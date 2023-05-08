@@ -683,7 +683,7 @@ export class UserService {
             count
           }
         }
-        users(where:{${query}}, limit: $limit, offset: $offset) {
+        users(where:{${query}}, limit: $limit, offset: $offset, order_by: {created_at: desc}) {
           first_name
           id
           last_name
