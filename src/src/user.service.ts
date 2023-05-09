@@ -640,6 +640,22 @@ export class UserService {
     }
     const mappedResponse = result;
 
+    let experience = mappedResponse.experience.filter((e) => {
+      return e.type == 'experience'
+    })
+    console.log("experience", experience)
+
+    let vo_experience = mappedResponse.experience.filter((e) => {
+      return e.type == 'vo_experience'
+    })
+    console.log("vo_experience", vo_experience)
+    if(experience) {
+      mappedResponse.experience = experience[0]
+    }
+    if(vo_experience) {
+      mappedResponse.vo_experience = vo_experience[0]
+    }
+
     return {
       statusCode: 200,
       message: 'Ok.',
