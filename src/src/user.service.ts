@@ -347,6 +347,10 @@ export class UserService {
       'aadhar_token',
       'keycloak_id',
       'profile_url',
+      'block',
+      'district',
+      'state',
+      'village'
     ];
     let user_id = req?.id ? req?.id : null;
     const keyExist = userArr.filter((e) => objKey.includes(e));
