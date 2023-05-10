@@ -650,10 +650,10 @@ export class UserService {
     })
     console.log("vo_experience", vo_experience)
     if(experience) {
-      mappedResponse.experience = experience[0]
+      mappedResponse.experience = experience
     }
     if(vo_experience) {
-      mappedResponse.vo_experience = vo_experience[0]
+      mappedResponse.vo_experience = vo_experience
     }
 
     return {
