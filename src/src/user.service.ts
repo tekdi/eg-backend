@@ -247,7 +247,8 @@ export class UserService {
 
   public async register(body: any, request: any) {
     const axios = require('axios');
-    const password = `@${this.helper.generateRandomPassword()}`;
+    //const password = `@${this.helper.generateRandomPassword()}`;
+    const password = body?.mobile;
     let username = `${body.first_name}`;
     if (body?.last_name) {
       username += `_${body.last_name.charAt(0)}`;
@@ -268,6 +269,8 @@ export class UserService {
       ],
       groups: ['facilitators'],
     };
+
+    console.log("data_to_create_user", data_to_create_user)
     const adminResult = await this.helper.getAdminKeycloakToken();
 
     if (adminResult?.data?.access_token) {
