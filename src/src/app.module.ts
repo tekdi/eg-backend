@@ -11,9 +11,10 @@ import { UserService } from './user.service';
 import { EnumModule } from './enum/enum.module';
 import { UserHelper } from './helper/userHelper';
 import { AuthenticateModule } from './authenticate/authenticate.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [HttpModule, ConfigModule.forRoot(), EnumModule, AuthenticateModule],
+  imports: [HttpModule, ConfigModule.forRoot(), EnumModule, AuthenticateModule, UsersModule],
   controllers: [AppController, UserController, GeolocationController],
   providers: [AppService, GeolocationService,HasuraService,UserService,UserHelper],
 })
