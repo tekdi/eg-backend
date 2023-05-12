@@ -223,6 +223,26 @@ export class UserService {
                 updated_by
               }
             }
+            interviews {
+              id
+              owner_user_id
+              end_date_time
+              comment
+              created_at
+              created_by
+              start_date_time
+              status
+              title
+              updated_at
+              updated_by
+              user_id
+              location_type
+              owner {
+                first_name
+                last_name
+                id
+              }
+            }
           }
         }`,
       variables: { keycloak_id: keycloak_id },
@@ -269,8 +289,6 @@ export class UserService {
       ],
       groups: ['facilitators'],
     };
-
-    console.log("data_to_create_user", data_to_create_user)
     const adminResult = await this.helper.getAdminKeycloakToken();
 
     if (adminResult?.data?.access_token) {
@@ -622,6 +640,26 @@ export class UserService {
               updated_by
             }
           }
+          interviews {
+            id
+            owner_user_id
+            end_date_time
+            comment
+            created_at
+            created_by
+            start_date_time
+            status
+            title
+            updated_at
+            updated_by
+            user_id
+            location_type
+            owner {
+              first_name
+              last_name
+              id
+            }
+          }
         }}`,
     };
 
@@ -786,6 +824,26 @@ export class UserService {
               name
               type
               updated_by
+            }
+          }
+          interviews {
+            id
+            owner_user_id
+            end_date_time
+            comment
+            created_at
+            created_by
+            start_date_time
+            status
+            title
+            updated_at
+            updated_by
+            user_id
+            location_type
+            owner {
+              first_name
+              last_name
+              id
             }
           }
         }}`,
