@@ -237,11 +237,26 @@ export class UserService {
               updated_by
               user_id
               location_type
+              location
               owner {
                 first_name
                 last_name
                 id
               }
+            }
+            evens {
+              context
+              context_id
+              created_by
+              end_date
+              end_time
+              id
+              location
+              location_type
+              start_date
+              start_time
+              updated_by
+              user_id
             }
           }
         }`,
@@ -654,11 +669,26 @@ export class UserService {
             updated_by
             user_id
             location_type
+            location
             owner {
               first_name
               last_name
               id
             }
+          }
+          evens {
+            context
+            context_id
+            created_by
+            end_date
+            end_time
+            id
+            location
+            location_type
+            start_date
+            start_time
+            updated_by
+            user_id
           }
         }}`,
     };
@@ -840,11 +870,26 @@ export class UserService {
             updated_by
             user_id
             location_type
+            location
             owner {
               first_name
               last_name
               id
             }
+          }
+          evens {
+            context
+            context_id
+            created_by
+            end_date
+            end_time
+            id
+            location
+            location_type
+            start_date
+            start_time
+            updated_by
+            user_id
           }
         }}`,
       variables: {
