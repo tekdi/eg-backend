@@ -93,7 +93,7 @@ export class UserService {
     };
     var configData = {
       method: 'post',
-      url: `${process.env.KEYCLOAK_URL}/realms/eg-sso/protocol/openid-connect/token`,
+      url: `${process.env.KEYCLOAK_URL}`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -244,7 +244,7 @@ export class UserService {
                 id
               }
             }
-            evens {
+            events {
               context
               context_id
               created_by
@@ -676,7 +676,7 @@ export class UserService {
               id
             }
           }
-          evens {
+          events {
             context
             context_id
             created_by
@@ -713,7 +713,9 @@ export class UserService {
 
     mappedResponse = {
       ...mappedResponse,
-      ['experience']: result?.experience.filter((e) => e.type == 'experience'),
+      ['experience']: result?.experience.filter(
+        (e: any) => e.type == 'experience',
+      ),
     };
 
     mappedResponse = {
@@ -877,7 +879,7 @@ export class UserService {
               id
             }
           }
-          evens {
+          events {
             context
             context_id
             created_by
