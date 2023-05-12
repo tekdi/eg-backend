@@ -93,7 +93,7 @@ export class UserService {
     };
     var configData = {
       method: 'post',
-      url: `${process.env.KEYCLOAK_URL}`,
+      url: `${process.env.KEYCLOAK_URL}/realms/eg-sso/protocol/openid-connect/token`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
