@@ -258,6 +258,13 @@ export class UserService {
               updated_by
               user_id
             }
+            documents(order_by: {id: desc}){
+              id
+              user_id
+              name
+              doument_type
+              document_sub_type
+            }
           }
         }`,
       variables: { keycloak_id: keycloak_id },
@@ -690,6 +697,13 @@ export class UserService {
             updated_by
             user_id
           }
+          documents(order_by: {id: desc}){
+            id
+            user_id
+            name
+            doument_type
+            document_sub_type
+          }
         }}`,
     };
 
@@ -878,6 +892,13 @@ export class UserService {
             start_time
             updated_by
             user_id
+          }
+          documents(order_by: {id: desc}){
+            id
+            user_id
+            name
+            doument_type
+            document_sub_type
           }
         }}`,
       variables: {
