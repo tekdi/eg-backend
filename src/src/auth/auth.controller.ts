@@ -14,7 +14,7 @@ export class AuthController {
 
     @Post('/otp-send')
     @UsePipes(ValidationPipe)
-    public async sendOtp(@Body() req: OtpSendDTO, @Res() response: Response) {
+    public sendOtp(@Body() req: OtpSendDTO, @Res() response: Response) {
         return this.authService.sendOtp(req, response);
     }
 

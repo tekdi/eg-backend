@@ -8,11 +8,8 @@ export class AuthService {
         const mobile = req.mobile;
         const reason = req.reason;
 
-        console.log("mobile", mobile);
-        console.log("reason", reason);
-
-        const otp = Math.floor(100000 + Math.random() * 900000);
-        const ttl = 5 * 60 * 1000;
+        const otp = crypto.randomInt(100000, 999999);
+        const ttl = parseInt(process.env.OTP_EXPIRY_IN_MINUTES) * 60 * 1000;
         const expires = Date.now() + ttl;
         const data = `${mobile}.${otp}.${reason}.${expires}`;
         const smsKey = "13893kjefbekbkb";
@@ -23,6 +20,9 @@ export class AuthService {
             .digest("hex");
         const fullhash = `${hash}.${expires}`;
 
+        console.log("OTP_EXPIRY_IN_MINUTES", process.env.OTP_EXPIRY_IN_MINUTES);
+        console.log("mobile", mobile);
+        console.log("reason", reason);
         console.log("fullhash", fullhash);
         console.log("otp", otp);
 
@@ -32,7 +32,11 @@ export class AuthService {
             return response.status(200).json({
                 success: true,
                 message: `Otp successfully sent to XXXXXX${mobileStr.substring(6)}`,
-                data: { hash: fullhash }
+                data: {
+                    // @TODO - remove OTP later
+                    otp: otp,
+                    hash: fullhash
+                }
             });
         } else {
             return response.status(400).json({
@@ -44,7 +48,6 @@ export class AuthService {
     }
 
     public async verifyOtp(req, response) {
-        //console.log("req", req)
         const mobile = req.mobile;
         const hash = req.hash;
         const otp = req.otp;
@@ -52,9 +55,6 @@ export class AuthService {
 
         let [hashValue, expires] = hash.split(".");
         let now = Date.now();
-
-        //console.log("now", now);
-        //console.log("expires", parseInt(expires));
 
         if (now > parseInt(expires)) {
             return response.status(400).json({
@@ -71,19 +71,13 @@ export class AuthService {
             .createHmac("sha256", smsKey)
             .update(data)
             .digest("hex");
-        //console.log("newCalculatedHash", newCalculatedHash);
-        //console.log("hashValue", hashValue);
 
         if (newCalculatedHash === hashValue) {
-            //console.log("inside if verify otp");
-
             return response.status(200).json({
                 success: true,
                 message: 'OTP verified successfully!',
                 data: {}
             });
-
-
         } else {
             return response.status(400).json({
                 success: false,
@@ -93,7 +87,6 @@ export class AuthService {
         }
     }
 
-    public async sendOtpService(mobile, otp) {
-
-    }
+    /*public async sendOtpService(mobile, otp) {
+    }*/
 }
