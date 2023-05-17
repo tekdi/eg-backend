@@ -725,19 +725,22 @@ export class UserService {
     }
     let mappedResponse = result;
 
-    mappedResponse = {
-      ...mappedResponse,
-      ['experience']: result?.experience.filter(
-        (e: any) => e.type == 'experience',
-      ),
-    };
-
-    mappedResponse = {
-      ...mappedResponse,
-      ['vo_experience']: result?.experience.filter(
-        (e: any) => e.type == 'vo_experience',
-      ),
-    };
+    if(result?.experience) {
+      mappedResponse = {
+        ...mappedResponse,
+        ['experience']: result?.experience.filter(
+          (e: any) => e.type == 'experience',
+        ),
+      };
+  
+      mappedResponse = {
+        ...mappedResponse,
+        ['vo_experience']: result?.experience.filter(
+          (e: any) => e.type == 'vo_experience',
+        ),
+      };
+    }
+    
 
     return {
       statusCode: 200,
