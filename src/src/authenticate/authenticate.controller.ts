@@ -7,13 +7,18 @@ export class AuthenticateController {
 
     constructor( public authenticateService: AuthenticateService ) {}
 
-    @Get('/otp-send')
-    public sendOtp( @Query('mobileNo') mobileNo: Number, @Res() response: Response) {
-        return this.authenticateService.sendOtp(mobileNo, response);
+    @Post('/otp-send')
+    public sendOtp( @Body() req: Record<string, any>, @Res() response: Response) {
+        return this.authenticateService.sendOtp(req, response);
     }
 
     @Post('/otp-verify')
     public verifyOtp( @Body() req: Record<string, any>, @Res() response: Response) {
         return this.authenticateService.verifyOtp(req, response);
+    }
+
+    @Post('/reset-password')
+    public resetPassword( @Body() req: Record<string, any>, @Res() response: Response) {
+        return this.authenticateService.resetPassword(req, response);
     }
 }
