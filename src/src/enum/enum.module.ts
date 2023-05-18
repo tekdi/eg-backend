@@ -4,6 +4,7 @@ import { EnumController } from './enum.controller';
 
 @Module({
   controllers: [EnumController],
-  providers: [EnumService]
+  providers: [EnumService],
+  exports: [EnumService]
 })
 export class EnumModule {}
