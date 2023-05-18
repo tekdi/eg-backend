@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 const crypto = require("crypto");
+const axios = require('axios');
 
 @Injectable()
 export class AuthService {
@@ -29,15 +30,27 @@ export class AuthService {
         const mobileStr = mobile.toString();
 
         if (otp && fullhash) {
-            return response.status(200).json({
-                success: true,
-                message: `Otp successfully sent to XXXXXX${mobileStr.substring(6)}`,
-                data: {
-                    // @TODO - remove OTP later
-                    otp: otp,
-                    hash: fullhash
-                }
-            });
+
+            const otpRes = await this.sendOtpService(mobile, reason, otp)
+            console.log("otpRes", otpRes)
+            if(otpRes) {
+                return response.status(200).json({
+                    success: true,
+                    message: `Otp successfully sent to XXXXXX${mobileStr.substring(6)}`,
+                    data: {
+                        // @TODO - remove OTP later
+                        otp: otp,
+                        hash: fullhash
+                    }
+                });
+            } else {
+                return response.status(400).json({
+                    success: false,
+                    message: 'Unable to send OTP!',
+                    data: {}
+                });
+            }
+            
         } else {
             return response.status(400).json({
                 success: false,
@@ -87,6 +100,32 @@ export class AuthService {
         }
     }
 
-    /*public async sendOtpService(mobile, otp) {
-    }*/
+    public async sendOtpService(mobileNo, reason, otp) {
+
+        console.log("mobileNo", mobileNo)
+        console.log("otp", otp)
+        console.log("reason", reason)
+
+        let msg =  `प्रिय प्रेरक, प्रगति कैम्प आयोजित करने के लिए कम से कम 8 RSOS पंजीकृत किशोरियों का होना आवश्यक है। कृपया 30 दिसंबर तक एजी मोबिलाइजेशन टूल पर सभी पंजीकृत किशोरियों की जानकारी साझा करें। अपंजीकृत एजी विकल्प को एजी मोबिलाइजेशन टूल पर अक्षम कर दिया गया है I FEGG`
+
+        let encryptMsg = encodeURIComponent(msg)
+
+
+        let config = {
+            method: 'get',
+            maxBodyLength: Infinity,
+            url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},arg1:test21,arg2:test22&language=2&credittype=7&senderid=${process.env.SENDER_ID}&templateid=1491&message=${encryptMsg}&isschd=false&isrefno=true&filetype=1`,
+            headers: {}
+        };
+
+        try {
+            const res = await axios.request(config)
+            console.log("otp api res", res.data)
+            return res.data
+        } catch (err) {
+            console.log("otp err", err)
+        }
+
+
+    }
 }
