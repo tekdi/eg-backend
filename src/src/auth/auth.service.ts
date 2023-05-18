@@ -106,15 +106,15 @@ export class AuthService {
         console.log("otp", otp)
         console.log("reason", reason)
 
-        let msg =  `प्रिय प्रेरक, प्रगति कैम्प आयोजित करने के लिए कम से कम 8 RSOS पंजीकृत किशोरियों का होना आवश्यक है। कृपया 30 दिसंबर तक एजी मोबिलाइजेशन टूल पर सभी पंजीकृत किशोरियों की जानकारी साझा करें। अपंजीकृत एजी विकल्प को एजी मोबिलाइजेशन टूल पर अक्षम कर दिया गया है I FEGG`
+        let msg =  `नमस्ते, प्रगति प्लेटफॉर्म पर सत्यापन/लॉगिन के लिए आपका ओटीपी {#OTP#} है। FEGG`
 
-        let encryptMsg = encodeURIComponent(msg)
+        let encodeMsg = encodeURIComponent(msg)
 
 
         let config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},arg1:test21,arg2:test22&language=2&credittype=7&senderid=${process.env.SENDER_ID}&templateid=1491&message=${encryptMsg}&isschd=false&isrefno=true&filetype=1`,
+            url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},arg1:${otp}&language=2&credittype=7&senderid=${process.env.SENDER_ID}&templateid=1491&message=${encodeMsg}&isschd=false&isrefno=true&filetype=1`,
             headers: {}
         };
 
