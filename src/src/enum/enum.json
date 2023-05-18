@@ -16,10 +16,12 @@
     { "title": "Yes", "value": "yes" }
   ],
   "EXPERIENCE": [
+    { "title": "0", "value": "0" },
     { "title": "1", "value": "1" },
     { "title": "2", "value": "2" },
     { "title": "3", "value": "3" },
     { "title": "4", "value": "4" },
+    { "title": "5", "value": "5" },
     { "title": "5+", "value": "5+" }
   ],
   "MOBILE_TYPE": [
@@ -33,5 +35,17 @@
     { "title": "Dropouts", "value": "dropouts" },
     { "title": "Old Prerak", "value": "old_prerak" },
     { "title": "Other", "value": "other" }
+  ],
+  "FACILITATOR_STATUS": [
+    { "title": "FACILITATOR_STATUS_QUIT", "value": "quit" },
+    { "title": "FACILITATOR_STATUS_REJECTED", "value": "rejected" },
+    { "title": "FACILITATOR_STATUS_APPLIED", "value": "applied" },
+    { "title": "FACILITATOR_STATUS_APPLICATION_SCREENED", "value": "application_screened" },
+    { "title": "FACILITATOR_STATUS_SHORTLISTED_FOR_ORIENTATION", "value": "shortlisted_for_orientation" },
+    { "title": "FACILITATOR_STATUS_POTENTIAL_PRERAK", "value": "potential_prerak" },
+    { "title": "FACILITATOR_STATUS_SELECTED_FOR_TRAINING", "value": "selected_for_training" },
+    { "title": "FACILITATOR_STATUS_SELECTED_FOR_ONBOARDING", "value": "selected_for_onboarding" },
+    { "title": "FACILITATOR_STATUS_SELECTED_PRERAK", "value": "selected_prerak" },
+    { "title": "FACILITATOR_STATUS_RUSTICATE", "value": "rusticate" }
   ]
 }
