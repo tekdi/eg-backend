@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 const crypto = require("crypto");
 const axios = require('axios');
 
 @Injectable()
 export class AuthService {
+
+    constructor(private readonly keycloakService: KeycloakService) { }
 
     public async sendOtp(req, response) {
         const mobile = req.mobile;
@@ -33,7 +36,7 @@ export class AuthService {
 
             const otpRes = await this.sendOtpService(mobile, reason, otp)
             console.log("otpRes", otpRes)
-            if(otpRes) {
+            if (otpRes) {
                 return response.status(200).json({
                     success: true,
                     message: `Otp successfully sent to XXXXXX${mobileStr.substring(6)}`,
@@ -50,7 +53,7 @@ export class AuthService {
                     data: {}
                 });
             }
-            
+
         } else {
             return response.status(400).json({
                 success: false,
@@ -106,7 +109,7 @@ export class AuthService {
         console.log("otp", otp)
         console.log("reason", reason)
 
-        let msg =  `नमस्ते, प्रगति प्लेटफॉर्म पर सत्यापन/लॉगिन के लिए आपका ओटीपी {#OTP#} है। FEGG`
+        let msg = `नमस्ते, प्रगति प्लेटफॉर्म पर सत्यापन/लॉगिन के लिए आपका ओटीपी {#OTP#} है। FEGG`
 
         let encodeMsg = encodeURIComponent(msg)
 
@@ -127,5 +130,21 @@ export class AuthService {
         }
 
 
+    }
+
+    public async resetPassword(req, response) {
+        console.log("req", req)
+        const token = await this.keycloakService.getAdminKeycloakToken()
+        console.log("token", token)
+        if (token?.access_token) {
+
+            const resetPasswordRes = await this.keycloakService.resetPassword(req.id, token.access_token)
+            
+            return response.status(200).json({
+                success: true,
+                message: 'Password changed successfully!',
+                data: token
+            });
+        }
     }
 }

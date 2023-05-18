@@ -23,4 +23,10 @@ export class AuthController {
     public verifyOtp(@Body() req: OtpVerifyDTO, @Res() response: Response) {
         return this.authService.verifyOtp(req, response);
     }
+
+    @Post('/reset-password')
+    @UsePipes(ValidationPipe)
+    public resetPassword(@Body() req: any, @Res() response: Response) {
+        return this.authService.resetPassword(req, response);
+    }
 }

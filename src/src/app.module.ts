@@ -15,6 +15,7 @@ import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { UsersModule } from './users/users.module';
+import { KeycloakModule } from './services/keycloak/keycloak.module';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { UsersModule } from './users/users.module';
         HasuraModule,
         S3Module,
         UploadFileModule,
+        KeycloakModule,
     ],
     controllers: [AppController, UserController, GeolocationController],
     providers: [AppService, GeolocationService, UserService],
