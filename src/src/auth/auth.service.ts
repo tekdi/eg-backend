@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 const crypto = require("crypto");
 const axios = require('axios');
@@ -6,7 +7,7 @@ const axios = require('axios');
 @Injectable()
 export class AuthService {
 
-    constructor(private readonly keycloakService: KeycloakService) { }
+    constructor(private readonly keycloakService: KeycloakService, private readonly hasuraService: HasuraService) { }
 
     public async sendOtp(req, response) {
         const mobile = req.mobile;
@@ -134,17 +135,52 @@ export class AuthService {
 
     public async resetPassword(req, response) {
         console.log("req", req)
-        const token = await this.keycloakService.getAdminKeycloakToken()
-        console.log("token", token)
-        if (token?.access_token) {
+        let query = {
+            query: `query MyQuery {
+                users_by_pk(id: ${req.id}) {
+                  keycloak_id
+                  last_name
+                  id
+                  first_name
+                }
+              }`
+        }
+        const userRes = await this.hasuraService.postData(query)
+        console.log("userRes", userRes)
+        if (userRes) {
+            const token = await this.keycloakService.getAdminKeycloakToken()
+            if (token?.access_token && userRes.data.users_by_pk.keycloak_id) {
 
-            const resetPasswordRes = await this.keycloakService.resetPassword(req.id, token.access_token)
-            
+                const resetPasswordRes = await this.keycloakService.resetPassword(userRes.data.users_by_pk.keycloak_id, token.access_token, req.password)
+                
+                if(resetPasswordRes) {
+                    return response.status(200).json({
+                        success: true,
+                        message: 'Password updated successfully!',
+                        data: {}
+                    });
+                } else {
+                    return response.status(200).json({
+                        success: false,
+                        message: 'unable to reset password!',
+                        data: {}
+                    }); 
+                }
+                
+            } else {
+                return response.status(200).json({
+                    success: false,
+                    message: 'unable to get token',
+                    data: {}
+                });
+            }
+        } else {
             return response.status(200).json({
-                success: true,
-                message: 'Password changed successfully!',
-                data: token
+                success: false,
+                message: 'User not found!',
+                data: {}
             });
         }
+
     }
 }

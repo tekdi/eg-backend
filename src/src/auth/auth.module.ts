@@ -3,10 +3,11 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
+import { HasuraModule } from 'src/services/hasura/hasura.module';
 
 @Module({
-  providers: [AuthService, KeycloakService],
+  imports: [KeycloakModule, HasuraModule],
   controllers: [AuthController],
-  imports: [KeycloakModule]
+  providers: [AuthService],
 })
 export class AuthModule {}
