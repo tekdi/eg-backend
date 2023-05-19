@@ -3,8 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosRequestConfig } from 'axios';
 
+
 @Injectable()
 export class KeycloakService {
+    
+    public keycloak_url = this.configService.get<string>('KEYCLOAK_URL');
+    public keycloak_admin_cli_client_secret = this.configService.get<string>('KEYCLOAK_ADMIN_CLI_CLIENT_SECRET');
+    public realm_name = this.configService.get<string>('REALM_NAME');
 
     constructor(private configService: ConfigService, private readonly httpService: HttpService) { }
 
@@ -14,12 +19,11 @@ export class KeycloakService {
             username: 'admin',
             client_id: 'admin-cli',
             grant_type: 'client_credentials',
-            password: this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD'),
-            client_secret: this.configService.get<string>('KEYCLOAK_ADMIN_CLI_CLIENT_SECRET')
+            client_secret: this.keycloak_admin_cli_client_secret
         };
 
 
-        const url = this.configService.get<string>('KEYCLOAK_URL') + '/realms/master/protocol/openid-connect/token';
+        const url = `${this.keycloak_url}/realms/master/protocol/openid-connect/token`;
 
         const config: AxiosRequestConfig = {
             headers: {
@@ -49,7 +53,7 @@ export class KeycloakService {
         }
 
 
-        const url = this.configService.get<string>('KEYCLOAK_URL')+`/admin/realms/eg-sso/users/${keycloak_id}/reset-password`;
+        const url = `${this.keycloak_url}/admin/realms/${this.realm_name}/users/${keycloak_id}/reset-password`;
 
         const config: AxiosRequestConfig = {
             headers: {

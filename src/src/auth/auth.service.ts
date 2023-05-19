@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 const crypto = require("crypto");
@@ -7,7 +8,9 @@ const axios = require('axios');
 @Injectable()
 export class AuthService {
 
-    constructor(private readonly keycloakService: KeycloakService, private readonly hasuraService: HasuraService) { }
+    public smsKey = this.configService.get<string>('SMS_KEY');;
+
+    constructor(private configService: ConfigService, private readonly keycloakService: KeycloakService, private readonly hasuraService: HasuraService) { }
 
     public async sendOtp(req, response) {
         const mobile = req.mobile;
@@ -17,7 +20,7 @@ export class AuthService {
         const ttl = parseInt(process.env.OTP_EXPIRY_IN_MINUTES) * 60 * 1000;
         const expires = Date.now() + ttl;
         const data = `${mobile}.${otp}.${reason}.${expires}`;
-        const smsKey = "13893kjefbekbkb";
+        const smsKey = this.smsKey;
 
         const hash = crypto
             .createHmac("sha256", smsKey)
@@ -70,10 +73,9 @@ export class AuthService {
         const otp = req.otp;
         const reason = req.reason;
 
-        let [hashValue, expires] = hash.split(".");
-        let now = Date.now();
+        const otpVerify = await this.otpVerification(mobile, hash, otp, reason);
 
-        if (now > parseInt(expires)) {
+        if(otpVerify === 'Timeout please try again') {
             return response.status(400).json({
                 success: false,
                 message: 'Timeout please try again',
@@ -81,27 +83,22 @@ export class AuthService {
             });
         }
 
-        const data = `${mobile}.${otp}.${reason}.${expires}`;
-        const smsKey = "13893kjefbekbkb";
-
-        const newCalculatedHash = crypto
-            .createHmac("sha256", smsKey)
-            .update(data)
-            .digest("hex");
-
-        if (newCalculatedHash === hashValue) {
+        if(otpVerify === 'OTP verified successfully') {
             return response.status(200).json({
                 success: true,
                 message: 'OTP verified successfully!',
                 data: {}
-            });
-        } else {
+            }); 
+        }
+
+        if(otpVerify === 'Incorrect OTP') {
             return response.status(400).json({
                 success: false,
                 message: 'Incorrect OTP',
                 data: {}
             });
         }
+
     }
 
     public async sendOtpService(mobileNo, reason, otp) {
@@ -133,54 +130,113 @@ export class AuthService {
 
     }
 
-    public async resetPassword(req, response) {
+    public async resetPasswordUsingOtp(req, response) {
         console.log("req", req)
-        let query = {
-            query: `query MyQuery {
-                users_by_pk(id: ${req.id}) {
-                  keycloak_id
-                  last_name
-                  id
-                  first_name
-                }
-              }`
-        }
-        const userRes = await this.hasuraService.postData(query)
-        console.log("userRes", userRes)
-        if (userRes) {
-            const token = await this.keycloakService.getAdminKeycloakToken()
-            if (token?.access_token && userRes.data.users_by_pk.keycloak_id) {
+        const mobile = req.mobile;
+        const hash = req.hash;
+        const otp = req.otp;
+        const reason = req.reason;
 
-                const resetPasswordRes = await this.keycloakService.resetPassword(userRes.data.users_by_pk.keycloak_id, token.access_token, req.password)
-                
-                if(resetPasswordRes) {
-                    return response.status(200).json({
-                        success: true,
-                        message: 'Password updated successfully!',
-                        data: {}
-                    });
-                } else {
-                    return response.status(200).json({
-                        success: false,
-                        message: 'unable to reset password!',
-                        data: {}
-                    }); 
-                }
-                
-            } else {
-                return response.status(200).json({
-                    success: false,
-                    message: 'unable to get token',
-                    data: {}
-                });
-            }
-        } else {
-            return response.status(200).json({
+        const otpVerify = await this.otpVerification(mobile, hash, otp, reason)
+
+        if(otpVerify === 'Timeout please try again') {
+            return response.status(400).json({
                 success: false,
-                message: 'User not found!',
+                message: 'Timeout please try again',
                 data: {}
             });
         }
 
+        if(otpVerify === 'OTP verified successfully') {
+
+            let query = {
+                query: `query MyQuery {
+                    users_by_pk(id: ${req.id}) {
+                      keycloak_id
+                      last_name
+                      id
+                      first_name
+                    }
+                  }`
+            }
+            const userRes = await this.hasuraService.postData(query)
+            console.log("userRes", userRes)
+            if (userRes) {
+                const token = await this.keycloakService.getAdminKeycloakToken()
+                if (token?.access_token && userRes.data.users_by_pk.keycloak_id) {
+    
+                    const resetPasswordRes = await this.keycloakService.resetPassword(userRes.data.users_by_pk.keycloak_id, token.access_token, req.password)
+                    
+                    if(resetPasswordRes) {
+                        return response.status(200).json({
+                            success: true,
+                            message: 'Password updated successfully!',
+                            data: {}
+                        });
+                    } else {
+                        return response.status(200).json({
+                            success: false,
+                            message: 'unable to reset password!',
+                            data: {}
+                        }); 
+                    }
+                    
+                } else {
+                    return response.status(200).json({
+                        success: false,
+                        message: 'unable to get token',
+                        data: {}
+                    });
+                }
+            } else {
+                return response.status(200).json({
+                    success: false,
+                    message: 'User not found!',
+                    data: {}
+                });
+            }
+
+            
+        }
+
+        if(otpVerify === 'Incorrect OTP') {
+            return response.status(400).json({
+                success: false,
+                message: 'Incorrect OTP',
+                data: {}
+            });
+        }
+
+        
+
+    }
+
+    public async otpVerification(mobile, hash, otp, reason) {
+        let [hashValue, expires] = hash.split(".");
+        let now = Date.now();
+
+        if (now > parseInt(expires)) {
+
+            return 'Timeout please try again';
+    
+        }
+
+        const data = `${mobile}.${otp}.${reason}.${expires}`;
+        const smsKey = this.smsKey;
+
+        const newCalculatedHash = crypto
+            .createHmac("sha256", smsKey)
+            .update(data)
+            .digest("hex");
+
+        if (newCalculatedHash === hashValue) {
+
+            return 'OTP verified successfully';
+            
+        } else {
+
+            return 'Incorrect OTP';
+        
+        }
     }
 }

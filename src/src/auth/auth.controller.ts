@@ -6,6 +6,7 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { OtpSendDTO } from './dto/otp-send.dto';
 import { OtpVerifyDTO } from './dto/otp-verify.dto';
+import { ResetPasswordDTO } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,9 +25,9 @@ export class AuthController {
         return this.authService.verifyOtp(req, response);
     }
 
-    @Post('/reset-password')
+    @Post('/reset-password-otp')
     @UsePipes(ValidationPipe)
-    public resetPassword(@Body() req: any, @Res() response: Response) {
-        return this.authService.resetPassword(req, response);
+    public resetPasswordUsingOtp(@Body() req: ResetPasswordDTO, @Res() response: Response) {
+        return this.authService.resetPasswordUsingOtp(req, response);
     }
 }
