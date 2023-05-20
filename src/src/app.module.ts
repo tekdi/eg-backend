@@ -18,6 +18,7 @@ import { UsersModule } from './users/users.module';
 import { FacilitatorModule } from './facilitator/facilitator.module';
 import { KeycloakModule } from './services/keycloak/keycloak.module';
 import { InterviewModule } from './interview/interview.module';
+import { BeneficiaryModule } from './beneficiary/beneficiary.module';
 
 @Module({
   imports: [
@@ -36,7 +37,8 @@ import { InterviewModule } from './interview/interview.module';
     UploadFileModule,
     InterviewModule,
     KeycloakModule,
-    FacilitatorModule
+    FacilitatorModule,
+    BeneficiaryModule
   ],
   controllers: [AppController, UserController, GeolocationController],
   providers: [AppService, GeolocationService, UserService]
