@@ -36,6 +36,7 @@ import { InterviewModule } from './interview/interview.module';
     UploadFileModule,
     InterviewModule,
     KeycloakModule,
+    FacilitatorModule
   ],
   controllers: [AppController, UserController, GeolocationController],
   providers: [AppService, GeolocationService, UserService]
