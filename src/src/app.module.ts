@@ -16,6 +16,7 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { UsersModule } from './users/users.module';
 import { FacilitatorModule } from './facilitator/facilitator.module';
+import { KeycloakModule } from './services/keycloak/keycloak.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { FacilitatorModule } from './facilitator/facilitator.module';
         S3Module,
         UploadFileModule,
         FacilitatorModule,
+        KeycloakModule,
     ],
     controllers: [AppController, UserController, GeolocationController],
     providers: [AppService, GeolocationService, UserService],

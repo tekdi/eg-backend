@@ -19,7 +19,7 @@ export class HasuraService {
             
         const config: AxiosRequestConfig = {
             headers: {
-                'x-hasura-admin-secret': this.configService.get<string>('HASURA_SECRET_KEY'),
+                'x-hasura-admin-secret': this.configService.get<string>('HASURA_ADMIN_SECRET'),
                 'Content-Type': 'application/json'
             },
         };
