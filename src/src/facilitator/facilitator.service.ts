@@ -92,11 +92,10 @@ export class FacilitatorService {
 
     if (
       body.hasOwnProperty('district')
-      && this.isValidString(body.district)
     ) {
-      paramsQueryArray.push('$district: String');
-      filterQueryArray.push('{user: {district: { _eq: $district }}}');
-      variables.district = body.district.toUpperCase();
+      paramsQueryArray.push('$district: [String!]');
+      filterQueryArray.push('{user: {district: { _in: $district }}}');
+      variables.district = body.district;
     }
 
     let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
