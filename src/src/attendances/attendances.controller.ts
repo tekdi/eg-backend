@@ -20,7 +20,7 @@ export class AttendancesController {
     return this.attendancesService.create(createAttendanceDto);
   }
 
-  @Get()
+  @Post()
   findAll(@Body() request: Record<string, any>) {
     return this.attendancesService.findAll(request);
   }
