@@ -37,5 +37,4 @@ export class AuthController {
     public resetPasswordUsingOtp(@Body() req: ResetPasswordDTO, @Res() response: Response) {
         return this.authService.resetPasswordUsingOtp(req, response);
     }
-
 }

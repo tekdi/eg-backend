@@ -5,11 +5,11 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { lastValueFrom, map } from 'rxjs';
-import jwt_decode from 'jwt-decode';
-import { UserHelperService } from './helper/userHelper.service';
-import { HasuraService } from './hasura/hasura.service';
 import { Response } from 'express';
+import jwt_decode from 'jwt-decode';
+import { lastValueFrom, map } from 'rxjs';
+import { HasuraService } from './hasura/hasura.service';
+import { UserHelperService } from './helper/userHelper.service';
 @Injectable()
 export class UserService {
   public url = process.env.HASURA_BASE_URL;
@@ -767,6 +767,7 @@ export class UserService {
         }
       });
     }
+    console.log("quesry",query)
     const user = await this.ipUserInfo(req);
     query += `program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}`;
     var data = {

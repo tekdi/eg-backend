@@ -5,33 +5,84 @@
     { "title": "OTHER", "value": "other" }
   ],
   "QUALIFICATION": [
-    { "title": "Bachelors", "value": "bachelors" },
-    { "title": "Masters", "value": "masters" },
-    { "title": "Diploma", "value": "diploma" },
-    { "title": "Post Graduate", "value": "post_graduate" },
-    { "title": "Ph.D.", "value": "ph_d" }
+    { "title": "BACHELORS", "value": "bachelors" },
+    { "title": "MASTERS", "value": "masters" },
+    { "title": "DIPLOMA", "value": "diploma" },
+    { "title": "POST_GRADUATE", "value": "post_graduate" },
+    { "title": "PH_D", "value": "ph_d" }
   ],
   "TEACHING_DEGREE": [
-    { "title": "No", "value": "no" },
-    { "title": "Yes", "value": "yes" }
+    { "title": "NO", "value": "no" },
+    { "title": "YES", "value": "yes" }
   ],
   "EXPERIENCE": [
+    { "title": "0", "value": "0" },
     { "title": "1", "value": "1" },
     { "title": "2", "value": "2" },
     { "title": "3", "value": "3" },
     { "title": "4", "value": "4" },
+    { "title": "5", "value": "5" },
     { "title": "5+", "value": "5+" }
   ],
   "MOBILE_TYPE": [
-    { "title": "Android", "value": "android" },
-    { "title": "Iphone", "value": "iphone" }
+    { "title": "ANDROID", "value": "android" },
+    { "title": "IPHONE", "value": "iphone" }
   ],
   "REFERRAL": [
-    { "title": "Prerak Referral", "value": "prerak_referral" },
-    { "title": "NGO Referral", "value": "ngo_referral" },
-    { "title": "Advertisements", "value": "advertisements" },
-    { "title": "Dropouts", "value": "dropouts" },
-    { "title": "Old Prerak", "value": "old_prerak" },
-    { "title": "Other", "value": "other" }
+    { "title": "PRERAK_REFERRAL", "value": "prerak_referral" },
+    { "title": "NGO_REFERRAL", "value": "ngo_referral" },
+    { "title": "ADVERTISEMENTS", "value": "advertisements" },
+    { "title": "DROPOUTS", "value": "dropouts" },
+    { "title": "OLD_PRERAK", "value": "old_prerak" },
+    { "title": "OTHER", "value": "other" }
+  ],
+  "FACILITATOR_STATUS": [
+    { "title": "FACILITATOR_STATUS_QUIT", "value": "quit" },
+    { "title": "FACILITATOR_STATUS_REJECTED", "value": "rejected" },
+    { "title": "FACILITATOR_STATUS_APPLIED", "value": "applied" },
+    { "title": "FACILITATOR_STATUS_APPLICATION_SCREENED", "value": "application_screened" },
+    { "title": "FACILITATOR_STATUS_SHORTLISTED_FOR_ORIENTATION", "value": "shortlisted_for_orientation" },
+    { "title": "FACILITATOR_STATUS_POTENTIAL_PRERAK", "value": "potential_prerak" },
+    { "title": "FACILITATOR_STATUS_SELECTED_FOR_TRAINING", "value": "selected_for_training" },
+    { "title": "FACILITATOR_STATUS_SELECTED_FOR_ONBOARDING", "value": "selected_for_onboarding" },
+    { "title": "FACILITATOR_STATUS_SELECTED_PRERAK", "value": "selected_prerak" },
+    { "title": "FACILITATOR_STATUS_RUSTICATE", "value": "rusticate" }
+  ],
+  "TYPE_OF_LEARNER": [
+    { "title": "DROPOUT", "value": "dropout" },
+    { "title": "NEVER_ENROLLED", "value": "never_enrolled" },
+    {
+      "title": "ALREADY_ENROLLED_IN_OPEN_SCHOOL",
+      "value": "already_enrolled_in_open_school"
+    },
+    { "title": "ALREADY_OPEN_SCHOOL_SYC", "value": "already_open_school_syc" },
+    {
+      "title": "STREAM_2_(MAINSTREAM_SYC)",
+      "value": "stream_2_mainstream_syc"
+    },
+    { "title": "PRAGATI_SYC", "value": "pragati_syc" }
+  ],
+  "LAST_STANDARD_OF_EDUCATION": [
+    { "title": "0", "value": "0" },
+    { "title": "1", "value": "1" },
+    { "title": "2", "value": "2" },
+    { "title": "3", "value": "3" },
+    { "title": "4", "value": "4" },
+    { "title": "5", "value": "5" },
+    { "title": "6", "value": "6" },
+    { "title": "7", "value": "7" },
+    { "title": "8", "value": "8" },
+    { "title": "9", "value": "9" }
+  ],
+  "ENROLLEMENT_STATUS": [
+    { "title": "ENROLLED", "value": "enrolled" },
+    { "title": "NOT_ENROLLED", "value": "not_enrolled" },
+    { "title": "APPLIED_BUT_PENDING", "value": "applied_but_pending" },
+    { "title": "REJECTED", "value": "rejected" },
+    { "title": "OTHER", "value": "other" }
+  ],
+  "ENROLLED_FOR_BOARD": [
+    { "title": "RSOS", "value": "rsos" },
+    { "title": "NIOS", "value": "nios" }
   ]
 }
