@@ -5,10 +5,7 @@ import {
 export class ResetPasswordDTO {
     @IsString()
     @IsNotEmpty()
-    @MinLength(10)
-    @Matches(/^[6-9]\d{9}$/)
-    // Should start with 6
-    public mobile: string;
+    public username: string;
 
     @IsString()
     @IsNotEmpty()
@@ -23,9 +20,6 @@ export class ResetPasswordDTO {
     @IsString()
     @IsNotEmpty()
     public hash: string;
-
-    @IsNotEmpty()
-    public id: number;
 
     @IsNotEmpty()
     @IsString()

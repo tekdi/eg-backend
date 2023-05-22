@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { OtpSendDTO } from './dto/otp-send.dto';
 import { OtpVerifyDTO } from './dto/otp-verify.dto';
 import { ResetPasswordDTO } from './dto/reset-password.dto';
+import { UserOtpSendDTO } from './dto/username-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -25,9 +26,16 @@ export class AuthController {
         return this.authService.verifyOtp(req, response);
     }
 
-    @Post('/reset-password-otp')
+    @Post('/get-mobile-by-username-send-otp')
+    @UsePipes(ValidationPipe)
+    public sendUsernameOtp(@Body() req: UserOtpSendDTO, @Res() response: Response) {
+        return this.authService.sendUsernameOtp(req, response);
+    }
+
+    @Post('/forgot-password-otp')
     @UsePipes(ValidationPipe)
     public resetPasswordUsingOtp(@Body() req: ResetPasswordDTO, @Res() response: Response) {
         return this.authService.resetPasswordUsingOtp(req, response);
     }
+
 }
