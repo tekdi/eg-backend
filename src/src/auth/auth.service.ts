@@ -208,6 +208,57 @@ export class AuthService {
 
     }
 
+    public async resetPasswordUsingId(req, response) {
+        console.log("req", req)
+        let query = {
+            query: `query MyQuery {
+                users_by_pk(id: ${req.id}) {
+                  keycloak_id
+                  last_name
+                  id
+                  first_name
+                }
+              }`
+        }
+        const userRes = await this.hasuraService.postData(query)
+        console.log("userRes", userRes)
+        if (userRes) {
+            const token = await this.keycloakService.getAdminKeycloakToken()
+            if (token?.access_token && userRes.data.users_by_pk.keycloak_id && req.password) {
+
+                const resetPasswordRes = await this.keycloakService.resetPassword(userRes.data.users_by_pk.keycloak_id, token.access_token, req.password)
+
+                if(resetPasswordRes) {
+                    return response.status(200).json({
+                        success: true,
+                        message: 'Password updated successfully!',
+                        data: {}
+                    });
+                } else {
+                    return response.status(200).json({
+                        success: false,
+                        message: 'unable to reset password!',
+                        data: {}
+                    }); 
+                }
+
+            } else {
+                return response.status(200).json({
+                    success: false,
+                    message: 'unable to get token',
+                    data: {}
+                });
+            }
+        } else {
+            return response.status(200).json({
+                success: false,
+                message: 'User not found!',
+                data: {}
+            });
+        }
+
+    }
+
     //helper function
     public async sendOtpSMS(mobile, reason) {
 
