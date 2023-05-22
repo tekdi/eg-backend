@@ -7,15 +7,15 @@ import { AuthModule } from './auth/auth.module';
 import { BeneficiariesModule } from './beneficiaries/beneficiaries.module';
 import { EnumModule } from './enum/enum.module';
 import { EventsModule } from './events/events.module';
+import { FacilitatorModule } from './facilitator/facilitator.module';
 import { GeolocationController } from './geolocation.controller';
 import { GeolocationService } from './geolocation.service';
 import { HasuraModule } from './hasura/hasura.module';
 import { HelperModule } from './helper/helper.module';
+import { InterviewModule } from './interview/interview.module';
+import { KeycloakModule } from './services/keycloak/keycloak.module';
 import { S3Module } from './services/s3/s3.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
-import { FacilitatorModule } from './facilitator/facilitator.module';
-import { KeycloakModule } from './services/keycloak/keycloak.module';
-import { InterviewModule } from './interview/interview.module';
 import { UserModule } from './user.module';
 @Module({
     imports: [

@@ -15,7 +15,7 @@ import { CreateEventDto } from 'src/events/dto/create-event.dto';
 import { BeneficiariesService } from './beneficiaries.service';
 import { RegisterFacilitatorDto } from '../helper/dto/register-beneficiary.dto';
 
-
+import { StatusUpdateDTO } from './dto/status-update.dto';
 @Controller('beneficiaries')
 export class BeneficiariesController {
 
@@ -66,5 +66,11 @@ export class BeneficiariesController {
     @Req() request:any
   ) {
       return this.bs.create({ ...req, id: id }, true, request);
+  }
+  
+  @Put('statusUpdate')
+  @UsePipes(ValidationPipe)
+  statusUpdate( @Body() request: StatusUpdateDTO) {
+    return this.bs.statusUpdate( request);
   }
 }

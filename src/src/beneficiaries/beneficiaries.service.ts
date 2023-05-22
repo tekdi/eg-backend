@@ -16,6 +16,18 @@ export class BeneficiariesService {
       private helper: UserHelperService,
       private hasuraService: HasuraService
     ){}
+
+    public returnFields=[
+        "status",
+        "facilitator_id",
+        "beneficiaries_found_at",
+        "documents_status",
+        "program_id",
+        "rsos_id",    
+        "created_by",
+        "updated_by",
+        
+    ]
       
     public async findAll(request: any,req:any) {
 
@@ -292,6 +304,11 @@ if(!result){
 
   remove(id: number) {
     // return this.hasuraService.delete(this.table, { id: +id });
+  }
+  
+ public async statusUpdate(req:any){
+  return await this.hasuraService.update(req.id, 'beneficiaries',req,this.returnFields,[...this.returnFields,"id"]);
+
   }
 
   public async registerBeneficiary(body, request) {
