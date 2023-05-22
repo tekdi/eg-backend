@@ -224,7 +224,7 @@ export class AuthService {
         console.log("userRes", userRes)
         if (userRes) {
             const token = await this.keycloakService.getAdminKeycloakToken()
-            if (token?.access_token && userRes.data.users_by_pk.keycloak_id && req.password) {
+            if (token?.access_token && userRes.data.users_by_pk.keycloak_id) {
 
                 const resetPasswordRes = await this.keycloakService.resetPassword(userRes.data.users_by_pk.keycloak_id, token.access_token, req.password)
 
@@ -258,6 +258,7 @@ export class AuthService {
         }
 
     }
+
 
     //helper function
     public async sendOtpSMS(mobile, reason) {
