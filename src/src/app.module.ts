@@ -19,27 +19,28 @@ import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user.module';
 import { AttendancesModule } from './attendances/attendances.module';
 @Module({
-    imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
-        {
-            ...HttpModule.register({}),
-            global: true,
-        },
-        HelperModule,
-        EnumModule,
-        BeneficiariesModule,
-        AuthModule,
-        UserModule,
-        InterviewModule,
-        KeycloakModule,
-        FacilitatorModule,
-        EventsModule,
-        HasuraModule,
-        S3Module,
-        UploadFileModule,
-        AttendancesModule,
-    ],
-    controllers: [AppController, GeolocationController],
-    providers: [AppService, GeolocationService],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    {
+      ...HttpModule.register({}),
+      global: true,
+    },
+    HelperModule,
+    EnumModule,
+    BeneficiariesModule,
+    AuthModule,
+    UserModule,
+    InterviewModule,
+    KeycloakModule,
+    FacilitatorModule,
+    EventsModule,
+    HasuraModule,
+    S3Module,
+    UploadFileModule,
+    AttendancesModule,
+    KeycloakModule,
+  ],
+  controllers: [AppController, GeolocationController],
+  providers: [AppService, GeolocationService],
 })
-export class AppModule { }
+export class AppModule {}
