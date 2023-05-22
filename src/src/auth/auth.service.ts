@@ -17,7 +17,7 @@ export class AuthService {
         const reason = req.reason;
 
         if (mobile && reason) {
-            const sendOtpRes = await this.sendOtpFunction(mobile, reason)
+            const sendOtpRes = await this.sendOtpSMS(mobile, reason)
             console.log("sendOtpRes", sendOtpRes)
 
             if (sendOtpRes.success) {
@@ -157,7 +157,7 @@ export class AuthService {
 
     }
 
-    public async sendUsernameOtp(req, response) {
+    public async getMobileByUsernameSendOtp(req, response) {
         const username = req.username;
         const reason = req.reason;
 
@@ -180,7 +180,7 @@ export class AuthService {
             const mobile = userRes.data.users[0].mobile
 
             if (mobile) {
-                const sendOtpRes = await this.sendOtpFunction(mobile, reason)
+                const sendOtpRes = await this.sendOtpSMS(mobile, reason)
                 console.log("sendOtpRes", sendOtpRes)
 
                 if (sendOtpRes.success) {
@@ -209,7 +209,7 @@ export class AuthService {
     }
 
     //helper function
-    public async sendOtpFunction(mobile, reason) {
+    public async sendOtpSMS(mobile, reason) {
 
         const otp = crypto.randomInt(100000, 999999);
         const ttl = parseInt(process.env.OTP_EXPIRY_IN_MINUTES) * 60 * 1000;
@@ -233,7 +233,7 @@ export class AuthService {
 
         if (otp && fullhash) {
 
-            const otpRes = await this.sendOtpService(mobile, reason, otp)
+            const otpRes = await this.sendSMS(mobile, otp)
             console.log("otpRes", otpRes)
             if (otpRes) {
                 return {
@@ -294,11 +294,10 @@ export class AuthService {
         }
     }
 
-    public async sendOtpService(mobileNo, reason, otp) {
+    public async sendSMS(mobileNo, otp) {
 
         console.log("mobileNo", mobileNo)
         console.log("otp", otp)
-        console.log("reason", reason)
 
         let msg = `नमस्ते, प्रगति प्लेटफॉर्म पर सत्यापन/लॉगिन के लिए आपका ओटीपी {#OTP#} है। FEGG`
 

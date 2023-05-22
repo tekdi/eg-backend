@@ -2,7 +2,7 @@ import {
     IsNotEmpty, IsString, Matches, MinLength
 } from 'class-validator';
 
-export class ResetPasswordDTO {
+export class GetMobileByUsernameSendOtpDTO {
     @IsString()
     @IsNotEmpty()
     public username: string;
