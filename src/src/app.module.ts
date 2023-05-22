@@ -17,6 +17,7 @@ import { KeycloakModule } from './services/keycloak/keycloak.module';
 import { S3Module } from './services/s3/s3.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user.module';
+import { AttendancesModule } from './attendances/attendances.module';
 @Module({
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
@@ -36,6 +37,7 @@ import { UserModule } from './user.module';
         HasuraModule,
         S3Module,
         UploadFileModule,
+        AttendancesModule,
     ],
     controllers: [AppController, GeolocationController],
     providers: [AppService, GeolocationService],
