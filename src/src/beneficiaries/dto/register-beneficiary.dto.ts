@@ -1,19 +1,23 @@
 import {
     IsNotEmpty,
     IsString,
-    IsMobilePhone,
-    IsEnum
+    IsEnum,
+    Matches,
+    MinLength
 } from 'class-validator';
 
-import { mobileOwnership, mobileType } from '../enums/beneficiary';
+import { mobileOwnership, mobileType } from '../../helper/enums/beneficiary';
 
-export class RegisterFacilitatorDto {
+export class RegisterBeneficiaryDto {
     
     @IsNotEmpty()
     @IsString()
     first_name: string;
 
-    @IsMobilePhone('en-IN')
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(10)
+    @Matches(/^[6-9]\d{9}$/)
     mobile: string;
 
     @IsNotEmpty()

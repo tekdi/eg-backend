@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { CreateEventDto } from 'src/events/dto/create-event.dto';
 import { BeneficiariesService } from './beneficiaries.service';
-import { RegisterFacilitatorDto } from '../helper/dto/register-beneficiary.dto';
+import { RegisterBeneficiaryDto } from './dto/register-beneficiary.dto';
 
 import { StatusUpdateDTO } from './dto/status-update.dto';
 @Controller('beneficiaries')
@@ -53,7 +53,7 @@ export class BeneficiariesController {
   @Post('/register')
   @UsePipes(ValidationPipe)
   private async registerBeneficiary (
-      @Body() body: RegisterFacilitatorDto,
+      @Body() body: RegisterBeneficiaryDto,
       @Req() request:any
   ) {
       return this.beneficiariesService.registerBeneficiary(body, request);

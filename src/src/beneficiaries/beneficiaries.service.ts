@@ -305,6 +305,7 @@ if(!result){
     const password = body.mobile;
     let username = body.first_name;
     username += `_${body.mobile}`;
+
     const data_to_create_user = {
       enabled: 'true',
       firstName: body.first_name,
@@ -319,55 +320,31 @@ if(!result){
       groups: ['beneficiaries'],
     };
 
-    const data = {
-      username: 'admin',
-      client_id: 'admin-cli',
-      grant_type: 'client_credentials',
-      password: this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD'),
-      client_secret: this.configService.get<string>('KEYCLOAK_ADMIN_CLI_CLIENT_SECRET'),
-    };
-    const adminResultData = await this.keycloakService.getAdminKeycloakToken(data, 'master');
-    
-    if (adminResultData?.access_token) {
-      let url = `${this.configService.get<string>('KEYCLOAK_URL')}/admin/realms/eg-sso/users`;
-      let data = data_to_create_user;
+    try {
+      const { headers, status } = await this.keycloakService.createUser(data_to_create_user);
+      
+      if (headers.location) {
+        const split = headers.location.split('/');
+        const keycloak_id = split[split.length - 1];
+        body.keycloak_id = keycloak_id;
+        const result = await this.newCreate(body);
 
-      try {
-        const { headers, status } = await lastValueFrom(
-          this.httpService.post(url, data, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${adminResultData.access_token}`,
-            }
-          })
-            .pipe(map((res) => res))
-        );
-        
-        if (headers.location) {
-          const split = headers.location.split('/');
-          const keycloak_id = split[split.length - 1];
-          body.keycloak_id = keycloak_id;
-          const result = await this.newCreate(body);
-
-          return {
-            status,
-            message: 'User created successfully',
-            data: {
-              user: result?.data,
-              keycloak_id: keycloak_id,
-              username: username,
-            },
-          };
-        } else {
-          throw new BadRequestException('Error while generating admin token !');
-        }
-      } catch (e) {
-        throw new HttpException(e.message, HttpStatus.CONFLICT, {
-          cause: e,
-        });
+        return {
+          status,
+          message: 'User created successfully',
+          data: {
+            user: result?.data,
+            keycloak_id: keycloak_id,
+            username: username,
+          },
+        };
+      } else {
+        throw new BadRequestException('Error while generating admin token !');
       }
-    } else {
-      throw new BadRequestException('Error while creating user !');
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.CONFLICT, {
+        cause: e,
+      });
     }
   }
 
