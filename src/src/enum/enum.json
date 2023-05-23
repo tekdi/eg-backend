@@ -117,14 +117,6 @@
     { "title": "DUE_TO_MARRIAGES", "value": "marriages" },
     { "title": "MIGRATION_RELATED_TO_EMPLOYMENT", "value": "migration_related_to_employment" }
   ],
-  "DOCUMENTS": [
-    { "title": "DOCS_LIST_JAN_AADHAAR_CARD", "value": "jan_aadhaar_card" },
-    { "title": "DOCS_LIST_AADHAAR_CARD", "value": "aadhaar_card" }
-  ],
-  "DOCUMENTS_STATUS": [
-    { "title": "DOC_STATUS_NOT_AVAILABLE", "value": "not_available" },
-    { "title": "DOC_STATUS_COMPLETE", "value": "complete" }
-  ],
   "PREVIOUS_SCHOOL_TYPE": [
     { "title": "PREVIOUS_SCHOOL_TYPE_PRIVATE_SCHOOL", "value": "private_school" },
     { "title": "PREVIOUS_SCHOOL_TYPE_GOVERNMENT_SCHOOL", "value": "government_school" },
