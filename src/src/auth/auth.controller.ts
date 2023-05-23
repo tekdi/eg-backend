@@ -1,8 +1,8 @@
 import {
-    Body, Controller, Post, Res, UseGuards, UsePipes,
+    Body, Controller, Post, Req, Res, UseGuards, UsePipes,
     ValidationPipe
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { OtpSendDTO } from './dto/otp-send.dto';
 import { OtpVerifyDTO } from './dto/otp-verify.dto';
@@ -43,7 +43,13 @@ export class AuthController {
     @Post('/reset-password-admin')
     @UseGuards(new AuthGuard())
     @UsePipes(ValidationPipe)
-    public resetPasswordUsingId(@Body() req: ResetPasswordAdminDTO, @Res() response: Response) {
-        return this.authService.resetPasswordUsingId(req, response);
+    public resetPasswordUsingId(@Body() req: ResetPasswordAdminDTO, @Req() header: Request, @Res() response: Response) {
+        return this.authService.resetPasswordUsingId(req, header, response);
+    }
+
+    @Post('/login')
+    @UsePipes(ValidationPipe)
+    login(@Req() req: Request, @Res() response: Response,) {
+        return this.authService.login(req, response);
     }
 }

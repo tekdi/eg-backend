@@ -6,24 +6,17 @@ import { AxiosRequestConfig } from 'axios';
 
 @Injectable()
 export class KeycloakService {
-    
+
     public keycloak_url = this.configService.get<string>('KEYCLOAK_URL');
     public keycloak_admin_cli_client_secret = this.configService.get<string>('KEYCLOAK_ADMIN_CLI_CLIENT_SECRET');
     public realm_name = this.configService.get<string>('REALM_NAME');
 
     constructor(private configService: ConfigService, private readonly httpService: HttpService) { }
 
-    public async getAdminKeycloakToken() {
+    public async getAdminKeycloakToken(data, realm) {
         console.log("inside getAdminKeycloakToken")
-        const data = {
-            username: 'admin',
-            client_id: 'admin-cli',
-            grant_type: 'client_credentials',
-            client_secret: this.keycloak_admin_cli_client_secret
-        };
 
-
-        const url = `${this.keycloak_url}/realms/master/protocol/openid-connect/token`;
+        const url = `${this.keycloak_url}/realms/${realm}/protocol/openid-connect/token`;
 
         const config: AxiosRequestConfig = {
             headers: {
@@ -75,4 +68,5 @@ export class KeycloakService {
         }
         
     }
+
 }
