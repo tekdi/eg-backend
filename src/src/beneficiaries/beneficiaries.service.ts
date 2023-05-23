@@ -301,7 +301,6 @@ if(!result){
   }
 
   public async registerBeneficiary(body, request) {
-    const axios = require('axios');
     const user=await this.userService.ipUserInfo(request);
     const password = body.mobile;
     let username = body.first_name;
@@ -319,10 +318,17 @@ if(!result){
       ],
       groups: ['beneficiaries'],
     };
-    // const adminResult = await this.keycloakService.getAdminKeycloakToken();
-    const adminResult = await this.helper.getAdminKeycloakToken();
+
+    const data = {
+      username: 'admin',
+      client_id: 'admin-cli',
+      grant_type: 'client_credentials',
+      password: this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD'),
+      client_secret: this.configService.get<string>('KEYCLOAK_ADMIN_CLI_CLIENT_SECRET'),
+    };
+    const adminResultData = await this.keycloakService.getAdminKeycloakToken(data, 'master');
     
-    if (adminResult?.data?.access_token) {
+    if (adminResultData?.access_token) {
       let url = `${this.configService.get<string>('KEYCLOAK_URL')}/admin/realms/eg-sso/users`;
       let data = data_to_create_user;
 
@@ -331,7 +337,7 @@ if(!result){
           this.httpService.post(url, data, {
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${adminResult.data.access_token}`,
+              Authorization: `Bearer ${adminResultData.access_token}`,
             }
           })
             .pipe(map((res) => res))
@@ -367,6 +373,7 @@ if(!result){
 
   async create(req: any, update = false, request) {
     const user=await this.userService.ipUserInfo(request);
+    const { data: beneficiaryUser} = await this.userById(req.id);
     let i = 0,
     response = [];
     let objKey = Object.keys(req);
@@ -405,7 +412,7 @@ if(!result){
           'extended_users',
           {
             ...req,
-            id: req?.extended_users?.id ? req?.extended_users?.id : null,
+            id: beneficiaryUser?.extended_users[0]?.id ? beneficiaryUser?.extended_users[0]?.id : null,
             user_id,
           },
           extendedUserArr,
@@ -436,8 +443,8 @@ if(!result){
           'core_beneficiaries',
           {
             ...req,
-            id: req?.core_beneficiaries?.id
-              ? req?.core_beneficiaries?.id
+            id: beneficiaryUser?.core_beneficiaries[0]?.id
+              ? beneficiaryUser?.core_beneficiaries[0]?.id
               : null,
             user_id: user_id,
           },
