@@ -4,6 +4,9 @@ import { lastValueFrom, map } from 'rxjs';
 import { UserService } from 'src/user.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService } from '../hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { KeycloakService } from '../services/keycloak/keycloak.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class BeneficiariesService {
@@ -14,7 +17,10 @@ export class BeneficiariesService {
       private readonly httpService: HttpService,
       private userService:UserService,
       private helper: UserHelperService,
-      private hasuraService: HasuraService
+      private hasuraService: HasuraService,
+      private hasuraServiceFromServices: HasuraServiceFromServices,
+      private keycloakService: KeycloakService,
+      private configService: ConfigService
     ){}
 
     public returnFields=[
@@ -29,16 +35,16 @@ export class BeneficiariesService {
         
     ]
       
-    public async findAll(request: any,req:any) {
+    public async findAll(body: any,req:any) {
 
       // try {
         const user=await this.userService.ipUserInfo(req)
       // } catch (error) {
       //   throw new UnauthorizedException();
       // }
-            const { filters } = request;
-            const page = request.page ? request.page : '1';
-            const limit = request?.limit ? request?.limit : '10';
+            const { filters } = body;
+            const page = body.page ? body.page : '1';
+            const limit = body?.limit ? body?.limit : '10';
         
             let offset = 0;
             if (page > 1 && limit) {
@@ -156,17 +162,8 @@ export class BeneficiariesService {
                          
                   }`
             }
-                        
-            const response = await lastValueFrom(
-              this.httpService
-                .post(this.url, data, {
-                  headers: {
-                    'x-hasura-admin-secret': process.env.HASURA_ADMIN_SECRET,
-                    'Content-Type': 'application/json',
-                  },
-                })
-                .pipe(map((res) => res.data)),
-            );
+
+            const response = await this.hasuraServiceFromServices.getData(data);
         
             let result = response?.data?.users;
         
@@ -270,16 +267,8 @@ export class BeneficiariesService {
           }
           `        
         }
-        const response = await lastValueFrom(
-            this.httpService
-              .post(this.url, data, {
-                headers: {
-                  'x-hasura-admin-secret': process.env.HASURA_ADMIN_SECRET,
-                  'Content-Type': 'application/json',
-                },
-              })
-              .pipe(map((res) => res.data)),
-          );
+
+        const response = await this.hasuraServiceFromServices.getData(data);
           let result = response?.data?.users_by_pk;
 if(!result){
  return {
@@ -330,21 +319,24 @@ if(!result){
       ],
       groups: ['beneficiaries'],
     };
+    // const adminResult = await this.keycloakService.getAdminKeycloakToken();
     const adminResult = await this.helper.getAdminKeycloakToken();
     
     if (adminResult?.data?.access_token) {
-      var config = {
-        method: 'post',
-        url: `${process.env.KEYCLOAK_URL}/admin/realms/eg-sso/users`,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminResult.data.access_token}`,
-        },
-        data: data_to_create_user,
-      };
+      let url = `${this.configService.get<string>('KEYCLOAK_URL')}/admin/realms/eg-sso/users`;
+      let data = data_to_create_user;
 
       try {
-        const { headers, status } = await axios(config);
+        const { headers, status } = await lastValueFrom(
+          this.httpService.post(url, data, {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${adminResult.data.access_token}`,
+            }
+          })
+            .pipe(map((res) => res))
+        );
+        
         if (headers.location) {
           const split = headers.location.split('/');
           const keycloak_id = split[split.length - 1];
@@ -554,16 +546,8 @@ if(!result){
         }}`,
     };
 
-    const response = await lastValueFrom(
-      this.httpService
-        .post(this.url, data, {
-          headers: {
-            'x-hasura-admin-secret': process.env.HASURA_ADMIN_SECRET,
-            'Content-Type': 'application/json',
-          },
-        })
-        .pipe(map((res) => res.data)),
-    );
+    const response = await this.hasuraServiceFromServices.getData(data);
+
     let result = response?.data?.users_by_pk;
     if (result?.beneficiaries && result?.beneficiaries[0]) {
       result.beneficiaries = result.beneficiaries[0];
