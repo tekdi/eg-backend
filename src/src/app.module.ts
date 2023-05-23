@@ -36,6 +36,7 @@ import { UserModule } from './user.module';
         HasuraModule,
         S3Module,
         UploadFileModule,
+        KeycloakModule,
     ],
     controllers: [AppController, GeolocationController],
     providers: [AppService, GeolocationService],
