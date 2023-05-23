@@ -62,6 +62,36 @@ export class FacilitatorService {
     // return this.hasuraService.delete(this.table, { id: +id });
   }
 
+  filterFacilitatorsBasedOnExperience(arr, experience_type, experience_value) {
+    return arr.filter(facilitator => {
+      if (facilitator.user?.experience && Array.isArray(facilitator.user?.experience)) {
+        if (facilitator.user.experience.length) {
+          const sum = facilitator.user?.experience.reduce((acc, curr) => {
+            if (curr.type === experience_type) {
+              acc += Number(curr.experience_in_years);
+            }
+            return acc;
+          }, 0);
+          if (experience_value === '5+' && sum > 5) {
+            return true;
+          } else if (Number(experience_value) <= sum) {
+            return true;
+          } else {
+            return false;
+          }
+        } else {
+          if (Number(experience_value) === 0) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      } else {
+        return false;
+      }
+    });
+  }
+
   async getFacilitators(body: any) {
     const page = isNaN(body.page) ? 1 : parseInt(body.page);
     const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
@@ -166,27 +196,9 @@ export class FacilitatorService {
       && body.hasOwnProperty('work_experience')
       && this.isValidString(body.work_experience)
     ) {
-      const isValidNumberFilter = !isNaN(parseInt(body.work_experience)) || body.work_experience === '5+';
+      const isValidNumberFilter = !isNaN(Number(body.work_experience)) || body.work_experience === '5+';
       if (isValidNumberFilter) {
-        mappedResponse = mappedResponse.filter(facilitator => {
-          if (facilitator.user?.experience && facilitator.user?.experience.length) {
-            const sum = facilitator.user?.experience.reduce((acc, curr) => {
-              if (curr.type === 'experience') {
-                acc += parseInt(curr.experience_in_years);
-              }
-              return acc;
-            }, 0);
-            if (body.work_experience === '5+' && sum > 5) {
-              return true;
-            } else if (parseInt(body.work_experience) === sum) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            return false;
-          }
-        });
+        mappedResponse = this.filterFacilitatorsBasedOnExperience(mappedResponse, 'experience', body.work_experience);
       }
     }
 
@@ -195,27 +207,9 @@ export class FacilitatorService {
       && body.hasOwnProperty('vo_experience')
       && this.isValidString(body.vo_experience)
     ) {
-      const isValidNumberFilter = !isNaN(parseInt(body.vo_experience)) || body.vo_experience === '5+';
+      const isValidNumberFilter = !isNaN(Number(body.vo_experience)) || body.vo_experience === '5+';
       if (isValidNumberFilter) {
-        mappedResponse = mappedResponse.filter(facilitator => {
-          if (facilitator.user?.experience && facilitator.user?.experience.length) {
-            const sum = facilitator.user?.experience.reduce((acc, curr) => {
-              if (curr.type === 'vo_experience') {
-                acc += parseInt(curr.experience_in_years);
-              }
-              return acc;
-            }, 0);
-            if (body.vo_experience === '5+' && sum > 5) {
-              return true;
-            } else if (parseInt(body.vo_experience) === sum) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            return false;
-          }
-        });
+        mappedResponse = this.filterFacilitatorsBasedOnExperience(mappedResponse, 'vo_experience', body.vo_experience);
       }
     }
 
