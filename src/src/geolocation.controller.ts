@@ -14,8 +14,7 @@ export class GeolocationController {
     const count = response?.data[`${tableName}_aggregate`]?.aggregate?.count;
 
     return {
-      statusCode: 200,
-      message: 'Ok.',
+      success: 'true',
       data: {
         totalCount: count,
         states: mappedResponse,
@@ -31,8 +30,7 @@ export class GeolocationController {
     const count = response?.data[`${tableName}_aggregate`]?.aggregate?.count;
 
     return {
-      statusCode: 200,
-      message: 'Ok.',
+      success: 'true',
       data: {
         totalCount: count,
         districts: mappedResponse,
@@ -48,8 +46,7 @@ export class GeolocationController {
     const count = response?.data[`${tableName}_aggregate`]?.aggregate?.count;
 
     return {
-      statusCode: 200,
-      message: 'Ok.',
+      success: 'true',
       data: {
         totalCount: count,
         blocks: mappedResponse,
@@ -66,8 +63,7 @@ export class GeolocationController {
     const count = response?.data[`${tableName}_aggregate`]?.aggregate?.count;
 
     return {
-      statusCode: 200,
-      message: 'Ok.',
+      success: 'true',
       data: {
         totalCount: count,
         villages: mappedResponse,
