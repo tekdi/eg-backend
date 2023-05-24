@@ -431,7 +431,7 @@ export class AuthService {
         console.log("mobileNo", mobileNo)
         console.log("otp", otp)
 
-        let msg = "नमस्ते, प्रगति प्लेटफॉर्म पर सत्यापन/लॉगिन के लिए आपका ओटीपी {#OTP#} है। FEGG"
+        let msg = "नमस्ते, प्रगति प्लेटफॉर्म पर सत्यापन/लॉगिन के लिए आपका ओटीपी {#var#} है। FEGG"
 
         let encodeMsg = encodeURIComponent(msg)
         console.log("encodeMsg", encodeMsg)
