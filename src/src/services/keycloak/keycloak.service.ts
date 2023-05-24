@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosRequestConfig, AxiosResponseHeaders, RawAxiosResponseHeaders } from 'axios';
 import { lastValueFrom, map } from 'rxjs';
@@ -67,10 +67,10 @@ export class KeycloakService {
         } catch (e) {
             console.log("getAdminKeycloakToken", e.message)
         }
-        
+
     }
 
-    public async createUser(userData): Promise<{ [key: string]: any }>  {
+    public async createUser(userData): Promise<{ [key: string]: any }> {
         const data = {
             username: 'admin',
             client_id: 'admin-cli',
@@ -87,12 +87,12 @@ export class KeycloakService {
 
                 const { headers, status } = await lastValueFrom(
                     this.httpService.post(url, data, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${adminResultData.access_token}`,
-                    }
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${adminResultData.access_token}`,
+                        }
                     })
-                    .pipe(map((res) => res))
+                        .pipe(map((res) => res))
                 );
                 return {
                     headers,
@@ -102,8 +102,11 @@ export class KeycloakService {
                 throw new BadRequestException('Error while creating user !');
             }
         } catch (e) {
-            console.log(e);
-            throw e;
+            console.log("error 105"), e.message;
+            throw new HttpException(e.message, HttpStatus.CONFLICT, {
+                cause: e,
+            });
+
         }
     }
 

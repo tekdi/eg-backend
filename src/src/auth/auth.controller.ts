@@ -10,6 +10,7 @@ import { GetMobileByUsernameSendOtpDTO } from './dto/get-mobile-by-username-send
 import { UserOtpSendDTO } from './dto/username-otp.dto';
 import { AuthGuard } from './auth.guard';
 import { ResetPasswordAdminDTO } from './dto/reset-password-admin.dto';
+import { RegisterFacilitatorDto } from './dto/register-facilator.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -51,5 +52,21 @@ export class AuthController {
     @UsePipes(ValidationPipe)
     login(@Req() req: Request, @Res() response: Response,) {
         return this.authService.login(req, response);
+    }
+
+    // users/is_user_exist by mobile and adhaar etc filter.
+    @Post('/is_user_exist')
+    public async isUserExist(@Body() req: Record<string, any>) {
+        return this.authService.isUserExist(req);
+    }
+
+    // users/register on keycloak and hasura both side.
+    @Post('/register')
+    @UsePipes(ValidationPipe)
+    public async register(
+        @Body() body: RegisterFacilitatorDto,
+        @Req() request: Request,
+    ) {
+        return this.authService.register(body, request);
     }
 }
