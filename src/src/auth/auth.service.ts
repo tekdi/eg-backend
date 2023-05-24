@@ -218,7 +218,6 @@ export class AuthService {
 
     public async resetPasswordUsingId(req, header, response) {
         console.log("req", req)
-
         const authToken = header.header("authorization");
         const decoded: any = jwt_decode(authToken);
         let keycloak_id = decoded.sub;

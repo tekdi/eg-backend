@@ -13,50 +13,64 @@ import {
 } from '@nestjs/common';
 import { CreateEventDto } from 'src/events/dto/create-event.dto';
 import { BeneficiariesService } from './beneficiaries.service';
+import { RegisterBeneficiaryDto } from './dto/register-beneficiary.dto';
 
 import { StatusUpdateDTO } from './dto/status-update.dto';
 @Controller('beneficiaries')
 export class BeneficiariesController {
 
-    constructor(private bs:BeneficiariesService){}
+  constructor(private beneficiariesService:BeneficiariesService){}
 
     // @Get('/list')
     // public async getAgList(
     //   @Body() request: Record<string, any>,
     //   @Req() req:any
     // ) {
-    //    return this.bs.getAgList(request,req);
+    //    return this.beneficiariesService.getAgList(request,req);
     // }
     
-  @Post('/create')
-  create(@Body() createEventDto: CreateEventDto) {
-    return this.bs.create(createEventDto);
-  }
+  // @Post('/create')
+  // create(@Body() createEventDto: CreateEventDto) {
+  //   return this.beneficiariesService.create(createEventDto);
+  // }
 
   @Post()
   findAll(@Body() request: Record<string, any>,
   @Req() req:any) {
-    return this.bs.findAll(request,req);
+    return this.beneficiariesService.findAll(request,req);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.bs.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() request: Record<string, any>) {
-    return this.bs.update(+id, request);
+    return this.beneficiariesService.findOne(+id);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.bs.remove(+id);
+    return this.beneficiariesService.remove(+id);
+  }
+
+  @Post('/register')
+  @UsePipes(ValidationPipe)
+  private async registerBeneficiary (
+      @Body() body: RegisterBeneficiaryDto,
+      @Req() request:any
+  ) {
+      return this.beneficiariesService.registerBeneficiary(body, request);
+  }
+
+  @Patch(':id')
+  public async updateBeneficiary(
+    @Param('id') id: string,
+    @Body() req: Record<string, any>,
+    @Req() request:any
+  ) {
+      return this.beneficiariesService.create({ ...req, id: id }, true, request);
   }
   
   @Put('statusUpdate')
   @UsePipes(ValidationPipe)
   statusUpdate( @Body() request: StatusUpdateDTO) {
-    return this.bs.statusUpdate( request);
+    return this.beneficiariesService.statusUpdate( request);
   }
 }
