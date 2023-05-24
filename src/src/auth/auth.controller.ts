@@ -10,7 +10,8 @@ import { GetMobileByUsernameSendOtpDTO } from './dto/get-mobile-by-username-send
 import { UserOtpSendDTO } from './dto/username-otp.dto';
 import { AuthGuard } from './auth.guard';
 import { ResetPasswordAdminDTO } from './dto/reset-password-admin.dto';
-import { RegisterFacilitatorDto } from './dto/register-facilator.dto';
+import { RegisterDTO } from './dto/register.dto';
+import { UserExistDTO } from './dto/user-exist.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -50,23 +51,20 @@ export class AuthController {
 
     @Post('/login')
     @UsePipes(ValidationPipe)
-    login(@Req() req: Request, @Res() response: Response,) {
+    login(@Req() req: Request, @Res() response: Response) {
         return this.authService.login(req, response);
     }
 
     // users/is_user_exist by mobile and adhaar etc filter.
     @Post('/is_user_exist')
-    public async isUserExist(@Body() req: Record<string, any>) {
-        return this.authService.isUserExist(req);
+    public async isUserExist(@Body() req: UserExistDTO, @Res() response: Response) {
+        return this.authService.isUserExist(req, response);
     }
 
     // users/register on keycloak and hasura both side.
     @Post('/register')
     @UsePipes(ValidationPipe)
-    public async register(
-        @Body() body: RegisterFacilitatorDto,
-        @Req() request: Request,
-    ) {
-        return this.authService.register(body, request);
+    public async register(@Body() body: RegisterDTO, @Req() request: Request, @Res() response: Response) {
+        return this.authService.register(body, request, response);
     }
 }

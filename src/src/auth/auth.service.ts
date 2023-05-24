@@ -339,31 +339,31 @@ export class AuthService {
 
     }
 
-    public async isUserExist(req: any) {
+    public async isUserExist(req, response) {
         // Set User table name
         const tableName = 'users';
 
         // Calling hasura common method find all
         const data_exist = await this.hasuraService.findAll(tableName, req);
-        let response = data_exist.data.users;
+        let userExist = data_exist.data.users;
 
         // Check wheather user is exist or not based on response
-        if (response.length > 0) {
-            return {
-                status: 422,
+        if (userExist.length > 0) {
+            return response.status(200).send({
+                success: true,
                 message: 'User exist',
-                isUserExist: true,
-            };
+                data: {},
+            });
         } else {
-            return {
-                status: 200,
+            return response.status(200).send({
+                success: false,
                 message: 'User not exist',
-                isUserExist: false,
-            };
+                data: {},
+            });
         }
     }
 
-    public async register(body: any, request: any) {
+    public async register(body: any, request: any, response) {
 
         //const password = `@${this.helper.generateRandomPassword()}`;
         const password = body?.mobile;
@@ -399,8 +399,9 @@ export class AuthService {
 
             const result = await this.newCreate(body);
             console.log("result", result)
-            return {
-                status,
+
+            return response.status(200).send({
+                success: true,
                 message: 'User created successfully',
                 data: {
                     user: result?.data,
@@ -408,7 +409,7 @@ export class AuthService {
                     username: username,
                     password: password,
                 },
-            };
+            });
 
         } else {
             console.log("err 414")

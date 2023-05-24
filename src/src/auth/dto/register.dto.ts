@@ -1,7 +1,7 @@
 // src/articles/dto/create-article.dto.ts
 import { IsNotEmpty } from 'class-validator';
   
-  export class RegisterFacilitatorDto {
+  export class RegisterDTO {
     @IsNotEmpty()
     first_name: string;
   
