@@ -2,13 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
+import jwt_decode from 'jwt-decode';
 const crypto = require("crypto");
 const axios = require('axios');
+const atob = require('atob');
 
 @Injectable()
 export class AuthService {
 
-    public smsKey = this.configService.get<string>('SMS_KEY');;
+    public smsKey = this.configService.get<string>('SMS_KEY');
+    public keycloak_admin_cli_client_secret = this.configService.get<string>('KEYCLOAK_ADMIN_CLI_CLIENT_SECRET');
 
     constructor(private configService: ConfigService, private readonly keycloakService: KeycloakService, private readonly hasuraService: HasuraService) { }
 
@@ -103,8 +106,13 @@ export class AuthService {
                 }
 
                 if (otpVerify === 'OTP verified successfully') {
-
-                    const token = await this.keycloakService.getAdminKeycloakToken()
+                    const query = {
+                        username: 'admin',
+                        client_id: 'admin-cli',
+                        grant_type: 'client_credentials',
+                        client_secret: this.keycloak_admin_cli_client_secret
+                    };
+                    const token = await this.keycloakService.getAdminKeycloakToken(query, 'master')
                     if (token?.access_token && keycloak_id) {
 
                         const resetPasswordRes = await this.keycloakService.resetPassword(keycloak_id, token.access_token, req.password)
@@ -208,8 +216,13 @@ export class AuthService {
 
     }
 
-    public async resetPasswordUsingId(req, response) {
+    public async resetPasswordUsingId(req, header, response) {
         console.log("req", req)
+        
+        const authToken = header.header("authorization");
+        const decoded: any = jwt_decode(authToken);
+        let keycloak_id = decoded.sub;
+        console.log("keycloak_id", keycloak_id)
         let query = {
             query: `query MyQuery {
                 users_by_pk(id: ${req.id}) {
@@ -223,12 +236,18 @@ export class AuthService {
         const userRes = await this.hasuraService.postData(query)
         console.log("userRes", userRes)
         if (userRes) {
-            const token = await this.keycloakService.getAdminKeycloakToken()
+            const query = {
+                username: 'admin',
+                client_id: 'admin-cli',
+                grant_type: 'client_credentials',
+                client_secret: this.keycloak_admin_cli_client_secret
+            };
+            const token = await this.keycloakService.getAdminKeycloakToken(query, 'master')
             if (token?.access_token && userRes.data.users_by_pk.keycloak_id) {
 
                 const resetPasswordRes = await this.keycloakService.resetPassword(userRes.data.users_by_pk.keycloak_id, token.access_token, req.password)
 
-                if(resetPasswordRes) {
+                if (resetPasswordRes) {
                     return response.status(200).json({
                         success: true,
                         message: 'Password updated successfully!',
@@ -239,7 +258,7 @@ export class AuthService {
                         success: false,
                         message: 'unable to reset password!',
                         data: {}
-                    }); 
+                    });
                 }
 
             } else {
@@ -256,6 +275,43 @@ export class AuthService {
                 data: {}
             });
         }
+
+    }
+
+    public async login(req, response) {
+
+        const headers = req.header("authorization").split(" ");
+        console.log("headers", headers)
+        const b64ToString = atob(headers[1]);
+        const creds = b64ToString.split(':');
+        console.log("creds", creds)
+
+        const query = {
+            username: creds[0],
+            password: creds[1],
+            grant_type: 'password',
+            client_id: 'hasura',
+        };
+
+        console.log("query", query)
+        const token = await this.keycloakService.getAdminKeycloakToken(query, 'eg-sso')
+
+        console.log("token", token)
+
+        if (token) {
+            return response.status(200).send({
+                success: true,
+                message: 'LOGGEDIN_SUCCESSFULLY',
+                data: token,
+            });
+        } else {
+            return response.status(401).send({
+                success: false,
+                message: 'INVALID_USERNAME_PASSWORD_MESSAGE',
+                data: null,
+            });
+        }
+
 
     }
 

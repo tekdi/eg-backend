@@ -48,6 +48,16 @@
     { "title": "FACILITATOR_STATUS_SELECTED_PRERAK", "value": "selected_prerak" },
     { "title": "FACILITATOR_STATUS_RUSTICATE", "value": "rusticate" }
   ],
+  "BENEFICIARY_STATUS": [
+    { "title": "BENEFICIARY_STATUS_IDENTIFIED", "value": "identified" },
+    { "title": "BENEFICIARY_STATUS_READY_TO_ENROLL", "value": "ready_to_enroll" },
+    { "title": "BENEFICIARY_STATUS_ENROLLED", "value": "enrolled" },
+    { "title": "BENEFICIARY_STATUS_APPROVED_IP", "value": "approved_ip" },
+    { "title": "BENEFICIARY_STATUS_REGISTERED_IN_CAMP", "value": "registered_in_camp" },
+    { "title": "BENEFICIARY_STATUS_PRAGATI_SYC", "value": "pragati_syc" },
+    { "title": "BENEFICIARY_STATUS_REJECTED", "value": "rejected" },
+    { "title": "BENEFICIARY_STATUS_DROPOUT", "value": "dropout" }
+  ],
   "TYPE_OF_LEARNER": [
     { "title": "DROPOUT", "value": "dropout" },
     { "title": "NEVER_ENROLLED", "value": "never_enrolled" },
@@ -84,5 +94,39 @@
   "ENROLLED_FOR_BOARD": [
     { "title": "RSOS", "value": "rsos" },
     { "title": "NIOS", "value": "nios" }
+  ],
+  "SOCIAL_STATUS": [
+    { "title": "SC", "value": "sc" },
+    { "title": "ST", "value": "st" },
+    { "title": "OBC", "value": "obc" },
+    { "title": "GENERAL", "value": "general" },
+    { "title": "OTHERS", "value": "others" }
+  ],
+  "BENEFICIARY_MARITAL_STATUS": [
+    { "title": "SINGLE", "value": "single" },
+    { "title": "MARRIED", "value": "married" },
+    { "title": "UNMARRIED", "value": "unmarried" }
+  ],
+  "REASON_OF_LEAVING_EDUCATION": [
+    { "title": "SCHOOL_BEING_TOO_FAR_AWAY", "value": "school_being_too_far_away" },
+    { "title": "DUE_TO_FAIL", "value": "fail" },
+    { "title": "GIRL_NOT_WILLING_TO_PURSUE_FURTHER_STUDIES", "value": "girl_not_willing_to_pursue_further_studies" },
+    { "title": "SOCIAL / FAMILY PRESSURE", "value": "social_family_pressure" },
+    { "title": "ECONOMIC_DIFFICULTIES", "value": "economic_difficulties" },
+    { "title": "FRIENDS / FRIENDS LEAVING SCHOOL", "value": "friends_friends_leaving_school" },
+    { "title": "DUE_TO_MARRIAGES", "value": "marriages" },
+    { "title": "MIGRATION_RELATED_TO_EMPLOYMENT", "value": "migration_related_to_employment" }
+  ],
+  "PREVIOUS_SCHOOL_TYPE": [
+    { "title": "PREVIOUS_SCHOOL_TYPE_PRIVATE_SCHOOL", "value": "private_school" },
+    { "title": "PREVIOUS_SCHOOL_TYPE_GOVERNMENT_SCHOOL", "value": "government_school" },
+    { "title": "PREVIOUS_SCHOOL_TYPE_NEVER_STUDIED", "value": "never_studied" },
+    { "title": "PREVIOUS_SCHOOL_TYPE_OPEN_SCHOOL", "value": "open_school" },
+    { "title": "PREVIOUS_SCHOOL_TYPE_OTHER", "value": "other" }
+  ],
+  "CAREER_ASPIRATION": [
+    { "title": "CAREER_ASPIRATION_FURTHER_STUDIES", "value": "further_studies" },
+    { "title": "CAREER_ASPIRATION_SKILL_TRAINING", "value": "skill_training" },
+    { "title": "CAREER_ASPIRATION_SMALL_BUSINESS", "value": "small_business" }
   ]
 }

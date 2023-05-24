@@ -767,7 +767,6 @@ export class UserService {
         }
       });
     }
-    console.log("quesry",query)
     const user = await this.ipUserInfo(req);
     query += `program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}`;
     var data = {
