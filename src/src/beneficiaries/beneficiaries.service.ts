@@ -357,12 +357,13 @@ if(!result){
     const userArr = [
       'first_name',
       'last_name',
+      'middle_name',
+      'mobile',
+      'alternative_mobile_number',
+      'email_id',
       'gender',
       'dob',
       'address',
-      'aadhar_token',
-      'keycloak_id',
-      'profile_url',
       'block',
       'district',
       'state',
@@ -401,18 +402,21 @@ if(!result){
         'last_standard_of_education_year',
         'last_standard_of_education',
         'reason_of_leaving_education',
-        'user_id',
         'connect_via_refrence',
         'mobile_ownership',
         'last_school_type',
         'previous_school_type',
-        'enrollement_status',
-        'document_id',
         'device_type',
         'device_ownership',
-        'enrolled_for_board',
         'career_aspiration',
-        'learner_wish_to_pursue_education'
+        'learner_wish_to_pursue_education',
+        'father_first_name',
+        'father_middle_name',
+        'father_last_name',
+        'mother_first_name',
+        'mother_middle_name',
+        'mother_last_name',
+        'career_aspiration_details'
       ];
       const coreBeneficiarieskeyExist = coreBeneficiariesArr.filter((e) => objKey.includes(e));
       if (coreBeneficiarieskeyExist.length > 0) {
@@ -464,6 +468,7 @@ if(!result){
         users_by_pk(id: ${id}) {
           id
           first_name
+          middle_name
           last_name              
           dob
           mobile
@@ -516,6 +521,13 @@ if(!result){
             document_id
             enrolled_for_board
             enrollement_status
+            father_first_name
+            father_middle_name
+            father_last_name
+            mother_first_name
+            mother_middle_name
+            mother_last_name
+            career_aspiration_details
           }
           extended_users {
             marital_status
