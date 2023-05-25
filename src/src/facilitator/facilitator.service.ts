@@ -64,9 +64,9 @@ export class FacilitatorService {
 
   filterFacilitatorsBasedOnExperience(arr, experience_type, experience_value) {
     return arr.filter(facilitator => {
-      if (facilitator.user?.experience && Array.isArray(facilitator.user?.experience)) {
-        if (facilitator.user.experience.length) {
-          const sum = facilitator.user?.experience.reduce((acc, curr) => {
+      if (facilitator?.experience && Array.isArray(facilitator?.experience)) {
+        if (facilitator.experience.length) {
+          const sum = facilitator?.experience.reduce((acc, curr) => {
             if (curr.type === experience_type) {
               acc += Number(curr.experience_in_years);
             }
@@ -106,7 +106,7 @@ export class FacilitatorService {
 
     if (body.hasOwnProperty('qualificationIds') && body.qualificationIds.length) {
       paramsQueryArray.push('$qualificationIds: [Int!]');
-      filterQueryArray.push('{user: {qualifications: {qualification_master_id: {_in: $qualificationIds}}}}');
+      filterQueryArray.push('{qualifications: {qualification_master_id: {_in: $qualificationIds}}}');
       variables.qualificationIds = body.qualificationIds;
     }
 
@@ -116,7 +116,7 @@ export class FacilitatorService {
       && this.allStatus.map(obj => obj.value).includes(body.status)
     ) {
       paramsQueryArray.push('$status: String');
-      filterQueryArray.push('{user: {program_faciltators: {status: {_eq: $status}}}}');
+      filterQueryArray.push('{program_faciltators: {status: {_eq: $status}}}');
       variables.status = body.status;
     }
 
@@ -124,9 +124,11 @@ export class FacilitatorService {
       body.hasOwnProperty('district')
     ) {
       paramsQueryArray.push('$district: [String!]');
-      filterQueryArray.push('{user: {district: { _in: $district }}}');
+      filterQueryArray.push('{district: { _in: $district }}');
       variables.district = body.district;
     }
+
+    filterQueryArray.unshift('{core_faciltator: {}}');
 
     let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
     let paramsQuery = '';
@@ -136,46 +138,46 @@ export class FacilitatorService {
 
     const data = {
       query: `query MyQuery ${paramsQuery} {
-        core_faciltators_aggregate {
+        users_aggregate (where: ${filterQuery}) {
           aggregate {
             count
           }
         }
-        core_faciltators (where: ${filterQuery}) {
+
+        users (where: ${filterQuery}) {
           id
-          pan_no
-          user {
+          first_name
+          last_name
+          email_id
+          dob
+          gender
+          village
+          block
+          district
+          state
+          core_faciltator {
+            pan_no
+          }
+          program_faciltators {
             id
-            first_name
-            last_name
-            email_id
-            dob
-            gender
-            village
-            block
-            district
-            state
-            program_faciltators {
+            has_social_work_exp
+            form_step_number
+            status
+            status_reason
+            program {
               id
-              has_social_work_exp
-              form_step_number
-              status
-              status_reason
-              program {
-                id
-                name
-              }
+              name
             }
-            qualifications {
-              institution
-              qualification_master {
-                name
-              }
+          }
+          qualifications {
+            institution
+            qualification_master {
+              name
             }
-            experience {
-              type
-              experience_in_years
-            }
+          }
+          experience {
+            type
+            experience_in_years
           }
         }
       }`,
@@ -189,7 +191,7 @@ export class FacilitatorService {
       throw new InternalServerErrorException(error.message);
     }
 
-    let mappedResponse = response?.data?.core_faciltators;
+    let mappedResponse = response?.data?.users;
     
     if (
       mappedResponse
@@ -216,16 +218,13 @@ export class FacilitatorService {
     let responseWithPagination = mappedResponse.slice(skip, skip + limit);
 
     responseWithPagination = responseWithPagination.map(obj => {
-        const user_id = obj.user.id;
-        delete obj.user.id;
-        const res = {
-            ...obj,
-            'user_id': user_id,
-            ...obj.user     
-        };
-        delete res.user;
-        return res;
-    });
+      const res = {
+        ...obj,
+        ...obj.core_faciltator,
+      };
+      delete res.core_faciltator;
+      return res;
+  });
 
     const count = mappedResponse.length;
     const totalPages = Math.ceil(count / limit);
