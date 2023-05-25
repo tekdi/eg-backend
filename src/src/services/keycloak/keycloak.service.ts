@@ -65,7 +65,7 @@ export class KeycloakService {
             console.log("password updated")
             return "password updated";
         } catch (e) {
-            console.log("getAdminKeycloakToken", e.message)
+            console.log("resetPassword", e.message)
         }
 
     }
@@ -108,6 +108,39 @@ export class KeycloakService {
             });
 
         }
+    }
+    
+
+    public async registerUser(data, token) {
+        console.log("inside registerUser")
+
+        const url = `${this.keycloak_url}/admin/realms/eg-sso/users`;
+
+        const config: AxiosRequestConfig = {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+        };
+
+        let registerUserRes: any;
+        try {
+            const observable = this.httpService.post(url, data, config);
+
+            const promise = observable.toPromise();
+
+            const { headers, status } = await promise;
+            console.log("registerUser response", headers)
+            registerUserRes = {
+                headers,
+                status
+            }
+            // return response.data;
+        } catch (err) {
+            console.log("registerUser err", err)
+            registerUserRes = {error: err}
+        }
+        return registerUserRes;
     }
 
 }

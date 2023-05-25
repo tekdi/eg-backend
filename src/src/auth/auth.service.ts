@@ -363,7 +363,9 @@ export class AuthService {
         }
     }
 
-    public async register(body: any, request: any, response) {
+    public async register(body, response) {
+
+        console.log("body", body)
 
         //const password = `@${this.helper.generateRandomPassword()}`;
         const password = body?.mobile;
@@ -377,7 +379,6 @@ export class AuthService {
             firstName: body?.first_name,
             lastName: body?.last_name,
             username: username.toLowerCase(),
-            email: body?.email_id,
             credentials: [
                 {
                     type: 'password',
@@ -385,35 +386,76 @@ export class AuthService {
                     temporary: false,
                 },
             ],
-            groups: ['facilitators'],
+            groups: [`${body.role}`],
         };
 
+        console.log("data_to_create_user", data_to_create_user)
 
-        const { headers, status } = await this.keycloakService.createUser(data_to_create_user)
-        console.log("headers", headers)
-        console.log("status", status)
-        if (headers.location) {
-            const split = headers.location.split('/');
-            const keycloak_id = split[split.length - 1];
-            body.keycloak_id = keycloak_id;
+        const query = {
+            username: 'admin',
+            client_id: 'admin-cli',
+            grant_type: 'client_credentials',
+            client_secret: this.keycloak_admin_cli_client_secret
+        };
+        const token = await this.keycloakService.getAdminKeycloakToken(query, 'master')
+        if (token?.access_token) {
+            const registerUserRes = await this.keycloakService.registerUser(data_to_create_user, token.access_token)
+            console.log("registerUserRes", registerUserRes)
+            if (registerUserRes.error) {
+                if(registerUserRes.error.message == 'Request failed with status code 409') {
+                    return response.status(200).json({
+                        success: false,
+                        message: "User already exists!",
+                        data: {}
+                    });
+                } else {
+                    return response.status(200).json({
+                        success: false,
+                        message: registerUserRes.error.message,
+                        data: {}
+                    });
+                }
+                
+            } else if (registerUserRes.headers.location) {
+                
+                const split = registerUserRes.headers.location.split('/');
+                const keycloak_id = split[split.length - 1];
+                body.keycloak_id = keycloak_id;
+                if(body.role_fields.parent_ip) {
+                    body.parent_ip = body.role_fields.parent_ip
+                }
+                if(body.role_fields.faciliator_id) {
+                    body.faciliator_id = body.role_fields.faciliator_id
+                }
+                console.log("body 415", body)
+                const result = await this.newCreate(body);
+                console.log("result", result)
 
-            const result = await this.newCreate(body);
-            console.log("result", result)
-
-            return response.status(200).send({
-                success: true,
-                message: 'User created successfully',
-                data: {
-                    user: result?.data,
-                    keycloak_id: keycloak_id,
-                    username: username,
-                    password: password,
-                },
-            });
-
+                return response.status(200).send({
+                    success: true,
+                    message: 'User created successfully',
+                    data: {
+                        user: result?.data,
+                        keycloak_id: keycloak_id,
+                        username: username,
+                        password: password,
+                    },
+                });
+            } else {
+                return response.status(200).json({
+                    success: false,
+                    message: 'Unable to create user in keycloak',
+                    data: {}
+                });
+            }
         } else {
-            console.log("err 414")
+            return response.status(200).json({
+                success: false,
+                message: 'Unable to get keycloak token',
+                data: {}
+            });
         }
+
     }
     //helper function
     public async sendOtpSMS(mobile, reason) {

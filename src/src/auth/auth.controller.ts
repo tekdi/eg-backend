@@ -64,7 +64,7 @@ export class AuthController {
     // users/register on keycloak and hasura both side.
     @Post('/register')
     @UsePipes(ValidationPipe)
-    public async register(@Body() body: RegisterDTO, @Req() request: Request, @Res() response: Response) {
-        return this.authService.register(body, request, response);
+    public async register(@Body() body: RegisterDTO, @Res() response: Response) {
+        return this.authService.register(body, response);
     }
 }
