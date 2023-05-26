@@ -144,7 +144,7 @@ export class FacilitatorService {
           }
         }
 
-        users (where: ${filterQuery}) {
+        users (where: ${filterQuery}, order_by: {created_at: desc}) {
           first_name
           id
           last_name
