@@ -361,7 +361,7 @@ return resp.status(404).send({
     }
   }
 
-  async create(req: any, update = false, request, response) {
+  async create(req: any, request, response, update = false) {
     const user=await this.userService.ipUserInfo(request);
     const { data: beneficiaryUser} = await this.userById(req.id);
     const user_id = req?.id;
@@ -643,9 +643,8 @@ return resp.status(404).send({
       case 'enrollement':{
         // Update enrollement data in Beneficiaries table 
                 const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.enrollement.beneficiaries;
-        
-              const programDetails=beneficiaryUser.beneficiaries.find((data) => req.user_id==data.user_id&&req.academic_year_id==data.academic_year_id)
-             let tableName = 'beneficiaries';
+              const programDetails=beneficiaryUser.beneficiaries.find((data) => req.id==data.user_id&&req.academic_year_id==data.academic_year_id)
+              let tableName = 'beneficiaries';
              
                  await this.hasuraService.q(
                   tableName,
@@ -734,7 +733,7 @@ return resp.status(404).send({
             facilitator_id
             id
             academic_year_id
-            id
+            user_id
             enrollment_number
             enrollment_status
             enrolled_for_board
