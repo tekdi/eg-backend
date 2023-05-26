@@ -3,6 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { UserService } from 'src/user.service';
 
 @Injectable()
 export class FacilitatorService {
@@ -10,6 +11,7 @@ export class FacilitatorService {
     private readonly httpService: HttpService,
     private enumService: EnumService,
     private hasuraService: HasuraService,
+    private userService:UserService,
   ) {
   }
 
@@ -92,7 +94,8 @@ export class FacilitatorService {
     });
   }
 
-  async getFacilitators(body: any) {
+  async getFacilitators(req: any, body: any) {
+    const user = await this.userService.ipUserInfo(req);
     const page = isNaN(body.page) ? 1 : parseInt(body.page);
     const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
@@ -128,7 +131,7 @@ export class FacilitatorService {
       variables.district = body.district;
     }
 
-    filterQueryArray.unshift('{core_faciltator: {}}');
+    filterQueryArray.unshift(`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`);
 
     let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
     let paramsQuery = '';
@@ -164,6 +167,11 @@ export class FacilitatorService {
           state_id
           updated_by
           profile_url
+          state
+          district
+          block
+          village
+          grampanchayat
           program_users {
             id
             organisation_id
