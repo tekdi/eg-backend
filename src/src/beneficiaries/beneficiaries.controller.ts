@@ -12,7 +12,7 @@ import {
   UsePipes,
   ValidationPipe
 } from '@nestjs/common';
-import { Response, response } from 'express';
+import { Response } from 'express';
 import { BeneficiariesService } from './beneficiaries.service';
 import { RegisterBeneficiaryDto } from './dto/register-beneficiary.dto';
 
@@ -67,7 +67,7 @@ export class BeneficiariesController {
     @Req() request:any,
     @Res() response: any
   ) {
-      return this.beneficiariesService.create({ ...req, id: id }, true, request, response);
+      return this.beneficiariesService.create({ ...req, id: id }, request, response, true);
   }
   
   @Put('statusUpdate')
