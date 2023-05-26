@@ -401,24 +401,12 @@ export class AuthService {
         const token = await this.keycloakService.getAdminKeycloakToken(query, 'master')
         if (token?.access_token) {
 
-            const findUsername = await this.keycloakService.findUser(data_to_create_user, token.access_token)
-            console.log("findUsername", findUsername)
-
-            if (findUsername && body.role === 'beneficiaries') {
-                let usernameArr = data_to_create_user.username.split('_')
-
-                usernameArr[0] = this.incrementString(usernameArr[0])
-
-                console.log("usernameArr 410", usernameArr)
-
-                const separator = '_';
-
-                const updatedUserName = usernameArr.join(separator);
-
-                console.log("updatedUserName", updatedUserName);
-                data_to_create_user.username = updatedUserName
+            if (body.role === 'beneficiaries') {
+                let newUserName = await this.findRecursiveUser(data_to_create_user.username, token.access_token)
+                console.log("newUserName", newUserName)
+                data_to_create_user.username = newUserName
             }
-            console.log("data_to_create_user", data_to_create_user)
+            console.log("data_to_create_user 407", data_to_create_user)
             
             const registerUserRes = await this.keycloakService.registerUser(data_to_create_user, token.access_token)
             console.log("registerUserRes", registerUserRes)
@@ -460,7 +448,7 @@ export class AuthService {
                     data: {
                         user: result?.data,
                         keycloak_id: keycloak_id,
-                        username: username,
+                        username: data_to_create_user.username,
                         password: password,
                     },
                 });
@@ -816,6 +804,26 @@ export class AuthService {
 
         // Replace the numeric part in the original string with the incremented number
         return str.replace(/\d+$/, paddedNumber);
+    }
+
+    public async findRecursiveUser(username, token) {
+
+        const findUsername = await this.keycloakService.findUser(username, token)
+        console.log("findUsername", findUsername)
+        var newUserName = username
+        if (findUsername.length > 0) {
+            console.log("817", newUserName[newUserName.length-1])
+            if (newUserName[newUserName.length-1] == '_') {
+                newUserName = username
+            } else {
+                newUserName = username + '_'
+            }
+            console.log("newUserName", newUserName)
+            newUserName = this.incrementString(newUserName)
+            await this.findRecursiveUser(newUserName, token)
+        }
+        return newUserName
+
     }
 
 }
