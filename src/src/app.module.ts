@@ -18,6 +18,7 @@ import { S3Module } from './services/s3/s3.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user.module';
 import { AttendancesModule } from './attendances/attendances.module';
+import { SubjectslistModule } from './subjectslist/subjectslist.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -39,6 +40,7 @@ import { AttendancesModule } from './attendances/attendances.module';
     UploadFileModule,
     AttendancesModule,
     KeycloakModule,
+    SubjectslistModule,
   ],
   controllers: [AppController, GeolocationController],
   providers: [AppService, GeolocationService],
