@@ -112,7 +112,7 @@ export class KeycloakService {
     
 
     public async registerUser(data, token) {
-        console.log("inside registerUser")
+        console.log("inside registerUser", data)
 
         const url = `${this.keycloak_url}/admin/realms/eg-sso/users`;
 
@@ -146,7 +146,7 @@ export class KeycloakService {
     public async findUser(data, token) {
         console.log("inside findUser", data)
 
-        const url = `${this.keycloak_url}/admin/realms/eg-sso/users?username=${data.username}`;
+        const url = `${this.keycloak_url}/admin/realms/eg-sso/users?username=${data}`;
 
         const config: AxiosRequestConfig = {
             headers: {
