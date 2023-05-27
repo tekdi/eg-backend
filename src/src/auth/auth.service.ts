@@ -400,11 +400,16 @@ export class AuthService {
         };
         const token = await this.keycloakService.getAdminKeycloakToken(query, 'master')
         if (token?.access_token) {
+            const findUsername = await this.keycloakService.findUser(username, token?.access_token)
+            console.log("findUsername", findUsername)
 
-            if (body.role === 'beneficiaries') {
-                let newUserName = await this.findRecursiveUser(data_to_create_user.username, token.access_token)
-                console.log("newUserName", newUserName)
-                data_to_create_user.username = newUserName
+            if (findUsername.length>0 && body.role === 'beneficiaries') {
+                let lastUsername = findUsername[findUsername.length-1.].username
+                console.log("lastUsername" , lastUsername)
+                let count = findUsername.length
+                console.log('count', count)
+                data_to_create_user.username = data_to_create_user.username + '_' + count;
+                
             }
             console.log("data_to_create_user 407", data_to_create_user)
             
@@ -806,24 +811,6 @@ export class AuthService {
         return str.replace(/\d+$/, paddedNumber);
     }
 
-    public async findRecursiveUser(username, token) {
-
-        const findUsername = await this.keycloakService.findUser(username, token)
-        console.log("findUsername", findUsername)
-        var newUserName = username
-        if (findUsername.length > 0) {
-            console.log("817", newUserName[newUserName.length-1])
-            if (newUserName[newUserName.length-1] == '_') {
-                newUserName = username
-            } else {
-                newUserName = username + '_'
-            }
-            console.log("newUserName", newUserName)
-            newUserName = this.incrementString(newUserName)
-            await this.findRecursiveUser(newUserName, token)
-        }
-        return newUserName
-
-    }
+    
 
 }
