@@ -419,13 +419,13 @@ export class BeneficiariesService {
     const { data: beneficiaryUser } = await this.userById(req.id);
     const user_id = req?.id;
     const PAGE_WISE_UPDATE_TABLE_DETAILS = {
-      basic: {
+      edit_basic: {
         users: ['first_name', 'last_name', 'middle_name', 'dob'],
       },
-      registration_contact: {
+      add_contact: {
         core_beneficiaries: ['user_id', 'device_ownership', 'device_type'],
       },
-      contact: {
+      edit_contact: {
         users: ['mobile', 'alternative_mobile_number', 'email_id'],
         core_beneficiaries: [
           'user_id',
@@ -436,7 +436,7 @@ export class BeneficiariesService {
           'alternative_device_type',
         ],
       },
-      registration_address: {
+      add_address: {
         users: [
           'lat',
           'long',
@@ -447,7 +447,7 @@ export class BeneficiariesService {
           'grampanchayat',
         ],
       },
-      address: {
+      edit_address: {
         users: [
           'state',
           'district',
@@ -460,7 +460,7 @@ export class BeneficiariesService {
       personal: {
         extended_users: ['user_id', 'social_category', 'marital_status'],
       },
-      family: {
+      edit_family: {
         core_beneficiaries: [
           'user_id',
           'father_first_name',
@@ -471,7 +471,7 @@ export class BeneficiariesService {
           'mother_last_name',
         ],
       },
-      registration_education: {
+      add_education: {
         core_beneficiaries: [
           'user_id',
           'type_of_learner',
@@ -480,7 +480,7 @@ export class BeneficiariesService {
           'reason_of_leaving_education',
         ],
       },
-      education: {
+      edit_education: {
         core_beneficiaries: [
           'user_id',
           'last_standard_of_education',
@@ -489,14 +489,14 @@ export class BeneficiariesService {
           'reason_of_leaving_education',
         ],
       },
-      further_studies: {
+      edit_further_studies: {
         core_beneficiaries: [
           'user_id',
           'career_aspiration',
           'career_aspiration_details',
         ],
       },
-      enrollement: {
+      edit_enrollement: {
         beneficiaries: [
           'enrollment_number',
           'user_id',
@@ -513,19 +513,18 @@ export class BeneficiariesService {
     };
 
     switch (req.edit_page_type) {
-      case 'basic': {
+      case 'edit_basic': {
         // Update Users table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.basic.users;
+        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.edit_basic.users;
         const tableName = 'users';
         await this.hasuraService.q(tableName, req, userArr, update);
         break;
       }
 
-      case 'registration_contact': {
+      case 'add_contact': {
         // Update Core Beneficiaries table data
         const coreBeneficiaryArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.registration_contact
-            .core_beneficiaries;
+          PAGE_WISE_UPDATE_TABLE_DETAILS.add_contact.core_beneficiaries;
         const tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -543,15 +542,15 @@ export class BeneficiariesService {
         break;
       }
 
-      case 'contact': {
+      case 'edit_contact': {
         // Update Users table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.contact.users;
+        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.edit_contact.users;
         let tableName = 'users';
         await this.hasuraService.q(tableName, req, userArr, update);
 
         // Update Core Beneficiaries table data
         const coreBeneficiaryArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.contact.core_beneficiaries;
+          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_contact.core_beneficiaries;
         tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -569,18 +568,17 @@ export class BeneficiariesService {
         break;
       }
 
-      case 'registration_address': {
+      case 'add_address': {
         // Update Users table data
-        const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.registration_address.users;
+        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.add_address.users;
         let tableName = 'users';
         await this.hasuraService.q(tableName, req, userArr, update);
         break;
       }
 
-      case 'address': {
+      case 'edit_address': {
         // Update Users table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.address.users;
+        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.edit_address.users;
         let tableName = 'users';
         await this.hasuraService.q(tableName, req, userArr, update);
         break;
@@ -605,10 +603,10 @@ export class BeneficiariesService {
         break;
       }
 
-      case 'family': {
+      case 'edit_family': {
         // Update Core beneficiaries table data
         const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.family.core_beneficiaries;
+          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_family.core_beneficiaries;
         let tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -625,10 +623,50 @@ export class BeneficiariesService {
         break;
       }
 
-      case 'registration_education': {
+      case 'add_education': {
         // Update Core beneficiaries table data
         const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.registration_education
+          PAGE_WISE_UPDATE_TABLE_DETAILS.add_education.core_beneficiaries;
+        let tableName = 'core_beneficiaries';
+        await this.hasuraService.q(
+          tableName,
+          {
+            ...req,
+            id: beneficiaryUser?.core_beneficiaries[0]?.id
+              ? beneficiaryUser?.core_beneficiaries[0]?.id
+              : null,
+            user_id,
+          },
+          userArr,
+          update,
+        );
+        break;
+      }
+
+      case 'edit_education': {
+        // Update Core beneficiaries table data
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_education.core_beneficiaries;
+        let tableName = 'core_beneficiaries';
+        await this.hasuraService.q(
+          tableName,
+          {
+            ...req,
+            id: beneficiaryUser?.core_beneficiaries[0]?.id
+              ? beneficiaryUser?.core_beneficiaries[0]?.id
+              : null,
+            user_id,
+          },
+          userArr,
+          update,
+        );
+        break;
+      }
+
+      case 'edit_further_studies': {
+        // Update Core beneficiaries table data
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_further_studies
             .core_beneficiaries;
         let tableName = 'core_beneficiaries';
         await this.hasuraService.q(
@@ -645,50 +683,10 @@ export class BeneficiariesService {
         );
         break;
       }
-
-      case 'education': {
-        // Update Core beneficiaries table data
-        const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.education.core_beneficiaries;
-        let tableName = 'core_beneficiaries';
-        await this.hasuraService.q(
-          tableName,
-          {
-            ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
-              : null,
-            user_id,
-          },
-          userArr,
-          update,
-        );
-        break;
-      }
-
-      case 'further_studies': {
-        // Update Core beneficiaries table data
-        const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.further_studies.core_beneficiaries;
-        let tableName = 'core_beneficiaries';
-        await this.hasuraService.q(
-          tableName,
-          {
-            ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
-              : null,
-            user_id,
-          },
-          userArr,
-          update,
-        );
-        break;
-      }
-      case 'enrollement': {
+      case 'edit_enrollement': {
         // Update enrollement data in Beneficiaries table
         const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.enrollement.beneficiaries;
+          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement.beneficiaries;
         const programDetails = beneficiaryUser.beneficiaries.find(
           (data) =>
             req.id == data.user_id &&
