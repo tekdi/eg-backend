@@ -42,9 +42,9 @@ export class BeneficiariesController {
   ) {
     return this.beneficiariesService.findAll(request, req, response);
   }
-  @Get('/statusCount')
-  findAllStatusCount(@Req() request: any, @Res() response: Response) {
-    return this.beneficiariesService.findAllStatusCount(request, response);
+  @Get('/getStatuswiseCount')
+  getStatuswiseCount(@Req() request: any, @Res() response: Response) {
+    return this.beneficiariesService.getStatuswiseCount(request, response);
   }
   @Get(':id')
   findOne(@Param('id') id: string, @Res() response: Response) {

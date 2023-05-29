@@ -45,7 +45,7 @@ export class BeneficiariesService {
   ];
 
   //status count
-  public async findAllStatusCount(req: any, resp: any) {
+  public async getStatuswiseCount(req: any, resp: any) {
     const user = await this.userService.ipUserInfo(req);
     const status = [
       'identified',
