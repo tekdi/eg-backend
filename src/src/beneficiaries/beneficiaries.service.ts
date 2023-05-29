@@ -1,5 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user.service';
 import { HasuraService } from '../hasura/hasura.service';
@@ -8,56 +13,96 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { KeycloakService } from '../services/keycloak/keycloak.service';
 @Injectable()
 export class BeneficiariesService {
-    public url = process.env.HASURA_BASE_URL;
+  public url = process.env.HASURA_BASE_URL;
 
- 
-    constructor(
-       
-      private readonly httpService: HttpService,
-      private userService:UserService,
-      private helper: UserHelperService,
-      private hasuraService: HasuraService,
-      private hasuraServiceFromServices: HasuraServiceFromServices,
-      private keycloakService: KeycloakService,
-      private configService: ConfigService
-    ){}
+  constructor(
+    private readonly httpService: HttpService,
+    private userService: UserService,
+    private helper: UserHelperService,
+    private hasuraService: HasuraService,
+    private hasuraServiceFromServices: HasuraServiceFromServices,
+    private keycloakService: KeycloakService,
+    private configService: ConfigService,
+  ) {}
 
-    public returnFields=[
-        "status",
-        "user_id",
-        "enrollment_number",
-        "beneficiaries_found_at",
-        "documents_status",
-        "enrollment_status",
-        "enrolled_for_board",
-        "type_of_enrollement",
-        "academic_year_id",
-        "payment_receipt_document_id",
-        "facilitator_id",
-        "documents_status",
-        "program_id",
-        "reason_for_status_update",   
-        "created_by",
-        "updated_by",
-        
-    ]
-      
-    public async findAll(body: any,req:any,resp:any) {
-        const user=await this.userService.ipUserInfo(req)
-            const { status,sortType } = body;
-            const page = body.page ? body.page : '1';
-            const limit = body?.limit ? body?.limit : '10';
-        
-            let offset = 0;
-            if (page > 1 && limit) {
-              offset = parseInt(limit) * (page - 1);
-            }
-            let query =''
-        if(status){
-          let query = `{beneficiaries:{status:{_eq:${status}}}}`;
+  public returnFields = [
+    'status',
+    'user_id',
+    'enrollment_number',
+    'beneficiaries_found_at',
+    'documents_status',
+    'enrollment_status',
+    'enrolled_for_board',
+    'type_of_enrollement',
+    'academic_year_id',
+    'payment_receipt_document_id',
+    'facilitator_id',
+    'documents_status',
+    'program_id',
+    'reason_for_status_update',
+    'created_by',
+    'updated_by',
+  ];
+
+  //status count
+  public async findAllStatusCount(req: any, resp: any) {
+    const user = await this.userService.ipUserInfo(req);
+    const status = [
+      'identified',
+      'ready_to_enroll',
+      'enrolled',
+      'approved_ip',
+      'registered_in_camp',
+      'pragati_syc',
+      'rejected',
+      'dropout',
+    ];
+    let qury = `query MyQuery {
+      ${status.map(
+        (
+          item,
+        ) => `${item}:beneficiaries_aggregate(where: {status: {_eq: "${item}"}}) {
+        aggregate {
+          count
         }
-            var data={
-                query:`query MyQuery($limit:Int, $offset:Int) {
+      }`,
+      )}
+    }`;
+    const data = { query: qury };
+    const response = await this.hasuraServiceFromServices.getData(data);
+    const newQdata = response?.data;
+    const res = status.map((item) => {
+      return {
+        status: item,
+        count: newQdata?.[item]?.aggregate?.count,
+      };
+    });
+
+    return resp.status(200).json({
+      success: true,
+      message: 'Benificiaries found successfully!',
+      data: {
+        data: res,
+      },
+    });
+  }
+
+  public async findAll(body: any, req: any, resp: any) {
+    const user = await this.userService.ipUserInfo(req);
+    const { status, sortType } = body;
+    const page = body.page ? body.page : '1';
+    const limit = body?.limit ? body?.limit : '10';
+
+    let offset = 0;
+    if (page > 1 && limit) {
+      offset = parseInt(limit) * (page - 1);
+    }
+    let query = '';
+    if (status) {
+      let query = `{beneficiaries:{status:{_eq:${status}}}}`;
+    }
+    var data = {
+      query: `query MyQuery($limit:Int, $offset:Int) {
                     users_aggregate( where:   
                         {
                           _and: [
@@ -166,45 +211,43 @@ export class BeneficiariesService {
                     }
                     
                          
-                  }`
-            }
-            const response = await this.hasuraServiceFromServices.getData(data);
-            let result = response?.data?.users;
-        
-            let mappedResponse = result;
-            const count = response?.data?.users_aggregate?.aggregate?.count;
-            const totalPages = Math.ceil(count / limit);
-        
-            if(!mappedResponse || mappedResponse.length<1){
-              return resp.status(404).send({
-                success: false,
-                status: 'Not Found',
-                message: 'Benificiaries Not Found',
-                data: {},
-              });
-            }else {
-                  return  resp.status(200).json({
-                    success: true,
-                    message: 'Benificiaries found successfully!',
-                    data: {
-                      totalCount: count,
-                    data: mappedResponse?.map((e) => ({
-                      ...e,
-                      ['program_faciltators']: e?.['program_faciltators']?.[0],
-                    })),
-                    limit,
-                    currentPage: page,
-                    totalPages: `${totalPages}`,
-                    },
-            })
-            }
-            
-          }    
+                  }`,
+    };
+    const response = await this.hasuraServiceFromServices.getData(data);
+    let result = response?.data?.users;
 
+    let mappedResponse = result;
+    const count = response?.data?.users_aggregate?.aggregate?.count;
+    const totalPages = Math.ceil(count / limit);
 
- public async findOne(id: number,resp:any) {
-     var data={
-        query:`query searchById {
+    if (!mappedResponse || mappedResponse.length < 1) {
+      return resp.status(404).send({
+        success: false,
+        status: 'Not Found',
+        message: 'Benificiaries Not Found',
+        data: {},
+      });
+    } else {
+      return resp.status(200).json({
+        success: true,
+        message: 'Benificiaries found successfully!',
+        data: {
+          totalCount: count,
+          data: mappedResponse?.map((e) => ({
+            ...e,
+            ['program_faciltators']: e?.['program_faciltators']?.[0],
+          })),
+          limit,
+          currentPage: page,
+          totalPages: `${totalPages}`,
+        },
+      });
+    }
+  }
+
+  public async findOne(id: number, resp: any) {
+    var data = {
+      query: `query searchById {
             users_by_pk(id: ${id}) {
               id
               first_name
@@ -282,31 +325,26 @@ export class BeneficiariesService {
               }
             }
           }
-          `        
-        }
+          `,
+    };
 
-        const response = await this.hasuraServiceFromServices.getData(data);
-          let result = response?.data?.users_by_pk;
-if(!result){
-return resp.status(404).send({
-    success: false,
-    status: 'Not Found',
-    message: 'Benificiaries Not Found',
-    data: {},
-  });
-
-}else {
-     return  resp.status(200).json({
+    const response = await this.hasuraServiceFromServices.getData(data);
+    let result = response?.data?.users_by_pk;
+    if (!result) {
+      return resp.status(404).send({
+        success: false,
+        status: 'Not Found',
+        message: 'Benificiaries Not Found',
+        data: {},
+      });
+    } else {
+      return resp.status(200).json({
         success: true,
         message: 'Benificiaries found successfully!',
-        data: {result:result},
-})
-          
-     }
+        data: { result: result },
+      });
     }
-     
-     
-  
+  }
 
   update(id: number, req: any) {
     // return this.hasuraService.update(+id, this.table, req, this.returnFields);
@@ -315,14 +353,19 @@ return resp.status(404).send({
   remove(id: number) {
     // return this.hasuraService.delete(this.table, { id: +id });
   }
-  
- public async statusUpdate(req:any){
-  return await this.hasuraService.update(req.id, 'beneficiaries',req,this.returnFields,[...this.returnFields,"id"]);
 
+  public async statusUpdate(req: any) {
+    return await this.hasuraService.update(
+      req.id,
+      'beneficiaries',
+      req,
+      this.returnFields,
+      [...this.returnFields, 'id'],
+    );
   }
 
   public async registerBeneficiary(body, request) {
-    const user=await this.userService.ipUserInfo(request);
+    const user = await this.userService.ipUserInfo(request);
     const password = body.mobile;
     let username = body.first_name;
     username += `_${body.mobile}`;
@@ -342,8 +385,10 @@ return resp.status(404).send({
     };
 
     try {
-      const { headers, status } = await this.keycloakService.createUser(data_to_create_user);
-      
+      const { headers, status } = await this.keycloakService.createUser(
+        data_to_create_user,
+      );
+
       if (headers.location) {
         const split = headers.location.split('/');
         const keycloak_id = split[split.length - 1];
@@ -370,42 +415,29 @@ return resp.status(404).send({
   }
 
   async create(req: any, request, response, update = false) {
-    const user=await this.userService.ipUserInfo(request);
-    const { data: beneficiaryUser} = await this.userById(req.id);
+    const user = await this.userService.ipUserInfo(request);
+    const { data: beneficiaryUser } = await this.userById(req.id);
     const user_id = req?.id;
     const PAGE_WISE_UPDATE_TABLE_DETAILS = {
-      'basic': {
-        'users': [
-          'first_name',
-          'last_name',
-          'middle_name',
-          'dob'
-        ]
+      basic: {
+        users: ['first_name', 'last_name', 'middle_name', 'dob'],
       },
-      'registration_contact': {
-        'core_beneficiaries': [
-          'user_id',
-          'device_ownership',
-          'device_type'
-        ]
+      registration_contact: {
+        core_beneficiaries: ['user_id', 'device_ownership', 'device_type'],
       },
-      'contact': {
-        'users': [
-          'mobile',
-          'alternative_mobile_number',
-          'email_id'
-        ],
-        'core_beneficiaries': [
+      contact: {
+        users: ['mobile', 'alternative_mobile_number', 'email_id'],
+        core_beneficiaries: [
           'user_id',
           'mark_as_whatsapp_number',
           'device_ownership',
           'device_type',
           'alternative_device_ownership',
-          'alternative_device_type'
-        ]
+          'alternative_device_type',
+        ],
       },
-      'registration_address': {
-        'users': [
+      registration_address: {
+        users: [
           'lat',
           'long',
           'state',
@@ -413,78 +445,74 @@ return resp.status(404).send({
           'block',
           'village',
           'grampanchayat',
-        ]
+        ],
       },
-      'address': {
-        'users': [
+      address: {
+        users: [
           'state',
           'district',
           'block',
           'village',
           'grampanchayat',
-          'address'
-        ]
+          'address',
+        ],
       },
-      'personal': {
-        'extended_users': [
-          'user_id',
-          'social_category',
-          'marital_status'
-        ]
+      personal: {
+        extended_users: ['user_id', 'social_category', 'marital_status'],
       },
-      'family': {
-        'core_beneficiaries': [
+      family: {
+        core_beneficiaries: [
           'user_id',
           'father_first_name',
           'father_middle_name',
           'father_last_name',
           'mother_first_name',
           'mother_middle_name',
-          'mother_last_name'
-        ]
+          'mother_last_name',
+        ],
       },
-      'registration_education': {
-        'core_beneficiaries': [
+      registration_education: {
+        core_beneficiaries: [
           'user_id',
           'type_of_learner',
           'last_standard_of_education',
           'last_standard_of_education_year',
-          'reason_of_leaving_education'
-        ]
+          'reason_of_leaving_education',
+        ],
       },
-      'education': {
-        'core_beneficiaries': [
+      education: {
+        core_beneficiaries: [
           'user_id',
           'last_standard_of_education',
           'last_standard_of_education_year',
           'previous_school_type',
-          'reason_of_leaving_education'
-        ]
+          'reason_of_leaving_education',
+        ],
       },
-      'further_studies': {
-        'core_beneficiaries': [
+      further_studies: {
+        core_beneficiaries: [
           'user_id',
           'career_aspiration',
-          'career_aspiration_details'
-        ]
+          'career_aspiration_details',
+        ],
       },
-      'enrollement':{
-        'beneficiaries':[
-          "enrollment_number",
-          "user_id",
-          "enrollment_status",
-          "enrolled_for_board",
-          "type_of_enrollement", 
-          "subjects" ,
-          "program_id",
-          "facilitator_id",
+      enrollement: {
+        beneficiaries: [
+          'enrollment_number',
+          'user_id',
+          'enrollment_status',
+          'enrolled_for_board',
+          'type_of_enrollement',
+          'subjects',
+          'program_id',
+          'facilitator_id',
           'academic_year_id',
-          "payment_receipt_document_id"
-        ]
-      }
-    }
-    
-    switch(req.edit_page_type) {
+          'payment_receipt_document_id',
+        ],
+      },
+    };
+
+    switch (req.edit_page_type) {
       case 'basic': {
         // Update Users table data
         const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.basic.users;
@@ -495,7 +523,9 @@ return resp.status(404).send({
 
       case 'registration_contact': {
         // Update Core Beneficiaries table data
-        const coreBeneficiaryArr = PAGE_WISE_UPDATE_TABLE_DETAILS.registration_contact.core_beneficiaries;
+        const coreBeneficiaryArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.registration_contact
+            .core_beneficiaries;
         const tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -507,12 +537,12 @@ return resp.status(404).send({
             user_id: user_id,
           },
           coreBeneficiaryArr,
-          update
+          update,
         );
 
         break;
       }
-      
+
       case 'contact': {
         // Update Users table data
         const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.contact.users;
@@ -520,7 +550,8 @@ return resp.status(404).send({
         await this.hasuraService.q(tableName, req, userArr, update);
 
         // Update Core Beneficiaries table data
-        const coreBeneficiaryArr = PAGE_WISE_UPDATE_TABLE_DETAILS.contact.core_beneficiaries;
+        const coreBeneficiaryArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.contact.core_beneficiaries;
         tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -532,7 +563,7 @@ return resp.status(404).send({
             user_id: user_id,
           },
           coreBeneficiaryArr,
-          update
+          update,
         );
 
         break;
@@ -540,7 +571,8 @@ return resp.status(404).send({
 
       case 'registration_address': {
         // Update Users table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.registration_address.users;
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.registration_address.users;
         let tableName = 'users';
         await this.hasuraService.q(tableName, req, userArr, update);
         break;
@@ -568,14 +600,15 @@ return resp.status(404).send({
             user_id,
           },
           userArr,
-          update
+          update,
         );
         break;
       }
 
       case 'family': {
         // Update Core beneficiaries table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.family.core_beneficiaries;
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.family.core_beneficiaries;
         let tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -587,14 +620,16 @@ return resp.status(404).send({
             user_id,
           },
           userArr,
-          update
+          update,
         );
         break;
       }
 
       case 'registration_education': {
         // Update Core beneficiaries table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.registration_education.core_beneficiaries;
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.registration_education
+            .core_beneficiaries;
         let tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -606,14 +641,15 @@ return resp.status(404).send({
             user_id,
           },
           userArr,
-          update
+          update,
         );
         break;
       }
 
       case 'education': {
         // Update Core beneficiaries table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.education.core_beneficiaries;
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.education.core_beneficiaries;
         let tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -625,14 +661,15 @@ return resp.status(404).send({
             user_id,
           },
           userArr,
-          update
+          update,
         );
         break;
       }
 
       case 'further_studies': {
         // Update Core beneficiaries table data
-        const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.further_studies.core_beneficiaries;
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.further_studies.core_beneficiaries;
         let tableName = 'core_beneficiaries';
         await this.hasuraService.q(
           tableName,
@@ -644,39 +681,40 @@ return resp.status(404).send({
             user_id,
           },
           userArr,
-          update
+          update,
         );
         break;
       }
-      case 'enrollement':{
-        // Update enrollement data in Beneficiaries table 
-                const userArr = PAGE_WISE_UPDATE_TABLE_DETAILS.enrollement.beneficiaries;
-              const programDetails=beneficiaryUser.beneficiaries.find((data) => req.id==data.user_id&&req.academic_year_id==data.academic_year_id)
-              let tableName = 'beneficiaries';
-             
-                 await this.hasuraService.q(
-                  tableName,
-                  {
-                  ...req,
-                    id: programDetails?.id
-                      ? programDetails.id
-                      : null,
-                    user_id: user_id,
-        
-                    subjects:JSON.stringify(req.subjects)
-                  },
-                  userArr,
-                  update,
-                );
-                
-              }  
-        
+      case 'enrollement': {
+        // Update enrollement data in Beneficiaries table
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.enrollement.beneficiaries;
+        const programDetails = beneficiaryUser.beneficiaries.find(
+          (data) =>
+            req.id == data.user_id &&
+            req.academic_year_id == data.academic_year_id,
+        );
+        let tableName = 'beneficiaries';
+
+        await this.hasuraService.q(
+          tableName,
+          {
+            ...req,
+            id: programDetails?.id ? programDetails.id : null,
+            user_id: user_id,
+
+            subjects: JSON.stringify(req.subjects),
+          },
+          userArr,
+          update,
+        );
+      }
     }
-    const { data: updatedUser} = await this.userById(user_id);
+    const { data: updatedUser } = await this.userById(user_id);
     return response.status(200).json({
       success: true,
-      message: "User data fetched successfully!",
-      data: updatedUser
+      message: 'User data fetched successfully!',
+      data: updatedUser,
     });
   }
 
