@@ -178,7 +178,6 @@ export class BeneficiariesService {
                         status
                         reason_for_status_update
                         documents_status
-                        document_checklist
                         updated_by
                         user_id
                         facilitator_id
@@ -309,7 +308,6 @@ export class BeneficiariesService {
                 status
                 reason_for_status_update
                 documents_status
-                document_checklist
                 updated_by
                 user_id
                 facilitator_id
@@ -554,7 +552,7 @@ export class BeneficiariesService {
           'user_id',
           'program_id',
           'academic_year_id',
-          'document_checklist',
+          'document_status',
         ],
       },
     };
@@ -763,7 +761,7 @@ export class BeneficiariesService {
         );
       }
       case 'document_status': {
-        // Update enrollement data in Beneficiaries table
+        // Update Document status data in Beneficiaries table
         const userArr =
           PAGE_WISE_UPDATE_TABLE_DETAILS.document_status.beneficiaries;
         const programDetails = beneficiaryUser.beneficiaries.find(
@@ -865,7 +863,7 @@ export class BeneficiariesService {
             payment_receipt_document_id
             program_id
             updated_by
-            document_checklist
+            document_status
           }
           core_beneficiaries {
             career_aspiration
