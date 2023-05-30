@@ -11,6 +11,7 @@ import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
+
 @Injectable()
 export class BeneficiariesService {
   public url = process.env.HASURA_BASE_URL;
@@ -265,7 +266,7 @@ export class BeneficiariesService {
   }
 
   public async findOne(id: number, resp: any) {
-    console.log("id",id)
+    console.log('id', id);
     var data = {
       query: `query searchById {
             users_by_pk(id: ${id}) {
@@ -314,6 +315,7 @@ export class BeneficiariesService {
                 facilitator_id
                 created_by
                 beneficiaries_found_at
+              
               }
               core_beneficiaries {
                 career_aspiration
@@ -547,6 +549,14 @@ export class BeneficiariesService {
           'payment_receipt_document_id',
         ],
       },
+      document_checklist: {
+        beneficiaries: [
+          'user_id',
+          'program_id',
+          'academic_year_id',
+          'document_checklist',
+        ],
+      },
     };
 
     switch (req.edit_page_type) {
@@ -752,6 +762,30 @@ export class BeneficiariesService {
           update,
         );
       }
+      case 'document_checklist': {
+        // Update enrollement data in Beneficiaries table
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.document_checklist.beneficiaries;
+        const programDetails = beneficiaryUser.beneficiaries.find(
+          (data) =>
+            req.id == data.user_id &&
+            req.academic_year_id == data.academic_year_id,
+        );
+        let tableName = 'beneficiaries';
+
+        await this.hasuraService.q(
+          tableName,
+          {
+            ...req,
+            id: programDetails?.id ? programDetails.id : null,
+            user_id: user_id,
+
+            // subjects: JSON.stringify(req.subjects),
+          },
+          userArr,
+          update,
+        );
+      }
     }
     const { data: updatedUser } = await this.userById(user_id);
     return response.status(200).json({
@@ -830,8 +864,8 @@ export class BeneficiariesService {
             subjects
             payment_receipt_document_id
             program_id
-            
             updated_by
+            document_checklist
           }
           core_beneficiaries {
             career_aspiration

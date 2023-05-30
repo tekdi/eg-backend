@@ -11,7 +11,7 @@ import {
   Req,
   Res,
   UsePipes,
-  ValidationPipe
+  ValidationPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { lastValueFrom, map } from 'rxjs';
@@ -94,7 +94,7 @@ export class UserController {
   // users/list by ID API filter pagination
   @Get('/info/:id')
   public async searchById(@Param('id') id: number, @Res() response: Response) {
-    return this.userService.userById(id,response);
+    return this.userService.userById(id, response);
   }
 
   // users/is_user_exist by mobile and adhaar etc filter.
@@ -124,7 +124,7 @@ export class UserController {
 
   // users/ip_user_info by auth token.
   @Get('/ip_user_info')
-  ipUserInfo(@Req() request: Request) {
+  ipUserInfo(@Req() request: any) {
     return this.userService.ipUserInfo(request);
   }
 
@@ -139,7 +139,7 @@ export class UserController {
   @UsePipes(ValidationPipe)
   public async register(
     @Body() body: RegisterFacilitatorDto,
-    @Req() request: Request,
+    @Req() request: any,
   ) {
     return this.userService.register(body, request);
   }
