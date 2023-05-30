@@ -59,9 +59,15 @@ export class BeneficiariesService {
     ];
     let qury = `query MyQuery {
       ${status.map(
-        (
-          item,
-        ) => `${item}:beneficiaries_aggregate(where: {status: {_eq: "${item}"}}) {
+        (item) => `${item}:beneficiaries_aggregate(where: {
+          _and: [
+              {
+                facilitator_id: {_eq: ${user.data.id}}
+              },{
+              status: {_eq: ${item}} 
+            }
+                                     ]
+        }) {
         aggregate {
           count
         }
