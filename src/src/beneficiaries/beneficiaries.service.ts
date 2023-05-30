@@ -549,7 +549,7 @@ export class BeneficiariesService {
           'payment_receipt_document_id',
         ],
       },
-      document_checklist: {
+      document_status: {
         beneficiaries: [
           'user_id',
           'program_id',
@@ -762,10 +762,10 @@ export class BeneficiariesService {
           update,
         );
       }
-      case 'document_checklist': {
+      case 'document_status': {
         // Update enrollement data in Beneficiaries table
         const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.document_checklist.beneficiaries;
+          PAGE_WISE_UPDATE_TABLE_DETAILS.document_status.beneficiaries;
         const programDetails = beneficiaryUser.beneficiaries.find(
           (data) =>
             req.id == data.user_id &&
