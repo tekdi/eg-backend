@@ -575,8 +575,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id: user_id,
           },
@@ -601,8 +601,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id: user_id,
           },
@@ -637,8 +637,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.extended_users[0]?.id
-              ? beneficiaryUser?.extended_users[0]?.id
+            id: beneficiaryUser?.extended_users?.[0]?.id
+              ? beneficiaryUser?.extended_users?.[0]?.id
               : null,
             user_id,
           },
@@ -656,9 +656,10 @@ export class BeneficiariesService {
         await this.hasuraService.q(
           tableName,
           {
-            ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            ...req.father_details,
+            ...req.mother_details,
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
@@ -677,8 +678,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
@@ -697,8 +698,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
@@ -718,8 +719,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
