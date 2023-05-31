@@ -265,7 +265,7 @@ export class BeneficiariesService {
   }
 
   public async findOne(id: number, resp: any) {
-    console.log("id",id)
+    console.log('id', id);
     var data = {
       query: `query searchById {
             users_by_pk(id: ${id}) {
@@ -547,6 +547,14 @@ export class BeneficiariesService {
           'payment_receipt_document_id',
         ],
       },
+      document_status: {
+        beneficiaries: [
+          'user_id',
+          'program_id',
+          'academic_year_id',
+          'document_status',
+        ],
+      },
     };
 
     switch (req.edit_page_type) {
@@ -753,6 +761,28 @@ export class BeneficiariesService {
           update,
         );
       }
+      case 'document_status': {
+        // Update Document status data in Beneficiaries table
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.document_status.beneficiaries;
+        const programDetails = beneficiaryUser.beneficiaries.find(
+          (data) =>
+            req.id == data.user_id &&
+            req.academic_year_id == data.academic_year_id,
+        );
+        let tableName = 'beneficiaries';
+
+        await this.hasuraService.q(
+          tableName,
+          {
+            ...req,
+            id: programDetails?.id ? programDetails.id : null,
+            user_id: user_id,
+          },
+          userArr,
+          update,
+        );
+      }
     }
     const { data: updatedUser } = await this.userById(user_id);
     return response.status(200).json({
@@ -831,8 +861,8 @@ export class BeneficiariesService {
             subjects
             payment_receipt_document_id
             program_id
-            
             updated_by
+            documents_status
           }
           core_beneficiaries {
             career_aspiration
