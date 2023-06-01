@@ -59,7 +59,7 @@ export class BeneficiariesService {
     ];
     let qury = `query MyQuery {
       ${status.map(
-        (item) => `${item}:beneficiaries_aggregate(where: {
+        (item) => `${item}:program_beneficiaries_aggregate(where: {
           _and: [
               {
                 facilitator_id: {_eq: ${user.data.id}}
@@ -105,7 +105,7 @@ export class BeneficiariesService {
     }
     let query = '';
     if (status) {
-      let query = `{beneficiaries:{status:{_eq:${status}}}}`;
+      let query = `{program_beneficiaries:{status:{_eq:${status}}}}`;
     }
     var data = {
       query: `query MyQuery($limit:Int, $offset:Int) {
@@ -113,7 +113,7 @@ export class BeneficiariesService {
                         {
                           _and: [
                               {
-                                beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
+                                program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
                               },
                              ${query}
                                                   
@@ -128,7 +128,7 @@ export class BeneficiariesService {
                       {
                         _and: [
                             {
-                              beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
+                              program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
                             },
                             ${query} 
                             
@@ -164,7 +164,7 @@ export class BeneficiariesService {
                         state_id
                         updated_by
                         profile_url
-                        beneficiaries{
+                        program_beneficiaries{
                         id
                         enrollment_status
                         enrolled_for_board
@@ -265,7 +265,7 @@ export class BeneficiariesService {
   }
 
   public async findOne(id: number, resp: any) {
-    console.log("id",id)
+    console.log('id', id);
     var data = {
       query: `query searchById {
             users_by_pk(id: ${id}) {
@@ -295,7 +295,7 @@ export class BeneficiariesService {
               lat
               long
               block_village_id
-              beneficiaries {
+              program_beneficiaries {
                 id
                 enrollment_status
                 enrolled_for_board
@@ -391,7 +391,7 @@ export class BeneficiariesService {
   public async statusUpdate(req: any) {
     return await this.hasuraService.update(
       req.id,
-      'beneficiaries',
+      'program_beneficiaries',
       req,
       this.returnFields,
       [...this.returnFields, 'id'],
@@ -534,7 +534,7 @@ export class BeneficiariesService {
         ],
       },
       edit_enrollement: {
-        beneficiaries: [
+        program_beneficiaries: [
           'enrollment_number',
           'user_id',
           'enrollment_status',
@@ -732,13 +732,13 @@ export class BeneficiariesService {
       case 'edit_enrollement': {
         // Update enrollement data in Beneficiaries table
         const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement.beneficiaries;
-        const programDetails = beneficiaryUser.beneficiaries.find(
+          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement.program_beneficiaries;
+        const programDetails = beneficiaryUser.program_beneficiaries.find(
           (data) =>
             req.id == data.user_id &&
             req.academic_year_id == data.academic_year_id,
         );
-        let tableName = 'beneficiaries';
+        let tableName = 'program_beneficiaries';
 
         await this.hasuraService.q(
           tableName,
@@ -774,7 +774,7 @@ export class BeneficiariesService {
     ]);
     const user_id = newR[tableName]?.id;
     if (user_id) {
-      await this.hasuraService.q(`beneficiaries`, { ...req, user_id }, [
+      await this.hasuraService.q(`program_beneficiaries`, { ...req, user_id }, [
         'facilitator_id',
         'user_id',
       ]);
@@ -817,7 +817,7 @@ export class BeneficiariesService {
           lat
           long
           block_village_id
-          beneficiaries {
+          program_beneficiaries {
             beneficiaries_found_at
             created_by
             facilitator_id
