@@ -755,7 +755,7 @@ export class BeneficiariesService {
             id: programDetails?.id ? programDetails.id : null,
             user_id: user_id,
 
-            subjects: JSON.stringify(req.subjects),
+            subjects: JSON.stringify(req.subjects).replace(/"/g, '\\"'),
           },
           userArr,
           update,
