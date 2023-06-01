@@ -59,7 +59,7 @@ export class BeneficiariesService {
     ];
     let qury = `query MyQuery {
       ${status.map(
-        (item) => `${item}:beneficiaries_aggregate(where: {
+        (item) => `${item}:program_beneficiaries_aggregate(where: {
           _and: [
               {
                 facilitator_id: {_eq: ${user.data.id}}
@@ -105,7 +105,7 @@ export class BeneficiariesService {
     }
     let query = '';
     if (status) {
-      let query = `{beneficiaries:{status:{_eq:${status}}}}`;
+      let query = `{program_beneficiaries:{status:{_eq:${status}}}}`;
     }
     var data = {
       query: `query MyQuery($limit:Int, $offset:Int) {
@@ -113,7 +113,7 @@ export class BeneficiariesService {
                         {
                           _and: [
                               {
-                                beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
+                                program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
                               },
                              ${query}
                                                   
@@ -128,7 +128,7 @@ export class BeneficiariesService {
                       {
                         _and: [
                             {
-                              beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
+                              program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
                             },
                             ${query} 
                             
@@ -164,7 +164,7 @@ export class BeneficiariesService {
                         state_id
                         updated_by
                         profile_url
-                        beneficiaries{
+                        program_beneficiaries{
                         id
                         enrollment_status
                         enrolled_for_board
@@ -265,7 +265,7 @@ export class BeneficiariesService {
   }
 
   public async findOne(id: number, resp: any) {
-    console.log("id",id)
+    console.log('id', id);
     var data = {
       query: `query searchById {
             users_by_pk(id: ${id}) {
@@ -295,7 +295,7 @@ export class BeneficiariesService {
               lat
               long
               block_village_id
-              beneficiaries {
+              program_beneficiaries {
                 id
                 enrollment_status
                 enrolled_for_board
@@ -391,7 +391,7 @@ export class BeneficiariesService {
   public async statusUpdate(req: any) {
     return await this.hasuraService.update(
       req.id,
-      'beneficiaries',
+      'program_beneficiaries',
       req,
       this.returnFields,
       [...this.returnFields, 'id'],
@@ -534,7 +534,7 @@ export class BeneficiariesService {
         ],
       },
       edit_enrollement: {
-        beneficiaries: [
+        program_beneficiaries: [
           'enrollment_number',
           'user_id',
           'enrollment_status',
@@ -547,6 +547,25 @@ export class BeneficiariesService {
           'payment_receipt_document_id',
         ],
       },
+      document_status: {
+        beneficiaries: [
+          'user_id',
+          'program_id',
+          'academic_year_id',
+          'document_status',
+        ],
+      },
+      edit_reference: {
+        references: [
+          'first_name',
+          'middle_name',
+          'last_name',
+          'relation',
+          'contact_number',
+          'context',
+          'context_id'
+        ],
+      }
     };
 
     switch (req.edit_page_type) {
@@ -575,8 +594,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id: user_id,
           },
@@ -601,8 +620,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id: user_id,
           },
@@ -637,8 +656,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.extended_users[0]?.id
-              ? beneficiaryUser?.extended_users[0]?.id
+            id: beneficiaryUser?.extended_users?.[0]?.id
+              ? beneficiaryUser?.extended_users?.[0]?.id
               : null,
             user_id,
           },
@@ -656,9 +675,10 @@ export class BeneficiariesService {
         await this.hasuraService.q(
           tableName,
           {
-            ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            ...req.father_details,
+            ...req.mother_details,
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
@@ -677,8 +697,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
@@ -697,8 +717,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
@@ -718,8 +738,8 @@ export class BeneficiariesService {
           tableName,
           {
             ...req,
-            id: beneficiaryUser?.core_beneficiaries[0]?.id
-              ? beneficiaryUser?.core_beneficiaries[0]?.id
+            id: beneficiaryUser?.core_beneficiaries?.[0]?.id
+              ? beneficiaryUser?.core_beneficiaries?.[0]?.id
               : null,
             user_id,
           },
@@ -731,13 +751,13 @@ export class BeneficiariesService {
       case 'edit_enrollement': {
         // Update enrollement data in Beneficiaries table
         const userArr =
-          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement.beneficiaries;
-        const programDetails = beneficiaryUser.beneficiaries.find(
+          PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement.program_beneficiaries;
+        const programDetails = beneficiaryUser.program_beneficiaries.find(
           (data) =>
             req.id == data.user_id &&
             req.academic_year_id == data.academic_year_id,
         );
-        let tableName = 'beneficiaries';
+        let tableName = 'program_beneficiaries';
 
         await this.hasuraService.q(
           tableName,
@@ -751,6 +771,46 @@ export class BeneficiariesService {
           userArr,
           update,
         );
+      }
+      case 'document_status': {
+        // Update Document status data in Beneficiaries table
+        const userArr =
+          PAGE_WISE_UPDATE_TABLE_DETAILS.document_status.beneficiaries;
+        const programDetails = beneficiaryUser.beneficiaries.find(
+          (data) =>
+            req.id == data.user_id &&
+            req.academic_year_id == data.academic_year_id,
+        );
+        let tableName = 'beneficiaries';
+
+        await this.hasuraService.q(
+          tableName,
+          {
+            ...req,
+            id: programDetails?.id ? programDetails.id : null,
+            user_id: user_id,
+          },
+          userArr,
+          update,
+        );
+      }
+      case 'edit_reference': {
+        // Update References table data
+        const referencesArr =
+        PAGE_WISE_UPDATE_TABLE_DETAILS.edit_reference.references;
+        const tableName = 'references';
+        await this.hasuraService.q(
+          tableName,
+          {
+            ...req,
+            id: beneficiaryUser?.references?.[0]?.id ?? null,
+            ...(!beneficiaryUser?.references?.[0]?.id && { context: 'users' }),
+            ...(!beneficiaryUser?.references?.[0]?.id && { context_id: user_id })
+          },
+          referencesArr,
+          update,
+        );
+        break;
       }
     }
     const { data: updatedUser } = await this.userById(user_id);
@@ -773,7 +833,7 @@ export class BeneficiariesService {
     ]);
     const user_id = newR[tableName]?.id;
     if (user_id) {
-      await this.hasuraService.q(`beneficiaries`, { ...req, user_id }, [
+      await this.hasuraService.q(`program_beneficiaries`, { ...req, user_id }, [
         'facilitator_id',
         'user_id',
       ]);
@@ -816,7 +876,7 @@ export class BeneficiariesService {
           lat
           long
           block_village_id
-          beneficiaries {
+          program_beneficiaries {
             beneficiaries_found_at
             created_by
             facilitator_id
@@ -830,8 +890,8 @@ export class BeneficiariesService {
             subjects
             payment_receipt_document_id
             program_id
-            
             updated_by
+            documents_status
           }
           core_beneficiaries {
             career_aspiration
@@ -863,6 +923,20 @@ export class BeneficiariesService {
             alternative_device_ownership
             alternative_device_type
             mark_as_whatsapp_number
+          }
+          references {
+            id
+            name
+            first_name
+            last_name
+            middle_name
+            relation
+            contact_number
+            designation
+            document_id
+            type_of_document
+            context
+            context_id
           }
           extended_users {
             marital_status
