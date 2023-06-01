@@ -94,7 +94,7 @@ export class KeycloakService {
 
 		const config: AxiosRequestConfig = {
 			headers: {
-				Authorization: `bearer ${token}`,
+				Authorization: `Bearer ${token}`,
 				'Content-Type': 'application/json',
 			},
 		};
@@ -105,9 +105,14 @@ export class KeycloakService {
 			const response = await promise;
 			console.log('password updated');
 
-			return response.data;
+			if (response.status === 204) {
+				return true;
+			} else {
+				return false;
+			}
 		} catch (e) {
 			console.log('resetPassword', e.message);
+			return false;
 		}
 	}
 
