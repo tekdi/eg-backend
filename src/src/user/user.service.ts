@@ -8,8 +8,8 @@ import {
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
-import { HasuraService } from './hasura/hasura.service';
-import { UserHelperService } from './helper/userHelper.service';
+import { HasuraService } from '../hasura/hasura.service';
+import { UserHelperService } from '../helper/userHelper.service';
 @Injectable()
 export class UserService {
   public url = process.env.HASURA_BASE_URL;
@@ -571,7 +571,7 @@ export class UserService {
 
   async userById(id: any, resp?: any) {
     var data = {
-      query: `query searchById {        
+      query: `query searchById {
         users_by_pk(id:${id}) {
           first_name
           id
@@ -644,9 +644,9 @@ export class UserService {
             context
             context_id
             contact_number
-            document_id       
+            document_id
             type_of_document
-            designation          
+            designation
             }
           }
           program_faciltators {
@@ -721,7 +721,7 @@ export class UserService {
           documents(order_by: {id: desc}){
           id
           user_id
-          name   
+          name
           document_sub_type
           context
           context_id

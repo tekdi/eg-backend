@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { lastValueFrom, map } from 'rxjs';
 import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../services/hasura/hasura.service';
-import { UserService } from 'src/user.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class FacilitatorService {
@@ -165,7 +165,7 @@ export class FacilitatorService {
             break;
           }
           case 'eligibility': {
-            
+
             break;
           }
           case 'status': {
@@ -173,7 +173,7 @@ export class FacilitatorService {
             break;
           }
           case 'comments': {
-            
+
             break;
           }
         }
@@ -333,7 +333,7 @@ export class FacilitatorService {
     }
 
     let mappedResponse = response?.data?.users;
-    
+
     if (
       mappedResponse
       && body.hasOwnProperty('work_experience')

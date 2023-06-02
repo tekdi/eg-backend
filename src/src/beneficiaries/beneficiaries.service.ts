@@ -6,7 +6,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from 'src/user.service';
+import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
@@ -64,7 +64,7 @@ export class BeneficiariesService {
               {
                 facilitator_id: {_eq: ${user.data.id}}
               },{
-              status: {_eq: ${item}} 
+              status: {_eq: ${item}}
             }
                                      ]
         }) {
@@ -93,7 +93,7 @@ export class BeneficiariesService {
     });
   }
 
-  public async findAll(body: any, req: any, resp: any) {   
+  public async findAll(body: any, req: any, resp: any) {
     const user = await this.userService.ipUserInfo(req);
    const status=body?.status
    const sortType=body?.sortType ? body?.sortType : 'desc'
@@ -118,7 +118,7 @@ export class BeneficiariesService {
 
     var data = {
       query: `query MyQuery($limit:Int, $offset:Int) {
-                    users_aggregate( where:   
+                    users_aggregate( where:
                         {
                           _and: [
                               {
@@ -126,12 +126,12 @@ export class BeneficiariesService {
                               },
                              ${query},
                              ${search}
-                                                  
+
                           ]
                         }){
                           aggregate{
-                            count                         
-                          }                      
+                            count
+                          }
                             }
                     users(
                       where:
@@ -141,8 +141,8 @@ export class BeneficiariesService {
                               program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
                             },
                             ${query},
-                            ${search} 
-                            
+                            ${search}
+
                         ]
                       },
                       limit: $limit,
@@ -161,10 +161,10 @@ export class BeneficiariesService {
                          email_id
                         block_id
                         block_village_id
-                        created_by                       
+                        created_by
                         gender
                         lat
-                        state                      
+                        state
                         grampanchayat
                           village
                           block
@@ -179,7 +179,7 @@ export class BeneficiariesService {
                         id
                         enrollment_status
                         enrolled_for_board
-                        type_of_enrollement 
+                        type_of_enrollement
                         subjects
                         academic_year_id
                         payment_receipt_document_id
@@ -237,10 +237,10 @@ export class BeneficiariesService {
                         social_category
                         qualification_id
                       }
-                     
+
                     }
-                    
-                         
+
+
                   }`,
     };
     const response = await this.hasuraServiceFromServices.getData(data);
@@ -283,7 +283,7 @@ export class BeneficiariesService {
               id
               first_name
               middle_name
-              last_name              
+              last_name
               dob
               mobile
             grampanchayat
@@ -314,7 +314,7 @@ export class BeneficiariesService {
                 id
                 enrollment_status
                 enrolled_for_board
-                type_of_enrollement 
+                type_of_enrollement
                 subjects
                 academic_year_id
                 payment_receipt_document_id
@@ -941,12 +941,12 @@ export class BeneficiariesService {
 
   async userById(id: any) {
     var data = {
-      query: `query searchById {        
+      query: `query searchById {
         users_by_pk(id: ${id}) {
           id
           first_name
           middle_name
-          last_name              
+          last_name
           dob
           mobile
           grampanchayat
