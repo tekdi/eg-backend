@@ -412,7 +412,6 @@ export class AuthService {
 
 		// Generate random password
 		const password = `@${this.userHelperService.generateRandomPassword()}`;
-		// const password = body?.mobile;
 
 		// Generate username
 		let username = `${body.first_name}`;
@@ -581,8 +580,6 @@ export class AuthService {
 						6,
 					)}`,
 					data: {
-						// @TODO - remove OTP later
-						// otp: otp,
 						hash: fullhash,
 					},
 				};

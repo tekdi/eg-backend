@@ -9,7 +9,7 @@ export class AadhaarKycService {
 	public async createOkycRequest(body, request: any, resp: any) {
 		const data = {};
 		const url = `${process.env.AADHAAR_OKYC_API_URL}`;
-		var config: AxiosRequestConfig = {
+		const config: AxiosRequestConfig = {
 			headers: {
 				'x-client-id': process.env['AADHAAR_OKYC_API_CLIENT_ID'],
 				'x-client-secret':
@@ -45,7 +45,7 @@ export class AadhaarKycService {
 	public async initiateOkycRequest(id: any, request: any, resp: any) {
 		const url = `${process.env.AADHAAR_OKYC_API_URL}/${id}/initiate/`;
 		console.log('url', url);
-		var config: AxiosRequestConfig = {
+		const config: AxiosRequestConfig = {
 			headers: {
 				'x-client-id': process.env['AADHAAR_OKYC_API_CLIENT_ID'],
 				'x-client-secret':
@@ -79,7 +79,7 @@ export class AadhaarKycService {
 	) {
 		const url = `${process.env.AADHAAR_OKYC_API_URL}/${id}/verify/`;
 		const data = { ...body };
-		var config: AxiosRequestConfig = {
+		const config: AxiosRequestConfig = {
 			headers: {
 				'x-client-id': process.env['AADHAAR_OKYC_API_CLIENT_ID'],
 				'x-client-secret':
@@ -114,7 +114,7 @@ export class AadhaarKycService {
 	) {
 		const url = `${process.env.AADHAAR_OKYC_API_URL}/${id}/complete/`;
 		const data = { ...body };
-		var config: AxiosRequestConfig = {
+		const config: AxiosRequestConfig = {
 			headers: {
 				'x-client-id': process.env['AADHAAR_OKYC_API_CLIENT_ID'],
 				'x-client-secret':
@@ -148,7 +148,7 @@ export class AadhaarKycService {
 		resp: any,
 	) {
 		const url = `${process.env.AADHAAR_OKYC_API_URL}/${id}/${shareCode}/`;
-		var config: AxiosRequestConfig = {
+		const config: AxiosRequestConfig = {
 			headers: {
 				'x-client-id': process.env['AADHAAR_OKYC_API_CLIENT_ID'],
 				'x-client-secret':
