@@ -659,9 +659,8 @@ export class BeneficiariesService {
             query: updateQuery
           };
 
-          hasuraResponse = await this.hasuraServiceFromServices.getData(data);
+          await this.hasuraServiceFromServices.getData(data);
 
-          // let result = response?.data?.update_users;
         } else {
           return response.status(400).json({
             success: false,
