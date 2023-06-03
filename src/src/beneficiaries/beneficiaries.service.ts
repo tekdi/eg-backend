@@ -393,6 +393,7 @@ export class BeneficiariesService {
 
     const response = await this.hasuraServiceFromServices.getData(data);
     let result = response?.data?.users_by_pk;
+    result.program_beneficiaries = result.program_beneficiaries?.[0];
     if (!result) {
       return resp.status(404).send({
         success: false,
@@ -845,11 +846,12 @@ export class BeneficiariesService {
         // Update enrollement data in Beneficiaries table
         const userArr =
           PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement.program_beneficiaries;
-        const programDetails = beneficiaryUser.program_beneficiaries.find(
-          (data) =>
-            req.id == data.user_id &&
-            req.academic_year_id == data.academic_year_id,
-        );
+        // const programDetails = beneficiaryUser.program_beneficiaries.find(
+        //   (data) =>
+        //     req.id == data.user_id &&
+        //     req.academic_year_id == 1,
+        // );
+        const programDetails = beneficiaryUser.program_beneficiaries;
         let tableName = 'program_beneficiaries';
 
         await this.hasuraService.q(
@@ -869,11 +871,12 @@ export class BeneficiariesService {
         // Update Document status data in Beneficiaries table
         const userArr =
           PAGE_WISE_UPDATE_TABLE_DETAILS.document_status.program_beneficiaries;
-        const programDetails = beneficiaryUser.program_beneficiaries.find(
-          (data) =>
-            req.id == data.user_id &&
-            req.academic_year_id == data.academic_year_id,
-        );
+        // const programDetails = beneficiaryUser.program_beneficiaries.find(
+        //   (data) =>
+        //     req.id == data.user_id &&
+        //     req.academic_year_id == 1,
+        // );
+        const programDetails = beneficiaryUser.program_beneficiaries;
         let tableName = 'program_beneficiaries';
 
         await this.hasuraService.q(
@@ -1050,10 +1053,10 @@ export class BeneficiariesService {
 
     const response = await this.hasuraServiceFromServices.getData(data);
     let result = response?.data?.users_by_pk;
-    let mappedResponse = result;
+    result.program_beneficiaries = result.program_beneficiaries?.[0];
     return {
       message: 'User data fetched successfully.',
-      data: mappedResponse,
+      data: result,
     };
   }
 }

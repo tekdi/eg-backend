@@ -258,6 +258,7 @@ export class FacilitatorService {
             form_step_number
             created_by
             updated_by
+            academic_year_id
           }
           qualifications {
             created_by
@@ -364,6 +365,7 @@ export class FacilitatorService {
         ...obj.core_faciltator,
       };
       delete res.core_faciltator;
+      res.program_faciltators = res.program_faciltators?.[0] || {}
       return res;
   });
 

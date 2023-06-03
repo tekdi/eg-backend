@@ -191,6 +191,8 @@ export class UserService {
               type
             }
             program_faciltators {
+              parent_ip
+              academic_year_id
               availability
               created_by
               has_social_work_exp
@@ -281,9 +283,12 @@ export class UserService {
     };
 
     const response = await axios(configData);
+    const userData = response?.data?.data?.users[0];
+    userData.program_faciltators = userData.program_faciltators[0];
+    
     return {
       status: response?.status,
-      data: response?.data?.data?.users[0],
+      data: userData,
     };
   }
 
