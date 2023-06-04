@@ -1,8 +1,11 @@
 import {
 	Body,
 	Controller,
+  Param,
+  Patch,
 	Post,
 	Req,
+  Res,
 	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
@@ -41,6 +44,15 @@ export class FacilitatorController {
 	// remove(@Param('id') id: string) {
 	//   return this.facilitatorService.remove(+id);
 	// }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() body: Record<string, any>,
+    @Res() response: any
+  ) {
+    return this.facilitatorService.update(+id, body, response);
+  }
 
 	@Post('/')
 	@UsePipes(ValidationPipe)

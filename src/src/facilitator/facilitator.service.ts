@@ -4,6 +4,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
 @Injectable()
 export class FacilitatorService {
@@ -12,6 +13,7 @@ export class FacilitatorService {
     private enumService: EnumService,
     private hasuraService: HasuraService,
     private userService:UserService,
+    private hasuraServiceFromServices: HasuraServiceFromServices,
   ) {
   }
 
@@ -56,8 +58,381 @@ export class FacilitatorService {
     // return this.hasuraService.getOne(+id, this.table, this.returnFields);
   }
 
-  update(id: number, req: any) {
-    // return this.hasuraService.update(+id, this.table, req, this.returnFields);
+  async updateBasicDetails(id: number, body: any) {
+    // Update Users table data
+    const userArr = [
+      'first_name',
+      'last_name',
+      'middle_name',
+      'dob'
+    ];
+    const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      const tableName = 'users';
+      body.id = id;
+      await this.hasuraService.q(tableName, body, userArr, true);
+    }
+  }
+
+  async updateContactDetails(id: number, body: any, facilitatorUser: any) {
+    // Update Users table data
+    const userArr = [
+      'mobile',
+      'alternative_mobile_number',
+      'email_id'
+    ];
+    let keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      const tableName = 'users';
+      body.id = id;
+      await this.hasuraService.q(tableName, body, userArr, true);
+    }
+
+    // Update core_facilitators table data
+    const coreFacilitatorsArr = [
+      'user_id',
+      'device_ownership',
+      'device_type',
+    ]
+    keyExist = coreFacilitatorsArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      const tableName = 'core_faciltators';
+      await this.hasuraService.q(
+        tableName,
+        {
+          ...body,
+          id: facilitatorUser?.core_faciltator?.id ?? null,
+          user_id: id,
+        },
+        coreFacilitatorsArr,
+        true
+      );
+    }
+  }
+
+  async updateAddressDetails(id: number, body: any) {
+    // Update Users table data
+    const userArr = [
+      'state',
+      'district',
+      'block',
+      'village',
+      'grampanchayat',
+    ];
+    const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      const tableName = 'users';
+      body.id = id;
+      await this.hasuraService.q(tableName, body, userArr, true);
+    }
+  }
+
+  async updatePersonalDetails(id: number, body: any, facilitatorUser: any) {
+    // Update Users table data
+    const userArr = [
+      'gender'
+    ];
+    let keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      const tableName = 'users';
+      body.id = id;
+      await this.hasuraService.q(tableName, body, userArr, true);
+    }
+
+    // Update Extended Users table data
+    const extendedUserArr = [
+      'user_id',
+      'social_category',
+      'marital_status'
+    ];
+    keyExist = extendedUserArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      let tableName = 'extended_users';
+      await this.hasuraService.q(
+        tableName,
+        {
+          ...body,
+          id: facilitatorUser?.extended_users?.[0]?.id ?? null,
+          user_id: id,
+        },
+        extendedUserArr,
+        true
+      );
+    }
+  }
+
+  async updateWorkExperienceDetails(id: number, body: any, facilitatorUser: any) {
+    if (body.experience_id && !facilitatorUser.experience.find(data => data.id == body.experience_id)) {
+      return {
+        errorMessage: "Invalid 'experience_id'!"
+      };
+    }
+    // Update experience table data
+    const experienceArr = [
+      'role_title',
+      'organization',
+      'description',
+      'experience_in_years',
+      'related_to_teaching',
+      'user_id',
+      'type'
+    ];
+    let keyExist = experienceArr.filter((e) => Object.keys(body).includes(e));
+    let experienceInfo;
+    if (keyExist.length) {
+      const tableName = 'experience';
+      body.id = id;
+      // If body has 'experience_id' field, then update. Otherwise create a new record.
+      experienceInfo = await this.hasuraService.q(
+        tableName,
+        {
+          ...body,
+          id: body.experience_id ? body.experience_id : null,
+          user_id: id,
+        },
+        experienceArr,
+        true
+      );
+      experienceInfo = experienceInfo.experience;
+    }
+
+    // Update Reference table data
+    const referencesArr = [
+      'name',
+      'contact_number',
+      'type_of_document',
+      'document_id',
+      'context',
+      'context_id'
+    ];
+    keyExist = referencesArr.filter((e) => Object.keys(body).includes(e));
+    let referenceInfo;
+    if (keyExist.length) {
+      let tableName = 'references';
+      let referenceDetails;
+      if (body.experience_id) {
+        referenceDetails = facilitatorUser.experience.find(data => data.id == body.experience_id)?.reference[0];
+      }
+      // If body has document_id field, then update else create
+      referenceInfo = await this.hasuraService.q(
+        tableName,
+        {
+          ...body.reference_details,
+          document_id: body.document_id,
+          id: referenceDetails?.id ? referenceDetails?.id : null,
+
+          // If 'experienceInfo' has id then a new experience record has created
+          ...(experienceInfo?.id && { context: 'experience' }),
+          ...(experienceInfo?.id && { context_id: experienceInfo.id })
+        },
+        referencesArr,
+        true
+      );
+      referenceInfo = referenceInfo.references;
+    }
+
+    // Update Documents table data
+    if (referenceInfo?.id && body?.document_id) {
+      const documentsArr = [
+        'context',
+        'context_id'
+      ];
+      let tableName = 'documents';
+      await this.hasuraService.q(
+        tableName,
+        {
+          id: body?.document_id ?? null,
+          context: 'references',
+          context_id: referenceInfo?.id
+        },
+        documentsArr,
+        true
+      );
+    }
+  }
+
+  async updateWorkAvailabilityDetails(id: number, body: any, facilitatorUser: any) {
+    // Update Program facilitators table data
+    const programFacilitatorArr = [
+      'availability'
+    ];
+    let keyExist = programFacilitatorArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      const tableName = 'program_faciltators';
+      body.id = id;
+      const programDetails = facilitatorUser.program_faciltators;
+      await this.hasuraService.q(
+        tableName,
+        {
+          ...body,
+          id: programDetails?.id ?? null,
+        },
+        programFacilitatorArr,
+        true
+      );
+    }
+  }
+
+  async updateQualificationDetails(id: number, body: any, facilitatorUser: any) {
+    let getQuery = `
+      query MyQuery {
+        qualification_masters {
+          id
+          name
+        }
+      }
+    `;
+
+    const data = {
+      query: getQuery
+    };
+
+    const qualificationsData = await this.hasuraServiceFromServices.getData(data);
+
+    // Update Qualifications table data
+    const qualificationsArr = [
+      'user_id',
+      'qualification_master_id',
+      'qualification_reference_document_id'
+    ];
+    let keyExist = qualificationsArr.filter((e) => Object.keys(body).includes(e));
+    const qualificationDetails = facilitatorUser.qualifications[0];
+    if (keyExist.length) {
+      const tableName = 'qualifications';
+      await this.hasuraService.q(
+        tableName,
+        {
+          qualification_master_id: body.qualification_master_id,
+          qualification_reference_document_id: body.qualification_reference_document_id,
+          id: qualificationDetails?.id ?? null,
+          user_id: id,
+        },
+        qualificationsArr,
+        true
+      );
+    }
+
+    // Update Program facilitators table data
+    const programFacilitatorsArr = [
+      'qualification_ids'
+    ];
+    const programDetails = facilitatorUser.program_faciltators;
+    keyExist = qualificationsArr.filter((e) => Object.keys(body).includes(e));
+    if (keyExist.length) {
+      const tableName = 'program_faciltators';
+      await this.hasuraService.q(
+        tableName,
+        {
+          qualification_ids: JSON.stringify(body.qualification_ids),
+          id: programDetails.id,
+        },
+        programFacilitatorsArr,
+        true
+      );
+    }
+  }
+
+  async updateReferenceDetails(id: number, body: any, facilitatorUser: any) {
+    if (body.id && !facilitatorUser.references.find(data => data.id == body.id)) {
+      return {
+        errorMessage: "Invalid reference id!"
+      };
+    }
+    // Update References table data
+    const referencesArr = [
+      'name',
+      'contact_number',
+      'designation',
+      'context',
+      'context_id'
+    ];
+    const tableName = 'references';
+    await this.hasuraService.q(
+      tableName,
+      {
+        ...body,
+        id: body.id ?? null,
+        ...(!body.id && { context: 'users' }),
+        ...(!body.id && { context_id: id })
+      },
+      referencesArr,
+      true,
+    );
+  }
+
+  // async updatePhotoDetails(id: number, body: any) {
+  //   // Update Users table data
+  //   const userArr = [
+  //     body.photo_type
+  //   ];
+  //   body[body.photo_type] = body.url;
+  //   delete body.url;
+  //   let keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+  //   if (keyExist.length) {
+  //     const tableName = 'users';
+  //     body.id = id;
+  //     await this.hasuraService.q(tableName, body, userArr, true);
+  //   }
+  // }
+
+  async update(id: number, body: any, response: any) {
+    const { data: facilitatorUser } = await this.userById(id);
+    switch (body.page_type) {
+      case 'basic_details': {
+        await this.updateBasicDetails(id, body);
+        break;
+      }
+      case 'contact_details': {
+        await this.updateContactDetails(id, body, facilitatorUser);
+        break;
+      }
+      case 'address_details': {
+        await this.updateAddressDetails(id, body);
+        break;
+      }
+      case 'personal_details': {
+        await this.updatePersonalDetails(id, body, facilitatorUser);
+        break;
+      }
+      case 'work_availability_details': {
+        await this.updateWorkAvailabilityDetails(id, body, facilitatorUser);
+        break;
+      }
+      case 'work_experience_details': {
+        const result = await this.updateWorkExperienceDetails(id, body, facilitatorUser);
+        if (result && result.errorMessage) {
+          return response.status(400).json({
+            success: false,
+            message: result.errorMessage
+          });
+        }
+        break;
+      }
+      case 'qualification_details': {
+        await this.updateQualificationDetails(id, body, facilitatorUser);
+        break;
+      }
+      case 'reference_details': {
+        const result = await this.updateReferenceDetails(id, body, facilitatorUser);
+        if (result && result.errorMessage) {
+          return response.status(400).json({
+            success: false,
+            message: result.errorMessage
+          });
+        }
+        break;
+      }
+      // case 'profile_photos': {
+      //   await this.updatePhotoDetails(id, body);
+      //   break;
+      // }
+    }
+    const { data: updatedUser } = await this.userById(id);
+    return response.status(200).json({
+      success: true,
+      message: "User data fetched successfully!",
+      data: updatedUser
+    });
   }
 
   remove(id: number) {
@@ -381,6 +756,205 @@ export class FacilitatorService {
         currentPage: page,
         totalPages: `${totalPages}`,
       }
+    };
+  }
+
+  async userById(id: any) {
+    var data = {
+      query: `query searchById {        
+        users_by_pk(id: ${id}) {
+          first_name
+          id
+          last_name
+          dob
+          aadhar_token
+          address
+          block_id
+          block_village_id
+          created_by
+          district_id
+          email_id
+          gender
+          lat
+          long
+          mobile
+          password
+          state_id
+          updated_by
+          profile_url
+          state
+          district
+          block
+          village
+          grampanchayat
+          alternative_mobile_number
+          profile_photo_1
+          profile_photo_2
+          profile_photo_3
+          program_users {
+            id
+            organisation_id
+            academic_year_id
+            program_id
+            role_id
+            status
+            user_id
+          }
+          core_faciltator {
+            created_by
+            device_ownership
+            device_type
+            id
+            pan_no
+            refreere
+            sourcing_channel
+            updated_by
+            user_id
+          }
+          experience {
+            id
+            description
+            end_year
+            experience_in_years
+            institution
+            start_year
+            organization
+            role_title
+            user_id
+            type
+            reference {
+              id
+              name
+              contact_number
+              type_of_document
+              designation
+              document_id
+              document_reference {
+                id
+                user_id
+                name
+                doument_type
+                document_sub_type
+                provider
+                path
+              }
+            }
+          }
+          program_faciltators {
+            parent_ip
+            availability
+            has_social_work_exp
+            id
+            police_verification_done
+            program_id
+            social_background_verified_by_neighbours
+            user_id
+            village_knowledge_test
+            status
+            form_step_number
+            created_by
+            updated_by
+            academic_year_id
+            qualification_ids
+          }
+          qualifications {
+            created_by
+            end_year
+            id
+            institution
+            qualification_master_id
+            start_year
+            updated_by
+            user_id
+            qualification_reference_document_id
+            qualification_master {
+              context
+              context_id
+              created_by
+              id
+              name
+              type
+              updated_by
+            }
+            document_reference {
+              id
+              user_id
+              name
+              context
+              context_id
+              doument_type
+              document_sub_type
+              provider
+              path
+            }
+          }
+          interviews {
+            id
+            owner_user_id
+            end_date_time
+            comment
+            created_at
+            created_by
+            start_date_time
+            status
+            title
+            updated_at
+            updated_by
+            user_id
+            location_type
+            location
+            owner {
+              first_name
+              last_name
+              id
+            }
+          }
+          events {
+            context
+            context_id
+            created_by
+            end_date
+            end_time
+            id
+            location
+            location_type
+            start_date
+            start_time
+            updated_by
+            user_id
+          }
+          documents(order_by: {id: desc}){
+            id
+            user_id
+            name
+            doument_type
+            document_sub_type
+          }
+          extended_users {
+            marital_status
+            designation
+            created_by
+            id
+            user_id
+            updated_by
+            social_category
+            qualification_id
+          }
+          references {
+            id
+            name
+            contact_number
+            designation
+          }
+        }}`,
+    };
+
+    const response = await this.hasuraServiceFromServices.getData(data);
+    let userData = response?.data?.users_by_pk;
+    userData.program_faciltators = userData?.program_faciltators?.[0];
+    return {
+      message: 'User data fetched successfully.',
+      data: userData,
     };
   }
 }
