@@ -10,7 +10,7 @@ export class FacilitatorService {
     private readonly httpService: HttpService,
     private enumService: EnumService,
     private hasuraService: HasuraService,
-    private userService:UserService,
+    private userService: UserService,
   ) {
   }
 
@@ -138,7 +138,7 @@ export class FacilitatorService {
 
     // Update Extended Users table data
     const extendedUserArr = [
-      'user_id',
+      ...(!facilitatorUser?.extended_users?.[0] ? ['user_id'] : []),
       'social_category',
       'marital_status'
     ];
@@ -178,7 +178,6 @@ export class FacilitatorService {
     let experienceInfo;
     if (keyExist.length) {
       const tableName = 'experience';
-      body.id = id;
       // If body has 'experience_id' field, then update. Otherwise create a new record.
       experienceInfo = await this.hasuraService.q(
         tableName,
@@ -256,7 +255,6 @@ export class FacilitatorService {
     let keyExist = programFacilitatorArr.filter((e) => Object.keys(body).includes(e));
     if (keyExist.length) {
       const tableName = 'program_faciltators';
-      body.id = id;
       const programDetails = facilitatorUser.program_faciltators;
       await this.hasuraService.q(
         tableName,
@@ -284,8 +282,7 @@ export class FacilitatorService {
       await this.hasuraService.q(
         tableName,
         {
-          qualification_master_id: body.qualification_master_id,
-          qualification_reference_document_id: body.qualification_reference_document_id,
+          ...body,
           id: qualificationDetails?.id ?? null,
           user_id: id,
         },
@@ -505,7 +502,7 @@ export class FacilitatorService {
       let possibleSortFields = ['name', 'qualification', 'region', 'eligibility', 'status', 'comments'];
       let possibleSortTypes = ['asc', 'desc'];
       if (
-          possibleSortFields.includes(sortField)
+        possibleSortFields.includes(sortField)
         && possibleSortTypes.includes(sortType)
       ) {
         switch (sortField) {
@@ -724,7 +721,7 @@ export class FacilitatorService {
       delete res.core_faciltator;
       res.program_faciltators = res.program_faciltators?.[0] || {}
       return res;
-  });
+    });
 
     const count = mappedResponse.length;
     const totalPages = Math.ceil(count / limit);

@@ -1,24 +1,26 @@
 import {
 	Body,
 	Controller,
-  Param,
-  Patch,
+	Param,
+	Patch,
 	Post,
 	Req,
-  Res,
+	Res,
+	UseGuards,
 	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { FilterFacilitatorDto } from './dto/filter-facilitator.dto';
+import { AuthGuard } from '../modules/auth/auth.guard';
 import { FacilitatorService } from './facilitator.service';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/facilitators')
 export class FacilitatorController {
 	public url = process.env.HASURA_BASE_URL;
-	constructor(public facilitatorService: FacilitatorService) {}
+	constructor(public facilitatorService: FacilitatorService) { }
 
 	// @Post('/create')
 	// create(@Body() createFacilitatorDto: CreateFacilitatorDto) {
@@ -45,14 +47,15 @@ export class FacilitatorController {
 	//   return this.facilitatorService.remove(+id);
 	// }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() body: Record<string, any>,
-    @Res() response: any
-  ) {
-    return this.facilitatorService.update(+id, body, response);
-  }
+	@Patch(':id')
+	@UseGuards(new AuthGuard())
+	update(
+		@Param('id') id: string,
+		@Body() body: Record<string, any>,
+		@Res() response: any
+	) {
+		return this.facilitatorService.update(+id, body, response);
+	}
 
 	@Post('/')
 	@UsePipes(ValidationPipe)
