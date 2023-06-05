@@ -1,10 +1,8 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { lastValueFrom, map } from 'rxjs';
 import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
-import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
 @Injectable()
 export class FacilitatorService {
@@ -13,7 +11,6 @@ export class FacilitatorService {
     private enumService: EnumService,
     private hasuraService: HasuraService,
     private userService:UserService,
-    private hasuraServiceFromServices: HasuraServiceFromServices,
   ) {
   }
 
@@ -274,21 +271,6 @@ export class FacilitatorService {
   }
 
   async updateQualificationDetails(id: number, body: any, facilitatorUser: any) {
-    let getQuery = `
-      query MyQuery {
-        qualification_masters {
-          id
-          name
-        }
-      }
-    `;
-
-    const data = {
-      query: getQuery
-    };
-
-    const qualificationsData = await this.hasuraServiceFromServices.getData(data);
-
     // Update Qualifications table data
     const qualificationsArr = [
       'user_id',
@@ -400,7 +382,7 @@ export class FacilitatorService {
       }
       case 'work_experience_details': {
         const result = await this.updateWorkExperienceDetails(id, body, facilitatorUser);
-        if (result && result.errorMessage) {
+        if (result?.errorMessage) {
           return response.status(400).json({
             success: false,
             message: result.errorMessage
@@ -414,7 +396,7 @@ export class FacilitatorService {
       }
       case 'reference_details': {
         const result = await this.updateReferenceDetails(id, body, facilitatorUser);
-        if (result && result.errorMessage) {
+        if (result?.errorMessage) {
           return response.status(400).json({
             success: false,
             message: result.errorMessage
@@ -760,7 +742,7 @@ export class FacilitatorService {
   }
 
   async userById(id: any) {
-    var data = {
+    const data = {
       query: `query searchById {        
         users_by_pk(id: ${id}) {
           first_name
@@ -949,7 +931,7 @@ export class FacilitatorService {
         }}`,
     };
 
-    const response = await this.hasuraServiceFromServices.getData(data);
+    const response = await this.hasuraService.getData(data);
     let userData = response?.data?.users_by_pk;
     userData.program_faciltators = userData?.program_faciltators?.[0];
     return {
