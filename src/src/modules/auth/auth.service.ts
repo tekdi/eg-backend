@@ -23,7 +23,7 @@ export class AuthService {
 		private readonly keycloakService: KeycloakService,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
-	) {}
+	) { }
 
 	public async sendOtp(req, response) {
 		const mobile = req.mobile;
