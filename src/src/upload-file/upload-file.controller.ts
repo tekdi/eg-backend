@@ -6,11 +6,13 @@ import {
 	Post,
 	Res,
 	UploadedFile,
+	UseGuards,
 	UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
+import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { UploadFileService } from './upload-file.service';
 
 @UseInterceptors(SentryInterceptor)
@@ -27,9 +29,17 @@ export class UploadFileController {
 		@Res() request: Request,
 		@Res() response: Response,
 	) {
-		console.log('upload-file', file);
-		console.log('document_type', document_type);
 		await this.uploadFileService.addFile(file, id, document_type, response);
+	}
+
+	@Post('/attendance')
+	@UseGuards(new AuthGuard())
+	@UseInterceptors(FileInterceptor('file'))
+	async addFileNoMock(
+		@UploadedFile() file: Express.Multer.File,
+		@Res() response: Response,
+	) {
+		await this.uploadFileService.addFileNoMeta(file, response);
 	}
 
 	@Get('/:id/get-file')
