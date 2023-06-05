@@ -138,7 +138,7 @@ export class FacilitatorService {
 
     // Update Extended Users table data
     const extendedUserArr = [
-      ...(!facilitatorUser?.extended_users?.[0] ? ['user_id'] : []),
+      ...(!facilitatorUser?.extended_users ? ['user_id'] : []),
       'social_category',
       'marital_status'
     ];
@@ -149,7 +149,7 @@ export class FacilitatorService {
         tableName,
         {
           ...body,
-          id: facilitatorUser?.extended_users?.[0]?.id ?? null,
+          id: facilitatorUser?.extended_users.id ?? null,
           user_id: id,
         },
         extendedUserArr,
@@ -714,13 +714,8 @@ export class FacilitatorService {
     let responseWithPagination = mappedResponse.slice(skip, skip + limit);
 
     responseWithPagination = responseWithPagination.map(obj => {
-      const res = {
-        ...obj,
-        ...obj.core_faciltator,
-      };
-      delete res.core_faciltator;
-      res.program_faciltators = res.program_faciltators?.[0] || {}
-      return res;
+      obj.program_faciltators = obj.program_faciltators?.[0] || {}
+      return obj;
     });
 
     const count = mappedResponse.length;
