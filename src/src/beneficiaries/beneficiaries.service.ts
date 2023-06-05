@@ -593,6 +593,7 @@ export class BeneficiariesService {
 					'payment_receipt_document_id',
 				],
 			},
+			//update document status
 			document_status: {
 				program_beneficiaries: [
 					'user_id',
