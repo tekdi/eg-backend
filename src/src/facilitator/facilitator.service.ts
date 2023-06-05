@@ -159,6 +159,11 @@ export class FacilitatorService {
   }
 
   async updateWorkExperienceDetails(id: number, body: any, facilitatorUser: any) {
+    if (!(['experience', 'vo_experience'].includes(body.type))) {
+      return {
+        errorMessage: "Invalid experience type!"
+      };
+    }
     if (body.experience_id && !facilitatorUser.experience.find(data => data.id == body.experience_id)) {
       return {
         errorMessage: "Invalid 'experience_id'!"
@@ -762,9 +767,27 @@ export class FacilitatorService {
           village
           grampanchayat
           alternative_mobile_number
-          profile_photo_1
-          profile_photo_2
-          profile_photo_3
+          profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+            id
+            name
+            doument_type
+            document_sub_type
+            path
+          }
+          profile_photo_2: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
+            id
+            name
+            doument_type
+            document_sub_type
+            path
+          }
+          profile_photo_3: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
+            id
+            name
+            doument_type
+            document_sub_type
+            path
+          }
           program_users {
             id
             organisation_id
