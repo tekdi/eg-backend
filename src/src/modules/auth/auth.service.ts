@@ -763,8 +763,6 @@ export class AuthService {
                 form_step_number
                 created_by
                 updated_by
-				academic_year_id
-				program_id
               }
               qualifications {
                 created_by
