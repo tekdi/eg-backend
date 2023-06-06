@@ -653,34 +653,35 @@ export class BeneficiariesService {
 
 					// Mark other AGs as duplicate where duplicate reason is null
 					let updateQuery = `
-            mutation MyMutation {
-              update_users(
-                where: {
-                  _and: [
+						mutation MyMutation {
+							update_users(
+								where: {
+									_and: [
 										{ id: { _neq: ${beneficiaryUser.id} } },
-                    { aadhar_no: { _eq: "${aadhaar_no}" } },
-                    {
+										{ aadhar_no: { _eq: "${aadhaar_no}" } },
+										{
 											_or: [
 												{ is_duplicate: { _neq: "yes" } },
-                        { duplicate_reason: { _is_null: true } }
+												{ duplicate_reason: { _is_null: true } }
 											]
 										}
-                  ]
-                },
-                _set: {
-                  is_duplicate: "yes",
-                  duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
-                }
-              ) {
-                affected_rows
-                returning {
-                  id
-                  aadhar_no
-                  is_duplicate
-                  duplicate_reason
-                }
-              }
-            }`;
+									]
+								},
+								_set: {
+									is_duplicate: "yes",
+									duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
+								}
+							) {
+								affected_rows
+								returning {
+								id
+								aadhar_no
+								is_duplicate
+								duplicate_reason
+								}
+							}
+						}
+					`;
 
 					const data = {
 						query: updateQuery,
