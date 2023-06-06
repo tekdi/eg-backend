@@ -489,8 +489,8 @@ export class BeneficiariesService {
 			edit_basic: {
 				users: ['first_name', 'last_name', 'middle_name', 'dob'],
 			},
-			add_aadhaar: {
-				users: ['aadhar_no', 'is_duplicate', 'duplicate_reason'],
+			add_ag_duplication: {
+				users: ['is_duplicate', 'duplicate_reason'],
 			},
 			add_aadhaar_verification: {
 				users: ['aadhar_verified'],
@@ -624,13 +624,20 @@ export class BeneficiariesService {
 				break;
 			}
 
-			case 'add_aadhaar': {
-				const aadhaar_no = req.aadhar_no;
+			case 'add_ag_duplication': {
+				const aadhaar_no = beneficiaryUser.aadhar_no;
+
+				if (!aadhaar_no) {
+					return response.status(400).json({
+						success: false,
+						message: 'Aadhaar number not found!',
+					});
+				}
 
 				// Check if aadhaar already exists or not
 				let hasuraResponse =
 					await this.hasuraServiceFromServices.findAll('users', {
-						aadhaar_no,
+						aadhar_no: aadhaar_no,
 					});
 
 				if (
@@ -640,7 +647,7 @@ export class BeneficiariesService {
 				) {
 					// Update Users table data
 					const userArr =
-						PAGE_WISE_UPDATE_TABLE_DETAILS.add_aadhaar.users;
+						PAGE_WISE_UPDATE_TABLE_DETAILS.add_ag_duplication.users;
 					const tableName = 'users';
 					await this.hasuraService.q(tableName, req, userArr, update);
 
@@ -650,9 +657,14 @@ export class BeneficiariesService {
               update_users(
                 where: {
                   _and: [
+										{ id: { _neq: ${beneficiaryUser.id} } },
                     { aadhar_no: { _eq: "${aadhaar_no}" } },
-                    { duplicate_reason: { _is_null: true } }
-                    # { is_duplicate: { _neq: "yes" } },
+                    {
+											_or: [
+												{ is_duplicate: { _neq: "yes" } },
+                        { duplicate_reason: { _is_null: true } }
+											]
+										}
                   ]
                 },
                 _set: {
