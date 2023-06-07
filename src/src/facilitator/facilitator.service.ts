@@ -3,6 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { S3Service } from '../services/s3/s3.service';
 
 @Injectable()
 export class FacilitatorService {
@@ -11,6 +12,7 @@ export class FacilitatorService {
 		private enumService: EnumService,
 		private hasuraService: HasuraService,
 		private userService: UserService,
+		private s3Service: S3Service,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -686,6 +688,29 @@ export class FacilitatorService {
 			message: 'User data fetched successfully!',
 			data: updatedUser,
 		});
+	}
+
+	async removeExperience(id: number, body: any, response: any) {
+		try {
+			await this.hasuraService.delete('experience', { id });
+			
+			const referenceId = (await this.hasuraService.delete('references', { context: 'experience', context_id: id }, [], ['id'])).data.delete_references.returning[0].id;
+			
+			const fileName = (await this.hasuraService.delete('documents', { context: 'references', context_id: referenceId }, [], ['id', 'name'])).data.delete_documents[0].name;
+			
+			await this.s3Service.deletePhoto(fileName);
+			
+			return response.status(200).json({
+				success: true,
+				message: "Experience deleted successfully!"
+			});
+		
+		} catch (error) {
+			return response.status(500).json({
+				success: true,
+				message: error.message
+			});
+		}
 	}
 
 	remove(id: number) {
