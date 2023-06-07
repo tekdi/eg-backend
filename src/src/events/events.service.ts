@@ -29,6 +29,7 @@ export class EventsService {
 		'end_time',
 		'type',
 		'location',
+		'master_trainer',
 		'location_type',
 		'start_date',
 		'start_time',
@@ -47,6 +48,8 @@ export class EventsService {
 		'lat',
 		'long',
 		'rsvp',
+		'photo_1',
+		'photo_2',
 		'date_time',
 		'updated_by',
 	];
@@ -65,6 +68,7 @@ export class EventsService {
 			...(req?.context && { context: req?.context }),
 			user_id: req.user_id ? req.user_id : user_id,
 			name: req.name,
+			master_trainer:req.master_trainer,
 			created_by: user_id,
 			end_date: req.end_date,
 			end_time: req.end_time,
@@ -142,10 +146,16 @@ export class EventsService {
           location
           location_type
           name
+		  context
+		  context_id
+		  master_trainer
           reminders
+		  end_date
+		  end_time
           start_date
           start_time
           type
+		  created_by
           updated_by
           user_id
           attendances {
@@ -160,7 +170,7 @@ export class EventsService {
             status
             updated_by
             user_id
-            users{
+            user{
               first_name
               id
               last_name
@@ -196,8 +206,9 @@ export class EventsService {
 		var data = {
 			query: `query searchById {
       events_by_pk(id: ${id}) {
-         reminders
+        reminders
         name
+		master_trainer
         end_date
         created_by
         context_id
@@ -223,7 +234,7 @@ export class EventsService {
           status
           long
           rsvp
-          users{
+          user{
             first_name
             id
             last_name
@@ -364,7 +375,7 @@ export class EventsService {
 		}
 	}
 
-	public async updateAttendanceDetail(id: number, req: any, response: any) {
+	public async updateEventAcceptDetail(id: number, req: any, response: any) {
 		const tableName = 'attendance';
 		let result = await this.hasuraService.update(
 			+id,
@@ -386,6 +397,63 @@ export class EventsService {
 			});
 		}
 	}
+	public checkStrings(strings) {
+		let message = [];
+		for (let str in strings) {
+			if (strings[str] === undefined || strings[str] === '') {
+				message.push(`please send ${str} `);
+			}
+		}
+		let respObject: any = {};
+		if (message.length > 0) {
+			respObject.success = false;
+			respObject.errors = message;
+		} else {
+			respObject.success = true;
+		}
+		return respObject;
+	}
+
+	public async updateAttendanceDetail(id: number, req: any, response: any) {
+		const tableName = 'attendance';
+		if (req?.status == 'present') {
+			let checkStringResult = this.checkStrings({
+				lat: req.lat,
+				long: req.long,
+				photo_1: req.photo_1,
+			});
+
+			if (!checkStringResult.success) {
+				return response.status(400).send({
+					success: false,
+					message: checkStringResult.errors,
+					data: {},
+				});
+			}
+		}
+		try {
+			let result = await this.hasuraService.update(
+				+id,
+				tableName,
+				req,
+				this.attendanceReturnFields,
+			);
+			if (result.attendance) {
+				return response.status(200).send({
+					success: true,
+					message: 'Attendance Updated successfully!',
+					data: { attendance: result.attendance },
+				});
+			}
+		} catch (error) {
+			return response.status(500).send({
+				success: false,
+				message: error.message,
+				data: {},
+			});
+		}
+	}
+
 	remove(id: number) {
 		return this.hasuraService.delete(this.table, { id: +id });
 	}

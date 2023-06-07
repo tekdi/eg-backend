@@ -31,13 +31,20 @@ export class AadhaarKycService {
 				message: 'Created OKYC Request Successfully!',
 				data: response.data,
 			});
-		} catch (e) {
-			console.log('post data error', e.message);
+		} catch ({ response, message }) {
+			console.log('Error in creating OKYC request', message);
 
-			return resp.status(500).send({
+			return resp.status(response?.status ? response?.status : 500).send({
 				success: false,
-				message: e.message,
-				data: {},
+				message: response?.data?.error?.detail
+					? response?.data?.error?.detail
+					: message,
+
+				data: {
+					code: response?.data?.error?.code
+						? response?.data?.error?.code
+						: 500,
+				},
 			});
 		}
 	}
@@ -55,13 +62,20 @@ export class AadhaarKycService {
 				message: 'Initiates OKYC Request Successfully!',
 				data: result.data,
 			});
-		} catch (e) {
-			console.log('initiate okyc data error', e.message);
+		} catch ({ response, message }) {
+			console.log('Error in initiating OKYC', message);
 
-			return resp.status(500).send({
+			return resp.status(response?.status ? response?.status : 500).send({
 				success: false,
-				message: e.message,
-				data: {},
+				message: response?.data?.error?.detail
+					? response?.data?.error?.detail
+					: message,
+
+				data: {
+					code: response?.data?.error?.code
+						? response?.data?.error?.code
+						: 500,
+				},
 			});
 		}
 	}
@@ -85,12 +99,20 @@ export class AadhaarKycService {
 				message: 'Verified OKYC Request Successfully!',
 				data: result.data,
 			});
-		} catch (e) {
-			console.log('verify okyc data error', e.message);
+		} catch ({ response, message }) {
+			console.log('Error in verifying OKYC', message);
 
-			return resp.status(500).send({
-				message: e.message,
-				data: {},
+			return resp.status(response?.status ? response?.status : 500).send({
+				success: false,
+				message: response?.data?.error?.detail
+					? response?.data?.error?.detail
+					: message,
+
+				data: {
+					code: response?.data?.error?.code
+						? response?.data?.error?.code
+						: 500,
+				},
 			});
 		}
 	}
@@ -114,12 +136,20 @@ export class AadhaarKycService {
 				message: 'Completed OKYC Request Successfully!',
 				data: result.data,
 			});
-		} catch (e) {
-			console.log('complete okyc data error', e.message);
+		} catch ({ response, message }) {
+			console.log('Error in completing OKYC', message);
 
-			return resp.status(500).send({
-				message: e.message,
-				data: {},
+			return resp.status(response?.status ? response?.status : 500).send({
+				success: false,
+				message: response?.data?.error?.detail
+					? response?.data?.error?.detail
+					: message,
+
+				data: {
+					code: response?.data?.error?.code
+						? response?.data?.error?.code
+						: 500,
+				},
 			});
 		}
 	}
@@ -142,11 +172,18 @@ export class AadhaarKycService {
 				message: 'Got OKYC Status Successfully!',
 				data: result.data,
 			});
-		} catch (e) {
-			console.log('get okyc data error', e.message);
+		} catch ({ response, message }) {
+			console.log('Error in getting OKYC status', message);
 
-			return resp.status(404).send({
-				message: e.message,
+			return resp.status(response?.status ? response?.status : 500).send({
+				success: false,
+				message: response?.data?.error?.detail
+					? response?.data?.error?.detail
+					: message,
+				code: response?.data?.error?.code
+					? response?.data?.error?.code
+					: 500,
+
 				data: {},
 			});
 		}

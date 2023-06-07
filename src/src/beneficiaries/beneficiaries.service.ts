@@ -267,6 +267,8 @@ export class BeneficiariesService {
 						...e,
 						['program_faciltators']:
 							e?.['program_faciltators']?.[0],
+						['program_beneficiaries']:
+							e?.['program_beneficiaries']?.[0],
 					})),
 					limit,
 					currentPage: page,
@@ -315,7 +317,6 @@ export class BeneficiariesService {
                 id
                 enrollment_status
                 enrolled_for_board
-                type_of_enrollement
                 subjects
                 academic_year_id
                 payment_receipt_document_id
@@ -338,6 +339,7 @@ export class BeneficiariesService {
                 alternative_device_ownership
                 alternative_device_type
                 father_first_name
+				type_of_enrollement
                 father_middle_name
                 father_last_name
                 mother_first_name
@@ -489,8 +491,8 @@ export class BeneficiariesService {
 			edit_basic: {
 				users: ['first_name', 'last_name', 'middle_name', 'dob'],
 			},
-			add_aadhaar: {
-				users: ['aadhar_no', 'is_duplicate', 'duplicate_reason'],
+			add_ag_duplication: {
+				users: ['is_duplicate', 'duplicate_reason'],
 			},
 			add_aadhaar_verification: {
 				users: ['aadhar_verified'],
@@ -593,6 +595,7 @@ export class BeneficiariesService {
 					'payment_receipt_document_id',
 				],
 			},
+			//update document status
 			document_status: {
 				program_beneficiaries: [
 					'user_id',
@@ -623,13 +626,20 @@ export class BeneficiariesService {
 				break;
 			}
 
-			case 'add_aadhaar': {
-				const aadhar_no = req.aadhar_no;
+			case 'add_ag_duplication': {
+				const aadhaar_no = beneficiaryUser.aadhar_no;
+
+				if (!aadhaar_no) {
+					return response.status(400).json({
+						success: false,
+						message: 'Aadhaar number not found!',
+					});
+				}
 
 				// Check if aadhaar already exists or not
 				let hasuraResponse =
 					await this.hasuraServiceFromServices.findAll('users', {
-						aadhar_no,
+						aadhar_no: aadhaar_no,
 					});
 
 				if (
@@ -639,35 +649,41 @@ export class BeneficiariesService {
 				) {
 					// Update Users table data
 					const userArr =
-						PAGE_WISE_UPDATE_TABLE_DETAILS.add_aadhaar.users;
+						PAGE_WISE_UPDATE_TABLE_DETAILS.add_ag_duplication.users;
 					const tableName = 'users';
 					await this.hasuraService.q(tableName, req, userArr, update);
 
 					// Mark other AGs as duplicate where duplicate reason is null
 					let updateQuery = `
-            mutation MyMutation {
-              update_users(
-                where: {
-                  _and: [
-                    { aadhar_no: { _eq: "${aadhar_no}" } },
-                    { duplicate_reason: { _is_null: true } }
-                    # { is_duplicate: { _neq: "yes" } },
-                  ]
-                },
-                _set: {
-                  is_duplicate: "yes",
-                  duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
-                }
-              ) {
-                affected_rows
-                returning {
-                  id
-                  aadhar_no
-                  is_duplicate
-                  duplicate_reason
-                }
-              }
-            }`;
+						mutation MyMutation {
+							update_users(
+								where: {
+									_and: [
+										{ id: { _neq: ${beneficiaryUser.id} } },
+										{ aadhar_no: { _eq: "${aadhaar_no}" } },
+										{
+											_or: [
+												{ is_duplicate: { _neq: "yes" } },
+												{ duplicate_reason: { _is_null: true } }
+											]
+										}
+									]
+								},
+								_set: {
+									is_duplicate: "yes",
+									duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
+								}
+							) {
+								affected_rows
+								returning {
+								id
+								aadhar_no
+								is_duplicate
+								duplicate_reason
+								}
+							}
+						}
+					`;
 
 					const data = {
 						query: updateQuery,
@@ -703,8 +719,8 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
-						id: beneficiaryUser?.core_beneficiaries?.[0]?.id
-							? beneficiaryUser?.core_beneficiaries?.[0]?.id
+						id: beneficiaryUser?.core_beneficiaries?.id
+							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id: user_id,
 					},
@@ -731,8 +747,8 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
-						id: beneficiaryUser?.core_beneficiaries?.[0]?.id
-							? beneficiaryUser?.core_beneficiaries?.[0]?.id
+						id: beneficiaryUser?.core_beneficiaries?.id
+							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id: user_id,
 					},
@@ -770,8 +786,8 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
-						id: beneficiaryUser?.extended_users?.[0]?.id
-							? beneficiaryUser?.extended_users?.[0]?.id
+						id: beneficiaryUser?.extended_users?.id
+							? beneficiaryUser?.extended_users?.id
 							: null,
 						user_id,
 					},
@@ -787,13 +803,14 @@ export class BeneficiariesService {
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_family
 						.core_beneficiaries;
 				let tableName = 'core_beneficiaries';
+				console.log(beneficiaryUser?.core_beneficiaries?.id);
 				await this.hasuraService.q(
 					tableName,
 					{
 						...req.father_details,
 						...req.mother_details,
-						id: beneficiaryUser?.core_beneficiaries?.[0]?.id
-							? beneficiaryUser?.core_beneficiaries?.[0]?.id
+						id: beneficiaryUser?.core_beneficiaries?.id
+							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id,
 					},
@@ -813,8 +830,8 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
-						id: beneficiaryUser?.core_beneficiaries?.[0]?.id
-							? beneficiaryUser?.core_beneficiaries?.[0]?.id
+						id: beneficiaryUser?.core_beneficiaries?.id
+							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id,
 					},
@@ -834,8 +851,8 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
-						id: beneficiaryUser?.core_beneficiaries?.[0]?.id
-							? beneficiaryUser?.core_beneficiaries?.[0]?.id
+						id: beneficiaryUser?.core_beneficiaries?.id
+							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id,
 					},
@@ -855,8 +872,8 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
-						id: beneficiaryUser?.core_beneficiaries?.[0]?.id
-							? beneficiaryUser?.core_beneficiaries?.[0]?.id
+						id: beneficiaryUser?.core_beneficiaries?.id
+							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id,
 					},
@@ -893,6 +910,7 @@ export class BeneficiariesService {
 					userArr,
 					update,
 				);
+				break;
 			}
 			case 'document_status': {
 				// Update Document status data in Beneficiaries table
@@ -920,6 +938,7 @@ export class BeneficiariesService {
 					userArr,
 					update,
 				);
+				break;
 			}
 			case 'edit_reference': {
 				// Update References table data
@@ -1034,6 +1053,7 @@ export class BeneficiariesService {
             updated_by
             type_of_learner
             status
+			type_of_enrollement
             reason_of_leaving_education
             previous_school_type
             mobile_ownership
