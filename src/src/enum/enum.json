@@ -166,7 +166,7 @@
     {"title":"BIRTH_CERTIFICATE","value":"birth_certificate"}
 
   ],
-  "MOTIVATION":[
+  "LEARNING_MOTIVATION":[
     {"title":"TO_CONTINUE_STUDY","value":"to_continue_study"},
     {"title":"TO_BECOME_MANREGA_MATT_OR_MANREGA_SUPERVISOR","value":"to_become_manrega_matt_or_manrega_supervisor"},
     {"title":"TO_BECOME_ANGANWADI_WORKER","value":"to_become_anganwadi_worker"},
@@ -177,7 +177,7 @@
     {"title":"TO_GET_EMPLOYMENT","value":"to_get_employment"},
     {"title":"OTHER","value":"other"}
   ],
-  "TYPE_OF_SUPPORT":[
+  "TYPE_OF_SUPPORT_NEEDED":[
     {"title":"SUPPORT_IN_EXAM_PREPARATION","value":"support_in_exam_preparation"},
     {"title":"SUPPORT_IN_BUILDING_CONFIDENCE","value":"support_in_building_confidence"},
     {"title":"SUPPORT_IN_READING_WRITING","value":"support_in_reading_writing"},

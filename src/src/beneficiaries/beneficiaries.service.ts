@@ -571,8 +571,8 @@ export class BeneficiariesService {
 					'reason_of_leaving_education',
 				],
 				program_beneficiaries: [
-					'motivation',
-					'type_of_support',
+					'learning_motivation',
+					'type_of_support_needed',
 				],
 			},
 			edit_education: {
@@ -1087,8 +1087,8 @@ export class BeneficiariesService {
             program_id
             updated_by
             documents_status
-            motivation
-            type_of_support
+            learning_motivation
+            type_of_support_needed
           }
           core_beneficiaries {
             career_aspiration
