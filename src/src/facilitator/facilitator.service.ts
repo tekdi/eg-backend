@@ -806,7 +806,10 @@ export class FacilitatorService {
 			variables.status = body.status;
 		}
 
-		if (body.hasOwnProperty('district')) {
+		if (
+			body.hasOwnProperty('district') &&
+			body.district.length
+		) {
 			paramsQueryArray.push('$district: [String!]');
 			filterQueryArray.push('{district: { _in: $district }}');
 			variables.district = body.district;
