@@ -1087,8 +1087,8 @@ export class BeneficiariesService {
             program_id
             updated_by
             documents_status
-			motivation
-			type_of_support
+            motivation
+            type_of_support
           }
           core_beneficiaries {
             career_aspiration
