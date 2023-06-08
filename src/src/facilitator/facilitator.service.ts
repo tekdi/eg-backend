@@ -707,7 +707,7 @@ export class FacilitatorService {
 		
 		} catch (error) {
 			return response.status(500).json({
-				success: true,
+				success: false,
 				message: error.message
 			});
 		}
@@ -724,7 +724,7 @@ export class FacilitatorService {
 		
 		} catch (error) {
 			return response.status(500).json({
-				success: true,
+				success: false,
 				message: error.message
 			});
 		}

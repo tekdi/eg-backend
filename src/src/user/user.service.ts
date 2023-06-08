@@ -474,6 +474,20 @@ export class UserService {
           block
           village
           grampanchayat
+          aadhaar_front: documents(where: {document_sub_type: {_eq: "aadhaar_front"}}) {
+            id
+            name
+            doument_type
+            document_sub_type
+            path
+          }
+          aadhaar_back: documents(where: {document_sub_type: {_eq: "aadhaar_back"}}) {
+            id
+            name
+            doument_type
+            document_sub_type
+            path
+          }
           profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
             id
             name
@@ -671,7 +685,7 @@ export class UserService {
     );
     let result = response?.data?.users_by_pk;
 
-    for (const key of ['program_faciltators', 'profile_photo_1', 'profile_photo_2', 'profile_photo_3']) {
+    for (const key of ['program_faciltators', 'profile_photo_1', 'profile_photo_2', 'profile_photo_3', 'aadhaar_front', 'aadhaar_back']) {
       if (result?.[key] && result?.[key][0]) {
         result[key] = result[key][0];
       } else {
