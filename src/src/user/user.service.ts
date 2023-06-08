@@ -670,11 +670,15 @@ export class UserService {
         .pipe(map((res) => res.data)),
     );
     let result = response?.data?.users_by_pk;
-    if (result?.program_faciltators && result?.program_faciltators[0]) {
-      result.program_faciltators = result.program_faciltators[0];
-    } else {
-      result = { ...result, program_faciltators: {} };
+
+    for (const key of ['program_faciltators', 'profile_photo_1', 'profile_photo_2', 'profile_photo_3']) {
+      if (result?.[key] && result?.[key][0]) {
+        result[key] = result[key][0];
+      } else {
+        result = { ...result, [key]: {} };
+      }
     }
+
     let mappedResponse = result;
 
     if (result?.experience) {
