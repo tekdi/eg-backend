@@ -692,14 +692,30 @@ export class FacilitatorService {
 
 	async removeExperience(id: number, body: any, response: any) {
 		try {
-			await this.hasuraService.delete('experience', { id });
+			const deletedExperienceData = (await this.hasuraService.delete('experience', { id }))?.experience;
+
+			if (deletedExperienceData.affected_rows == 0) {
+				return response.status(400).json({
+					success: false,
+					message: "Experience Id does not exists!"
+				});
+			}
+
+			const deletedReferenceData = (await this.hasuraService.delete('references', { context: 'experience', context_id: id }, [], ['id']))?.references;
 			
-			const referenceId = (await this.hasuraService.delete('references', { context: 'experience', context_id: id }, [], ['id'])).references.returning[0].id;
-			
-			const fileName = (await this.hasuraService.delete('documents', { context: 'references', context_id: referenceId }, [], ['id', 'name'])).documents.returning[0].name;
-			
-			await this.s3Service.deletePhoto(fileName);
-			
+			if (deletedReferenceData && deletedReferenceData.affected_rows > 0) {
+				const referenceId = deletedReferenceData.returning[0].id;
+				
+				const deletedDocumentData = (await this.hasuraService.delete('documents', { context: 'references', context_id: referenceId }, [], ['id', 'name']))?.documents;
+				
+				if (deletedDocumentData && deletedDocumentData.affected_rows > 0) {
+					const fileName = deletedDocumentData.returning[0].name;
+					if (fileName && typeof fileName === 'string' && fileName.trim()) {
+						await this.s3Service.deletePhoto(fileName);
+					}
+				}
+			}
+
 			return response.status(200).json({
 				success: true,
 				message: "Experience deleted successfully!"
