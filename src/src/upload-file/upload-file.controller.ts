@@ -47,6 +47,7 @@ export class UploadFileController {
 	@UseInterceptors(FileInterceptor('file'))
 	async getFileUrl(
 		@Param('id') id: string,
+		@Res() request: Request,
 		@Res() response: Response,
 	) {
 		console.log('get-file id', id);
@@ -56,7 +57,6 @@ export class UploadFileController {
 	@Get('/getDocumentById/:id')
 	async getDocumentById(
 		@Param('id') id: string,
-		@Res() request: Request,
 		@Res() response: Response,
 	) {
 		await this.uploadFileService.getDocumentById(id, response);
