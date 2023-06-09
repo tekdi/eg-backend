@@ -685,7 +685,7 @@ export class UserService {
     );
     let result = response?.data?.users_by_pk;
 
-    for (const key of ['program_faciltators', 'profile_photo_1', 'profile_photo_2', 'profile_photo_3', 'aadhaar_front', 'aadhaar_back']) {
+    for (const key of ['qualifications', 'program_faciltators', 'profile_photo_1', 'profile_photo_2', 'profile_photo_3', 'aadhaar_front', 'aadhaar_back']) {
       if (result?.[key] && result?.[key][0]) {
         result[key] = result[key][0];
       } else {
@@ -913,6 +913,7 @@ export class UserService {
       data: mappedResponse?.map((e) => ({
         ...e,
         ['program_faciltators']: e?.['program_faciltators']?.[0],
+        ['qualifications']: e?.['qualifications']?.[0],
       })),
       limit,
       currentPage: page,

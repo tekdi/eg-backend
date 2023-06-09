@@ -253,7 +253,13 @@ export class FacilitatorService {
 
 		const hasuraResponse = await this.hasuraService.getData(data);
 
-		const usersList = hasuraResponse?.data?.users;
+		let usersList = hasuraResponse?.data?.users;
+
+		usersList = usersList.map((obj) => {
+			obj.program_faciltators = obj.program_faciltators?.[0] || {};
+			obj.qualifications = obj.qualifications?.[0] || {};
+			return obj;
+		});
 
 		const count = hasuraResponse?.data?.users_aggregate?.aggregate?.count || 0;
 
@@ -511,7 +517,7 @@ export class FacilitatorService {
 		let keyExist = qualificationsArr.filter((e) =>
 			Object.keys(body).includes(e),
 		);
-		const qualificationDetails = facilitatorUser.qualifications[0];
+		const qualificationDetails = facilitatorUser.qualifications;
 		if (keyExist.length) {
 			const tableName = 'qualifications';
 			await this.hasuraService.q(
@@ -1081,6 +1087,7 @@ export class FacilitatorService {
 
 		responseWithPagination = responseWithPagination.map((obj) => {
 			obj.program_faciltators = obj.program_faciltators?.[0] || {};
+			obj.qualifications = obj.qualifications?.[0] || {};
 			return obj;
 		});
 
