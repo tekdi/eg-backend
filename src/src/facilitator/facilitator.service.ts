@@ -547,14 +547,8 @@ export class FacilitatorService {
 	}
 
 	async updateReferenceDetails(id: number, body: any, facilitatorUser: any) {
-		if (
-			body.id &&
-			!facilitatorUser.references.find((data) => data.id == body.id)
-		) {
-			return {
-				errorMessage: 'Invalid reference id!',
-			};
-		}
+		const referenceDetails = facilitatorUser?.references;
+
 		// Update References table data
 		const referencesArr = [
 			'name',
@@ -568,9 +562,9 @@ export class FacilitatorService {
 			tableName,
 			{
 				...body,
-				id: body.id ?? null,
-				...(!body.id && { context: 'users' }),
-				...(!body.id && { context_id: id }),
+				id: referenceDetails.id ?? null,
+				...(!referenceDetails?.id && { context: 'users' }),
+				...(!referenceDetails?.id && { context_id: id }),
 			},
 			referencesArr,
 			true,
@@ -642,17 +636,11 @@ export class FacilitatorService {
 				break;
 			}
 			case 'reference_details': {
-				const result = await this.updateReferenceDetails(
+				await this.updateReferenceDetails(
 					id,
 					body,
 					facilitatorUser,
 				);
-				if (result?.errorMessage) {
-					return response.status(400).json({
-						success: false,
-						message: result.errorMessage,
-					});
-				}
 				break;
 			}
 			case 'documents_checklist': {
@@ -703,23 +691,6 @@ export class FacilitatorService {
 			return response.status(200).json({
 				success: true,
 				message: "Experience deleted successfully!"
-			});
-		
-		} catch (error) {
-			return response.status(500).json({
-				success: false,
-				message: error.message
-			});
-		}
-	}
-
-	async removeReference(id: number, body: any, response: any) {
-		try {
-			await this.hasuraService.delete('references', { id });
-			
-			return response.status(200).json({
-				success: true,
-				message: "Reference deleted successfully!"
 			});
 		
 		} catch (error) {
