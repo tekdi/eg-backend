@@ -432,15 +432,26 @@ export class FacilitatorService {
 			'context',
 			'context_id',
 		];
-		keyExist = referencesArr.filter((e) => Object.keys(body).includes(e));
+		keyExist = referencesArr.filter((e) => Object.keys(body.reference_details).includes(e));
 		let referenceInfo;
+		let referenceDetails;
 		if (keyExist.length) {
 			let tableName = 'references';
-			let referenceDetails;
 			if (experience_id) {
 				referenceDetails = facilitatorUser.experience.find(
 					(data) => data.id == experience_id,
-				)?.reference[0];
+				)?.reference;
+
+				await this.s3Service.deletePhoto(referenceDetails.document_reference.name);
+				
+				await this.hasuraService.delete(
+					'documents',
+					{
+						user_id: id,
+						context: 'references',
+						context_id: referenceDetails.id
+					},
+				);
 			}
 			referenceInfo = await this.hasuraService.q(
 				tableName,
@@ -462,7 +473,7 @@ export class FacilitatorService {
 		}
 
 		// Update Documents table data
-		if (referenceInfo?.id && body?.reference_details?.document_id) {
+		if (body?.reference_details?.document_id) {
 			const documentsArr = ['context', 'context_id'];
 			let tableName = 'documents';
 			await this.hasuraService.q(
@@ -470,7 +481,7 @@ export class FacilitatorService {
 				{
 					id: body?.reference_details?.document_id ?? null,
 					context: 'references',
-					context_id: referenceInfo?.id,
+					context_id: referenceInfo?.id ? referenceInfo?.id : referenceDetails.id,
 				},
 				documentsArr,
 				true,
@@ -517,10 +528,26 @@ export class FacilitatorService {
 		let keyExist = qualificationsArr.filter((e) =>
 			Object.keys(body).includes(e),
 		);
-		const qualificationDetails = facilitatorUser.qualifications;
+		let qualificationDetails = facilitatorUser.qualifications;
+
+		if (qualificationDetails.id) {
+			await this.s3Service.deletePhoto(qualificationDetails.document_reference.name);
+				
+			await this.hasuraService.delete(
+				'documents',
+				{
+					user_id: id,
+					context: 'qualifications',
+					context_id: qualificationDetails.id
+				},
+			);
+		}
+
+		let newCreatedQualificationDetails;
+
 		if (keyExist.length) {
 			const tableName = 'qualifications';
-			await this.hasuraService.q(
+			newCreatedQualificationDetails = (await this.hasuraService.q(
 				tableName,
 				{
 					...body,
@@ -529,7 +556,7 @@ export class FacilitatorService {
 				},
 				qualificationsArr,
 				true,
-			);
+			)).qualifications;
 		}
 
 		// Update Program facilitators table data
@@ -550,6 +577,24 @@ export class FacilitatorService {
 				true,
 			);
 		}
+
+		// Update documents table data
+		const documentsArr = ['context', 'context_id'];
+		let tableName = 'documents';
+		await this.hasuraService.q(
+			tableName,
+			{
+				id: body.qualification_reference_document_id ?? null,
+				context: 'qualifications',
+				context_id: qualificationDetails.id
+							? qualificationDetails.id
+							: newCreatedQualificationDetails.id
+							? newCreatedQualificationDetails.id
+							: null,
+			},
+			documentsArr,
+			true,
+		);
 	}
 
 	async updateReferenceDetails(id: number, body: any, facilitatorUser: any) {
