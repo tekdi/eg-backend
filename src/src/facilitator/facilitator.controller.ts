@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	Delete,
 	Param,
 	Patch,
 	Post,
@@ -50,6 +51,16 @@ export class FacilitatorController {
 		@Res() response: any
 	) {
 		return this.facilitatorService.getFacilitatorsForOrientation(request, body, response);
+	}
+
+	@Delete('/experience/:id')
+	@UseGuards(new AuthGuard())
+	removeExperience(
+		@Param('id') id: string,
+		@Req() request: any,
+		@Res() response: any
+	) {
+	  return this.facilitatorService.removeExperience(+id, request, response);
 	}
 
 	@Patch(':id')

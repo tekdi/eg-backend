@@ -323,6 +323,7 @@ export class BeneficiariesService {
                 program_id
                 enrollment_number
                 status
+				type_of_enrollement
                 reason_for_status_update
                 documents_status
                 document_checklist
@@ -569,6 +570,10 @@ export class BeneficiariesService {
 					'last_standard_of_education',
 					'last_standard_of_education_year',
 					'reason_of_leaving_education',
+				],
+				program_beneficiaries: [
+					'learning_motivation',
+					'type_of_support_needed',
 				],
 			},
 			edit_education: {
@@ -842,7 +847,7 @@ export class BeneficiariesService {
 
 			case 'add_education': {
 				// Update Core beneficiaries table data
-				const userArr =
+				let userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.add_education
 						.core_beneficiaries;
 				let tableName = 'core_beneficiaries';
@@ -854,6 +859,22 @@ export class BeneficiariesService {
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id,
+					},
+					userArr,
+					update,
+				);
+
+				// Update educational data in program_beneficiaries table
+				userArr =
+				PAGE_WISE_UPDATE_TABLE_DETAILS.add_education.program_beneficiaries;
+				const programDetails = beneficiaryUser.program_beneficiaries;
+				tableName = 'program_beneficiaries';
+
+				await this.hasuraService.q(
+					tableName,
+					{
+						...req,
+						id: programDetails?.id ? programDetails.id : null,
 					},
 					userArr,
 					update,
@@ -1067,6 +1088,8 @@ export class BeneficiariesService {
             program_id
             updated_by
             documents_status
+            learning_motivation
+            type_of_support_needed
           }
           core_beneficiaries {
             career_aspiration
