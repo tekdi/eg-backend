@@ -382,14 +382,15 @@ export class FacilitatorService {
 				errorMessage: 'Invalid experience type!',
 			};
 		}
+		let experience_id = body.id;
 		if (
-			body.experience_id &&
+			experience_id &&
 			!facilitatorUser.experience.find(
-				(data) => data.id == body.experience_id,
+				(data) => data.id == experience_id,
 			)
 		) {
 			return {
-				errorMessage: "Invalid 'experience_id'!",
+				errorMessage: "Invalid experience id!",
 			};
 		}
 		// Update experience table data
@@ -408,12 +409,12 @@ export class FacilitatorService {
 		let experienceInfo;
 		if (keyExist.length) {
 			const tableName = 'experience';
-			// If body has 'experience_id' field, then update. Otherwise create a new record.
+			// If 'experience_id' has any value, then update. Otherwise create a new record.
 			experienceInfo = await this.hasuraService.q(
 				tableName,
 				{
 					...body,
-					id: body.experience_id ? body.experience_id : null,
+					id: experience_id ? experience_id : null,
 					user_id: id,
 				},
 				experienceArr,
@@ -436,17 +437,16 @@ export class FacilitatorService {
 		if (keyExist.length) {
 			let tableName = 'references';
 			let referenceDetails;
-			if (body.experience_id) {
+			if (experience_id) {
 				referenceDetails = facilitatorUser.experience.find(
-					(data) => data.id == body.experience_id,
+					(data) => data.id == experience_id,
 				)?.reference[0];
 			}
-			// If body has document_id field, then update else create
 			referenceInfo = await this.hasuraService.q(
 				tableName,
 				{
 					...body.reference_details,
-					document_id: body.document_id,
+					document_id: body.reference_details?.document_id,
 					id: referenceDetails?.id ? referenceDetails?.id : null,
 
 					// If 'experienceInfo' has id then a new experience record has created
@@ -462,13 +462,13 @@ export class FacilitatorService {
 		}
 
 		// Update Documents table data
-		if (referenceInfo?.id && body?.document_id) {
+		if (referenceInfo?.id && body?.reference_details?.document_id) {
 			const documentsArr = ['context', 'context_id'];
 			let tableName = 'documents';
 			await this.hasuraService.q(
 				tableName,
 				{
-					id: body?.document_id ?? null,
+					id: body?.reference_details?.document_id ?? null,
 					context: 'references',
 					context_id: referenceInfo?.id,
 				},
@@ -543,7 +543,7 @@ export class FacilitatorService {
 			await this.hasuraService.q(
 				tableName,
 				{
-					qualification_ids: JSON.stringify(body.qualification_ids),
+					qualification_ids: JSON.stringify(body.qualification_ids).replace(/"/g, '\\"'),
 					id: programDetails.id,
 				},
 				programFacilitatorsArr,

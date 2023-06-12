@@ -715,6 +715,9 @@ export class UserService {
         ),
       };
     }
+
+    mappedResponse.program_faciltators.qualification_ids = mappedResponse.program_faciltators.qualification_ids.replace(/\"/g, '');
+
     if (resp) {
       console.log('if');
       return resp.status(200).send({
