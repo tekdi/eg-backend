@@ -1214,7 +1214,7 @@ export class BeneficiariesService {
             documents_status
             learning_motivation
             type_of_support_needed
-			learning_level
+            learning_level
           }
             core_beneficiaries {
             career_aspiration
