@@ -216,5 +216,11 @@
     { "title": "REACTIVATE_REASONS_ISSUE_RESOLVED", "value": "issue_resolved" },
     { "title": "REACTIVATE_REASONS_CHANGED_MIND", "value": "changed_mind" },
     { "title": "REACTIVATE_REASONS_OTHER", "value": "other" }
+  ],
+  "BENEFICIARY_LEARNING_LEVEL": [
+    { "title": "NO_EDUCATION", "value": "no_education" },
+    { "title": "FOUNDATIONAL_FNL", "value": "foundational_fnl" },
+    { "title": "INTERMEDIATORY", "value": "intermediatory" },
+    { "title": "EXPERT", "value": "expert" }
   ]
 }
