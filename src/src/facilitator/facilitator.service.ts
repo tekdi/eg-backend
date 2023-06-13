@@ -442,7 +442,9 @@ export class FacilitatorService {
 					(data) => data.id == experience_id,
 				)?.reference;
 
-				await this.s3Service.deletePhoto(referenceDetails.document_reference.name);
+				if (referenceDetails.document_reference?.name) {
+					await this.s3Service.deletePhoto(referenceDetails.document_reference.name);
+				}
 				
 				await this.hasuraService.delete(
 					'documents',
@@ -531,7 +533,9 @@ export class FacilitatorService {
 		let qualificationDetails = facilitatorUser.qualifications;
 
 		if (qualificationDetails.id) {
-			await this.s3Service.deletePhoto(qualificationDetails.document_reference.name);
+			if (qualificationDetails.document_reference?.name) {
+				await this.s3Service.deletePhoto(qualificationDetails.document_reference.name);
+			}
 				
 			await this.hasuraService.delete(
 				'documents',
