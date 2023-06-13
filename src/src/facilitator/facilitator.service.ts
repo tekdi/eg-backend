@@ -470,9 +470,9 @@ export class FacilitatorService {
 					id: referenceDetails?.id ? referenceDetails?.id : null,
 
 					// If 'experienceInfo' has id then a new experience record has created
-					...(experienceInfo?.id && { context: 'experience' }),
-					...(experienceInfo?.id && {
-						context_id: experienceInfo.id,
+					...((experienceInfo?.id || !referenceDetails) && { context: 'experience' }),
+					...((experienceInfo?.id || !referenceDetails) && {
+						context_id: experienceInfo.id || experience_id,
 					}),
 				},
 				referencesArr,
@@ -490,7 +490,7 @@ export class FacilitatorService {
 				{
 					id: body?.reference_details?.document_id ?? null,
 					context: 'references',
-					context_id: referenceInfo?.id ? referenceInfo?.id : referenceDetails.id ? referenceDetails.id : null,
+					context_id: referenceInfo?.id ? referenceInfo?.id : referenceDetails?.id ? referenceDetails?.id : null,
 				},
 				documentsArr,
 				true,
