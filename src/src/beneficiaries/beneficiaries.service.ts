@@ -364,9 +364,9 @@ export class BeneficiariesService {
                 facilitator_id
                 created_by
                 beneficiaries_found_at
-				type_of_support_needed
-				learning_motivation
-				learning_level
+                type_of_support_needed
+                learning_motivation
+                learning_level
               }
               core_beneficiaries {
                 career_aspiration
