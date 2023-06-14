@@ -471,7 +471,11 @@ export class FacilitatorService {
 					tableName,
 					{
 						...body.reference_details,
-						document_id: body.reference_details?.document_id,
+						...(
+							(!isNaN(parseInt(body.reference_details?.document_id)))
+							&&
+							{ document_id: body.reference_details?.document_id }
+						),
 						id: referenceDetails?.id ? referenceDetails?.id : null,
 	
 						// If 'experienceInfo' has id then a new experience record has created
