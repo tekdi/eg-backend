@@ -151,30 +151,49 @@ export class BeneficiariesService {
                         created_at: ${sortType}
                       }
                     ) {
-                        id
-                        first_name
-                        last_name
-                        dob
-                        aadhar_token
-                        address
-                        district_id
-                         email_id
-                        block_id
-                        block_village_id
-                        created_by
-                        gender
-                        lat
-                        state
-                        grampanchayat
-                          village
-                          block
-                          district
-                        long
-                        mobile
-                        password
-                        state_id
-                        updated_by
-                        profile_url
+                        aadhaar_verification_mode
+						aadhar_no
+						aadhar_token
+						aadhar_verified
+						address
+						address_line_1
+						address_line_2
+						alternative_mobile_number
+						block
+						block_id
+						block_village_id
+						created_at
+						created_by
+						district
+						district_id
+						dob
+						duplicate_reason
+						email_id
+						email_verified
+						first_name
+						gender
+						grampanchayat
+						id
+						is_duplicate
+						keycloak_id
+						last_name
+						lat
+						long
+						middle_name
+						mobile
+						mobile_no_verified
+						password
+						pincode
+						profile_photo_1
+						profile_photo_2
+						profile_photo_3
+						profile_url
+						state
+						state_id
+						updated_at
+						updated_by
+						village
+						username
                         program_beneficiaries{
                         id
                         enrollment_status
@@ -194,6 +213,19 @@ export class BeneficiariesService {
                         facilitator_id
                         created_by
                         beneficiaries_found_at
+						document {
+							context
+							context_id
+							created_by
+							document_sub_type
+							doument_type
+							id
+							name
+							path
+							provider
+							updated_by
+							user_id
+						  }
                           }
                           core_beneficiaries {
                         career_aspiration
@@ -283,36 +315,49 @@ export class BeneficiariesService {
 		var data = {
 			query: `query searchById {
             users_by_pk(id: ${id}) {
-              id
-              first_name
-              middle_name
-              last_name
-              dob
-              mobile
-            grampanchayat
-              village
-              block
-              district
-              state
-              state_id
-              aadhar_no
-              aadhar_token
-              aadhar_verified
-              address
-              address_line_1
-              address_line_2
-              alternative_mobile_number
-              block
-              profile_url
-              block_id
-              district_id
-              email_id
-              gender
-              lat
-              long
-              block_village_id
-              is_duplicate
-              duplicate_reason
+				aadhaar_verification_mode
+				aadhar_no
+				aadhar_token
+				aadhar_verified
+				address
+				address_line_1
+				address_line_2
+				alternative_mobile_number
+				block
+				block_id
+				block_village_id
+				created_at
+				created_by
+				district
+				district_id
+				dob
+				duplicate_reason
+				email_id
+				email_verified
+				first_name
+				gender
+				grampanchayat
+				id
+				is_duplicate
+				keycloak_id
+				last_name
+				lat
+				long
+				middle_name
+				mobile
+				mobile_no_verified
+				password
+				pincode
+				profile_photo_1
+				profile_photo_2
+				profile_photo_3
+				profile_url
+				state
+				state_id
+				updated_at
+				updated_by
+				village
+				username
               program_beneficiaries {
                 id
                 enrollment_status
@@ -332,6 +377,22 @@ export class BeneficiariesService {
                 facilitator_id
                 created_by
                 beneficiaries_found_at
+				document {
+					context
+					context_id
+					created_by
+					document_sub_type
+					doument_type
+					id
+					name
+					path
+					provider
+					updated_by
+					user_id
+				  }
+                type_of_support_needed
+                learning_motivation
+                learning_level
               }
               core_beneficiaries {
                 career_aspiration
@@ -526,6 +587,7 @@ export class BeneficiariesService {
 				users: [
 					'lat',
 					'long',
+					'address',
 					'address_line_1',
 					'address_line_2',
 					'state',
@@ -569,20 +631,32 @@ export class BeneficiariesService {
 					'type_of_learner',
 					'last_standard_of_education',
 					'last_standard_of_education_year',
+					'previous_school_type',
 					'reason_of_leaving_education',
 				],
+				program_beneficiaries: ['learning_level'],
+			},
+			edit_education: {
+				core_beneficiaries: [
+					'user_id',
+					'type_of_learner',
+					'last_standard_of_education',
+					'last_standard_of_education_year',
+					'previous_school_type',
+					'reason_of_leaving_education',
+				],
+				program_beneficiaries: ['learning_level'],
+			},
+			add_other_details: {
 				program_beneficiaries: [
 					'learning_motivation',
 					'type_of_support_needed',
 				],
 			},
-			edit_education: {
-				core_beneficiaries: [
-					'user_id',
-					'last_standard_of_education',
-					'last_standard_of_education_year',
-					'previous_school_type',
-					'reason_of_leaving_education',
+			edit_other_details: {
+				program_beneficiaries: [
+					'learning_motivation',
+					'type_of_support_needed',
 				],
 			},
 			edit_further_studies: {
@@ -654,8 +728,8 @@ export class BeneficiariesService {
 					});
 
 				if (
-					hasuraResponse?.data?.users_aggregate?.aggregate.count > 0
-					&&
+					hasuraResponse?.data?.users_aggregate?.aggregate.count >
+						0 &&
 					req.is_duplicate !== 'yes'
 				) {
 					return response.status(400).json({
@@ -665,8 +739,8 @@ export class BeneficiariesService {
 				}
 
 				if (
-					hasuraResponse?.data?.users_aggregate?.aggregate.count <= 0
-					&&
+					hasuraResponse?.data?.users_aggregate?.aggregate.count <=
+						0 &&
 					req.is_duplicate === 'yes'
 				) {
 					return response.status(400).json({
@@ -866,7 +940,8 @@ export class BeneficiariesService {
 
 				// Update educational data in program_beneficiaries table
 				userArr =
-				PAGE_WISE_UPDATE_TABLE_DETAILS.add_education.program_beneficiaries;
+					PAGE_WISE_UPDATE_TABLE_DETAILS.add_education
+						.program_beneficiaries;
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				tableName = 'program_beneficiaries';
 
@@ -884,7 +959,7 @@ export class BeneficiariesService {
 
 			case 'edit_education': {
 				// Update Core beneficiaries table data
-				const userArr =
+				let userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_education
 						.core_beneficiaries;
 				let tableName = 'core_beneficiaries';
@@ -896,6 +971,64 @@ export class BeneficiariesService {
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
 						user_id,
+					},
+					userArr,
+					update,
+				);
+
+				// Update educational data in program_beneficiaries table
+				userArr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.add_education
+						.program_beneficiaries;
+				const programDetails = beneficiaryUser.program_beneficiaries;
+				tableName = 'program_beneficiaries';
+
+				await this.hasuraService.q(
+					tableName,
+					{
+						...req,
+						id: programDetails?.id ? programDetails.id : null,
+					},
+					userArr,
+					update,
+				);
+
+				break;
+			}
+
+			case 'add_other_details': {
+				// Update other details in program_beneficiaries table
+				let userArr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.add_other_details
+						.program_beneficiaries;
+				const programDetails = beneficiaryUser.program_beneficiaries;
+				let tableName = 'program_beneficiaries';
+
+				await this.hasuraService.q(
+					tableName,
+					{
+						...req,
+						id: programDetails?.id ? programDetails.id : null,
+					},
+					userArr,
+					update,
+				);
+				break;
+			}
+
+			case 'edit_other_details': {
+				// Update other details in program_beneficiaries table
+				let userArr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.add_other_details
+						.program_beneficiaries;
+				const programDetails = beneficiaryUser.program_beneficiaries;
+				let tableName = 'program_beneficiaries';
+
+				await this.hasuraService.q(
+					tableName,
+					{
+						...req,
+						id: programDetails?.id ? programDetails.id : null,
 					},
 					userArr,
 					update,
@@ -1041,38 +1174,51 @@ export class BeneficiariesService {
 	async userById(id: any) {
 		var data = {
 			query: `query searchById {
-        users_by_pk(id: ${id}) {
-          id
-          first_name
-          middle_name
-          last_name
-          dob
-          mobile
-          grampanchayat
-          village
-          block
-          district
-          state
-          state_id
-          aadhar_no
-          aadhar_token
-          aadhar_verified
-          address
-          address_line_1
-          address_line_2
-          alternative_mobile_number
-          block
-          profile_url
-          block_id
-          district_id
-          email_id
-          gender
-          lat
-          long
-          block_village_id
-          is_duplicate
-          duplicate_reason
-          program_beneficiaries {
+            users_by_pk(id: ${id}) {
+			aadhaar_verification_mode
+			aadhar_no
+			aadhar_token
+			aadhar_verified
+			address
+			address_line_1
+			address_line_2
+			alternative_mobile_number
+			block
+			block_id
+			block_village_id
+			created_at
+			created_by
+			district
+			district_id
+			dob
+			duplicate_reason
+			email_id
+			email_verified
+			first_name
+			gender
+			grampanchayat
+			id
+			is_duplicate
+			keycloak_id
+			last_name
+			lat
+			long
+			middle_name
+			mobile
+			mobile_no_verified
+			password
+			pincode
+			profile_photo_1
+			profile_photo_2
+			profile_photo_3
+			profile_url
+			state
+			state_id
+			updated_at
+			updated_by
+			village
+			username
+            program_beneficiaries {
             beneficiaries_found_at
             created_by
             facilitator_id
@@ -1090,8 +1236,22 @@ export class BeneficiariesService {
             documents_status
             learning_motivation
             type_of_support_needed
+			learning_level
+			document {
+				context
+				context_id
+				created_by
+				document_sub_type
+				doument_type
+				id
+				name
+				path
+				provider
+				updated_by
+				user_id
+			  }
           }
-          core_beneficiaries {
+            core_beneficiaries {
             career_aspiration
             updated_by
             type_of_learner
