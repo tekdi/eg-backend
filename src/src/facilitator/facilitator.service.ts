@@ -301,6 +301,14 @@ export class FacilitatorService {
 		if (keyExist.length) {
 			const tableName = 'users';
 			body.id = id;
+			if (typeof body.mobile === 'string' && !body.mobile.trim()) {
+				body.mobile = null;
+			}
+			if (typeof body.alternative_mobile_number === 'string' && !body.alternative_mobile_number.trim()) {
+				body.alternative_mobile_number = null;
+			}
+			body.mobile = body.mobile;
+			body.alternative_mobile_number = body.alternative_mobile_number;
 			await this.hasuraService.q(tableName, body, userArr, true);
 		}
 
