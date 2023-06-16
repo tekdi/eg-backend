@@ -22,6 +22,6 @@ export class RegisterDTO {
 
 	@IsString()
 	@IsNotEmpty()
-	@Matches(/^(19|20)\d\d[-/.](0[1-9]|1[012])[-/.](0[1-9]|[12][0-9]|3[01])$/)
+	@Matches(/^(19|20)\d\d[-/.](0[1-9]|1[012])[-/.](0[1-9]|[12]\d|3[01])$/)
 	dob: string;
 }
