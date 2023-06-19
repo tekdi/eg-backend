@@ -294,6 +294,61 @@ export class FacilitatorService {
 		}
 	}
 
+	async updateAadhaarDetails(id: number, body: any) {
+		const aadhaar_no = body.aadhar_no;
+
+		if (typeof aadhaar_no !== 'string' || !aadhaar_no.trim() || aadhaar_no.length !== 12) {
+			return {
+				success: false,
+				statusCode: 400,
+				message: 'Invalid Aadhaar number!'
+			};
+		}
+
+		// Check if aadhaar already exists or not
+		let hasuraQuery = `
+			query MyQuery {
+				users_aggregate (
+					where: {
+						_and: [
+							{ id: { _neq: ${id} } },
+							{ aadhar_no: { _eq: "${aadhaar_no}" } }
+						]
+					}
+				) {
+					aggregate {
+						count
+					}
+				}
+			}
+		`;
+
+		const data = {
+			query: hasuraQuery,
+		};
+
+		let hasuraResponse = await this.hasuraService.getData(data);
+
+		const existedUsers = hasuraResponse?.data?.users_aggregate?.aggregate?.count;
+
+		if (existedUsers) {
+			return {
+				success: false,
+				statusCode: 400,
+				message: 'Aadhaar number already exists!'
+			};
+		}
+
+		// Update Users table data
+		const userArr = ['aadhar_no'];
+		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+		if (keyExist.length) {
+			const tableName = 'users';
+			body.id = id;
+			await this.hasuraService.q(tableName, body, userArr, true);
+		}
+	}
+
 	async updateContactDetails(id: number, body: any, facilitatorUser: any) {
 		// Update Users table data
 		const userArr = ['mobile', 'alternative_mobile_number', 'email_id'];
@@ -746,6 +801,16 @@ export class FacilitatorService {
 						userArr,
 						true,
 					);
+				}
+				break;
+			}
+			case 'aadhaar_details': {
+				const result = await this.updateAadhaarDetails(id, body);
+				if (result && !result.success) {
+					return response.status(result.statusCode).json({
+						success: result.success,
+						message: result.message,
+					});
 				}
 				break;
 			}
