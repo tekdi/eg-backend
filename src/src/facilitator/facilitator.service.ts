@@ -460,7 +460,10 @@ export class FacilitatorService {
 						(data) => data.id == experience_id,
 					)?.reference;
 
-					if (referenceDetails) {
+					if (
+							referenceDetails
+						&& 	referenceDetails.document_id !== body.reference_details?.document_id
+					) {
 						if (referenceDetails?.document_reference?.name) {
 							await this.s3Service.deletePhoto(
 								referenceDetails.document_reference.name,
@@ -500,7 +503,10 @@ export class FacilitatorService {
 			}
 
 			// Update Documents table data
-			if (body?.reference_details?.document_id) {
+			if (
+					(!referenceDetails && body?.reference_details?.document_id)
+				|| 	(body?.reference_details?.document_id && referenceDetails.document_id !== body.reference_details.document_id)
+			) {
 				const documentsArr = ['context', 'context_id'];
 				let tableName = 'documents';
 				await this.hasuraService.q(
@@ -562,7 +568,10 @@ export class FacilitatorService {
 		);
 		let qualificationDetails = facilitatorUser.qualifications;
 
-		if (qualificationDetails.id) {
+		if (
+				qualificationDetails.qualification_reference_document_id
+			&& 	qualificationDetails.qualification_reference_document_id !== body.qualification_reference_document_id
+		) {
 			if (qualificationDetails.document_reference?.name) {
 				await this.s3Service.deletePhoto(
 					qualificationDetails.document_reference.name,
@@ -615,23 +624,28 @@ export class FacilitatorService {
 			);
 		}
 
-		// Update documents table data
-		const documentsArr = ['context', 'context_id'];
-		let tableName = 'documents';
-		await this.hasuraService.q(
-			tableName,
-			{
-				id: body.qualification_reference_document_id ?? null,
-				context: 'qualifications',
-				context_id: qualificationDetails.id
-					? qualificationDetails.id
-					: newCreatedQualificationDetails.id
-					? newCreatedQualificationDetails.id
-					: null,
-			},
-			documentsArr,
-			true,
-		);
+		if (
+				(!qualificationDetails && body?.qualification_reference_document_id)
+			|| 	(body?.qualification_reference_document_id && qualificationDetails.qualification_reference_document_id !== body.qualification_reference_document_id)
+		) {
+			// Update documents table data
+			const documentsArr = ['context', 'context_id'];
+			let tableName = 'documents';
+			await this.hasuraService.q(
+				tableName,
+				{
+					id: body.qualification_reference_document_id ?? null,
+					context: 'qualifications',
+					context_id: qualificationDetails.id
+						? qualificationDetails.id
+						: newCreatedQualificationDetails.id
+						? newCreatedQualificationDetails.id
+						: null,
+				},
+				documentsArr,
+				true,
+			);
+		}
 	}
 
 	async updateReferenceDetails(id: number, body: any, facilitatorUser: any) {
