@@ -319,7 +319,7 @@ export class FacilitatorService {
 			'user_id',
 			'device_ownership',
 			'device_type',
-			'sourcing_channel'
+			'refreere'
 		];
 		keyExist = coreFacilitatorsArr.filter((e) =>
 			Object.keys(body).includes(e),
