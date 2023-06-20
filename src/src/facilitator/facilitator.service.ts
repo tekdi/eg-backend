@@ -297,7 +297,13 @@ export class FacilitatorService {
 	async updateAadhaarDetails(id: number, body: any) {
 		const aadhaar_no = body.aadhar_no;
 
-		if (typeof aadhaar_no !== 'string' || !aadhaar_no.trim() || aadhaar_no.length !== 12) {
+		if (
+			typeof aadhaar_no !== 'string'
+			|| !aadhaar_no.trim()
+			|| aadhaar_no.length !== 12
+			|| aadhaar_no.startsWith('1')
+			|| aadhaar_no.startsWith('0')
+		) {
 			return {
 				success: false,
 				statusCode: 400,
