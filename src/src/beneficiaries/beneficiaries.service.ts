@@ -368,9 +368,41 @@ export class BeneficiariesService {
 				mobile_no_verified
 				password
 				pincode
-				profile_photo_1
-				profile_photo_2
-				profile_photo_3
+				aadhaar_front: documents(where: {document_sub_type: {_eq: "aadhaar_front"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+					}
+				aadhaar_back: documents(where: {document_sub_type: {_eq: "aadhaar_back"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+					}
+				profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+					}
+					profile_photo_2: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+					}
+					profile_photo_3: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+					}
 				profile_url
 				state
 				state_id
@@ -500,6 +532,20 @@ export class BeneficiariesService {
 			});
 		} else {
 			result.program_beneficiaries = result?.program_beneficiaries?.[0];
+			//response mapping convert array to object
+			for (const key of [
+				'profile_photo_1',
+				'profile_photo_2',
+				'profile_photo_3',
+				'aadhaar_front',
+				'aadhaar_back',
+			]) {
+				if (result?.[key] && result?.[key][0]) {
+					result[key] = result[key][0];
+				} else {
+					result = { ...result, [key]: {} };
+				}
+			}
 			return resp.status(200).json({
 				success: true,
 				message: 'Benificiaries found successfully!',
