@@ -112,7 +112,17 @@ export class BeneficiariesService {
 		}
 		let query = '';
 		if (status && status !== '') {
-			query = `{program_beneficiaries:{status:{_eq:${status}}}}`;
+			if (status === 'identified') {
+				query = `{
+					_or: [
+						{ program_beneficiaries: { status: { _eq: "identified" } } },
+						{ program_beneficiaries: { status: { _is_null: true } } },
+						{ program_beneficiaries: { status: { _eq: "" } } },
+					]
+				}`;
+			} else {
+				query = `{program_beneficiaries:{status:{_eq:${status}}}}`;
+			}
 		}
 		let search = '';
 
