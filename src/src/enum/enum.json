@@ -158,7 +158,7 @@
 	],
 	"FACILITATOR_MARITAL_STATUS": [
 		{ "title": "FACILITATOR_MARITAL_STATUS_SINGLE", "value": "single" },
-
+		{ "title": "FACILITATOR_MARITAL_STATUS_MARRIED", "value": "married" },
 		{ "title": "FACILITATOR_MARITAL_STATUS_DIVORCED", "value": "divorced" },
 		{
 			"title": "FACILITATOR_MARITAL_STATUS_SEPARATED",
