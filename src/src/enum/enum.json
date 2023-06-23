@@ -158,7 +158,7 @@
 	],
 	"FACILITATOR_MARITAL_STATUS": [
 		{ "title": "FACILITATOR_MARITAL_STATUS_SINGLE", "value": "single" },
-		{ "title": "FACILITATOR_MARITAL_STATUS_MARRIED", "value": "married" },
+
 		{ "title": "FACILITATOR_MARITAL_STATUS_DIVORCED", "value": "divorced" },
 		{
 			"title": "FACILITATOR_MARITAL_STATUS_SEPARATED",
@@ -169,6 +169,20 @@
 	"FACILITATOR_AVAILABILITY": [
 		{ "title": "FACILITATOR_PART_TIME", "value": "part_time" },
 		{ "title": "FACILITATOR_FULL_TIME", "value": "full_time" }
+	],
+	"FACILITATOR_EVENT_TYPE": [
+		{
+			"title": "FACILITATOR_EVENT_TYPE_PRERAK_ORIENTATION",
+			"value": "prerak_orientation"
+		},
+		{
+			"title": "FACILITATOR_EVENT_TYPE_PRERAK_FLN_TRAINING",
+			"value": "prerak_fln_training"
+		},
+		{
+			"title": "FACILITATOR_EVENT_TYPE_PRERAK_CAMP_EXECUTION_TRAINING",
+			"value": "prerak_camp_execution_training"
+		}
 	],
 	"FACILITATOR_REASONS_FOR_QUIT": [
 		{
