@@ -148,24 +148,15 @@
 		{ "title": "FACILITATOR_SOCIAL_STATUS_OPEN", "value": "open" },
 		{ "title": "FACILITATOR_SOCIAL_STATUS_OTHER", "value": "other" }
 	],
-	"BENEFICIARY_MARITAL_STATUS": [
-		{ "title": "BENEFICIARY_MARITAL_STATUS_MARRIED", "value": "married" },
+	"MARITAL_STATUS": [
+		{ "title": "MARITAL_STATUS_MARRIED", "value": "married" },
 		{
-			"title": "BENEFICIARY_MARITAL_STATUS_UNMARRIED",
+			"title": "MARITAL_STATUS_UNMARRIED",
 			"value": "unmarried"
 		},
-		{ "title": "BENEFICIARY_MARITAL_STATUS_SINGLE", "value": "single" }
+		{ "title": "MARITAL_STATUS_SINGLE", "value": "single" }
 	],
-	"FACILITATOR_MARITAL_STATUS": [
-		{ "title": "FACILITATOR_MARITAL_STATUS_SINGLE", "value": "single" },
-		{ "title": "FACILITATOR_MARITAL_STATUS_MARRIED", "value": "married" },
-		{ "title": "FACILITATOR_MARITAL_STATUS_DIVORCED", "value": "divorced" },
-		{
-			"title": "FACILITATOR_MARITAL_STATUS_SEPARATED",
-			"value": "separated"
-		},
-		{ "title": "FACILITATOR_MARITAL_STATUS_OTHER", "value": "other" }
-	],
+
 	"FACILITATOR_AVAILABILITY": [
 		{ "title": "FACILITATOR_PART_TIME", "value": "part_time" },
 		{ "title": "FACILITATOR_FULL_TIME", "value": "full_time" }
