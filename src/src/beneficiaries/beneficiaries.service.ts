@@ -201,9 +201,27 @@ export class BeneficiariesService {
 						mobile_no_verified
 						password
 						pincode
-						profile_photo_1
-						profile_photo_2
-						profile_photo_3
+						profile_photo_1: documents (where: { document_sub_type: {_eq: "profile_photo_1"}}) {
+							id
+							name
+							doument_type
+							document_sub_type
+							path
+						}
+						profile_photo_2: documents (where: { document_sub_type: {_eq: "profile_photo_2"}}) {
+							id
+							name
+							doument_type
+							document_sub_type
+							path
+						}
+						profile_photo_3: documents (where: { document_sub_type: {_eq: "profile_photo_3"}}) {
+							id
+							name
+							doument_type
+							document_sub_type
+							path
+						}
 						profile_url
 						state
 						state_id
@@ -1098,6 +1116,19 @@ export class BeneficiariesService {
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 
+				req.learning_motivation = req.learning_motivation.length
+					? JSON.stringify(req.learning_motivation).replace(
+							/"/g,
+							'\\"',
+					  )
+					: null;
+				req.type_of_support_needed = req.type_of_support_needed.length
+					? JSON.stringify(req.type_of_support_needed).replace(
+							/"/g,
+							'\\"',
+					  )
+					: null;
+
 				await this.hasuraService.q(
 					tableName,
 					{
@@ -1117,6 +1148,19 @@ export class BeneficiariesService {
 						.program_beneficiaries;
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
+
+				req.learning_motivation = req.learning_motivation.length
+					? JSON.stringify(req.learning_motivation).replace(
+							/"/g,
+							'\\"',
+					  )
+					: null;
+				req.type_of_support_needed = req.type_of_support_needed.length
+					? JSON.stringify(req.type_of_support_needed).replace(
+							/"/g,
+							'\\"',
+					  )
+					: null;
 
 				await this.hasuraService.q(
 					tableName,
@@ -1155,6 +1199,19 @@ export class BeneficiariesService {
 				);
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				//update further_studies in program_beneficiaries table
+				req.aspiration_mapping.learning_motivation = req
+					.aspiration_mapping.learning_motivation.length
+					? JSON.stringify(
+							req.aspiration_mapping.learning_motivation,
+					  ).replace(/"/g, '\\"')
+					: null;
+				req.aspiration_mapping.type_of_support_needed = req
+					.aspiration_mapping.type_of_support_needed.length
+					? JSON.stringify(
+							req.aspiration_mapping.type_of_support_needed,
+					  ).replace(/"/g, '\\"')
+					: null;
+
 				await this.hasuraService.q(
 					'program_beneficiaries',
 					{
