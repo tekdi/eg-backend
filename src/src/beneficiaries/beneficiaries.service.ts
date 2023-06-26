@@ -772,6 +772,22 @@ export class BeneficiariesService {
 					'facilitator_id',
 					'academic_year_id',
 					'payment_receipt_document_id',
+					'enrollment_date',
+					'enrollment_first_name',
+					'enrollment_middle_name',
+					'enrollment_last_name',
+					'enrollment_dob',
+					'enrollment_aadhaar_no',
+				],
+			},
+			edit_enrollement_details: {
+				program_beneficiaries: [
+					'enrollment_date',
+					'enrollment_first_name',
+					'enrollment_middle_name',
+					'enrollment_last_name',
+					'enrollment_dob',
+					'enrollment_aadhaar_no',
 				],
 			},
 			//update document status
@@ -1220,6 +1236,12 @@ export class BeneficiariesService {
 					myRequest['enrolled_for_board'] = null;
 					myRequest['subjects'] = null;
 					myRequest['payment_receipt_document_id'] = null;
+					myRequest['enrollment_date'] = null;
+					myRequest['enrollment_first_name'] = null;
+					myRequest['enrollment_middle_name'] = null;
+					myRequest['enrollment_last_name'] = null;
+					myRequest['enrollment_dob'] = null;
+					myRequest['enrollment_aadhaar_no'] = null;
 					const data = {
 						query: `query searchById {
 							users_by_pk(id: ${req.id}) {
@@ -1282,6 +1304,59 @@ export class BeneficiariesService {
 				);
 				break;
 			}
+
+			case 'edit_enrollement_details': {
+				// Update enrollement data in Beneficiaries table
+				const userArr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
+						.program_beneficiaries;
+				// const programDetails = beneficiaryUser.program_beneficiaries.find(
+				//   (data) =>
+				//     req.id == data.user_id &&
+				//     req.academic_year_id == 1,
+				// );
+				const programDetails = beneficiaryUser.program_beneficiaries;
+				let tableName = 'program_beneficiaries';
+				let myRequest = {};
+				if (req.enrollment_status == 'enrolled') {
+					let messageArray = [];
+					let tempArray = [
+						'enrollment_date',
+						'enrollment_first_name',
+						'enrollment_middle_name',
+						'enrollment_last_name',
+						'enrollment_dob',
+						'enrollment_aadhaar_no',
+					];
+					for (let info of tempArray) {
+						if (req[info] === undefined || req[info] === '') {
+							messageArray.push(`please send ${info} `);
+						}
+					}
+					if (messageArray.length > 0) {
+						return response.status(400).send({
+							success: false,
+							message: messageArray,
+							data: {},
+						});
+					} else {
+						myRequest = {
+							...req,
+						};
+					}
+				}
+				await this.hasuraService.q(
+					tableName,
+					{
+						...myRequest,
+						id: programDetails?.id ? programDetails.id : null,
+					},
+					userArr,
+					update,
+				);
+				break;
+			}
+
 			case 'document_status': {
 				// Update Document status data in Beneficiaries table
 				const userArr =
@@ -1432,6 +1507,12 @@ export class BeneficiariesService {
             learning_motivation
             type_of_support_needed
 			learning_level
+			enrollment_date,
+			enrollment_first_name,
+			enrollment_middle_name,
+			enrollment_last_name,
+			enrollment_dob,
+			enrollment_aadhaar_no,
 			document {
 				context
 				context_id
