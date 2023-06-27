@@ -138,6 +138,7 @@ export class QueryGeneratorService {
 								'enrollment_middle_name',
 								'enrollment_last_name',
 								'enrollment_aadhaar_no',
+								'is_eligible',
 							].includes(e)
 						) {
 							strArr = [...strArr, `${e}:${item[e]}`];

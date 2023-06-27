@@ -263,12 +263,13 @@ export class BeneficiariesService {
                         facilitator_id
                         created_by
                         beneficiaries_found_at
-						enrollment_date,
-						enrollment_first_name,
-						enrollment_middle_name,
-						enrollment_last_name,
-						enrollment_dob,
-						enrollment_aadhaar_no,
+						enrollment_date
+						enrollment_first_name
+						enrollment_middle_name
+						enrollment_last_name
+						enrollment_dob
+						enrollment_aadhaar_no
+						is_eligible
 						document {
 							context
 							context_id
@@ -357,12 +358,9 @@ export class BeneficiariesService {
 							e?.['program_faciltators']?.[0],
 						['program_beneficiaries']:
 							e?.['program_beneficiaries']?.[0],
-						['profile_photo_1']:
-							e?.['profile_photo_1']?.[0] || {},
-						['profile_photo_2']:
-							e?.['profile_photo_2']?.[0] || {},
-						['profile_photo_3']:
-							e?.['profile_photo_3']?.[0] || {},
+						['profile_photo_1']: e?.['profile_photo_1']?.[0] || {},
+						['profile_photo_2']: e?.['profile_photo_2']?.[0] || {},
+						['profile_photo_3']: e?.['profile_photo_3']?.[0] || {},
 					})),
 					limit,
 					currentPage: page,
@@ -484,12 +482,13 @@ export class BeneficiariesService {
                 facilitator_id
                 created_by
                 beneficiaries_found_at
-				enrollment_date,
-				enrollment_first_name,
-				enrollment_middle_name,
-				enrollment_last_name,
-				enrollment_dob,
-				enrollment_aadhaar_no,
+				enrollment_date
+				enrollment_first_name
+				enrollment_middle_name
+				enrollment_last_name
+				enrollment_dob
+				enrollment_aadhaar_no
+				is_eligible
 				document {
 					context
 					context_id
@@ -814,6 +813,7 @@ export class BeneficiariesService {
 					'enrollment_last_name',
 					'enrollment_dob',
 					'enrollment_aadhaar_no',
+					'is_eligible',
 				],
 			},
 			edit_enrollement_details: {
@@ -823,6 +823,7 @@ export class BeneficiariesService {
 					'enrollment_last_name',
 					'enrollment_dob',
 					'enrollment_aadhaar_no',
+					'is_eligible',
 				],
 			},
 			//update document status
@@ -1317,6 +1318,7 @@ export class BeneficiariesService {
 					myRequest['enrollment_last_name'] = null;
 					myRequest['enrollment_dob'] = null;
 					myRequest['enrollment_aadhaar_no'] = null;
+					myRequest['is_eligible'] = null;
 					const data = {
 						query: `query searchById {
 							users_by_pk(id: ${req.id}) {
@@ -1397,10 +1399,9 @@ export class BeneficiariesService {
 					let messageArray = [];
 					let tempArray = [
 						'enrollment_first_name',
-						'enrollment_middle_name',
-						'enrollment_last_name',
 						'enrollment_dob',
 						'enrollment_aadhaar_no',
+						'is_eligible',
 					];
 					for (let info of tempArray) {
 						if (req[info] === undefined || req[info] === '') {
@@ -1416,6 +1417,12 @@ export class BeneficiariesService {
 					} else {
 						myRequest = {
 							...req,
+							...(req?.enrollment_middle_name == '' && {
+								enrollment_middle_name: null,
+							}),
+							...(req?.enrollment_last_name == '' && {
+								enrollment_last_name: null,
+							}),
 						};
 					}
 				}
@@ -1581,12 +1588,13 @@ export class BeneficiariesService {
             learning_motivation
             type_of_support_needed
 			learning_level
-			enrollment_date,
-			enrollment_first_name,
-			enrollment_middle_name,
-			enrollment_last_name,
-			enrollment_dob,
-			enrollment_aadhaar_no,
+			enrollment_date
+			enrollment_first_name
+			enrollment_middle_name
+			enrollment_last_name
+			enrollment_dob
+			enrollment_aadhaar_no
+			is_eligible
 			document {
 				context
 				context_id
