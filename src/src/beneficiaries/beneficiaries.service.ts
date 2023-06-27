@@ -1216,7 +1216,10 @@ export class BeneficiariesService {
 				const userArr2 =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_further_studies
 						.program_beneficiaries;
-				const convertToJsonStr = (arr) => arr.length ? JSON.stringify(arr).replace(/"/g, '\\"') : null;
+				const convertToJsonStr = (arr) =>
+					arr.length
+						? JSON.stringify(arr).replace(/"/g, '\\"')
+						: null;
 				req.career_aspiration = convertToJsonStr(req.career_aspiration);
 				let tableName = 'core_beneficiaries';
 				await this.hasuraService.q(
@@ -1235,8 +1238,13 @@ export class BeneficiariesService {
 				);
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				//update further_studies in program_beneficiaries table
-				req.aspiration_mapping.learning_motivation = convertToJsonStr(req.aspiration_mapping.learning_motivation);
-				req.aspiration_mapping.type_of_support_needed = convertToJsonStr(req.aspiration_mapping.type_of_support_needed);
+				req.aspiration_mapping.learning_motivation = convertToJsonStr(
+					req.aspiration_mapping.learning_motivation,
+				);
+				req.aspiration_mapping.type_of_support_needed =
+					convertToJsonStr(
+						req.aspiration_mapping.type_of_support_needed,
+					);
 
 				await this.hasuraService.q(
 					'program_beneficiaries',
