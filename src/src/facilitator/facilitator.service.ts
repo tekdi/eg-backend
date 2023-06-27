@@ -1213,13 +1213,13 @@ export class FacilitatorService {
           block
           village
           grampanchayat
-		  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
-			id
-			name
-			doument_type
-			document_sub_type
-			path
-		  }
+          profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+            id
+            name
+            doument_type
+            document_sub_type
+            path
+          }
           program_users {
             id
             organisation_id
