@@ -351,6 +351,12 @@ export class BeneficiariesService {
 							e?.['program_faciltators']?.[0],
 						['program_beneficiaries']:
 							e?.['program_beneficiaries']?.[0],
+						['profile_photo_1']:
+							e?.['profile_photo_1']?.[0] || {},
+						['profile_photo_2']:
+							e?.['profile_photo_2']?.[0] || {},
+						['profile_photo_3']:
+							e?.['profile_photo_3']?.[0] || {},
 					})),
 					limit,
 					currentPage: page,

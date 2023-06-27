@@ -1374,6 +1374,7 @@ export class FacilitatorService {
 		responseWithPagination = responseWithPagination.map((obj) => {
 			obj.program_faciltators = obj.program_faciltators?.[0] || {};
 			obj.qualifications = obj.qualifications?.[0] || {};
+			obj.profile_photo_1 = obj.profile_photo_1?.[0] || {};
 			return obj;
 		});
 
