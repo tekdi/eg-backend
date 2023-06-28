@@ -1299,10 +1299,13 @@ export class BeneficiariesService {
 					} else {
 						myRequest = {
 							...req,
-							subjects: JSON.stringify(req.subjects).replace(
-								/"/g,
-								'\\"',
-							),
+							subjects:
+								typeof req.subjects == 'object'
+									? JSON.stringify(req.subjects).replace(
+											/"/g,
+											'\\"',
+									  )
+									: null,
 						};
 					}
 				}
@@ -1671,7 +1674,7 @@ export class BeneficiariesService {
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users_by_pk;
 		if (result) {
-			result.program_beneficiaries = result.program_beneficiaries?.[0];
+			result.program_beneficiaries = result?.program_beneficiaries?.[0];
 		}
 		return {
 			message: 'User data fetched successfully.',
