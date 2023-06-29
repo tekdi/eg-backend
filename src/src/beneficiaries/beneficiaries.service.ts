@@ -569,7 +569,7 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
-		let result = response?.data?.users_by_pk;
+		let result:any =response?.data?.users_by_pk;
 		if (!result) {
 			return resp.status(404).send({
 				success: false,
@@ -578,7 +578,7 @@ export class BeneficiariesService {
 				data: {},
 			});
 		} else {
-			result.program_beneficiaries = result?.program_beneficiaries?.[0];
+			result.program_beneficiaries = result?.program_beneficiaries?.[0]??{};
 			//response mapping convert array to object
 			for (const key of [
 				'profile_photo_1',
@@ -1460,9 +1460,9 @@ export class BeneficiariesService {
 						...req,
 						id: programDetails?.id ? programDetails.id : null,
 						user_id: user_id,
-						documents_status: JSON.stringify(
-							req.documents_status,
-						).replace(/"/g, '\\"'),
+						documents_status: typeof req?.documents_status=="object" ?JSON.stringify(
+							req?.documents_status,
+						).replace(/"/g, '\\"'):null,
 					},
 					userArr,
 					update,
