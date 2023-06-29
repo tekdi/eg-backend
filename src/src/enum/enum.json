@@ -377,6 +377,10 @@
 		{
 			"title": "CAREER_ASPIRATION_SMALL_BUSINESS",
 			"value": "small_business"
+		},
+		{
+			"title": "CAREER_ASPIRATION_NAUKARI",
+			"value": "naukari"
 		}
 	],
 	"DOCUMENT_STATUS": [
