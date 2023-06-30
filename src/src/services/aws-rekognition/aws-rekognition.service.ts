@@ -43,9 +43,8 @@ export class AwsRekognitionService {
 				const createCollectionResponse = await this.rekognition
 					.createCollection({ CollectionId: collectionId })
 					.promise();
-				console.log(
-					`Created a new collection: ${createCollectionResponse}`,
-				);
+				console.log('Created a new collection:');
+				console.dir(createCollectionResponse, { depth: 99 });
 				response.new = true;
 				response.data = createCollectionResponse;
 			} else {
