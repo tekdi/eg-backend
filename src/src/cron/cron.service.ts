@@ -147,9 +147,44 @@ export class CronService {
 			`;
 		try {
 			return (await this.hasuraService.getData({ query: updateQuery }))
-				.update_users_by_pk;
+				.data.update_users_by_pk;
 		} catch (error) {
 			console.log('markUserAsIndexed:', error);
+			throw error;
+		}
+	}
+
+	async markAttendance(
+		attendaceId: number,
+		attendaceData: {
+			isAttendanceMarked: boolean;
+			isAttendanceVerified: boolean;
+		},
+	) {
+		let updateQuery = `
+				mutation MyMutation {
+					update_attendance_by_pk (
+						pk_columns: {
+							id: ${attendaceId}
+						},
+						_set: {
+							is_attendance_marked: ${attendaceData.isAttendanceMarked},
+							is_attendance_verified: ${attendaceData.isAttendanceVerified}
+						}
+					) {
+						id
+						is_attendance_marked
+						is_attendance_verified
+					}
+				}
+			`;
+		try {
+			return (
+				(await this.hasuraService.getData({ query: updateQuery })).data
+					.update_attendance_by_pk.id === attendaceId
+			);
+		} catch (error) {
+			console.log('markAttendance:', error);
 			throw error;
 		}
 	}
@@ -157,14 +192,25 @@ export class CronService {
 	async getAllUsersForAttendance() {
 		const query = `
 				query MyQuery {
-					users(where: {
+					users ( where: {
 						_and: [
-							{ attendances_aggregate: {count: {predicate: {_gt: 1}}} },
-							{ attendances: { is_attendance_marked: {_is_null: false} } }
+							{ fa_user_indexed: {_eq: true} },
+							{ attendances_aggregate: {count: {predicate: {_gt: 0}}} },
+							{
+								_or: [
+									{ attendances: { is_attendance_marked: {_is_null: true} } },
+									{ attendances: { is_attendance_marked: {_eq: false} } },
+								]
+							}
 						]
 					}) {
 						id
-						attendances(where: { is_attendance_marked: {_is_null: false} }) {
+						attendances ( where: {
+							_or: [
+								{  is_attendance_marked: {_is_null: true} },
+                  				{ is_attendance_marked: {_eq: false} },
+							]
+						}) {
 							id
 							is_attendance_marked
 						}
@@ -298,10 +344,50 @@ export class CronService {
 					faceIdsData: faFaceIds,
 				});
 			}
-
-			/*----------------------- Mark attendance -----------------------*/
 		} catch (error) {
 			// console.log();
+		}
+	}
+
+	@Cron(CronExpression.EVERY_10_SECONDS)
+	async markAttendanceCron() {
+		const collectionId = this.configService.get<string>(
+			'AWS_REKOGNITION_COLLECTION_ID',
+		);
+
+		// Step-1 Fetch all users whose attendace is not marked
+		const userForAttendance = await this.getAllUsersForAttendance();
+
+		// Step-2 Iterate thorugh them
+		for (const user of userForAttendance) {
+			const userId = String(user.id);
+			// Iterate through attendance documents and mark attendance
+			await Promise.allSettled(
+				user.attendances.map(async (attendanceObj) => {
+					if (attendanceObj.document.name) {
+						// Find Users matching with image
+						const matchedUser =
+							await this.awsRekognitionService.searchUsersByImage(
+								collectionId,
+								attendanceObj.document.name,
+							);
+						// Check if the user matched
+						const isMatchFound = matchedUser.some(
+							(obj) => obj.User.UserId === userId,
+						);
+						// Set attendance marked as true
+						// If match found then set attendance verified as true else false
+						let isAttendanceMarked = true;
+						let isAttendanceVerified = false;
+						if (isMatchFound) isAttendanceVerified = true;
+						// Update in attendance data in database
+						await this.markAttendance(attendanceObj.id, {
+							isAttendanceMarked,
+							isAttendanceVerified,
+						});
+					}
+				}),
+			);
 		}
 	}
 }

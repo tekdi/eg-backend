@@ -21,9 +21,7 @@ export class AwsRekognitionService {
 		this.secretAccessKey = this.configService.get<string>(
 			'AWS_REKOGNITION_SECRET_ACCESS_KEY',
 		);
-		this.bucketName = this.configService.get<string>(
-			'S3_BUCKET',
-		);
+		this.bucketName = this.configService.get<string>('S3_BUCKET');
 
 		AWS.config.update({
 			region: this.region,
@@ -113,17 +111,24 @@ export class AwsRekognitionService {
 		}
 	}
 
-	async disassociatePhotoFromUser(collectionId: string, userId: string, faceId: string) {
+	async disassociatePhotoFromUser(
+		collectionId: string,
+		userId: string,
+		faceId: string,
+	) {
 		try {
 			const disassociateFaceParams = {
 				CollectionId: collectionId,
 				UserId: userId,
-				FaceIds: [faceId]
+				FaceIds: [faceId],
 			};
-			const disassociateFaceResponse = await this.rekognition.disassociateFaces(disassociateFaceParams).promise();
+			const disassociateFaceResponse = await this.rekognition
+				.disassociateFaces(disassociateFaceParams)
+				.promise();
 			console.log('disassociateFaceResponse:', disassociateFaceResponse);
 			const response = { success: false };
-			if (disassociateFaceResponse.DisassociatedFaces.length === 1) response.success = true;
+			if (disassociateFaceResponse.DisassociatedFaces.length === 1)
+				response.success = true;
 			return response;
 		} catch (error) {
 			console.log('disassociatePhotoFromUser:', error);
@@ -135,12 +140,15 @@ export class AwsRekognitionService {
 		try {
 			const deleteFaceParams = {
 				CollectionId: collectionId,
-				FaceIds: [faceId]
+				FaceIds: [faceId],
 			};
-			const deleteFacesResponse = await this.rekognition.deleteFaces(deleteFaceParams).promise();
+			const deleteFacesResponse = await this.rekognition
+				.deleteFaces(deleteFaceParams)
+				.promise();
 			console.log('deleteFacesResponse:', deleteFacesResponse);
 			const response = { success: false };
-			if (deleteFacesResponse.DeletedFaces.length === 1) response.success = true;
+			if (deleteFacesResponse.DeletedFaces.length === 1)
+				response.success = true;
 			return response;
 		} catch (error) {
 			console.log('deletePhotoFromCollection:', error);
@@ -149,21 +157,23 @@ export class AwsRekognitionService {
 	}
 
 	async addFaceInCollection(collectionId: string, imageName: string) {
+		const response = { success: false, faceId: null };
 		try {
 			const addFaceParams = {
 				CollectionId: collectionId,
 				Image: {
 					S3Object: {
 						Bucket: this.bucketName,
-						Name: imageName
+						Name: imageName,
 					},
 				},
 				ExternalImageId: imageName,
-				MaxFaces: 1
+				MaxFaces: 1,
 			};
-			const addFaceResponse = await this.rekognition.indexFaces(addFaceParams).promise();
+			const addFaceResponse = await this.rekognition
+				.indexFaces(addFaceParams)
+				.promise();
 			console.log('addFaceResponse:', addFaceResponse);
-			const response = { success: false, faceId: null };
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
 				response.faceId = addFaceResponse.FaceRecords[0].Face.FaceId;
@@ -171,24 +181,60 @@ export class AwsRekognitionService {
 			return response;
 		} catch (error) {
 			console.log('addFaceInCollection:', error);
-			throw error;
+			if (error.statusCode === 400) {
+				response.success = false;
+				return response;
+			} else throw error;
 		}
 	}
 
-	async associateFaceToUser(collectionId: string, userId: string, faceId: string) {
+	async associateFaceToUser(
+		collectionId: string,
+		userId: string,
+		faceId: string,
+	) {
 		try {
 			const associateFacesParams = {
 				CollectionId: collectionId,
 				UserId: userId,
-				FaceIds: [faceId]
+				FaceIds: [faceId],
 			};
-			const associateFaceResponse = await this.rekognition.associateFaces(associateFacesParams).promise();
+			const associateFaceResponse = await this.rekognition
+				.associateFaces(associateFacesParams)
+				.promise();
 			console.log('associateFaceResponse:', associateFaceResponse);
 			const response = { success: false };
-			if (associateFaceResponse.AssociatedFaces.length === 1) response.success = true;
+			if (associateFaceResponse.AssociatedFaces.length === 1)
+				response.success = true;
 			return response;
 		} catch (error) {
 			console.log('associateFaceToUser:', error);
+			throw error;
+		}
+	}
+
+	async searchUsersByImage(collectionId: string, imageName: string) {
+		try {
+			const searchParams = {
+				CollectionId: collectionId,
+				Image: {
+					S3Object: {
+						Bucket: this.bucketName,
+						Name: imageName,
+					},
+				},
+				UserMatchThreshold: 80,
+				MaxUsers: 5,
+			};
+
+			const compareResponse = await this.rekognition
+				.searchUsersByImage(searchParams)
+				.promise();
+			console.log('Matching faces:');
+			console.dir(compareResponse, { depth: 99 });
+			return compareResponse.UserMatches;
+		} catch (error) {
+			console.log('searchUsersByImage:', error);
 			throw error;
 		}
 	}
