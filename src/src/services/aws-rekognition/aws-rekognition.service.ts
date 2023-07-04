@@ -172,7 +172,8 @@ export class AwsRekognitionService {
 			const addFaceResponse = await this.rekognition
 				.indexFaces(addFaceParams)
 				.promise();
-			console.log('addFaceResponse:', addFaceResponse);
+			console.log('addFaceResponse:');
+			console.dir(addFaceResponse, {depth: 99});
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
 				response.faceId = addFaceResponse.FaceRecords[0].Face.FaceId;
@@ -201,7 +202,8 @@ export class AwsRekognitionService {
 			const associateFaceResponse = await this.rekognition
 				.associateFaces(associateFacesParams)
 				.promise();
-			console.log('associateFaceResponse:', associateFaceResponse);
+			console.log('associateFaceResponse:');
+			console.dir(associateFaceResponse);
 			const response = { success: false };
 			if (associateFaceResponse.AssociatedFaces.length === 1)
 				response.success = true;
