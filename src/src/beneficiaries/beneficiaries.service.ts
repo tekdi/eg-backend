@@ -644,7 +644,7 @@ export class BeneficiariesService {
 		const audit = await this.userService.auditLogs(
 			req?.user_id,
 			header,
-			'program_beneficiaries',
+			'program_beneficiaries.status',
 			updatedUser?.program_beneficiaries?.id,
 			{
 				status: updatedUser?.program_beneficiaries?.status,

@@ -1053,7 +1053,7 @@ export class UserService {
 	async auditLogs(
 		userId,
 		header,
-		tableName,
+		context,
 		context_id,
 		oldData,
 		newData,
@@ -1079,7 +1079,7 @@ export class UserService {
 					new_data: JSON.stringify(storeNew).replace(/"/g, '\\"'),
 					old_data: JSON.stringify(storeOld).replace(/"/g, '\\"'),
 					user_id: userId,
-					context: tableName,
+					context: context,
 					context_id: context_id,
 					updated_by_user: user?.data?.id,
 				},
@@ -1101,7 +1101,7 @@ export class UserService {
 	public async getAuditDetails(context_id, context, req: any, resp: any) {
 		const data = {
 			query: `query MyQuery {
-				audit_logs(where: {_and:[{context_id: {_eq: ${context_id}}},{context:{_eq:${context}}}]}) {
+				audit_logs(where: {_and:[{context_id: {_eq: ${context_id}}},{context:{_eq:"${context}"}}]}) {
 				  context_id
 				  context
 				  created_at
