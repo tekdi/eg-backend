@@ -158,8 +158,9 @@ export class UserService {
 
 		let userData = null;
 		if (response?.data?.data?.users[0]) {
-			userData = (await this.userById(+response?.data?.data?.users[0]?.id))
-				.data;
+			userData = (
+				await this.userById(+response?.data?.data?.users[0]?.id)
+			).data;
 		}
 
 		return {
@@ -1046,6 +1047,94 @@ export class UserService {
 				message: 'User not exist',
 				isUserExist: false,
 			};
+		}
+	}
+
+	async auditLogs(
+		userId,
+		header,
+		tableName,
+		context_id,
+		oldData,
+		newData,
+		tempArray,
+	) {
+		const user = await this.ipUserInfo(header);
+		let storeOld = {};
+		let storeNew = {};
+
+		for (let data of tempArray) {
+			if (oldData[data] !== newData[data]) {
+				storeOld[data] = oldData[data];
+				storeNew[data] = newData[data];
+			}
+		}
+		if (
+			Object.keys(storeOld).length !== 0 &&
+			Object.keys(storeNew).length !== 0
+		) {
+			const res = await this.hasuraService.create(
+				'audit_logs',
+				{
+					new_data: JSON.stringify(storeNew).replace(/"/g, '\\"'),
+					old_data: JSON.stringify(storeOld).replace(/"/g, '\\"'),
+					user_id: userId,
+					context: tableName,
+					context_id: context_id,
+					updated_by_user: user?.data?.id,
+				},
+				[
+					'id',
+					'user_id',
+					'new_data',
+					'old_data',
+					'context',
+					'context_id',
+					'updated_at',
+					'created_at',
+					'updated_by_user',
+				],
+			);
+			return res;
+		}
+	}
+	public async getAuditDetails(context_id, context, req: any, resp: any) {
+		const data = {
+			query: `query MyQuery {
+				audit_logs(where: {_and:[{context_id: {_eq: ${context_id}}},{context:{_eq:${context}}}]}) {
+				  context_id
+				  context
+				  created_at
+				  id
+				  new_data
+				  old_data
+				  updated_at
+				  user_id
+				  updated_by_user
+				  user{
+					id
+					first_name
+					last_name
+					middle_name
+				  }
+				}
+			  }`,
+		};
+		const response = await this.hasuraServiceFromServices.getData(data);
+		let result: any = response?.data?.audit_logs;
+		if (!result) {
+			return resp.status(404).send({
+				success: false,
+				status: 'Not Found',
+				message: 'Audit Logs Not Found',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Audit Logs found successfully!',
+				data: { result: result },
+			});
 		}
 	}
 }

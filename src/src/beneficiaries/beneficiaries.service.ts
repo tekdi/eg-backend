@@ -12,6 +12,7 @@ import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
+import { log } from 'util';
 @Injectable()
 export class BeneficiariesService {
 	public url = process.env.HASURA_BASE_URL;
@@ -610,10 +611,11 @@ export class BeneficiariesService {
 		// return this.hasuraService.delete(this.table, { id: +id });
 	}
 
-	public async statusUpdate(req: any) {
+	public async statusUpdate(req: any, header: any) {
 		const { data: updatedUser } = await this.userById(req?.user_id);
 		if (
-			(req.status !== 'dropout' && req.status !== 'rejected') &&
+			req.status !== 'dropout' &&
+			req.status !== 'rejected' &&
 			updatedUser?.program_beneficiaries?.status == 'duplicated'
 		) {
 			return {
@@ -634,6 +636,28 @@ export class BeneficiariesService {
 			},
 			this.returnFields,
 			[...this.returnFields, 'id'],
+		);
+
+		const newdata = (
+			await this.userById(res?.program_beneficiaries?.user_id)
+		).data;
+		const audit = await this.userService.auditLogs(
+			req?.user_id,
+			header,
+			'program_beneficiaries',
+			updatedUser?.program_beneficiaries?.id,
+			{
+				status: updatedUser?.program_beneficiaries?.status,
+				reason_for_status_update:
+					updatedUser?.program_beneficiaries
+						?.reason_for_status_update,
+			},
+			{
+				status: newdata?.program_beneficiaries?.status,
+				reason_for_status_update:
+					newdata?.program_beneficiaries?.reason_for_status_update,
+			},
+			['status', 'reason_for_status_update'],
 		);
 		return {
 			status: 200,
@@ -1487,21 +1511,27 @@ export class BeneficiariesService {
 				const { data: updatedUser } = await this.userById(req.id);
 				if (updatedUser.program_beneficiaries.enrollment_number) {
 					if (req?.is_eligible === 'no') {
-						const status = await this.statusUpdate({
-							user_id: req.id,
-							status: 'ineligible_for_pragati_camp',
-							reason_for_status_update:
-								'The age of the learner should not be 14 to 29',
-						});
+						const status = await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: 'ineligible_for_pragati_camp',
+								reason_for_status_update:
+									'The age of the learner should not be 14 to 29',
+							},
+							request,
+						);
 					} else if (
 						updatedUser?.program_beneficiaries
 							?.enrollment_aadhaar_no === updatedUser?.aadhar_no
 					) {
-						const status = await this.statusUpdate({
-							user_id: req.id,
-							status: 'enrolled',
-							reason_for_status_update: 'enrolled',
-						});
+						const status = await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: 'enrolled',
+								reason_for_status_update: 'enrolled',
+							},
+							request,
+						);
 					}
 				}
 

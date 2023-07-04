@@ -162,4 +162,31 @@ export class UserController {
 	) {
 		return this.userService.getAadhaarDetails(id, response);
 	}
+
+	@Post('/audit')
+	public async auditLogs(@Body() body: any, @Req() request: Request) {
+		return this.userService.auditLogs(
+			1,
+			request,
+			'program_beneficiaries',
+			1,
+			body.oldData,
+			body.newData,
+			body.arrayFields,
+		);
+	}
+	@Get('/audit/:conext_id/:context')
+	getAuditDetails(
+		@Req() request: any,
+		@Res() response: Response,
+		@Param('conext_id') conext_id: string,
+		@Param('context') context: number,
+	) {
+		return this.userService.getAuditDetails(
+			conext_id,
+			context,
+			request,
+			response,
+		);
+	}
 }
