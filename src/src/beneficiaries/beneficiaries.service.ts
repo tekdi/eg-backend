@@ -611,17 +611,17 @@ export class BeneficiariesService {
 		// return this.hasuraService.delete(this.table, { id: +id });
 	}
 
-	public async statusUpdate(req: any, header: any) {
-		const { data: updatedUser } = await this.userById(req?.user_id);
+	public async statusUpdate(body: any, request: any) {
+		const { data: updatedUser } = await this.userById(body?.user_id);
 		if (
-			req.status !== 'dropout' &&
-			req.status !== 'rejected' &&
+			body.status !== 'dropout' &&
+			body.status !== 'rejected' &&
 			updatedUser?.program_beneficiaries?.status == 'duplicated'
 		) {
 			return {
 				status: 400,
 				success: false,
-				message: `You cant update status to ${req.status} `,
+				message: `You cant update status to ${body.status} `,
 				data: {},
 			};
 		}
@@ -629,10 +629,10 @@ export class BeneficiariesService {
 			updatedUser?.program_beneficiaries?.id,
 			'program_beneficiaries',
 			{
-				...req,
-				reason_for_status_update: req.reason_for_status_update?.trim()
-					? req.reason_for_status_update?.trim()
-					: req.status,
+				...body,
+				reason_for_status_update: body.reason_for_status_update?.trim()
+					? body.reason_for_status_update?.trim()
+					: body.status,
 			},
 			this.returnFields,
 			[...this.returnFields, 'id'],
@@ -641,9 +641,9 @@ export class BeneficiariesService {
 		const newdata = (
 			await this.userById(res?.program_beneficiaries?.user_id)
 		).data;
-		const audit = await this.userService.auditLogs(
-			req?.user_id,
-			header,
+		const audit = await this.userService.addAuditLog(
+			body?.user_id,
+			request,
 			'program_beneficiaries.status',
 			updatedUser?.program_beneficiaries?.id,
 			{

@@ -163,14 +163,14 @@ export class UserController {
 		return this.userService.getAadhaarDetails(id, response);
 	}
 
-	@Get('/audit/:context_id/:context')
-	getAuditDetails(
+	@Get('/audit/:context/:context_id')
+	getAuditLogs(
 		@Req() request: any,
 		@Res() response: Response,
 		@Param('context_id') context_id: string,
 		@Param('context') context: number,
 	) {
-		return this.userService.getAuditDetails(
+		return this.userService.getAuditLogs(
 			context_id,
 			context,
 			request,

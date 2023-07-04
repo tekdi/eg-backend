@@ -1050,16 +1050,16 @@ export class UserService {
 		}
 	}
 
-	async auditLogs(
+	async addAuditLog(
 		userId,
-		header,
+		request,
 		context,
 		context_id,
 		oldData,
 		newData,
 		tempArray,
 	) {
-		const user = await this.ipUserInfo(header);
+		const user = await this.ipUserInfo(request);
 		let storeOld = {};
 		let storeNew = {};
 
@@ -1098,7 +1098,8 @@ export class UserService {
 			return res;
 		}
 	}
-	public async getAuditDetails(context_id, context, req: any, resp: any) {
+
+	public async getAuditLogs(context_id, context, req: any, resp: any) {
 		const data = {
 			query: `query MyQuery {
 				audit_logs(where: {_and:[{context_id: {_eq: ${context_id}}},{context:{_eq:"${context}"}}]}) {
@@ -1125,7 +1126,6 @@ export class UserService {
 		if (!result) {
 			return resp.status(404).send({
 				success: false,
-				status: 'Not Found',
 				message: 'Audit Logs Not Found',
 				data: {},
 			});
