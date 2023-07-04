@@ -265,7 +265,7 @@ export class CronService implements OnModuleInit {
 	}
 
 	async onModuleInit() {
-		await this.markAttendanceCron();
+		await this.indexRekognitionUsers();
 	}
 
 	// @Cron(CronExpression.EVERY_10_SECONDS)
