@@ -117,6 +117,31 @@ export class UploadFileService {
 			const res = await this.hasuraService.postData(query);
 
 			if (res) {
+				// If profile_photo_1, profile_photo_2 or profile_photo_3 is added or updated,
+				// then set fa_user_indexed to false and fa_photos_indexed.profile_photo_i to false.
+				// if (['profile_photo_1', 'profile_photo_2', 'profile_photo_3'].includes(document_sub_type)) {
+				// 	// Fetch user details
+				// 	// let 
+				// 	let updateQuery = `
+				// 		mutation MyMutation {
+				// 			update_users_by_pk(
+				// 				pk_columns: {
+				// 					id: ${id}
+				// 				},
+				// 				_set: {
+				// 					fa_user_indexed: false,
+				// 					fa_photos_indexed: "${JSON.stringify(photosIndexingData).replace(/"/g, '\\"')}",
+				// 					fa_face_ids: "${JSON.stringify(faceIdsData).replace(/"/g, '\\"')}"
+				// 				}
+				// 			) {
+				// 				id
+				// 				fa_user_indexed
+				// 				fa_photos_indexed
+				// 				fa_face_ids
+				// 			}
+				// 		}
+				// 	`;
+				// }
 				return response.status(200).send({
 					success: true,
 					status: 'Success',

@@ -22,6 +22,7 @@ export class CronService implements OnModuleInit {
 					}
 				}
 			`;
+		console.log(await this.hasuraService.getData({ query }));
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
@@ -37,9 +38,16 @@ export class CronService implements OnModuleInit {
 				query MyQuery {
 					users(
 						where: {
-							_or: [
-								{ fa_user_indexed: { _is_null: true } },
-								{ fa_user_indexed: { _eq: false } }
+							_and: [
+								{
+									id: { _in: [893, 901] }
+								},
+								{
+									_or: [
+										{ fa_user_indexed: { _is_null: true } },
+										{ fa_user_indexed: { _eq: false } }
+									]
+								}
 							]
 						},
 						order_by: {created_at: asc_nulls_first}
@@ -121,7 +129,6 @@ export class CronService implements OnModuleInit {
 			}
 			return response;
 		} catch (error) {
-			console.log('disassociateAndDeleteFace:', error);
 			throw error;
 		}
 	}
@@ -153,7 +160,6 @@ export class CronService implements OnModuleInit {
 			}
 			return response;
 		} catch (error) {
-			console.log('addAndAssociatePhotoToUser:', error);
 			throw error;
 		}
 	}
@@ -230,6 +236,7 @@ export class CronService implements OnModuleInit {
 				query MyQuery {
 					users ( where: {
 						_and: [
+							{ id: { _in: [893, 901] } }
 							{ fa_user_indexed: {_eq: true} },
 							{ attendances_aggregate: {count: {predicate: {_gt: 0}}} },
 							{
@@ -288,10 +295,14 @@ export class CronService implements OnModuleInit {
 				)
 			).map((id) => parseInt(id));
 
+			// const usersIdsExistsInCollection = [];
+
 			// Step-3: Fetch all users from database which are not present in collection
 			const nonExistingUsers = await this.fetchAllUsersExceptIds(
 				usersIdsExistsInCollection,
 			);
+
+			// const nonExistingUsers = [{ id: 893 }, { id: 901 }];
 
 			// Step-4: Create users in collection
 			await this.awsRekognitionService.createUsersInCollection(
@@ -307,6 +318,7 @@ export class CronService implements OnModuleInit {
 
 			// Step-2: Iterate through them and index faces one by one
 			for (const user of usersToIndexFaces) {
+				console.log(user);
 				let userId = String(user.id);
 				// Step-A Fetch all faceIds of the user
 				await this.awsRekognitionService.getAllFacesOfUser(
@@ -410,52 +422,58 @@ export class CronService implements OnModuleInit {
 				}
 			}
 		} catch (error) {
-			// console.log();
+			console.log('Error occurred in indexRekognitionUsers.');
 		}
 	}
 
 	// @Cron(CronExpression.EVERY_10_SECONDS)
 	async markAttendanceCron() {
-		const collectionId = this.configService.get<string>(
-			'AWS_REKOGNITION_COLLECTION_ID',
-		);
-
-		// Step-1 Fetch all users whose attendace is not marked
-		const usersForAttendance = await this.getAllUsersForAttendance();
-
-		// Step-2 Iterate thorugh them
-		for (const user of usersForAttendance) {
-			const userId = String(user.id);
-			// Iterate through attendance documents and mark attendance
-			await Promise.allSettled(
-				user.attendances.map(async (attendanceObj) => {
-					if (attendanceObj.photo_1) {
-						// Find Users matching with image
-						const matchedUser =
-							await this.awsRekognitionService.searchUsersByImage(
-								collectionId,
-								attendanceObj.photo_1,
-							);
-						// Check if the user matched
-						const isMatchFound = matchedUser.some(
-							(obj) => obj.User.UserId === userId,
-						);
-						// Set attendance marked as true
-						// If match found then set attendance verified as true else false
-						let isAttendanceMarked = true;
-						let isAttendanceVerified = false;
-						if (isMatchFound) isAttendanceVerified = true;
-						console.log('-------------------------------------------------------------------------');
-						console.log(`------------------------------ Verfied: ${isMatchFound} ----------------------------`);
-						console.log('-------------------------------------------------------------------------');
-						// Update in attendance data in database
-						await this.markAttendance(attendanceObj.id, {
-							isAttendanceMarked,
-							isAttendanceVerified,
-						});
-					}
-				}),
+		try {
+			const collectionId = this.configService.get<string>(
+				'AWS_REKOGNITION_COLLECTION_ID',
 			);
+	
+			// Step-1 Fetch all users whose attendace is not marked
+			const usersForAttendance = await this.getAllUsersForAttendance();
+
+			console.log(usersForAttendance);
+	
+			// Step-2 Iterate thorugh them
+			for (const user of usersForAttendance) {
+				const userId = String(user.id);
+				// Iterate through attendance documents and mark attendance
+				await Promise.allSettled(
+					user.attendances.map(async (attendanceObj) => {
+						if (attendanceObj.photo_1) {
+							// Find Users matching with image
+							const matchedUser =
+								await this.awsRekognitionService.searchUsersByImage(
+									collectionId,
+									attendanceObj.photo_1,
+								);
+							// Check if the user matched
+							const isMatchFound = matchedUser.some(
+								(obj) => obj.User.UserId === userId,
+							);
+							// Set attendance marked as true
+							// If match found then set attendance verified as true else false
+							let isAttendanceMarked = true;
+							let isAttendanceVerified = false;
+							if (isMatchFound) isAttendanceVerified = true;
+							console.log('-------------------------------------------------------------------------');
+							console.log(`------------------------------ Verfied: ${isMatchFound} ----------------------------`);
+							console.log('-------------------------------------------------------------------------');
+							// Update in attendance data in database
+							await this.markAttendance(attendanceObj.id, {
+								isAttendanceMarked,
+								isAttendanceVerified,
+							});
+						}
+					}),
+				);
+			}
+		} catch (error) {
+			console.log('Error occurred in markAttendanceCron.');
 		}
 	}
 }
