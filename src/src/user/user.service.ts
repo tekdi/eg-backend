@@ -20,11 +20,25 @@ export class UserService {
 		private helper: UserHelperService,
 		private hasuraService: HasuraService,
 	) {}
-	public async update(userId: string, request: any, tableName: String) {
+	
+	public async update(userId: string, body: any, tableName: String) {
 		try {
+			const user: any = await this.hasuraService.getOne(
+				parseInt(userId),
+				'program_faciltators',
+				['id', 'user_id', 'status'],
+			);
+			const oldStatus = user?.program_faciltators?.status;
+			const statusArray = [
+				'shortlisted_for_orientation',
+				'selected_for_training',
+				'pragati_mobilizer',
+				'selected_for_onboarding',
+				'selected_prerak',
+			];
 			var axios = require('axios');
-			const userDataSchema = request;
-			let userData = request;
+			const userDataSchema = body;
+			let userData = body;
 			let query = '';
 			Object.keys(userData).forEach((e) => {
 				if (
@@ -32,13 +46,20 @@ export class UserService {
 					userData[e] != '' &&
 					Object.keys(userDataSchema).includes(e)
 				) {
+					if (
+						e === 'status' &&
+						userData[e] === 'on_hold' &&
+						statusArray.includes(oldStatus)
+					) {
+						return;
+					}
 					query += `${e}: "${userData[e]}", `;
 				}
 			});
 
 			var data = {
 				query: `mutation update($id:Int) {
-			update_${tableName}(where: {id: {_eq: $id}}, _set: {${query}}) {
+			  update_${tableName}(where: {id: {_eq: $id}}, _set: {${query}}) {
 				affected_rows
 			}
 		}`,

@@ -116,9 +116,9 @@ export class UserController {
 	@Put('update_facilitator/:id')
 	public async updateUser(
 		@Param('id') id: string,
-		@Body() req: Record<string, any>,
+		@Body() body: Record<string, any>,
 	) {
-		return this.userService.update(id, req, 'program_faciltators');
+		return this.userService.update(id, body, 'program_faciltators');
 	}
 
 	// users/login by username and password.

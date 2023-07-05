@@ -54,21 +54,27 @@ export class BeneficiariesService {
 			'identified',
 			'ready_to_enroll',
 			'enrolled',
-			'approved_ip',
+			'duplicated',
+			'enrolled_ip_verified',
 			'registered_in_camp',
-			'pragati_syc',
 			'rejected',
+			'ineligible_for_pragati_camp',
 			'dropout',
+			'10th_passed',
 		];
 		let qury = `query MyQuery {
-      ${status.map(
-			(item) => `${item}:program_beneficiaries_aggregate(where: {
-          _and: [
+        ${status.map(
+			(item) => `${
+				!isNaN(Number(item[0])) ? '_' + item : item
+			}:program_beneficiaries_aggregate(where: {
+            _and: [
               {
                 facilitator_id: {_eq: ${user.data.id}}
               },{
-              status: {_eq: ${item}}
-            }
+              status: {_eq: "${item}"}
+            },
+				{ user:	{ id: { _is_null: false } } }
+			
                                      ]
         }) {
         aggregate {
@@ -83,13 +89,13 @@ export class BeneficiariesService {
 		const res = status.map((item) => {
 			return {
 				status: item,
-				count: newQdata?.[item]?.aggregate?.count,
+				count: newQdata?.[!isNaN(Number(item[0])) ? '_' + item : item]
+					?.aggregate?.count,
 			};
 		});
-
 		return resp.status(200).json({
 			success: true,
-			message: 'Benificiaries found successfully!',
+			message: 'Data found successfully!',
 			data: {
 				data: res,
 			},
@@ -614,8 +620,8 @@ export class BeneficiariesService {
 	public async statusUpdate(body: any, request: any) {
 		const { data: updatedUser } = await this.userById(body?.user_id);
 		if (
-			body.status !== 'dropout' &&
-			body.status !== 'rejected' &&
+			req.status !== 'dropout' &&
+			req.status !== 'rejected' &&
 			updatedUser?.program_beneficiaries?.status == 'duplicated'
 		) {
 			return {
