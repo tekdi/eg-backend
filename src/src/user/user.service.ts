@@ -1152,7 +1152,7 @@ export class UserService {
 			return resp.status(200).json({
 				success: true,
 				message: 'Audit Logs found successfully!',
-				data: { result: result },
+				data: result,
 			});
 		}
 	}
