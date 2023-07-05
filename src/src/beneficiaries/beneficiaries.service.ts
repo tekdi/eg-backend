@@ -620,8 +620,8 @@ export class BeneficiariesService {
 	public async statusUpdate(body: any, request: any) {
 		const { data: updatedUser } = await this.userById(body?.user_id);
 		if (
-			req.status !== 'dropout' &&
-			req.status !== 'rejected' &&
+			body.status !== 'dropout' &&
+			body.status !== 'rejected' &&
 			updatedUser?.program_beneficiaries?.status == 'duplicated'
 		) {
 			return {
