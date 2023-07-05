@@ -649,7 +649,7 @@ export class BeneficiariesService {
 		).data;
 		const audit = await this.userService.addAuditLog(
 			body?.user_id,
-			request,
+			request.mw_userid,
 			'program_beneficiaries.status',
 			updatedUser?.program_beneficiaries?.id,
 			{

@@ -20,7 +20,7 @@ export class UserService {
 		private helper: UserHelperService,
 		private hasuraService: HasuraService,
 	) {}
-	
+
 	public async update(userId: string, body: any, tableName: String) {
 		try {
 			const user: any = await this.hasuraService.getOne(
@@ -1073,17 +1073,15 @@ export class UserService {
 
 	async addAuditLog(
 		userId,
-		request,
+		mw_userid,
 		context,
 		context_id,
 		oldData,
 		newData,
 		tempArray,
 	) {
-		const user = await this.ipUserInfo(request);
 		let storeOld = {};
 		let storeNew = {};
-
 		for (let data of tempArray) {
 			if (oldData[data] !== newData[data]) {
 				storeOld[data] = oldData[data];
@@ -1102,7 +1100,7 @@ export class UserService {
 					user_id: userId,
 					context: context,
 					context_id: context_id,
-					updated_by_user: user?.data?.id,
+					updated_by_user: mw_userid,
 				},
 				[
 					'id',
