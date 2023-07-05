@@ -86,6 +86,17 @@ export class AwsRekognitionService {
 					.createUser(createUserParams)
 					.promise();
 				console.log('createUserResponse:', createUserResponse);
+				// Set delay of 250 ms between two requests
+				await new Promise((resolve, reject) =>
+					setTimeout(
+						resolve,
+						parseInt(
+							this.configService.get<string>(
+								'AWS_REKOGNITION_CREATE_USER_REQUEST_INTERVAL_TIME',
+							),
+						),
+					),
+				);
 			}
 		} catch (error) {
 			console.log('createUsersInCollection:', error);

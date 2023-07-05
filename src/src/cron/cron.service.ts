@@ -13,11 +13,15 @@ export class CronService implements OnModuleInit {
 	) {}
 
 	async fetchAllUsersExceptIds(userIds: Number[]) {
+
 		const query = `
 				query MyQuery {
-					users(where: {id: {_nin: ${JSON.stringify(
-						userIds,
-					)}}}, order_by: {created_at: asc_nulls_first}) {
+					users(
+						where: {
+							id: {_nin: ${JSON.stringify(userIds)}}
+						},
+						order_by: {created_at: asc_nulls_first}
+					) {
 						id
 					}
 				}
@@ -33,7 +37,7 @@ export class CronService implements OnModuleInit {
 		}
 	}
 
-	async fetchAllUsersToIndexFaces() {
+	async fetchAllUsersToIndexFaces(limit: number) {
 		const query = `
 				query MyQuery {
 					users(
@@ -50,7 +54,8 @@ export class CronService implements OnModuleInit {
 								}
 							]
 						},
-						order_by: {created_at: asc_nulls_first}
+						order_by: {created_at: asc_nulls_first},
+						limit: ${limit}
 					) {
 						id
 						fa_photos_indexed
@@ -199,8 +204,8 @@ export class CronService implements OnModuleInit {
 	async markAttendance(
 		attendaceId: number,
 		attendaceData: {
-			isAttendanceMarked: boolean;
 			isAttendanceVerified: boolean;
+			matchingPercentage: number;
 		},
 	) {
 		let updateQuery = `
@@ -210,13 +215,12 @@ export class CronService implements OnModuleInit {
 							id: ${attendaceId}
 						},
 						_set: {
-							is_attendance_marked: ${attendaceData.isAttendanceMarked},
-							is_attendance_verified: ${attendaceData.isAttendanceVerified}
+							fa_is_processed: ${attendaceData.isAttendanceVerified},
+							fa_similarity_percentage: ${attendaceData.matchingPercentage}
 						}
 					) {
 						id
-						is_attendance_marked
-						is_attendance_verified
+						fa_is_processed
 					}
 				}
 			`;
@@ -231,32 +235,27 @@ export class CronService implements OnModuleInit {
 		}
 	}
 
-	async getAllUsersForAttendance() {
+	async getAllUsersForAttendance(limit: number) {
 		const query = `
 				query MyQuery {
-					users ( where: {
-						_and: [
-							{ id: { _in: [893, 901] } }
-							{ fa_user_indexed: {_eq: true} },
-							{ attendances_aggregate: {count: {predicate: {_gt: 0}}} },
-							{
-								_or: [
-									{ attendances: { is_attendance_marked: {_is_null: true} } },
-									{ attendances: { is_attendance_marked: {_eq: false} } },
-								]
-							}
-						]
-					}) {
+					users (
+						where: {
+							_and: [
+								{ id: { _in: [893, 901] } },
+								{ fa_user_indexed: {_eq: true} },
+								{ attendances_aggregate: {count: {predicate: {_gt: 0}}} },
+								{ attendances: { fa_is_processed: {_is_null: true} } },
+							]
+						},
+						limit: ${limit}
+					) {
 						id
 						attendances ( where: {
-							_or: [
-								{  is_attendance_marked: {_is_null: true} },
-                  				{ is_attendance_marked: {_eq: false} },
-							]
+							fa_is_processed: {_is_null: true},
 						}) {
 							id
 							photo_1
-							is_attendance_marked
+							fa_is_processed
 						}
 					}
 				}
@@ -272,7 +271,7 @@ export class CronService implements OnModuleInit {
 	}
 
 	async onModuleInit() {
-		await this.indexRekognitionUsers();
+		// await this.markAttendanceCron();
 	}
 
 	// @Cron(CronExpression.EVERY_10_SECONDS)
@@ -280,10 +279,10 @@ export class CronService implements OnModuleInit {
 		try {
 			/*----------------------- Create users in collection -----------------------*/
 
-			// Step-1: Create collection if not exists
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
+			// Step-1: Create collection if not exists
 			await this.awsRekognitionService.createCollectionIfNotExists(
 				collectionId,
 			);
@@ -300,11 +299,17 @@ export class CronService implements OnModuleInit {
 			// Step-3: Fetch all users from database which are not present in collection
 			const nonExistingUsers = await this.fetchAllUsersExceptIds(
 				usersIdsExistsInCollection,
+				// parseInt(
+				// 	this.configService.get<string>(
+				// 		'AWS_REKOGNITION_CREATE_USER_BATCH_SIZE',
+				// 	),
+				// ),
 			);
 
 			// const nonExistingUsers = [{ id: 893 }, { id: 901 }];
 
 			// Step-4: Create users in collection
+			// Need to put timeout or promise
 			await this.awsRekognitionService.createUsersInCollection(
 				collectionId,
 				nonExistingUsers.map((userObj) => String(userObj.id)),
@@ -314,17 +319,24 @@ export class CronService implements OnModuleInit {
 			/*----------------------- Index faces of users -----------------------*/
 
 			// Step-1: Fetch all users whose fa_user_indexed value is false or null.
-			const usersToIndexFaces = await this.fetchAllUsersToIndexFaces();
+			const usersToIndexFaces = await this.fetchAllUsersToIndexFaces(
+				parseInt(
+					this.configService.get<string>(
+						'AWS_REKOGNITION_INDEX_USER_BATCH_SIZE',
+					),
+				),
+			);
+			console.dir(usersToIndexFaces, {depth: 99});
 
 			// Step-2: Iterate through them and index faces one by one
 			for (const user of usersToIndexFaces) {
 				console.log(user);
 				let userId = String(user.id);
 				// Step-A Fetch all faceIds of the user
-				await this.awsRekognitionService.getAllFacesOfUser(
-					collectionId,
-					userId,
-				);
+				// await this.awsRekognitionService.getAllFacesOfUser(
+				// 	collectionId,
+				// 	userId,
+				// );
 
 				// Step-B Perform indexing of all 3 profile photos if not indexed
 				const faPhotos = JSON.parse(user.fa_photos_indexed);
@@ -373,6 +385,7 @@ export class CronService implements OnModuleInit {
 							// Step-b1 Check if the faceId is present. If so, then profile photo is updated
 							if (isFaceIdAvailable) {
 								// Step-b1 Delete photo from collection
+								// Need to optmize (less impact)
 								const photoDeleted = (
 									await this.disassociateAndDeleteFace(
 										collectionId,
@@ -381,10 +394,22 @@ export class CronService implements OnModuleInit {
 									)
 								).success;
 								addPhoto = photoDeleted;
+								// Set delay
+								await new Promise((resolve, reject) =>
+									setTimeout(
+										resolve,
+										parseInt(
+											this.configService.get<string>(
+												'AWS_REKOGNITION_AFTER_DELETE_IMAGE_INTERVAL_TIME',
+											),
+										),
+									),
+								);
 							}
 
 							// Step-b2 Add and associate new face photo with user
 							if (addPhoto) {
+								// Need to optmize
 								const addedPhotoData =
 									await this.addAndAssociatePhotoToUser(
 										collectionId,
@@ -419,6 +444,17 @@ export class CronService implements OnModuleInit {
 						photosIndexingData: faPhotos,
 						faceIdsData: faFaceIds,
 					});
+					// Set delay between two indexing process 
+					await new Promise((resolve, reject) =>
+						setTimeout(
+							resolve,
+							parseInt(
+								this.configService.get<string>(
+									'AWS_REKOGNITION_INDEX_USER_PROCESS_INTERVAL_TIME',
+								),
+							),
+						),
+					);
 				}
 			}
 		} catch (error) {
@@ -434,43 +470,59 @@ export class CronService implements OnModuleInit {
 			);
 	
 			// Step-1 Fetch all users whose attendace is not marked
-			const usersForAttendance = await this.getAllUsersForAttendance();
-
-			console.log(usersForAttendance);
+			const usersForAttendance = await this.getAllUsersForAttendance(
+				parseInt(
+					this.configService.get<string>(
+						'AWS_REKOGNITION_MARK_ATTENDANCE_BATCH_SIZE',
+					),
+				),
+			);
+			console.dir(usersForAttendance, {depth: 99});
 	
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
 				const userId = String(user.id);
 				// Iterate through attendance documents and mark attendance
-				await Promise.allSettled(
-					user.attendances.map(async (attendanceObj) => {
-						if (attendanceObj.photo_1) {
-							// Find Users matching with image
-							const matchedUser =
-								await this.awsRekognitionService.searchUsersByImage(
-									collectionId,
-									attendanceObj.photo_1,
-								);
-							// Check if the user matched
-							const isMatchFound = matchedUser.some(
-								(obj) => obj.User.UserId === userId,
+				for (const attendanceObj of user.attendances) {
+					if (attendanceObj.photo_1) {
+						// Find Users matching with image
+						// Need settimeout
+						const matchedUser =
+							await this.awsRekognitionService.searchUsersByImage(
+								collectionId,
+								attendanceObj.photo_1,
 							);
-							// Set attendance marked as true
-							// If match found then set attendance verified as true else false
-							let isAttendanceMarked = true;
-							let isAttendanceVerified = false;
-							if (isMatchFound) isAttendanceVerified = true;
-							console.log('-------------------------------------------------------------------------');
-							console.log(`------------------------------ Verfied: ${isMatchFound} ----------------------------`);
-							console.log('-------------------------------------------------------------------------');
-							// Update in attendance data in database
-							await this.markAttendance(attendanceObj.id, {
-								isAttendanceMarked,
-								isAttendanceVerified,
-							});
-						}
-					}),
-				);
+						// Check if the user matched
+						let matchingPercentage = null;
+						const isMatchFound = matchedUser.some((obj) => {
+							obj.User.UserId === userId;
+							matchingPercentage = obj.Similarity;
+						});
+						// Set attendance marked as true
+						// If match found then set attendance verified as true else false
+						let isAttendanceVerified = false;
+						if (isMatchFound) isAttendanceVerified = true;
+						console.log('-------------------------------------------------------------------------');
+						console.log(`------------------------------ Verfied: ${isMatchFound} ----------------------------`);
+						console.log('-------------------------------------------------------------------------');
+						// Update in attendance data in database
+						await this.markAttendance(attendanceObj.id, {
+							isAttendanceVerified,
+							matchingPercentage
+						});
+						// Set delay between two attendance process
+						await new Promise((resolve, reject) =>
+							setTimeout(
+								resolve,
+								parseInt(
+									this.configService.get<string>(
+										'AWS_REKOGNITION_MARK_ATTENDANCE_PROCESS_INTERVAL_TIME',
+									),
+								),
+							),
+						);
+					}
+				}
 			}
 		} catch (error) {
 			console.log('Error occurred in markAttendanceCron.');
