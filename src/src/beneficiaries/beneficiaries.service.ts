@@ -1779,7 +1779,6 @@ export class BeneficiariesService {
           }
         }}`,
 		};
-
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users_by_pk;
 		if (result) {
