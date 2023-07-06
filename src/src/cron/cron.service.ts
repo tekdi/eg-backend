@@ -1,11 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 
 @Injectable()
-export class CronService implements OnModuleInit {
+export class CronService {
 	constructor(
 		private configService: ConfigService,
 		private awsRekognitionService: AwsRekognitionService,
@@ -13,7 +13,6 @@ export class CronService implements OnModuleInit {
 	) {}
 
 	async fetchAllUsersExceptIds(userIds: Number[]) {
-
 		const query = `
 				query MyQuery {
 					users(
@@ -26,7 +25,6 @@ export class CronService implements OnModuleInit {
 					}
 				}
 			`;
-		console.log(await this.hasuraService.getData({ query }));
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
@@ -42,16 +40,9 @@ export class CronService implements OnModuleInit {
 				query MyQuery {
 					users(
 						where: {
-							_and: [
-								{
-									id: { _in: [893, 901] }
-								},
-								{
-									_or: [
-										{ fa_user_indexed: { _is_null: true } },
-										{ fa_user_indexed: { _eq: false } }
-									]
-								}
+							_or: [
+								{ fa_user_indexed: { _is_null: true } },
+								{ fa_user_indexed: { _eq: false } }
 							]
 						},
 						order_by: {created_at: asc_nulls_first},
@@ -241,7 +232,6 @@ export class CronService implements OnModuleInit {
 					users (
 						where: {
 							_and: [
-								{ id: { _in: [893, 901] } },
 								{ fa_user_indexed: {_eq: true} },
 								{ attendances_aggregate: {count: {predicate: {_gt: 0}}} },
 								{ attendances: { fa_is_processed: {_is_null: true} } },
@@ -270,11 +260,7 @@ export class CronService implements OnModuleInit {
 		}
 	}
 
-	async onModuleInit() {
-		// await this.markAttendanceCron();
-	}
-
-	// @Cron(CronExpression.EVERY_10_SECONDS)
+	@Cron(CronExpression.EVERY_30_MINUTES)
 	async indexRekognitionUsers() {
 		try {
 			/*----------------------- Create users in collection -----------------------*/
@@ -282,6 +268,7 @@ export class CronService implements OnModuleInit {
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
+
 			// Step-1: Create collection if not exists
 			await this.awsRekognitionService.createCollectionIfNotExists(
 				collectionId,
@@ -294,26 +281,15 @@ export class CronService implements OnModuleInit {
 				)
 			).map((id) => parseInt(id));
 
-			// const usersIdsExistsInCollection = [];
-
 			// Step-3: Fetch all users from database which are not present in collection
 			const nonExistingUsers = await this.fetchAllUsersExceptIds(
 				usersIdsExistsInCollection,
-				// parseInt(
-				// 	this.configService.get<string>(
-				// 		'AWS_REKOGNITION_CREATE_USER_BATCH_SIZE',
-				// 	),
-				// ),
 			);
 
-			// const nonExistingUsers = [{ id: 893 }, { id: 901 }];
-
 			// Step-4: Create users in collection
-			// Need to put timeout or promise
 			await this.awsRekognitionService.createUsersInCollection(
 				collectionId,
 				nonExistingUsers.map((userObj) => String(userObj.id)),
-				// ['901']
 			);
 
 			/*----------------------- Index faces of users -----------------------*/
@@ -326,19 +302,14 @@ export class CronService implements OnModuleInit {
 					),
 				),
 			);
-			console.dir(usersToIndexFaces, {depth: 99});
+			console.dir(usersToIndexFaces, { depth: 99 });
 
 			// Step-2: Iterate through them and index faces one by one
 			for (const user of usersToIndexFaces) {
 				console.log(user);
 				let userId = String(user.id);
-				// Step-A Fetch all faceIds of the user
-				// await this.awsRekognitionService.getAllFacesOfUser(
-				// 	collectionId,
-				// 	userId,
-				// );
 
-				// Step-B Perform indexing of all 3 profile photos if not indexed
+				// Step-A Perform indexing of all 3 profile photos if not indexed
 				const faPhotos = JSON.parse(user.fa_photos_indexed);
 				const faFaceIds = JSON.parse(user.fa_face_ids);
 				console.log('faPhotos1:', faPhotos);
@@ -358,34 +329,32 @@ export class CronService implements OnModuleInit {
 					if (
 						faPhotos[photokeyName] ||
 						(isProfilePhotoNotAvailable && !isFaceIdAvailable)
-					) continue;
+					)
+						continue;
 					// Step-ii Else perform indexing based on operation
 					else {
 						let isSuccess = false;
 						// Step-a Check if the photo is deleted
 						if (isProfilePhotoNotAvailable && isFaceIdAvailable) {
 							// Step-a1 Delete photo from collection
-							// const photoDeleted = (
-							// 	await this.disassociateAndDeleteFace(
-							// 		collectionId,
-							// 		userId,
-							// 		faFaceIds[faceIdKeyName],
-							// 	)
-							// ).success;
-
+							const photoDeleted = (
+								await this.disassociateAndDeleteFace(
+									collectionId,
+									userId,
+									faFaceIds[faceIdKeyName],
+								)
+							).success;
 							// Step-a2 Set fa_face_ids.faceid(i) to null.
-							// if (photoDeleted) {
-							// 	faFaceIds[faceIdKeyName] = null;
-							// 	isSuccess = true;
-							// }
-
+							if (photoDeleted) {
+								faFaceIds[faceIdKeyName] = null;
+								isSuccess = true;
+							}
 							// Step-b Else either profile photo is newly added or updated
 						} else {
 							let addPhoto = true;
 							// Step-b1 Check if the faceId is present. If so, then profile photo is updated
 							if (isFaceIdAvailable) {
 								// Step-b1 Delete photo from collection
-								// Need to optmize (less impact)
 								const photoDeleted = (
 									await this.disassociateAndDeleteFace(
 										collectionId,
@@ -395,7 +364,7 @@ export class CronService implements OnModuleInit {
 								).success;
 								addPhoto = photoDeleted;
 								// Set delay
-								await new Promise((resolve, reject) =>
+								await new Promise((resolve) =>
 									setTimeout(
 										resolve,
 										parseInt(
@@ -409,7 +378,6 @@ export class CronService implements OnModuleInit {
 
 							// Step-b2 Add and associate new face photo with user
 							if (addPhoto) {
-								// Need to optmize
 								const addedPhotoData =
 									await this.addAndAssociatePhotoToUser(
 										collectionId,
@@ -444,8 +412,8 @@ export class CronService implements OnModuleInit {
 						photosIndexingData: faPhotos,
 						faceIdsData: faFaceIds,
 					});
-					// Set delay between two indexing process 
-					await new Promise((resolve, reject) =>
+					// Set delay between two indexing process
+					await new Promise((resolve) =>
 						setTimeout(
 							resolve,
 							parseInt(
@@ -462,13 +430,13 @@ export class CronService implements OnModuleInit {
 		}
 	}
 
-	// @Cron(CronExpression.EVERY_10_SECONDS)
+	@Cron(CronExpression.EVERY_30_MINUTES)
 	async markAttendanceCron() {
 		try {
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
-	
+
 			// Step-1 Fetch all users whose attendace is not marked
 			const usersForAttendance = await this.getAllUsersForAttendance(
 				parseInt(
@@ -477,8 +445,8 @@ export class CronService implements OnModuleInit {
 					),
 				),
 			);
-			console.dir(usersForAttendance, {depth: 99});
-	
+			console.dir(usersForAttendance, { depth: 99 });
+
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
 				const userId = String(user.id);
@@ -486,29 +454,40 @@ export class CronService implements OnModuleInit {
 				for (const attendanceObj of user.attendances) {
 					if (attendanceObj.photo_1) {
 						// Find Users matching with image
-						// Need settimeout
 						const matchedUser =
 							await this.awsRekognitionService.searchUsersByImage(
 								collectionId,
 								attendanceObj.photo_1,
+								parseInt(
+									this.configService.get<string>(
+										'AWS_REKOGNITION_FACE_MATCHING_THRESHOLD',
+									),
+								),
 							);
 						// Check if the user matched
 						let matchingPercentage = null;
 						const isMatchFound = matchedUser.some((obj) => {
-							obj.User.UserId === userId;
-							matchingPercentage = obj.Similarity;
+							if (obj.User.UserId === userId) {
+								matchingPercentage = obj.Similarity;
+								return true;
+							}
 						});
-						// Set attendance marked as true
-						// If match found then set attendance verified as true else false
+						// Set attendance verified as true or false based on results
 						let isAttendanceVerified = false;
 						if (isMatchFound) isAttendanceVerified = true;
-						console.log('-------------------------------------------------------------------------');
-						console.log(`------------------------------ Verfied: ${isMatchFound} ----------------------------`);
-						console.log('-------------------------------------------------------------------------');
+						console.log(
+							'-------------------------------------------------------------------------',
+						);
+						console.log(
+							`------------------------------ Verified: ${isMatchFound} ----------------------------`,
+						);
+						console.log(
+							'-------------------------------------------------------------------------',
+						);
 						// Update in attendance data in database
 						await this.markAttendance(attendanceObj.id, {
 							isAttendanceVerified,
-							matchingPercentage
+							matchingPercentage,
 						});
 						// Set delay between two attendance process
 						await new Promise((resolve, reject) =>

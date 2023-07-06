@@ -1,6 +1,4 @@
-// import { S3Client } from '@aws-sdk/client-s3';
 import * as AWS from 'aws-sdk';
-// import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -86,8 +84,8 @@ export class AwsRekognitionService {
 					.createUser(createUserParams)
 					.promise();
 				console.log('createUserResponse:', createUserResponse);
-				// Set delay of 250 ms between two requests
-				await new Promise((resolve, reject) =>
+				// Set delay between two requests
+				await new Promise((resolve) =>
 					setTimeout(
 						resolve,
 						parseInt(
@@ -184,7 +182,7 @@ export class AwsRekognitionService {
 				.indexFaces(addFaceParams)
 				.promise();
 			console.log('addFaceResponse:');
-			console.dir(addFaceResponse, {depth: 99});
+			console.dir(addFaceResponse, { depth: 99 });
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
 				response.faceId = addFaceResponse.FaceRecords[0].Face.FaceId;
@@ -225,7 +223,7 @@ export class AwsRekognitionService {
 		}
 	}
 
-	async searchUsersByImage(collectionId: string, imageName: string) {
+	async searchUsersByImage(collectionId: string, imageName: string, faceMatchingThreshold: number) {
 		try {
 			const searchParams = {
 				CollectionId: collectionId,
@@ -235,7 +233,7 @@ export class AwsRekognitionService {
 						Name: imageName,
 					},
 				},
-				UserMatchThreshold: 80,
+				UserMatchThreshold: faceMatchingThreshold,
 				MaxUsers: 5,
 			};
 
