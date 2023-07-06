@@ -223,7 +223,11 @@ export class AwsRekognitionService {
 		}
 	}
 
-	async searchUsersByImage(collectionId: string, imageName: string, faceMatchingThreshold: number) {
+	async searchUsersByImage(
+		collectionId: string,
+		imageName: string,
+		faceMatchingThreshold: number,
+	) {
 		try {
 			const searchParams = {
 				CollectionId: collectionId,

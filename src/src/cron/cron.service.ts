@@ -12,7 +12,7 @@ export class CronService {
 		private hasuraService: HasuraService,
 	) {}
 
-	async fetchAllUsersExceptIds(userIds: Number[]) {
+	async fetchAllUsersExceptIds(userIds: number[]) {
 		const query = `
 				query MyQuery {
 					users(
@@ -103,30 +103,26 @@ export class CronService {
 		userId: string,
 		faceId: string,
 	) {
-		try {
-			// Disassociate image from user
-			const photoDisassociated = (
-				await this.awsRekognitionService.disassociatePhotoFromUser(
-					collectionId,
-					userId,
-					faceId,
-				)
-			).success;
+		// Disassociate image from user
+		const photoDisassociated = (
+			await this.awsRekognitionService.disassociatePhotoFromUser(
+				collectionId,
+				userId,
+				faceId,
+			)
+		).success;
 
-			let response = { success: false };
-			// Delete face from collection
-			if (photoDisassociated) {
-				const photoDeleted =
-					await this.awsRekognitionService.deletePhotoFromCollection(
-						collectionId,
-						faceId,
-					);
-				if (photoDeleted) response.success = true;
-			}
-			return response;
-		} catch (error) {
-			throw error;
+		let response = { success: false };
+		// Delete face from collection
+		if (photoDisassociated) {
+			const photoDeleted =
+				await this.awsRekognitionService.deletePhotoFromCollection(
+					collectionId,
+					faceId,
+				);
+			if (photoDeleted) response.success = true;
 		}
+		return response;
 	}
 
 	async addAndAssociatePhotoToUser(
@@ -134,30 +130,26 @@ export class CronService {
 		userId: string,
 		imageName: string,
 	) {
-		try {
-			// Add face in collection
-			const addFaceResponse =
-				await this.awsRekognitionService.addFaceInCollection(
-					collectionId,
-					imageName,
-				);
+		// Add face in collection
+		const addFaceResponse =
+			await this.awsRekognitionService.addFaceInCollection(
+				collectionId,
+				imageName,
+			);
 
-			const response = { success: false, faceId: addFaceResponse.faceId };
-			// Associate face to user
-			if (addFaceResponse.success) {
-				const associatedPhoto = (
-					await this.awsRekognitionService.associateFaceToUser(
-						collectionId,
-						userId,
-						addFaceResponse.faceId,
-					)
-				).success;
-				if (associatedPhoto) response.success = true;
-			}
-			return response;
-		} catch (error) {
-			throw error;
+		const response = { success: false, faceId: addFaceResponse.faceId };
+		// Associate face to user
+		if (addFaceResponse.success) {
+			const associatedPhoto = (
+				await this.awsRekognitionService.associateFaceToUser(
+					collectionId,
+					userId,
+					addFaceResponse.faceId,
+				)
+			).success;
+			if (associatedPhoto) response.success = true;
 		}
+		return response;
 	}
 
 	async markUserAsIndexed(
