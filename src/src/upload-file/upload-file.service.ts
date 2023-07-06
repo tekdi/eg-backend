@@ -119,56 +119,52 @@ export class UploadFileService {
 			if (res) {
 				// If profile_photo_1, profile_photo_2 or profile_photo_3 is added or updated,
 				// then set fa_user_indexed to false and fa_photos_indexed.profile_photo_i to false.
-				// if (
-				// 	[
-				// 		'profile_photo_1',
-				// 		'profile_photo_2',
-				// 		'profile_photo_3',
-				// 	].includes(document_sub_type)
-				// ) {
-				// 	// Fetch user details
-				// 	let getQuery = `query MyQuery {
-				// 			users (where: {id: {_eq: ${id}}}) {
-				// 				id
-				// 				fa_photos_indexed
-				// 				fa_user_indexed
-				// 			}
-				// 	  	}`;
-				// 	const user = (
-				// 		await this.hasuraServiceFromServices.getData({
-				// 			query: getQuery,
-				// 		})
-				// 	)?.data?.users[0];
-				// 	console.log('user:', user);
-				// 	if (user) {
-				// 		const faPhotos = JSON.parse(user.fa_photos_indexed);
-				// 		faPhotos[document_sub_type] = false;
-				// 		let updateQuery = `
-				// 				mutation MyMutation {
-				// 					update_users_by_pk(
-				// 						pk_columns: {
-				// 							id: ${id}
-				// 						},
-				// 						_set: {
-				// 							fa_user_indexed: false,
-				// 							fa_photos_indexed: "${JSON.stringify(faPhotos).replace(/"/g, '\\"')}",
-				// 						}
-				// 					) {
-				// 						id
-				// 						fa_user_indexed
-				// 						fa_photos_indexed
-				// 						fa_face_ids
-				// 					}
-				// 				}
-				// 			`;
-				// 		console.log('updateQuery:', updateQuery);
-				// 		(
-				// 			await this.hasuraService.getData({
-				// 				query: updateQuery,
-				// 			})
-				// 		).data.update_users_by_pk;
-				// 	}
-				// }
+				if (
+					[
+						'profile_photo_1',
+						'profile_photo_2',
+						'profile_photo_3',
+					].includes(document_sub_type)
+				) {
+					// Fetch user details
+					let getQuery = `query MyQuery {
+							users (where: {id: {_eq: ${id}}}) {
+								id
+								fa_photos_indexed
+								fa_user_indexed
+							}
+					  	}`;
+					const user = (
+						await this.hasuraServiceFromServices.getData({
+							query: getQuery,
+						})
+					)?.data?.users[0];
+					if (user) {
+						const faPhotos = JSON.parse(user.fa_photos_indexed);
+						faPhotos[document_sub_type] = false;
+						let updateQuery = `
+								mutation MyMutation {
+									update_users_by_pk(
+										pk_columns: {
+											id: ${id}
+										},
+										_set: {
+											fa_user_indexed: false,
+											fa_photos_indexed: "${JSON.stringify(faPhotos).replace(/"/g, '\\"')}",
+										}
+									) {
+										id
+										fa_user_indexed
+										fa_photos_indexed
+										fa_face_ids
+									}
+								}
+							`;
+						await this.hasuraService.getData({
+							query: updateQuery,
+						});
+					}
+				}
 				return response.status(200).send({
 					success: true,
 					status: 'Success',
