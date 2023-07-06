@@ -14,7 +14,7 @@ import { HelperModule } from '../helper/helper.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { BeneficiariesService } from './beneficiaries.service';
-import { SetUserIdFromTokenMiddleware } from './setuseridfromtokenmiddleware';
+import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 
 @Module({
 	imports: [
@@ -31,11 +31,6 @@ import { SetUserIdFromTokenMiddleware } from './setuseridfromtokenmiddleware';
 })
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
-		consumer
-			.apply(SetUserIdFromTokenMiddleware)
-			.forRoutes({
-				path: '/beneficiaries/statusUpdate',
-				method: RequestMethod.ALL,
-			});
+		consumer.apply(AuthMiddleware).forRoutes('*');
 	}
 }
