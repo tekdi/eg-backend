@@ -46,6 +46,7 @@ export class FacilitatorController {
 	// }
 
 	@Get('/getStatuswiseCount')
+	@UseGuards(new AuthGuard())
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.facilitatorService.getStatuswiseCount(request, response);
 	}
