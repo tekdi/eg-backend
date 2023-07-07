@@ -1,6 +1,20 @@
-import { Controller, Get, Param, UseInterceptors } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	Param,
+	Post,
+	Query,
+	Res,
+	UseGuards,
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe,
+} from '@nestjs/common';
 import { GeolocationService } from './geolocation.service';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
+import { MultipleBlocksDto } from '../geolocation/dto/multipleblock.dto';
+import { AuthGuard } from '../auth/auth.guard';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/locationmaster')
@@ -43,7 +57,19 @@ export class GeolocationController {
 		};
 	}
 
-	// blocks list API filter pagination
+	@Post('/multipleblocks')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	public async multipleblocks(
+		@Body() districts: MultipleBlocksDto,
+		@Res() response: any,
+	) {
+		return await this.geolocationService.multipleblocks(
+			districts,
+			response,
+		);
+	}
+
 	@Get('/blocks/:name')
 	public async blocks(@Param('name') name: string) {
 		const tableName = 'address';
@@ -51,7 +77,6 @@ export class GeolocationController {
 		let mappedResponse = response?.data[tableName];
 		const count =
 			response?.data[`${tableName}_aggregate`]?.aggregate?.count;
-
 		return {
 			success: 'true',
 			data: {
