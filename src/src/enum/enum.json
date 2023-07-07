@@ -550,7 +550,7 @@
 		},
 		{
 			"title": "BENEFICIARY_REASONS_FOR_DROPOUT_REASONS_OTHER",
-			"value": "Other"
+			"value": "other"
 		}
 	],
 	"REACTIVATE_REASONS": [
