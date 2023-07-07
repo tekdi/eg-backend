@@ -430,7 +430,8 @@ export class FacilitatorService {
 
 		let query = `query MyQuery {
 			all:program_faciltators_aggregate(where: {
-				parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}
+				parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
+				user: {id: {_is_null: false}}
 			}) 
 			{
 				aggregate {
@@ -441,7 +442,7 @@ export class FacilitatorService {
 			applied: program_faciltators_aggregate(
 				where: {
 					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, 
-					user_id: {_is_null: false},
+					user: {id: {_is_null: false}},
 					_or: [
 						{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
 						{ status: { _is_null: true } }
@@ -456,7 +457,7 @@ export class FacilitatorService {
 				.filter((item) => item != 'applied')
 				.map(
 					(item) => `${item}:program_faciltators_aggregate(where: {
-							parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, user_id: { _is_null: false }, status: {_eq: "${item}"}
+							parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, user: {id: {_is_null: false}}, status: {_eq: "${item}"}
 						}) {
 						aggregate {
 							count
