@@ -562,7 +562,6 @@
 			"title": "REACTIVATE_REASONS_CONVINCED_BY_PRERAK",
 			"value": "convinced_by_Prerak"
 		},
-		{ "title": "REACTIVATE_REASONS_MOVING_BACK", "value": "moved_back" },
 		{
 			"title": "REACTIVATE_REASONS_ISSUE_RESOLVED",
 			"value": "issue_resolved"
