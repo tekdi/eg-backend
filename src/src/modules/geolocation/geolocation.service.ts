@@ -1,18 +1,16 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { HasuraService } from 'src/services/hasura/hasura.service';
 import { lastValueFrom, map } from 'rxjs';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 
 @Injectable()
 export class GeolocationService {
-	public url = process.env.HASURA_BASE_URL;
-
 	constructor(
-		private readonly httpService: HttpService,
+		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
-	public async findAll(tableName: String, filters: Object = {}) {
+	public async findAll(tableName: string, filters: Object = {}) {
 		let query = '';
 		if (filters) {
 			Object.keys(filters).forEach((e) => {
@@ -23,94 +21,110 @@ export class GeolocationService {
 		}
 
 		let data = {
-			query: `query SearchAttendance {
-        ${tableName}_aggregate(where:{${query}}) {
-          aggregate {
-            count
-          }
-        }
-        ${tableName}(where:{${query}}) {
-          id
-          state_name
-          state_cd
-          district_name
-          district_cd
-          block_name
-          grampanchayat_name
-          village_ward_name
-          udise_block_code
-        }}`,
+			query: `
+			query SearchAddress {
+				${tableName}_aggregate(where:{${query}}) {
+					aggregate {
+						count
+					}
+				}
+
+				${tableName}(where:{${query}}) {
+					id
+					state_name
+					state_cd
+					district_name
+					district_cd
+					block_name
+					grampanchayat_name
+					village_ward_name
+					udise_block_code
+				}
+			}`,
 		};
 
-		return await lastValueFrom(
-			this.httpService
-				.post(this.url, data, {
-					headers: {
-						'x-hasura-admin-secret':
-							process.env.HASURA_ADMIN_SECRET,
-						'Content-Type': 'application/json',
-					},
-				})
-				.pipe(map((res) => res.data)),
-		);
+		return await this.hasuraService.postData(data);
 	}
 
-	async states() {
+	async getStates() {
 		let data = {
-			query: `query MyQuery {
-        address_aggregate(distinct_on: [state_name]) {
-          aggregate {
-            count
-          }
-        }
-        address(distinct_on: [state_name]) {
-          state_name
-          state_cd
-        }
-      }`,
+			query: `
+			query MyQuery {
+				address_aggregate(distinct_on: [state_name]) {
+					aggregate {
+						count
+					}
+				}
+
+				address(distinct_on: [state_name]) {
+					state_name
+					state_cd
+				}
+			}`,
 		};
 
-		return await lastValueFrom(
-			this.httpService
-				.post(this.url, data, {
-					headers: {
-						'x-hasura-admin-secret':
-							process.env.HASURA_ADMIN_SECRET,
-						'Content-Type': 'application/json',
-					},
-				})
-				.pipe(map((res) => res.data)),
-		);
+		return await this.hasuraService.postData(data);
 	}
 
-	async districts(state: string) {
+	async getDistricts(state: string) {
 		let data = {
-			query: `query MyQuery {
-        address_aggregate(distinct_on: [district_name], where: {state_name: {_eq: "${state}"}}) {
-          aggregate {
-            count
-          }
-        }
-        address(distinct_on: [district_name], where: {state_name: {_eq: "${state}"}}) {
-          district_cd
-          district_name
-        }
-      }`,
+			query: `
+			query MyQuery {
+				address_aggregate(
+					distinct_on: [district_name],
+					where: {
+						state_name: {_eq: "${state}"}
+					}
+				) {
+					aggregate {
+						count
+					}
+				}
+
+				address(
+					distinct_on: [district_name],
+					where: {
+						state_name: {_eq: "${state}"}
+					}
+				) {
+					district_cd
+					district_name
+				}
+			}`,
 		};
-		return await lastValueFrom(
-			this.httpService
-				.post(this.url, data, {
-					headers: {
-						'x-hasura-admin-secret':
-							process.env.HASURA_ADMIN_SECRET,
-						'Content-Type': 'application/json',
-					},
-				})
-				.pipe(map((res) => res.data)),
-		);
+
+		return await this.hasuraService.postData(data);
 	}
 
-	async multipleblocks(body: any, resp: any) {
+	async getBlocks(district: string) {
+		let data = {
+			query: `
+			query MyQuery {
+				address_aggregate(
+					distinct_on: [block_name],
+					where: {
+						district_name: {_eq: "${district}"}
+					}
+				) {
+					aggregate {
+						count
+					}
+				}
+
+				address(
+					distinct_on: [block_name],
+					where: {
+						district_name: {_eq: "${district}"}
+					}
+				) {
+					block_name
+				}
+			}`,
+		};
+
+		return await this.hasuraService.postData(data);
+	}
+	async getBlocksFromDistricts(body: any, resp: any) {
 		let data = {
 			query: `query MyQuery {
 				address(distinct_on: [block_name], where: {district_name: {_in: ${JSON.stringify(
@@ -138,55 +152,32 @@ export class GeolocationService {
 		}
 	}
 
-	async blocks(district: string) {
+	async getVillages(block: string) {
 		let data = {
-			query: `query MyQuery {
-        address_aggregate(distinct_on: [block_name], where: {district_name: {_eq: "${district}"}}) {
-          aggregate {
-            count
-          }
-        }
-        address(distinct_on: [block_name], where: {district_name: {_eq: "${district}"}}) {
-          block_name
-        }
-      }`,
-		};
-		return await lastValueFrom(
-			this.httpService
-				.post(this.url, data, {
-					headers: {
-						'x-hasura-admin-secret':
-							process.env.HASURA_ADMIN_SECRET,
-						'Content-Type': 'application/json',
-					},
-				})
-				.pipe(map((res) => res.data)),
-		);
-	}
+			query: `
+			query MyQuery {
+				address_aggregate(
+					distinct_on: [village_ward_name],
+					where: {
+						block_name: {_eq: "${block}"}
+					}
+				) {
+					aggregate {
+						count
+					}
+				}
 
-	async villages(block: string) {
-		let data = {
-			query: `query MyQuery {
-        address_aggregate(distinct_on: [village_ward_name], where: {block_name: {_eq: "${block}"}}) {
-          aggregate {
-            count
-          }
-        }
-        address(distinct_on: [village_ward_name], where: {block_name: {_eq: "${block}"}}) {
-          village_ward_name
-        }
-      }`,
+				address(
+					distinct_on: [village_ward_name],
+					where: {
+						block_name: {_eq: "${block}"}
+					}
+				) {
+					village_ward_name
+				}
+			}`,
 		};
-		return await lastValueFrom(
-			this.httpService
-				.post(this.url, data, {
-					headers: {
-						'x-hasura-admin-secret':
-							process.env.HASURA_ADMIN_SECRET,
-						'Content-Type': 'application/json',
-					},
-				})
-				.pipe(map((res) => res.data)),
-		);
+
+		return await this.hasuraService.postData(data);
 	}
 }
