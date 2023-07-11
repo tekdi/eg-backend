@@ -155,6 +155,31 @@ export class UserService {
 
 		// Get userid from  auth/login jwt token
 		const authToken = request?.headers?.authorization;
+		const authTokenTemp = request?.headers?.authorization.split(' ');
+
+		// If Bearer word not found in auth header value
+		if (authTokenTemp[0] !== 'Bearer') {
+			return userData;
+		}
+		// Get trimmed Bearer token value by skipping Bearer value
+		else {
+			bearerToken = authToken.trim().substr(7, authToken.length).trim();
+		}
+
+		// If Bearer token value is not passed
+		if (!bearerToken) {
+			return userData;
+		}
+		// Lets split token by dot (.)
+		else {
+			bearerTokenTemp = bearerToken.split('.');
+		}
+
+		// Since JWT has three parts - seperated by dots(.), lets split token
+		if (bearerTokenTemp.length < 3) {
+			return userData;
+		}
+
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
 
