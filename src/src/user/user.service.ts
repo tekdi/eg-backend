@@ -1121,7 +1121,7 @@ export class UserService {
 	public async getAuditLogs(context_id, context, req: any, resp: any) {
 		const data = {
 			query: `query MyQuery {
-				audit_logs(where: {_and:[{context_id: {_eq: ${context_id}}},{context:{_eq:"${context}"}}]}) {
+				audit_logs(where: {_and:[{context_id: {_eq: ${context_id}}},{context:{_eq:"${context}"}}]},order_by: {created_at:desc}) {
 				  context_id
 				  context
 				  created_at
