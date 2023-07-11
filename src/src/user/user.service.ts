@@ -8,9 +8,11 @@ import {
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
+
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+
 @Injectable()
 export class UserService {
 	public url = process.env.HASURA_BASE_URL;
@@ -147,6 +149,10 @@ export class UserService {
 	}
 
 	public async ipUserInfo(request: any) {
+		let userData = null;
+		let bearerToken = null;
+		let bearerTokenTemp = null;
+
 		// Get userid from  auth/login jwt token
 		const authToken = request?.headers?.authorization;
 		const decoded: any = jwt_decode(authToken);
@@ -177,7 +183,6 @@ export class UserService {
 
 		const response = await axios(configData);
 
-		let userData = null;
 		if (response?.data?.data?.users[0]) {
 			userData = (
 				await this.userById(+response?.data?.data?.users[0]?.id)
@@ -475,7 +480,6 @@ export class UserService {
 		);
 		let result = response?.data?.organisations_by_pk;
 		const mappedResponse = result;
-
 		return {
 			statusCode: 200,
 			message: 'Ok.',

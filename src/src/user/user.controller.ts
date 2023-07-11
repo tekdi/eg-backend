@@ -139,6 +139,7 @@ export class UserController {
 	}
 
 	@Get('/organization/:id')
+	@UseGuards(new AuthGuard())
 	organizationInfo(@Param('id') id: string) {
 		return this.userService.organizationInfo(id);
 	}
@@ -164,6 +165,7 @@ export class UserController {
 	}
 
 	@Get('/audit/:context/:context_id')
+	@UseGuards(new AuthGuard())
 	getAuditLogs(
 		@Req() request: any,
 		@Res() response: Response,

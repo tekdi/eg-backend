@@ -48,6 +48,17 @@ export class BeneficiariesController {
 	) {
 		return this.beneficiariesService.findAll(request, req, response);
 	}
+
+	@Post('/admin/list')
+	@UseGuards(new AuthGuard())
+	findAllAgForIp(
+		@Body() request: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.beneficiariesService.getList(request, req, response);
+	}
+
 	@Get('/getStatuswiseCount')
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.beneficiariesService.getStatuswiseCount(request, response);
@@ -106,5 +117,19 @@ export class BeneficiariesController {
 			message: result.message,
 			data: result.data,
 		});
+	}
+
+	@Post('/admin/export-csv')
+	@UseGuards(new AuthGuard())
+	async exportCsv(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.exportCsv(
+			request,
+			body,
+			response,
+		);
 	}
 }

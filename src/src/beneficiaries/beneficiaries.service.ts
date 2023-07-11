@@ -6,6 +6,7 @@ import {
 	Injectable,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createObjectCsvStringifier } from 'csv-writer';
 import { S3Service } from 'src/services/s3/s3.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
@@ -46,6 +47,91 @@ export class BeneficiariesService {
 		'created_by',
 		'updated_by',
 	];
+
+	async exportCsv(req: any, body: any, resp: any) {
+		try {
+			const user = await this.userService.ipUserInfo(req);
+
+			const data = {
+				query: `query MyQuery {
+					users(where: {
+						_and: [
+							{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }
+						]
+					}){
+						first_name
+						last_name
+						dob
+						village
+						mobile
+						block
+						district
+						program_beneficiaries{
+						status
+						enrollment_number
+						facilitator_user{
+							first_name
+							id
+							last_name
+						}
+					  }
+					}
+				  }
+				  `,
+			};
+			const hasuraResponse = await this.hasuraServiceFromServices.getData(
+				data,
+			);
+			const allBeneficiaries = hasuraResponse?.data?.users;
+			const csvStringifier = createObjectCsvStringifier({
+				header: [
+					{ id: 'name', title: 'Name' },
+					{ id: 'district', title: 'District' },
+					{ id: 'block', title: 'Block' },
+					{ id: 'village', title: 'Village' },
+					{ id: 'dob', title: 'DOB' },
+					{ id: 'prerak', title: 'Prerak' },
+					{ id: 'mobile', title: 'Mobile Number' },
+					{ id: 'status', title: 'Status' },
+					{ id: 'enrollment_number', title: 'Enrollment Number' },
+				],
+			});
+
+			const records = [];
+			for (let data of allBeneficiaries) {
+				const dataObject = {};
+				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['district'] = data?.district;
+				dataObject['block'] = data?.block;
+				dataObject['village'] = data?.village;
+				dataObject['dob'] = data?.dob;
+				dataObject['prerak'] =
+					data?.program_beneficiaries[0]?.facilitator_user
+						?.first_name +
+					' ' +
+					data?.program_beneficiaries[0]?.facilitator_user?.last_name;
+				dataObject['mobile'] = data?.mobile;
+				dataObject['status'] = data?.program_beneficiaries[0]?.status;
+				dataObject['enrollment_number'] =
+					data?.program_beneficiaries[0]?.enrollment_number;
+				records.push(dataObject);
+			}
+			let fileName = `${
+				user?.data?.first_name + '_' + user?.data?.last_name
+			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			const fileData =
+				csvStringifier.getHeaderString() +
+				csvStringifier.stringifyRecords(records);
+			resp.header('Content-Type', 'text/csv');
+			return resp.attachment(fileName).send(fileData);
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: 'File Does Not Export!',
+				data: {},
+			});
+		}
+	}
 
 	//status count
 	public async getStatuswiseCount(req: any, resp: any) {
@@ -102,6 +188,125 @@ export class BeneficiariesService {
 		});
 	}
 
+	public async getList(body: any, req: any, resp: any) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return resp.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		const sortType = body?.sortType ? body?.sortType : 'desc';
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let status = body?.status;
+		let filterQueryArray = [];
+		filterQueryArray.push(
+			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+		);
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+			);
+		}
+
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}}`,
+			);
+		}
+
+		if (status && status !== '') {
+			if (status === 'identified') {
+				filterQueryArray.push(`{
+					_or: [
+						{ program_beneficiaries: { status: { _eq: "identified" } } },
+						{ program_beneficiaries: { status: { _is_null: true } } },
+						{ program_beneficiaries: { status: { _eq: "" } } },
+					]
+				}`);
+			} else {
+				filterQueryArray.push(
+					`{program_beneficiaries:{status:{_eq:${status}}}}`,
+				);
+			}
+		}
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		var data = {
+			query: `query MyQuery($limit:Int, $offset:Int) {
+				users_aggregate(where:${filterQuery}) {
+				  aggregate {
+					count
+				  }
+				}
+				users(where: ${filterQuery},
+				limit: $limit,
+                      offset: $offset,
+                      order_by: {
+                        created_at: ${sortType}
+                      }
+				) {
+					id
+					first_name
+					last_name
+					district
+					block
+					mobile
+				    program_beneficiaries {
+					id
+					facilitator_id
+					status
+					
+				  }
+				}
+			  }`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const response = await this.hasuraServiceFromServices.getData(data);
+		let result = response?.data?.users;
+		let mappedResponse = result;
+		const count = response?.data?.users_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
+		if (!mappedResponse || mappedResponse.length < 1) {
+			return resp.status(200).send({
+				success: false,
+				status: 'Not Found',
+				message: 'Beneficiaries Not Found',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Benificiaries found success!',
+				data: {
+					totalCount: count,
+					data: mappedResponse?.map((e) => ({
+						...e,
+						['program_beneficiaries']:
+							e?.['program_beneficiaries']?.[0],
+					})),
+					limit,
+					currentPage: page,
+					totalPages: `${totalPages}`,
+				},
+			});
+		}
+	}
 	public async findAll(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.id) {
@@ -113,12 +318,11 @@ export class BeneficiariesService {
 		}
 		const status = body?.status;
 		const sortType = body?.sortType ? body?.sortType : 'desc';
-		const page = body?.page ? body?.page : '1';
-		const limit = body?.limit ? body?.limit : '10';
-		let offset = 0;
-		if (page > 1 && limit) {
-			offset = parseInt(limit) * (page - 1);
-		}
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
 		let query = '';
 		if (status && status !== '') {
 			if (status === 'identified') {
@@ -338,6 +542,10 @@ export class BeneficiariesService {
 
 
                   }`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
 		};
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
@@ -1429,24 +1637,10 @@ export class BeneficiariesService {
 				}
 				if (
 					req.enrollment_status == 'applied_but_pending' ||
-					req.enrollment_status == 'rejected'
+					req.enrollment_status == 'enrollment_rejected'
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
-				}
-				if (req.enrollment_status == 'other') {
-					let subject;
-					if (req.subjects) {
-						subject = JSON.stringify(req.subjects).replace(
-							/"/g,
-							'\\"',
-						);
-					}
-					myRequest = {
-						...req,
-						...(req.subjects && { subjects: subject }),
-						enrollment_status: req?.enrollment_status,
-					};
 				}
 				await this.hasuraService.q(
 					tableName,

@@ -2,7 +2,7 @@ import {
 	CanActivate,
 	ExecutionContext,
 	Injectable,
-	UnauthorizedException,
+	UnauthorizedException
 } from '@nestjs/common';
 import { Request } from 'express';
 import jwt_decode from 'jwt-decode';
@@ -24,9 +24,29 @@ export class AuthGuard implements CanActivate {
 		// Get token
 		const authToken = request.header('authorization');
 		const authTokenTemp = request.header('authorization').split(' ');
+		let bearerToken = null;
+		let bearerTokenTemp = null;
 
-		// Check if token is present as Bearer token
-		if (!authTokenTemp[1]) {
+		// If Bearer word not found in auth header value
+		if (authTokenTemp[0] !== 'Bearer') {
+			throw new UnauthorizedException('Bearer token not found');
+		}
+		// Get trimmed Bearer token value by skipping Bearer value
+		else {
+			bearerToken = authToken.trim().substr(7, authToken.length).trim();
+		}
+
+		// If Bearer token value is not passed
+		if (!bearerToken) {
+			throw new UnauthorizedException('Invalid token');
+		}
+		// Lets split token by dot (.)
+		else {
+			bearerTokenTemp = bearerToken.split('.');
+		}
+
+		// Since JWT has three parts - seperated by dots(.), lets split token
+		if (bearerTokenTemp.length < 3) {
 			throw new UnauthorizedException('Invalid token');
 		}
 
