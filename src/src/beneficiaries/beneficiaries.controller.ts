@@ -61,16 +61,16 @@ export class BeneficiariesController {
 
 	@Post('/:id/is_enrollment_exists')
 	@UseGuards(new AuthGuard())
-	isEnrollmentNumberExists(
+	async isEnrollmentNumberExists(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
 		@Res() response: Response,
 	) {
-		return this.beneficiariesService.isEnrollmentNumberExists(
+		const result = await this.beneficiariesService.isEnrollmentNumberExists(
 			id,
 			body,
-			response,
 		);
+		return response.status(result.success ? 200 : 422).json(result);
 	}
 
 	@Get('/getStatuswiseCount')
