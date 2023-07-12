@@ -59,6 +59,20 @@ export class BeneficiariesController {
 		return this.beneficiariesService.getList(request, req, response);
 	}
 
+	@Post('/:id/is_enrollment_exists')
+	@UseGuards(new AuthGuard())
+	isEnrollmentNumberExists(
+		@Param('id') id: string,
+		@Body() body: Record<string, any>,
+		@Res() response: Response,
+	) {
+		return this.beneficiariesService.isEnrollmentNumberExists(
+			id,
+			body,
+			response,
+		);
+	}
+
 	@Get('/getStatuswiseCount')
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.beneficiariesService.getStatuswiseCount(request, response);
@@ -126,10 +140,6 @@ export class BeneficiariesController {
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		return this.beneficiariesService.exportCsv(
-			request,
-			body,
-			response,
-		);
+		return this.beneficiariesService.exportCsv(request, body, response);
 	}
 }
