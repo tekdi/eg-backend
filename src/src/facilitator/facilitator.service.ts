@@ -5,8 +5,10 @@ import jwt_decode from 'jwt-decode';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
-import { HasuraService, HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { HasuraService } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
+
+type EligibilityUpdateFields = "experience";
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -14,7 +16,6 @@ export class FacilitatorService {
 		private authService:AuthService,
 		private enumService: EnumService,
 		private hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private userService: UserService,
 		private s3Service: S3Service,
 	) {}
@@ -47,6 +48,238 @@ export class FacilitatorService {
 		'updated_by',
 		'created_by',
 	];
+
+	private eligibilityDetails = {
+		NGOExperience: {
+			hasExperience: {
+				weight: 10,
+				values: {
+					0: 0,
+					1: 1,
+				},
+			},
+			yearsOfExperience: {
+				weight: 5,
+				values: {
+					'0-2': 0,
+					'3-4': 1,
+					'5': 2,
+				},
+			},
+		},
+		teachingExperience: {
+			hasExperience: {
+				weight: 10,
+				values: {
+					0: 0,
+					1: 1,
+				},
+			},
+			yearsOfExperience: {
+				weight: 5,
+				values: {
+					'0-2': 0,
+					'3-4': 1,
+					'5': 2,
+				},
+			},
+		},
+	};
+
+	getScoreFromYearsOfExperience(type, yearsOfExperience) {
+		let keyName = null;
+		if (type === 'vo_experience') keyName = 'NGOExperience';
+		if (type === 'teachingExperience') keyName = 'teachingExperience';
+
+		// Find the matched key range in which user's experience lies
+		const foundRange = Object.keys(
+			this.eligibilityDetails[keyName].yearsOfExperience.values,
+		).find((key) => {
+			const min = parseInt(key.split('-')[0]);
+			const max = parseInt(key.split('-')[1]);
+			if (!max) return yearsOfExperience >= min;
+			else return yearsOfExperience >= min && yearsOfExperience <= max;
+		});
+
+		return this.eligibilityDetails[keyName].yearsOfExperience.values[
+			foundRange
+		];
+	}
+
+	getScoreFromHasExperience(type, hasExperience) {
+		let keyName = null;
+		if (type === 'vo_experience') keyName = 'NGOExperience';
+		if (type === 'teachingExperience') keyName = 'teachingExperience';
+		return this.eligibilityDetails[keyName].hasExperience.values[
+			String(Number(hasExperience))
+		];
+	}
+
+	// Create eligibility scores details payload
+	createEligibilityDetailsPayload(
+		updateFields: EligibilityUpdateFields[],
+		currentData: { experience: any[]; vo_experience: any[] },
+	) {
+		const resScoreDetails: any = {};
+		// Loop through the fields to update
+		for (const key of updateFields) {
+			// Update NGO experience and teaching experience related details
+			if (key === 'experience') {
+				function getYearsOfExperienceFromString(str: string) {
+					if (str === '5+') return 5;
+					else if (str === '<1') return 0;
+					else return parseInt(str);
+				}
+				let voExpTotalYears = 0;
+				let teachingExpTotalYears = 0;
+				let hasVoExp = false;
+				let hasTeachingExp = false;
+
+				// Calculate total volunteer and teaching experience years
+				currentData.vo_experience.forEach((obj) => {
+					hasVoExp = true;
+					const yearsOfExperience = getYearsOfExperienceFromString(
+						obj.experience_in_years,
+					);
+					if (obj.related_to_teaching === 'yes') {
+						hasTeachingExp = true;
+						teachingExpTotalYears += yearsOfExperience;
+					}
+					voExpTotalYears += yearsOfExperience;
+				});
+				currentData.experience
+					.filter((obj) => obj.related_to_teaching === 'yes')
+					.forEach((obj) => {
+						hasTeachingExp = true;
+						const yearsOfExperience =
+							getYearsOfExperienceFromString(
+								obj.experience_in_years,
+							);
+						teachingExpTotalYears += yearsOfExperience;
+					});
+				// console.log('voExpTotalYears:', voExpTotalYears);
+				// console.log('teachingExpTotalYears:', teachingExpTotalYears);
+
+				// Get score for NGO experience years
+				const ngoExpScore = this.getScoreFromYearsOfExperience(
+					'vo_experience',
+					voExpTotalYears,
+				);
+				// console.log('ngoExpScore:', ngoExpScore);
+
+				// Get score based on user has NGO experience or not
+				const hasNgoExpScore = this.getScoreFromHasExperience(
+					'vo_experience',
+					hasVoExp,
+				);
+				// console.log('hasNgoExpScore:', hasNgoExpScore);
+
+				// Get score for teaching related experience years
+				const teachingExpScore = this.getScoreFromYearsOfExperience(
+					'teachingExperience',
+					teachingExpTotalYears,
+				);
+				// console.log('teachingExpScore:', teachingExpScore);
+
+				// Get score based on user has teaching experience or not
+				const hasTeachingExpScore = this.getScoreFromHasExperience(
+					'teachingExperience',
+					hasTeachingExp,
+				);
+				// console.log('hasTeachingExpScore:', hasTeachingExpScore);
+
+				// Append score details in resultant score payload
+				resScoreDetails.NGOExperience = {
+					hasExperience: hasNgoExpScore,
+					yearsOfExperience: ngoExpScore,
+				};
+				resScoreDetails.teachingExperience = {
+					hasExperience: hasTeachingExpScore,
+					yearsOfExperience: teachingExpScore,
+				};
+			}
+		}
+		return resScoreDetails;
+	}
+
+	// Update eligibility details from user id
+	async updateEligibilityDetails(userId) {
+		// Get user details
+		const { data: updatedFacilitator } = await this.userById(userId);
+
+		// Extract only needed information for updating eligibility
+		const currentData = {
+			experience: updatedFacilitator.experience,
+			vo_experience: updatedFacilitator.vo_experience,
+		};
+
+		// Create eligibility scores details payload
+		const updatedExpEligibilityDetails =
+			this.createEligibilityDetailsPayload(['experience'], currentData); // Passing static array of element 'experience' as currently we have only experience details to calculate eligibility. In future, we'll handle it dynamically
+		// console.log(
+		// 	'updatedExpEligibilityDetails:',
+		// 	updatedExpEligibilityDetails,
+		// );
+
+		// Create payload of scores details which contains all the scores details added/updated till now
+		const updatedEligibilityDetails = {
+			...JSON.parse(
+				updatedFacilitator.program_faciltators.eligibility_details,
+			),
+			...updatedExpEligibilityDetails,
+		};
+
+		// Calculate eligibility percentage
+		const updatedEligibilityScore = this.calculateEligibility(
+			updatedEligibilityDetails,
+		);
+		// console.log('updatedEligibilityScore:', updatedEligibilityScore);
+
+		// Update in databse
+		await this.hasuraService.q(
+			'program_faciltators',
+			{
+				id: updatedFacilitator.program_faciltators.id,
+				eligibility_details: JSON.stringify(
+					updatedEligibilityDetails,
+				).replace(/"/g, '\\"'),
+				eligibility_percentage: updatedEligibilityScore,
+			},
+			['eligibility_details', 'eligibility_percentage'],
+			true,
+		);
+	}
+
+	calculateEligibility(eligibilityData: object) {
+		let eligibilityScore = 0;
+		for (const key in eligibilityData) {
+			// Calculate total score for experience details
+			if (key === 'NGOExperience' || key === 'teachingExperience') {
+				// Get score based on user has experience or not
+				const hasExperienceScore = eligibilityData[key].hasExperience;
+
+				// Calculate and add score according to the weightage
+				eligibilityScore +=
+					hasExperienceScore *
+					this.eligibilityDetails[key].hasExperience.weight;
+
+				// Calculate score for years of experience if he has experience
+				if (hasExperienceScore) {
+					// Get score for years of experience
+					const yearsOfExperienceScore =
+						eligibilityData[key].yearsOfExperience;
+
+					// Calculate and add score according to the weightage
+					eligibilityScore +=
+						yearsOfExperienceScore *
+						this.eligibilityDetails[key].yearsOfExperience.weight;
+				}
+			}
+		}
+		// console.log('eligibilityScore:', eligibilityScore);
+		const percentage = Math.round((eligibilityScore * 100) / 40);
+		return percentage;
+	}
 
 	create(req: any) {
 		// return this.hasuraService.create(this.table, req, this.returnFields);
@@ -468,7 +701,7 @@ export class FacilitatorService {
 						}}`,
 				)}
 		}`;
-		const response = await this.hasuraServiceFromServices.getData({
+		const response = await this.hasuraService.getData({
 			query,
 		});
 		const newQdata = response?.data;
@@ -612,7 +845,7 @@ export class FacilitatorService {
 		let experienceInfo;
 		if (keyExist.length) {
 			const tableName = 'experience';
-			// If 'experience_id' has any value, then update. Otherwise create a new record.
+			// If 'id' has any value, then update. Otherwise create a new record.
 			experienceInfo = await this.hasuraService.q(
 				tableName,
 				{
@@ -624,6 +857,8 @@ export class FacilitatorService {
 				true,
 			);
 			experienceInfo = experienceInfo.experience;
+			// Update eligibility details
+			await this.updateEligibilityDetails(facilitatorUser.id);
 		}
 
 		if (
@@ -1073,6 +1308,9 @@ export class FacilitatorService {
 					}
 				}
 			}
+
+			// Update eligibility details
+			await this.updateEligibilityDetails(body.mw_userid);
 
 			return response.status(200).json({
 				success: true,
