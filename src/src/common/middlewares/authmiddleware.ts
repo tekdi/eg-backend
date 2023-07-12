@@ -6,6 +6,7 @@ import jwt_decode from 'jwt-decode';
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
 	constructor(private userService: UserService) {}
+
 	async use(req: any, res: Response, next: NextFunction) {
 		if (req.headers.authorization) {
 			const user = await this.userService.ipUserInfo(req);
