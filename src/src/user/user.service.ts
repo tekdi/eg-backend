@@ -721,6 +721,8 @@ export class UserService {
 			updated_by
 			academic_year_id
 			qualification_ids
+			eligibility_details
+			eligibility_percentage
 		  }
 		  qualifications {
 			created_by
