@@ -8,12 +8,8 @@ import { UserService } from './user.service';
 import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 @Module({
 	imports: [HelperModule, HasuraModule, HasuraModuleFromServices],
-	providers: [UserService, AuthMiddleware],
+	providers: [UserService],
 	controllers: [UserController],
 	exports: [UserService],
 })
-export class UserModule implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes('*');
-	}
-}
+export class UserModule {}
