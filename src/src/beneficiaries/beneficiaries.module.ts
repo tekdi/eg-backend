@@ -31,6 +31,6 @@ import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 })
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes('/beneficiaries');
+		consumer.apply(AuthMiddleware).forRoutes('*');
 	}
 }
