@@ -60,13 +60,18 @@ export class BeneficiariesController {
 	}
 
 	@Get('/getStatuswiseCount')
+	@UseGuards(new AuthGuard())
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
+		console.log('status');
+
 		return this.beneficiariesService.getStatuswiseCount(request, response);
 	}
 
 	@Get(':id')
 	@UseGuards(new AuthGuard())
 	findOne(@Param('id') id: string, @Res() response: Response) {
+		console.log('findone');
+
 		return this.beneficiariesService.findOne(+id, response);
 	}
 
@@ -126,10 +131,6 @@ export class BeneficiariesController {
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		return this.beneficiariesService.exportCsv(
-			request,
-			body,
-			response,
-		);
+		return this.beneficiariesService.exportCsv(request, body, response);
 	}
 }
