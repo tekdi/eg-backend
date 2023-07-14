@@ -379,4 +379,48 @@ export class HasuraService {
 			return { [tableName]: result };
 		}
 	};
+
+	public async getDataFromSQL(sql: string) {
+		try {
+			let url = this.configService.get<string>('HASURA_SQL_BASE_URL');
+			let admin_secret = this.configService.get<string>(
+				'HASURA_ADMIN_SECRET',
+			);
+			const data = {
+				type: 'run_sql',
+				args: {
+					source: 'educategirlsdev',
+					sql: sql,
+				},
+			};
+
+			return await lastValueFrom(
+				this.httpService
+					.post(url, data, {
+						headers: {
+							'x-hasura-admin-secret': admin_secret,
+							'Content-Type': 'application/json',
+						},
+					})
+					.pipe(map((res) => res.data)),
+			);
+		} catch (e) {
+			console.log('getDataFromSQL error', e.message);
+		}
+	}
+
+	public getFormattedData(arr) {
+		let result = [];
+		const columnNames = arr[0];
+		if (arr.length > 1) {
+			result = arr.slice(1).map((record) => {
+				const modifiedRecord = {};
+				columnNames.forEach((columnName, cNameIndex) => {
+					modifiedRecord[columnName] = record[cNameIndex];
+				});
+				return modifiedRecord;
+			});
+		}
+		return result;
+	}
 }
