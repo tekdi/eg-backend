@@ -2077,4 +2077,54 @@ export class BeneficiariesService {
 			data: result,
 		};
 	}
+
+	public async getAllDuplicatesUnderIp(id: number) {
+		const sql = `
+				SELECT
+					bu.aadhar_no AS "aadhar_no",
+					COUNT(*) AS "count"
+				FROM
+					users bu
+				INNER JOIN
+					program_beneficiaries pb
+				ON
+					bu.id = pb.user_id
+				LEFT OUTER JOIN
+					users fu
+				ON
+					pb.facilitator_id = fu.id
+				LEFT OUTER JOIN
+					program_faciltators pf
+				ON
+					fu.id = pf.user_id
+				WHERE
+					pf.parent_ip = '${id}'
+				AND
+					bu.aadhar_no IS NOT NULL
+				GROUP BY
+					bu.aadhar_no
+				HAVING
+					COUNT(*) > 1
+				AND
+					COUNT(*) = (
+						SELECT
+							COUNT(*)
+						FROM
+							users bu2
+						INNER JOIN
+							program_beneficiaries pb2
+						ON
+							bu2.id = pb2.user_id
+						WHERE
+							bu2.aadhar_no = bu.aadhar_no
+					)
+				;
+			`;
+		const duplicateListArr = (
+			await this.hasuraServiceFromServices.getDataFromSQL(sql)
+		).result;
+		return this.hasuraServiceFromServices.getFormattedData(
+			duplicateListArr,
+		);
+	}
 }

@@ -100,6 +100,18 @@ export class BeneficiariesController {
 		return this.beneficiariesService.getStatuswiseCount(request, response);
 	}
 
+	@Get('duplicates')
+	@UseGuards(new AuthGuard())
+	async duplicate(@Req() request: any, @Res() response: any) {
+		const ipId = request.mw_userid;
+		const resultPayload =
+			await this.beneficiariesService.getAllDuplicatesUnderIp(ipId);
+		return response.status(200).json({
+			success: true,
+			data: resultPayload,
+		});
+	}
+
 	@Get(':id')
 	@UseGuards(new AuthGuard())
 	findOne(@Param('id') id: string, @Res() response: Response) {
