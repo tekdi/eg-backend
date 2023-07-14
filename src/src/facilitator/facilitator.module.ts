@@ -14,7 +14,7 @@ import { FacilitatorController } from './facilitator.controller';
     imports: [UserModule, HttpModule, HasuraModule, EnumModule, AuthModule, S3Module],
     providers: [FacilitatorService],
     controllers: [FacilitatorController],
-    exports: [],
+    exports: [FacilitatorService],
 })
 export class FacilitatorModule {
 }
