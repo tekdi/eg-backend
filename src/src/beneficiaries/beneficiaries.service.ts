@@ -47,6 +47,27 @@ export class BeneficiariesService {
 		'updated_by',
 	];
 
+	async duplicateByAadhaar(aadhaarNo: string, ipId: number) {
+		const checkValidDuplicationQuery = `
+				query MyQuery {
+					users_aggregate (where: {
+						aadhar_no: {_eq: "${aadhaarNo}"},
+						program_beneficiaries: {
+							id: {_is_null: false},
+							_or: [
+								{_not: {facilitator_user: {}}},
+								{facilitator_user: {program_faciltators: {parent_ip: {_neq: "${ipId}"}}}}
+							]
+						}
+					}) {
+						aggregate {
+							count
+						}
+					}
+				}
+			`;
+	}
+
 	async isEnrollmentNumberExists(beneficiaryId: string, body: any) {
 		const query = `
 				query MyQuery {
