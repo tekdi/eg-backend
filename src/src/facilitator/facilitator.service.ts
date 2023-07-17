@@ -1631,6 +1631,8 @@ export class FacilitatorService {
             created_by
             updated_by
             academic_year_id
+            eligibility_details
+            eligibility_percentage
           }
           qualifications {
             created_by
