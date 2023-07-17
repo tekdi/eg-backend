@@ -49,17 +49,15 @@ export class BeneficiariesController {
 		return this.beneficiariesService.findAll(request, req, response);
 	}
 
-	@Post('duplicates')
+	@Post('byAadhaar')
 	@UseGuards(new AuthGuard())
 	async duplicateByAadhaar(
-		@Req() request: Record<string, any>,
 		@Body() body: Record<string, any>,
 		@Res() response: Record<string, any>,
 	) {
-		const ipId = request.mw_userid;
 		const aadhaarNo = body.aadhar_no;
 		const resultPayload =
-			await this.beneficiariesService.duplicateByAadhaar(aadhaarNo, ipId);
+			await this.beneficiariesService.byAadhaar(aadhaarNo);
 		return response.status(200).json({
 			success: true,
 			data: resultPayload,

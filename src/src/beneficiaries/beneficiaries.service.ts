@@ -47,25 +47,28 @@ export class BeneficiariesService {
 		'updated_by',
 	];
 
-	async duplicateByAadhaar(aadhaarNo: string, ipId: number) {
-		const checkValidDuplicationQuery = `
+	async byAadhaar(aadhaarNo: string) {
+		const beneficiariesByAadhaarQuery = `
 				query MyQuery {
-					users_aggregate (where: {
-						aadhar_no: {_eq: "${aadhaarNo}"},
-						program_beneficiaries: {
-							id: {_is_null: false},
-							_or: [
-								{_not: {facilitator_user: {}}},
-								{facilitator_user: {program_faciltators: {parent_ip: {_neq: "${ipId}"}}}}
-							]
-						}
-					}) {
-						aggregate {
-							count
+					users (where: {aadhar_no: {_eq: "${aadhaarNo}"}}) {
+						id
+						first_name
+						last_name
+						aadhar_no
+						program_beneficiaries {
+							facilitator_user {
+								id
+								first_name
+								last_name
+							}
 						}
 					}
 				}
 			`;
+		const resultData = (
+			await this.hasuraServiceFromServices.getData({ query: beneficiariesByAadhaarQuery })
+		)?.data?.users;
+		return resultData;
 	}
 
 	async isEnrollmentNumberExists(beneficiaryId: string, body: any) {
