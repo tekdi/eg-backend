@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { EventsService } from './events.service';
+import { HasuraModule } from 'src/services/hasura/hasura.module';
+import { UserModule } from 'src/user/user.module';
+import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { EventsController } from './events.controller';
-import { HasuraService } from 'src/hasura/hasura.service';
-import { HasuraModule } from 'src/hasura/hasura.module';
+import { EventsService } from './events.service';
+
 
 @Module({
-  imports: [HasuraModule],
+  imports: [UserModule,HasuraModule,HasuraModuleFromServices],
   controllers: [EventsController],
   providers: [EventsService],
 })
