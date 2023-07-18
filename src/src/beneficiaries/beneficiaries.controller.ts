@@ -64,9 +64,9 @@ export class BeneficiariesController {
 		return this.beneficiariesService.getStatuswiseCount(request, response);
 	}
 
-	@Get('duplicates')
+	@Get('ip-duplication')
 	@UseGuards(new AuthGuard())
-	async duplicate(@Req() request: any, @Res() response: any) {
+	async getAllDuplicatesUnderIp(@Req() request: any, @Res() response: any) {
 		const ipId = request.mw_userid;
 		const resultPayload =
 			await this.beneficiariesService.getAllDuplicatesUnderIp(ipId);
