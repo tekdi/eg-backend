@@ -86,7 +86,10 @@ export class FacilitatorService {
 								},
 								{
 									attendances_aggregate: {
-										count: { predicate: {_eq: 0} }
+										count: {
+											predicate: {_eq: 0},
+											filter: {event: {type: {_eq: "${body.type}"}}}
+										}
 									}
 								}
 							]
@@ -108,7 +111,10 @@ export class FacilitatorService {
 								},
 								{
 									attendances_aggregate: {
-										count: { predicate: {_eq: 0} }
+										count: {
+											predicate: {_eq: 0},
+											filter: {event: {type: {_eq: "${body.type}"}}}
+										}
 									}
 								}
 							]
