@@ -54,12 +54,20 @@ export class BeneficiariesService {
 						id
 						first_name
 						last_name
-						aadhar_no
+						created_at
+						mobile
+						state
+						district
+						block
+						village
+						grampanchayat
+						duplicate_reason
 						program_beneficiaries {
 							facilitator_user {
 								id
 								first_name
 								last_name
+								mobile
 							}
 						}
 					}
