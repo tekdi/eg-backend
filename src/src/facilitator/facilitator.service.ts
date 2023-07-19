@@ -501,8 +501,6 @@ export class FacilitatorService {
 			) {
 				body.alternative_mobile_number = null;
 			}
-			body.mobile = body.mobile;
-			body.alternative_mobile_number = body.alternative_mobile_number;
 			await this.hasuraService.q(tableName, body, userArr, true);
 		}
 

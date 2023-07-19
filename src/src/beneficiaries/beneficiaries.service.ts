@@ -1544,7 +1544,6 @@ export class BeneficiariesService {
 					arr.length
 						? JSON.stringify(arr).replace(/"/g, '\\"')
 						: null;
-				req.career_aspiration = req?.career_aspiration;
 				let tableName = 'core_beneficiaries';
 				await this.hasuraService.q(
 					tableName,
