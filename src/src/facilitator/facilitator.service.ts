@@ -5,13 +5,16 @@ import jwt_decode from 'jwt-decode';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
-import { HasuraService, HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import {
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
+} from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 @Injectable()
 export class FacilitatorService {
 	constructor(
 		private readonly httpService: HttpService,
-		private authService:AuthService,
+		private authService: AuthService,
 		private enumService: EnumService,
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
@@ -225,6 +228,7 @@ export class FacilitatorService {
 							status
 							comment
 							reminder
+							rsvp
 							location_type
 							location
 							created_at
@@ -995,6 +999,21 @@ export class FacilitatorService {
 				break;
 			}
 			case 'aadhaar_details': {
+				let isAdharExist = await this.hasuraService.findAll('users', {
+					aadhar_no: body?.aadhar_no,
+				});
+				let userExist = isAdharExist?.data?.users;
+				const isDuplicateAdhar = userExist.some(
+					(data) => data.id !== id,
+				);
+				if (userExist.length > 0 && isDuplicateAdhar) {
+					return response.status(422).send({
+						success: false,
+						message: 'Aadhaar Number Already Exist',
+						data: {},
+					});
+				}
+
 				const result = await this.updateAadhaarDetails(id, body);
 				if (result && !result.success) {
 					return response.status(result.statusCode).json({
@@ -1158,7 +1177,10 @@ export class FacilitatorService {
 					{ id: 'gender', title: 'Gender' },
 					{ id: 'aadhar_no', title: 'Aadhaar Number' },
 					{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
-					{ id: 'aadhaar_verification_mode', title: 'Aadhaar Verification Mode' },
+					{
+						id: 'aadhaar_verification_mode',
+						title: 'Aadhaar Verification Mode',
+					},
 				],
 			});
 
@@ -1171,9 +1193,12 @@ export class FacilitatorService {
 				dataObject['mobile'] = data?.mobile;
 				dataObject['status'] = data?.program_faciltators[0]?.status;
 				dataObject['gender'] = data?.gender;
-				dataObject['aadhar_no']=data?.aadhar_no; 
-				dataObject['aadhar_verified']=data?.aadhar_verified ? data?.aadhar_verified:'no';
-				dataObject['aadhaar_verification_mode']=data?.aadhaar_verification_mode;
+				dataObject['aadhar_no'] = data?.aadhar_no;
+				dataObject['aadhar_verified'] = data?.aadhar_verified
+					? data?.aadhar_verified
+					: 'no';
+				dataObject['aadhaar_verification_mode'] =
+					data?.aadhaar_verification_mode;
 				records.push(dataObject);
 			}
 			let fileName = `${decoded?.name.replace(' ', '_')}_${new Date()
@@ -1420,6 +1445,7 @@ export class FacilitatorService {
 			status
 			comment
 			reminder
+			rsvp
 			location_type
 			location
 			created_at

@@ -710,17 +710,21 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
-		const newR = await this.hasuraService.q(tableName, {...req,aadhar_verified:'pending'}, [
-			'first_name',
-			'last_name',
-			'middle_name',
-			'mobile',
-			'email_id',
-			'dob',
-			'keycloak_id',
-			'username',
-			'aadhar_verified'
-		]);
+		const newR = await this.hasuraService.q(
+			tableName,
+			{ ...req, aadhar_verified: 'pending' },
+			[
+				'first_name',
+				'last_name',
+				'middle_name',
+				'mobile',
+				'email_id',
+				'dob',
+				'keycloak_id',
+				'username',
+				'aadhar_verified',
+			],
+		);
 
 		const user_id = newR[tableName]?.id;
 
@@ -872,6 +876,7 @@ export class AuthService {
 				status
 				comment
 				reminder
+				rsvp
 				location_type
 				location
 				created_at
