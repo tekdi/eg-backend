@@ -732,8 +732,6 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
-		console.log('tushar request', req);
-
 		const newR = await this.hasuraService.q(
 			tableName,
 			{ ...req, aadhar_verified: 'pending' },
