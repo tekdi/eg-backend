@@ -92,6 +92,7 @@ export class AuthController {
 	public async register(
 		@Body() body: RegisterDTO,
 		@Res() response: Response,
+		@Req() request: any,
 	) {
 		return this.authService.register(body, response);
 	}
@@ -178,15 +179,11 @@ export class AuthController {
 	@Post('/okyc2/aadhaar/verify')
 	@UseGuards(new AuthGuard())
 	private async okyc2AadhaarVerify(
-		@Body() body:any,
+		@Body() body: any,
 		@Req() request: any,
 		@Res() response: Response,
 	) {
-		return this.authService.okyc2AadhaarVerify(
-			body,
-			request,
-			response,
-		);
+		return this.authService.okyc2AadhaarVerify(body, request, response);
 	}
 
 	@Get('/okyc2/aadhaar/verify/:id')
