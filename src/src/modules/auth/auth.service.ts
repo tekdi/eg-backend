@@ -786,13 +786,9 @@ export class AuthService {
 					'status',
 				],
 			);
-			console.log('');
 		}
-		console.log('user_id', user_id);
-		console.log('role', req.role_fields.facilitator_id);
 
 		const result = await this.userById(user_id);
-		console.log('resultsssss', result);
 		return result;
 	}
 
