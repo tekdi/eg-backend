@@ -13,6 +13,7 @@ import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
+import { EnumService } from '../enum/enum.service';
 @Injectable()
 export class BeneficiariesService {
 	public url = process.env.HASURA_BASE_URL;
@@ -26,6 +27,7 @@ export class BeneficiariesService {
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private keycloakService: KeycloakService,
 		private configService: ConfigService,
+		private enumService: EnumService,
 	) {}
 
 	public returnFields = [
@@ -179,7 +181,6 @@ export class BeneficiariesService {
 			'identified',
 			'ready_to_enroll',
 			'enrolled',
-			'duplicated',
 			'enrolled_ip_verified',
 			'registered_in_camp',
 			'rejected',
@@ -866,16 +867,13 @@ export class BeneficiariesService {
 
 	public async statusUpdate(body: any, request: any) {
 		const { data: updatedUser } = await this.userById(body?.user_id);
-		if (
-			body.status !== 'dropout' &&
-			body.status !== 'rejected' &&
-			body.status !== 'enrolled' &&
-			updatedUser?.program_beneficiaries?.status == 'duplicated'
-		) {
+		const allStatuses = this.enumService.getEnumValue('BENEFICIARY_STATUS').data.map(enumData => enumData.value);
+
+		if (!allStatuses.includes(body.status)) {
 			return {
 				status: 400,
 				success: false,
-				message: `You cant update status to ${body.status} `,
+				message: `Invalid status`,
 				data: {},
 			};
 		}
@@ -1244,26 +1242,6 @@ export class BeneficiariesService {
 					};
 
 					await this.hasuraServiceFromServices.getData(data);
-					const data1 = {
-						query: `mutation MyMutation {
-							update_program_beneficiaries(where:{_and:[{user:{aadhar_no:{_eq:"${aadhaar_no}"}}},{user:{id:{_neq:${user_id}}}}]} ,_set:{status:"duplicated",reason_for_status_update:"SYSTEM_DETECTED_DUPLICATES"}){
-							  returning{
-								status
-								reason_for_status_update
-							  }
-							}
-							update_new_ag_status: update_program_beneficiaries(where: {user_id: {_eq:${user_id}}},_set:{status:"duplicated",reason_for_status_update:"duplicated"}){
-							  returning{
-								status
-								reason_for_status_update
-							  }
-							}
-						  }
-						  `,
-					};
-					const result = await this.hasuraServiceFromServices.getData(
-						data1,
-					);
 				}
 				break;
 			}
