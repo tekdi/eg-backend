@@ -76,7 +76,11 @@ export class BeneficiariesService {
 		const resultData = (
 			await this.hasuraServiceFromServices.getData({ query: beneficiariesByAadhaarQuery })
 		)?.data?.users;
-		return resultData;
+		const success = resultData ? true : false;
+		return {
+			success,
+			result: resultData
+		};
 	}
 
 	async isEnrollmentNumberExists(beneficiaryId: string, body: any) {

@@ -58,10 +58,17 @@ export class BeneficiariesController {
 		const aadhaarNo = body.aadhar_no;
 		const resultPayload =
 			await this.beneficiariesService.byAadhaar(aadhaarNo);
-		return response.status(200).json({
-			success: true,
-			data: resultPayload,
-		});
+		if (resultPayload.success) {
+			return response.status(200).json({
+				success: true,
+				data: resultPayload.result,
+			});
+		} else {
+			return response.status(200).json({
+				success: false,
+				message: 'Error while fetching results',
+			});
+		}
 	}
 
 	@Post('/admin/list')
