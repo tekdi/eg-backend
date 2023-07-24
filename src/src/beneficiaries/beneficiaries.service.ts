@@ -831,9 +831,9 @@ export class BeneficiariesService {
                 enrolled_for_board
                 enrollement_status
               }
-			  program_users {
-				organisation_id
-			  }
+              program_users {
+                organisation_id
+              }
               references {
                 id
                 name
