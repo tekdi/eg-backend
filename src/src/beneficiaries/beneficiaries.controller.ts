@@ -49,6 +49,28 @@ export class BeneficiariesController {
 		return this.beneficiariesService.findAll(request, req, response);
 	}
 
+	@Post('/admin/list/duplicates-by-aadhaar')
+	@UseGuards(new AuthGuard())
+	async getBeneficiariesDuplicatesByAadhaar(
+		@Body() body: Record<string, any>,
+		@Res() response: Record<string, any>,
+	) {
+		const aadhaarNo = body.aadhar_no;
+		const resultPayload =
+			await this.beneficiariesService.getBeneficiariesDuplicatesByAadhaar(aadhaarNo);
+		if (resultPayload.success) {
+			return response.status(200).json({
+				success: true,
+				data: resultPayload.result,
+			});
+		} else {
+			return response.status(200).json({
+				success: false,
+				message: 'Error while fetching results',
+			});
+		}
+	}
+
 	@Post('/admin/list')
 	@UseGuards(new AuthGuard())
 	findAllAgForIp(

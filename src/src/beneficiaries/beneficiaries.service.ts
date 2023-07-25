@@ -49,6 +49,43 @@ export class BeneficiariesService {
 		'updated_by',
 	];
 
+	async getBeneficiariesDuplicatesByAadhaar(aadhaarNo: string) {
+		const beneficiariesByAadhaarQuery = `
+			query MyQuery {
+				users (where: {aadhar_no: {_eq: "${aadhaarNo}"}}) {
+					id
+					first_name
+					last_name
+					created_at
+					mobile
+					state
+					district
+					block
+					village
+					grampanchayat
+					duplicate_reason
+					program_beneficiaries {
+						facilitator_user {
+							id
+							first_name
+							last_name
+							mobile
+						}
+					}
+				}
+			}
+		`;
+
+		const resultData = (
+			await this.hasuraServiceFromServices.getData({ query: beneficiariesByAadhaarQuery })
+		)?.data?.users;
+		const success = resultData ? true : false;
+		return {
+			success,
+			result: resultData
+		};
+	}
+
 	async isEnrollmentNumberExists(beneficiaryId: string, body: any) {
 		const query = `
 				query MyQuery {
