@@ -1026,6 +1026,8 @@ export class BeneficiariesService {
 			},
 			edit_address: {
 				users: [
+					'lat',
+					'long',
 					'state',
 					'district',
 					'block',
