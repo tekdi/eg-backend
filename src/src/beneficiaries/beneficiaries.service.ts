@@ -482,6 +482,7 @@ export class BeneficiariesService {
 						grampanchayat
 						id
 						is_duplicate
+						is_deactivated
 						keycloak_id
 						last_name
 						lat
@@ -691,6 +692,7 @@ export class BeneficiariesService {
 				grampanchayat
 				id
 				is_duplicate
+				is_deactivated
 				keycloak_id
 				last_name
 				lat
