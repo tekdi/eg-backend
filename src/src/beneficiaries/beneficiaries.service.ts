@@ -919,38 +919,38 @@ export class BeneficiariesService {
 
 	public async deactivateDuplicateAG(AadhaarNo: string, exceptId: number) {
 		const query = `
-				mutation MyMutation {
-					update_users_many (
-						updates: [
-							{
-								where: {
-									aadhar_no: {_eq: "${AadhaarNo}"},
-									id: {_neq: ${exceptId}}
-								},
-								_set: {
-									is_deactivated: true,
-									is_duplicate: "no"
-								}
+			mutation MyMutation {
+				update_users_many (
+					updates: [
+						{
+							where: {
+								aadhar_no: {_eq: "${AadhaarNo}"},
+								id: {_neq: ${exceptId}}
 							},
-							{
-								where: {
-									id: {_eq: ${exceptId}},
-								},
-								_set: {
-									is_duplicate: "no"
-								}
+							_set: {
+								is_deactivated: true,
+								is_duplicate: "no"
 							}
-						]
-					) {
-						returning {
-							id
-							aadhar_no
-							is_duplicate
-							is_deactivated
+						},
+						{
+							where: {
+								id: {_eq: ${exceptId}},
+							},
+							_set: {
+								is_duplicate: "no"
+							}
 						}
+					]
+				) {
+					returning {
+						id
+						aadhar_no
+						is_duplicate
+						is_deactivated
 					}
 				}
-			`;
+			}
+		`;
 		const updateResult = (await this.hasuraServiceFromServices.getData({ query }))?.data?.update_users_many;
 		return {
 			success: updateResult ? true : false,
@@ -2137,46 +2137,46 @@ export class BeneficiariesService {
 	public async getAllDuplicatesUnderIp(id: number) {
 		const user = (await this.findOne(id)).data;
 		const sql = `
-				SELECT
-					bu.aadhar_no AS "aadhar_no",
-					COUNT(*) AS "count"
-				FROM
-					users bu
-				INNER JOIN
-					program_beneficiaries pb
-				ON
-					bu.id = pb.user_id
-				LEFT OUTER JOIN
-					users fu
-				ON
-					pb.facilitator_id = fu.id
-				LEFT OUTER JOIN
-					program_faciltators pf
-				ON
-					fu.id = pf.user_id
-				WHERE
-					pf.parent_ip = '${user?.program_users?.organisation_id}'
-				AND
-					bu.aadhar_no IS NOT NULL
-				GROUP BY
-					bu.aadhar_no
-				HAVING
-					COUNT(*) > 1
-				AND
-					COUNT(*) = (
-						SELECT
-							COUNT(*)
-						FROM
-							users bu2
-						INNER JOIN
-							program_beneficiaries pb2
-						ON
-							bu2.id = pb2.user_id
-						WHERE
-							bu2.aadhar_no = bu.aadhar_no
-					)
-				;
-			`;
+			SELECT
+				bu.aadhar_no AS "aadhar_no",
+				COUNT(*) AS "count"
+			FROM
+				users bu
+			INNER JOIN
+				program_beneficiaries pb
+			ON
+				bu.id = pb.user_id
+			LEFT OUTER JOIN
+				users fu
+			ON
+				pb.facilitator_id = fu.id
+			LEFT OUTER JOIN
+				program_faciltators pf
+			ON
+				fu.id = pf.user_id
+			WHERE
+				pf.parent_ip = '${user?.program_users?.organisation_id}'
+			AND
+				bu.aadhar_no IS NOT NULL
+			GROUP BY
+				bu.aadhar_no
+			HAVING
+				COUNT(*) > 1
+			AND
+				COUNT(*) = (
+					SELECT
+						COUNT(*)
+					FROM
+						users bu2
+					INNER JOIN
+						program_beneficiaries pb2
+					ON
+						bu2.id = pb2.user_id
+					WHERE
+						bu2.aadhar_no = bu.aadhar_no
+				)
+			;
+		`;
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.getDataFromSQL(sql)
 		).result;
@@ -2187,33 +2187,33 @@ export class BeneficiariesService {
 
 	public async getAllDuplicatesUnderPo() {
 		const sql = `
-				SELECT
-					bu.aadhar_no AS "aadhar_no",
-					COUNT(*) AS "count"
-				FROM
-					users bu
-				INNER JOIN
-					program_beneficiaries pb
-				ON
-					bu.id = pb.user_id
-				INNER JOIN
-					users fu
-				ON
-					pb.facilitator_id = fu.id
-				LEFT OUTER JOIN
-					program_faciltators pf
-				ON
-					fu.id = pf.user_id
-				WHERE
-					bu.aadhar_no IS NOT NULL
-				GROUP BY
-					bu.aadhar_no
-				HAVING
-					COUNT(*) > 1
-				AND
-					array_length(array_agg(DISTINCT pf.parent_ip), 1) > 1
-				;
-			`;
+			SELECT
+				bu.aadhar_no AS "aadhar_no",
+				COUNT(*) AS "count"
+			FROM
+				users bu
+			INNER JOIN
+				program_beneficiaries pb
+			ON
+				bu.id = pb.user_id
+			INNER JOIN
+				users fu
+			ON
+				pb.facilitator_id = fu.id
+			LEFT OUTER JOIN
+				program_faciltators pf
+			ON
+				fu.id = pf.user_id
+			WHERE
+				bu.aadhar_no IS NOT NULL
+			GROUP BY
+				bu.aadhar_no
+			HAVING
+				COUNT(*) > 1
+			AND
+				array_length(array_agg(DISTINCT pf.parent_ip), 1) > 1
+			;
+		`;
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.getDataFromSQL(sql)
 		).result;
