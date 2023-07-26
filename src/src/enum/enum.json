@@ -188,12 +188,8 @@
 
 	"BENEFICIARY_REASONS_FOR_REJECTING_LEARNER": [
 		{
-			"title": "BENEFICIARY_REASONS_FOR_REJECTING_LEARNER_BEHAVIORAL_ISSUES",
-			"value": "behavioral_issues"
-		},
-		{
-			"title": "BENEFICIARY_REASONS_FOR_REJECTING_LEARNER_NO_DOCUMENTS_ARE_AVAILABLE",
-			"value": "no_documents_are_available"
+			"title": "BENEFICIARY_REASONS_FOR_REJECTING_LEARNER_BEHAVIOURAL_ISSUES",
+			"value": "behavioural_issues"
 		}
 	],
 
