@@ -71,9 +71,9 @@ export class BeneficiariesController {
 		}
 	}
 
-	@Post('remove-ag-duplications')
+	@Post('remove-beneficiary-duplications')
 	@UseGuards(new AuthGuard())
-	async removeAGDuplications(
+	async removeBeneficiaryDuplications(
 		@Body() body: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Record<string, any>,
@@ -99,7 +99,7 @@ export class BeneficiariesController {
 		}
 
 		// Set other AGs as deactivated and set is_duplicate flag to false
-		const { success, data: updateData } = await this.beneficiariesService.deactivateDuplicateAG(aadhar_no, +body.activeId);
+		const { success, data: updateData } = await this.beneficiariesService.deactivateDuplicateBeneficiaries(aadhar_no, +body.activeId);
 
 		return response.status(200).json({
 			success: success,
@@ -109,7 +109,7 @@ export class BeneficiariesController {
 
 	@Post('/admin/list')
 	@UseGuards(new AuthGuard())
-	findAllAgForIp(
+	findAllBeneficiariesForIp(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Response,
@@ -136,23 +136,18 @@ export class BeneficiariesController {
 		return this.beneficiariesService.getStatuswiseCount(request, response);
 	}
 
-	@Get('ip-duplication')
+	@Get('admin/list/duplicates-count-by-aadhaar')
 	@UseGuards(new AuthGuard())
-	async getAllDuplicatesUnderIp(@Req() request: any, @Res() response: any) {
-		const ipId = request.mw_userid;
-		const resultPayload =
-			await this.beneficiariesService.getAllDuplicatesUnderIp(ipId);
-		return response.status(200).json({
-			success: true,
-			data: resultPayload,
-		});
-	}
+	async getAllDuplicateCountsByAadhaar(@Req() request: any, @Res() response: any) {
+		const role = request.mw_role;
 
-	@Get('po-duplication')
-	@UseGuards(new AuthGuard())
-	async getAllDuplicatesUnderPo(@Req() request: any, @Res() response: any) {
-		const resultPayload =
-			await this.beneficiariesService.getAllDuplicatesUnderPo();
+		// Fetch duplicate counts based on role
+		let resultPayload;
+		if (role === 'program_owner') {
+			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderPo();
+		} else if (role === 'staff') {
+			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderIp(request.mw_userid);
+		}
 		return response.status(200).json({
 			success: true,
 			data: resultPayload,

@@ -388,10 +388,13 @@ export class HasuraService {
 			let admin_secret = this.configService.get<string>(
 				'HASURA_ADMIN_SECRET',
 			);
+			const DBName = this.configService.get<string>(
+				'DB_NAME',
+			);
 			const data = {
 				type: 'run_sql',
 				args: {
-					source: 'educategirlsdev',
+					source: DBName,
 					sql: sql,
 				},
 			};

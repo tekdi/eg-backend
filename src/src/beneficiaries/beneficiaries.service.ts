@@ -919,7 +919,7 @@ export class BeneficiariesService {
 		// return this.hasuraService.delete(this.table, { id: +id });
 	}
 
-	public async deactivateDuplicateAG(AadhaarNo: string, exceptId: number) {
+	public async deactivateDuplicateBeneficiaries(AadhaarNo: string, exceptId: number) {
 		const query = `
 			mutation MyMutation {
 				update_users_many (
@@ -1279,7 +1279,7 @@ export class BeneficiariesService {
 				) {
 					return response.status(400).json({
 						success: false,
-						message: 'Duplicate AG detected!',
+						message: 'Duplicate Beneficiary detected!',
 					});
 				}
 
@@ -1301,7 +1301,7 @@ export class BeneficiariesService {
 				await this.hasuraService.q(tableName, req, userArr, update);
 
 				if (req.is_duplicate === 'yes') {
-					// Mark other AGs as duplicate where duplicate reason is null
+					// Mark other beneficiaries as duplicate where duplicate reason is null
 					let updateQuery = `
 						mutation MyMutation {
 							update_users(
