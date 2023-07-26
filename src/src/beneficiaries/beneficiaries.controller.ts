@@ -71,9 +71,9 @@ export class BeneficiariesController {
 		}
 	}
 
-	@Post('remove-beneficiary-duplications')
+	@Post('deactivate-duplicate-beneficiaries')
 	@UseGuards(new AuthGuard())
-	async removeBeneficiaryDuplications(
+	async deactivateDuplicateBeneficiaries(
 		@Body() body: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Record<string, any>,
