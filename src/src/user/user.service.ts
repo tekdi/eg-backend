@@ -181,7 +181,6 @@ export class UserService {
 		}
 
 		const decoded: any = jwt_decode(authToken);
-		request.mw_role = decoded.resource_access.hasura.roles.filter(role => role !== 'user')[0];
 		let keycloak_id = decoded.sub;
 
 		var axios = require('axios');
