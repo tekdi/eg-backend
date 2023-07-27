@@ -151,8 +151,6 @@ export class BeneficiariesController {
 	@Get('/getStatuswiseCount')
 	@UseGuards(new AuthGuard())
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
-		console.log('status');
-
 		return this.beneficiariesService.getStatuswiseCount(request, response);
 	}
 
@@ -184,8 +182,6 @@ export class BeneficiariesController {
 	@Get(':id')
 	@UseGuards(new AuthGuard())
 	findOne(@Param('id') id: string, @Res() response: Response) {
-		console.log('findone');
-
 		return this.beneficiariesService.findOne(+id, response);
 	}
 
