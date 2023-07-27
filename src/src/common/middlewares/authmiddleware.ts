@@ -12,7 +12,7 @@ export class AuthMiddleware implements NestMiddleware {
 			req.mw_userid = user?.data?.id;
 			if (user) {
 				const decoded: any = jwt_decode(req.headers.authorization);
-				req.mw_role = decoded.resource_access.hasura.roles.filter(role => role !== 'user')[0];
+				req.mw_roles = decoded.resource_access.hasura.roles;
 			}
 		} else {
 			req.mw_userid = null;

@@ -71,22 +71,22 @@ export class BeneficiariesController {
 		}
 	}
 
-	@Post('deactivate-duplicate-beneficiaries')
+	@Post('admin/list/deactivate-duplicates')
 	@UseGuards(new AuthGuard())
 	async deactivateDuplicateBeneficiaries(
 		@Body() body: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Record<string, any>,
 	) {
-		const role = req.mw_role;
+		const roles = req.mw_roles;
 		let duplicateArr;
 		// Fetch aadhar number of user to set as active
 		const { aadhar_no } = (await this.beneficiariesService.findOne(+body.activeId)).data;
 
 		// Fetch valid duplication list of the token user
-		if (role === 'program_owner') {
+		if (roles.includes('program_owner')) {
 			duplicateArr = await this.beneficiariesService.getAllDuplicatesUnderPo();
-		} else if (role === 'staff') {
+		} else if (roles.includes('staff')) {
 			duplicateArr = await this.beneficiariesService.getAllDuplicatesUnderIp(req.mw_userid);
 		}
 
@@ -99,7 +99,7 @@ export class BeneficiariesController {
 		}
 
 		// Set other AGs as deactivated and set is_duplicate flag to false
-		const { success, data: updateData } = await this.beneficiariesService.deactivateDuplicateBeneficiaries(aadhar_no, +body.activeId);
+		const { success, data: updateData } = await this.beneficiariesService.deactivateDuplicateBeneficiaries(aadhar_no, +body.activeId, req.mw_userid);
 
 		return response.status(200).json({
 			success: success,
@@ -139,13 +139,13 @@ export class BeneficiariesController {
 	@Get('admin/list/duplicates-count-by-aadhaar')
 	@UseGuards(new AuthGuard())
 	async getAllDuplicateCountsByAadhaar(@Req() request: any, @Res() response: any) {
-		const role = request.mw_role;
+		const roles = request.mw_roles;
 
 		// Fetch duplicate counts based on role
 		let resultPayload;
-		if (role === 'program_owner') {
+		if (roles.includes('program_owner')) {
 			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderPo();
-		} else if (role === 'staff') {
+		} else if (roles.includes('staff')) {
 			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderIp(request.mw_userid);
 		}
 		return response.status(200).json({

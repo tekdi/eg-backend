@@ -919,7 +919,27 @@ export class BeneficiariesService {
 		// return this.hasuraService.delete(this.table, { id: +id });
 	}
 
-	public async deactivateDuplicateBeneficiaries(AadhaarNo: string, exceptId: number) {
+	public async deactivateDuplicateBeneficiaries(AadhaarNo: string, exceptId: number, createdBy: number) {
+		// Store previous data before update
+		const getQuery = `
+			query MyQuery {
+				users (
+					where: {
+						aadhar_no: {_eq: "${AadhaarNo}"}
+					}
+				) {
+					id
+					aadhar_no
+					is_duplicate
+					is_deactivated
+					duplicate_reason
+				}
+			}
+		`;
+
+		const preUpdateData = (await this.hasuraServiceFromServices.getData({ query: getQuery })).data?.users;
+		const preUpdateDataObj = {};
+		preUpdateData.forEach(userData => preUpdateDataObj[userData.id] = userData);
 		const query = `
 			mutation MyMutation {
 				update_users_many (
@@ -930,8 +950,7 @@ export class BeneficiariesService {
 								id: {_neq: ${exceptId}}
 							},
 							_set: {
-								is_deactivated: true,
-								is_duplicate: "no"
+								is_deactivated: true
 							}
 						},
 						{
@@ -939,7 +958,7 @@ export class BeneficiariesService {
 								id: {_eq: ${exceptId}},
 							},
 							_set: {
-								is_duplicate: "no"
+								is_deactivated: false
 							}
 						}
 					]
@@ -949,11 +968,50 @@ export class BeneficiariesService {
 						aadhar_no
 						is_duplicate
 						is_deactivated
+						duplicate_reason
 					}
 				}
 			}
 		`;
+
 		const updateResult = (await this.hasuraServiceFromServices.getData({ query }))?.data?.update_users_many;
+
+		// Add audit logs of is_duplicate flag
+		await Promise.allSettled(
+			updateResult.map(updatedData => Promise.allSettled(updatedData.returning.map(updatedUserObj =>
+				this.userService.addAuditLog(
+					updatedUserObj.id,
+					createdBy,
+					'users.is_duplicate',
+					updatedUserObj.id,
+					{
+						is_duplicate: preUpdateDataObj[updatedUserObj.id].is_duplicate,
+						duplicate_reason: preUpdateDataObj[updatedUserObj.id].duplicate_reason,
+					},
+					{
+						is_duplicate: updatedUserObj.is_duplicate,
+						duplicate_reason: updatedUserObj.duplicate_reason,
+					},
+					['is_duplicate', 'duplicate_reason']
+				)
+			)))
+		);
+
+		// Add audit logs of is_deactivated flag
+		await Promise.allSettled(
+			updateResult.map(updatedData => Promise.allSettled(updatedData.returning.map(updatedUserObj =>
+				this.userService.addAuditLog(
+					updatedUserObj.id,
+					createdBy,
+					'users.is_deactivated',
+					updatedUserObj.id,
+					{ is_deactivated: preUpdateDataObj[updatedUserObj.id].is_deactivated },
+					{ is_deactivated: updatedUserObj.is_deactivated },
+					['is_deactivated']
+				)
+			)))
+		);
+
 		return {
 			success: updateResult ? true : false,
 			data: updateResult ? updateResult : null
@@ -1298,9 +1356,52 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.add_ag_duplication.users;
 				const tableName = 'users';
-				await this.hasuraService.q(tableName, req, userArr, update);
+				const updatedCurrentUser = (await this.hasuraService.q(tableName, req, userArr, update, ['id', 'is_duplicate', 'duplicate_reason'])).users;
+
+				// Audit duplicate flag history
+				if (updatedCurrentUser?.id) {
+					const audit = await this.userService.addAuditLog(
+						updatedCurrentUser.id,
+						request.mw_userid,
+						'users.is_duplicate',
+						updatedCurrentUser.id,
+						{
+							is_duplicate: beneficiaryUser.is_duplicate,
+							duplicate_reason: beneficiaryUser.duplicate_reason,
+						},
+						{
+							is_duplicate: updatedCurrentUser.is_duplicate,
+							duplicate_reason: updatedCurrentUser.duplicate_reason,
+						},
+						['is_duplicate', 'duplicate_reason'],
+					);
+				}
 
 				if (req.is_duplicate === 'yes') {
+					// Store previous data before update
+					let getQuery = `
+						query MyQuery {
+							users(
+								where: {
+									_and: [
+										{ id: { _neq: ${beneficiaryUser.id} } },
+										{ aadhar_no: { _eq: "${aadhaar_no}" } }
+									]
+								}
+							) {
+								id
+								aadhar_no
+								is_deactivated
+								is_duplicate
+								duplicate_reason
+							}
+						}
+					`;
+
+					const preUpdateData = (await this.hasuraServiceFromServices.getData({ query: getQuery })).data.users;
+					const preUpdateDataObj = {};
+					preUpdateData.forEach(userData => preUpdateDataObj[userData.id] = userData);
+
 					// Mark other beneficiaries as duplicate where duplicate reason is null
 					let updateQuery = `
 						mutation MyMutation {
@@ -1334,11 +1435,77 @@ export class BeneficiariesService {
 						}
 					`;
 
-					const data = {
+					let data = {
 						query: updateQuery,
 					};
 
-					await this.hasuraServiceFromServices.getData(data);
+					let updatedDuplicateData = (await this.hasuraServiceFromServices.getData(data)).data.update_users;
+
+					// Audit duplicate flag history for all duplicate beneficiaries
+					await Promise.allSettled(
+						updatedDuplicateData.returning.map(updatedData => this.userService.addAuditLog(
+							updatedData.id,
+							request.mw_userid,
+							'users.is_duplicate',
+							updatedData.id,
+							{
+								is_duplicate: preUpdateDataObj[updatedData.id].is_duplicate,
+								duplicate_reason: preUpdateDataObj[updatedData.id].duplicate_reason,
+							},
+							{
+								is_duplicate: updatedData.is_duplicate,
+								duplicate_reason: updatedData.duplicate_reason,
+							},
+							['is_duplicate', 'duplicate_reason'],
+						))
+					);
+
+					// Set is_deactivated flag from false to null for activated beneficiary after resolving duplications
+					updateQuery = `
+						mutation MyMutation {
+							update_users(
+								where: {
+									_and: [
+										{ id: { _neq: ${beneficiaryUser.id} } },
+										{ aadhar_no: { _eq: "${aadhaar_no}" } },
+										{ is_duplicate: { _eq: "yes" } },
+										{ is_deactivated: { _eq: false } }
+									]
+								},
+								_set: {
+									is_deactivated: null
+								}
+							) {
+								affected_rows
+								returning {
+									id
+									aadhar_no
+									is_deactivated
+									is_duplicate
+									duplicate_reason
+								}
+							}
+						}
+					`;
+
+					data = {
+						query: updateQuery,
+					};
+
+					updatedDuplicateData = (await this.hasuraServiceFromServices.getData(data)).data.update_users;
+
+					// Audit duplicate flag history
+					await Promise.allSettled(
+						updatedDuplicateData.returning.map(updatedData => this.userService.addAuditLog(
+							updatedData.id,
+							request.mw_userid,
+							'users.is_deactivated',
+							updatedData.id,
+							{ is_deactivated: preUpdateDataObj[updatedData.id].is_deactivated },
+							{ is_deactivated: updatedData.is_deactivated },
+							['is_deactivated'],
+						))
+					);
 				}
 				break;
 			}
@@ -2160,6 +2327,8 @@ export class BeneficiariesService {
 				pf.parent_ip = '${user?.program_users?.organisation_id}'
 			AND
 				bu.aadhar_no IS NOT NULL
+			AND
+				bu.is_deactivated IS NOT true
 			GROUP BY
 				bu.aadhar_no
 			HAVING
@@ -2176,6 +2345,8 @@ export class BeneficiariesService {
 						bu2.id = pb2.user_id
 					WHERE
 						bu2.aadhar_no = bu.aadhar_no
+					AND
+				        bu2.is_deactivated IS NOT true
 				)
 			;
 		`;
@@ -2208,6 +2379,8 @@ export class BeneficiariesService {
 				fu.id = pf.user_id
 			WHERE
 				bu.aadhar_no IS NOT NULL
+			AND
+				bu.is_deactivated IS NOT true
 			GROUP BY
 				bu.aadhar_no
 			HAVING
