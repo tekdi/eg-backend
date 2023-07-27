@@ -52,7 +52,18 @@ export class BeneficiariesService {
 	async getBeneficiariesDuplicatesByAadhaar(aadhaarNo: string) {
 		const beneficiariesByAadhaarQuery = `
 			query MyQuery {
-				users (where: {aadhar_no: {_eq: "${aadhaarNo}"}}) {
+				users(where: {
+					_and: [
+						{ aadhar_no: {_eq: "${aadhaarNo}"} },
+						{
+							_or: [
+								{ is_deactivated: {_is_null: true} },
+								{ is_deactivated: {_neq: true} },
+							]
+						},
+						{ program_beneficiaries: {} }
+					]
+				}) {
 					id
 					first_name
 					last_name
