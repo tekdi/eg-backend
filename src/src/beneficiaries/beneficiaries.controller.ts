@@ -164,4 +164,14 @@ export class BeneficiariesController {
 	) {
 		return this.beneficiariesService.exportCsv(request, body, response);
 	}
+
+	@Post('/admin/export-subjects-csv')
+	@UseGuards(new AuthGuard())
+	async exportSubjectsCsv(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.exportSubjectCsv(request, body, response);
+	}
 }

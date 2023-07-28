@@ -168,7 +168,10 @@ export class BeneficiariesService {
 					{ id: 'enrollment_number', title: 'Enrollment Number' },
 					{ id: 'aadhar_no', title: 'Aadhaar Number' },
 					{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
-					{ id: 'aadhaar_verification_mode', title: 'Aadhaar Verification Mode' },
+					{
+						id: 'aadhaar_verification_mode',
+						title: 'Aadhaar Verification Mode',
+					},
 				],
 			});
 
@@ -189,10 +192,14 @@ export class BeneficiariesService {
 				dataObject['status'] = data?.program_beneficiaries[0]?.status;
 				dataObject['enrollment_number'] =
 					data?.program_beneficiaries[0]?.enrollment_number;
+				
+				dataObject['aadhar_no'] = data?.aadhar_no;
+				dataObject['aadhar_verified'] = data?.aadhar_verified
+					? data?.aadhar_verified
+					: 'no';
+				dataObject['aadhaar_verification_mode'] =
+					data?.aadhaar_verification_mode;
 				records.push(dataObject);
-				dataObject['aadhar_no']=data?.aadhar_no; 
-				dataObject['aadhar_verified']=data?.aadhar_verified ? data?.aadhar_verified:'no';
-				dataObject['aadhaar_verification_mode']=data?.aadhaar_verification_mode;
 			}
 			let fileName = `${
 				user?.data?.first_name + '_' + user?.data?.last_name
@@ -202,6 +209,172 @@ export class BeneficiariesService {
 				csvStringifier.stringifyRecords(records);
 			resp.header('Content-Type', 'text/csv');
 			return resp.attachment(fileName).send(fileData);
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: 'File Does Not Export!',
+				data: {},
+			});
+		}
+	}
+
+	async exportSubjectCsv(req: any, body: any, resp: any) {
+		try {
+			const user = await this.userService.ipUserInfo(req);
+
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return resp.status(404).send({
+					success: false,
+					message: 'Invalid Ip',
+					data: {},
+				});
+			}
+			
+			const sortType = body?.sortType ? body?.sortType : 'desc';
+			let status = body?.status;
+			let filterQueryArray = [];
+			filterQueryArray.push(
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			);
+			if (body?.district && body?.district.length > 0) {
+				filterQueryArray.push(
+					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+				);
+			}
+
+			if (body?.block && body?.block.length > 0) {
+				filterQueryArray.push(
+					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+				);
+			}
+
+			if (body.facilitator && body.facilitator.length > 0) {
+				filterQueryArray.push(
+					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}`,
+				);
+			}
+
+			if (status && status !== '') {
+				if (status === 'identified') {
+					filterQueryArray.push(`{
+					_or: [
+						{ program_beneficiaries: { status: { _eq: "identified" } } },
+						{ program_beneficiaries: { status: { _is_null: true } } },
+						{ program_beneficiaries: { status: { _eq: "" } } },
+					]
+				}`);
+				} else {
+					filterQueryArray.push(
+						`{program_beneficiaries:{status:{_eq:${status}}}}`,
+					);
+				}
+			}
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+			var data = {
+				query: `query MyQuery {
+					users(where: ${filterQuery},
+						order_by: {
+						created_at: ${sortType}
+						}
+					) {
+					id
+					first_name
+					last_name
+					district
+					block
+					mobile
+				    program_beneficiaries {
+					id
+					enrolled_for_board
+					subjects
+					facilitator_id
+					status
+					
+				  	}
+				}
+			  }`,
+			};
+			
+			const response = await this.hasuraServiceFromServices.getData(data);
+			let result = response?.data?.users;
+			let mappedResponse = result;
+			
+			const sql = `SELECT
+						name,
+						array_agg(id)
+						FROM
+						subjects
+						GROUP BY
+						name
+						;`;
+			const subjectGroup = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			).result;
+			let allSubjects =
+				this.hasuraServiceFromServices.getFormattedData(subjectGroup);
+			const subjects = {};
+			const subjectHeader = [];
+
+			for (let data of allSubjects) {
+				subjectHeader.push({ id: data.name, title: data.name });
+			}
+			//create export table columns list
+			const csvStringifier = createObjectCsvStringifier({
+				header: [
+					{ id: 'name', title: 'Name' },
+					{ id: 'enrolled_for_board', title: 'Enrolled For Board' },
+					...subjectHeader,
+				],
+			});
+			const records = [];
+			// getting subject which Ag ha selected
+
+			for (let data of mappedResponse) {
+				let selectedSubject = JSON.parse(
+					data?.program_beneficiaries[0]?.subjects,
+				);
+				const dataObject = {};
+				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['enrolled_for_board'] =
+					data?.program_beneficiaries[0]?.enrolled_for_board;
+				// executing loop for all subject ,check if ag has selected subject then mark "Yes" else "No"
+
+				for (let i = 0; i < allSubjects.length; i++) {
+					if (selectedSubject) {
+						let res = allSubjects[i].array_agg
+							.replace(/[{}]/g, '')
+							.split(',')
+							.some((e) => selectedSubject.includes(e));
+
+						if (res == true) {
+							dataObject[allSubjects[i].name] = 'yes';
+						} else {
+							dataObject[allSubjects[i].name] = 'no';
+						}
+					} else {
+						dataObject[allSubjects[i].name] = 'no';
+					}
+				}
+
+				records.push(dataObject);
+			}
+
+			let fileName = `${
+				user?.data?.first_name +
+				'_' +
+				user?.data?.last_name +
+				'_' +
+				'subjects'
+			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			const fileData =
+				csvStringifier.getHeaderString() +
+				csvStringifier.stringifyRecords(records);
+			resp.header('Content-Type', 'text/csv');
+			return resp.attachment(fileName).send(fileData);
+			
 		} catch (error) {
 			return resp.status(500).json({
 				success: false,
@@ -342,6 +515,7 @@ export class BeneficiariesService {
 					mobile
 				    program_beneficiaries {
 					id
+					subjects
 					facilitator_id
 					status
 					
