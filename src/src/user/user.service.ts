@@ -592,6 +592,7 @@ export class UserService {
 		  grampanchayat
 		  id
 		  is_duplicate
+		  is_deactivated
 		  keycloak_id
 		  last_name
 		  lat

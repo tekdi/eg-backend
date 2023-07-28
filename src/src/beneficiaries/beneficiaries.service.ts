@@ -52,7 +52,18 @@ export class BeneficiariesService {
 	async getBeneficiariesDuplicatesByAadhaar(aadhaarNo: string) {
 		const beneficiariesByAadhaarQuery = `
 			query MyQuery {
-				users (where: {aadhar_no: {_eq: "${aadhaarNo}"}}) {
+				users(where: {
+					_and: [
+						{ aadhar_no: {_eq: "${aadhaarNo}"} },
+						{
+							_or: [
+								{ is_deactivated: {_is_null: true} },
+								{ is_deactivated: {_neq: true} },
+							]
+						},
+						{ program_beneficiaries: {} }
+					]
+				}) {
 					id
 					first_name
 					last_name
@@ -658,6 +669,7 @@ export class BeneficiariesService {
 						grampanchayat
 						id
 						is_duplicate
+						is_deactivated
 						keycloak_id
 						last_name
 						lat
@@ -838,7 +850,7 @@ export class BeneficiariesService {
 		}
 	}
 
-	public async findOne(id: number, resp: any) {
+	public async findOne(id: number, resp?: any) {
 		console.log('id', id);
 		var data = {
 			query: `query searchById {
@@ -867,6 +879,7 @@ export class BeneficiariesService {
 				grampanchayat
 				id
 				is_duplicate
+				is_deactivated
 				keycloak_id
 				last_name
 				lat
@@ -1007,6 +1020,9 @@ export class BeneficiariesService {
                 enrolled_for_board
                 enrollement_status
               }
+              program_users {
+                organisation_id
+              }
               references {
                 id
                 name
@@ -1039,12 +1055,16 @@ export class BeneficiariesService {
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result: any = response?.data?.users_by_pk;
 		if (!result) {
-			return resp.status(404).send({
-				success: false,
-				status: 'Not Found',
-				message: 'Benificiaries Not Found',
-				data: {},
-			});
+			if (resp) {
+				return resp.status(404).send({
+					success: false,
+					status: 'Not Found',
+					message: 'Benificiaries Not Found',
+					data: {},
+				});
+			} else {
+				return { success: false };
+			}
 		} else {
 			result.program_beneficiaries =
 				result?.program_beneficiaries?.[0] ?? {};
@@ -1055,6 +1075,7 @@ export class BeneficiariesService {
 				'profile_photo_3',
 				'aadhaar_front',
 				'aadhaar_back',
+				'program_users'
 			]) {
 				if (result?.[key] && result?.[key][0]) {
 					result[key] = result[key][0];
@@ -1062,11 +1083,18 @@ export class BeneficiariesService {
 					result = { ...result, [key]: {} };
 				}
 			}
-			return resp.status(200).json({
-				success: true,
-				message: 'Benificiaries found successfully!',
-				data: { result: result },
-			});
+			if (resp) {
+				return resp.status(200).json({
+					success: true,
+					message: 'Benificiaries found successfully!',
+					data: { result: result },
+				});
+			} else {
+				return {
+					success: true,
+					data: result
+				};
+			}
 		}
 	}
 
@@ -1076,6 +1104,92 @@ export class BeneficiariesService {
 
 	remove(id: number) {
 		// return this.hasuraService.delete(this.table, { id: +id });
+	}
+
+	public async deactivateDuplicateBeneficiaries(AadhaarNo: string, exceptId: number, createdBy: number) {
+		// Store previous data before update
+		const getQuery = `
+			query MyQuery {
+				users (
+					where: {
+						aadhar_no: {_eq: "${AadhaarNo}"}
+					}
+				) {
+					id
+					aadhar_no
+					is_duplicate
+					is_deactivated
+					duplicate_reason
+				}
+			}
+		`;
+
+		const preUpdateData = (await this.hasuraServiceFromServices.getData({ query: getQuery })).data?.users;
+		const preUpdateDataObj = {};
+		preUpdateData.forEach(userData => preUpdateDataObj[userData.id] = userData);
+		const query = `
+			mutation MyMutation {
+				update_users_many (
+					updates: [
+						{
+							where: {
+								aadhar_no: {_eq: "${AadhaarNo}"},
+								id: {_neq: ${exceptId}}
+							},
+							_set: {
+								is_deactivated: true
+							}
+						},
+						{
+							where: {
+								id: {_eq: ${exceptId}},
+							},
+							_set: {
+								is_deactivated: false
+							}
+						}
+					]
+				) {
+					returning {
+						id
+						aadhar_no
+						is_duplicate
+						is_deactivated
+						duplicate_reason
+					}
+				}
+			}
+		`;
+
+		const updateResult = (await this.hasuraServiceFromServices.getData({ query }))?.data?.update_users_many;
+
+		// Add audit logs of is_duplicate flag
+		await Promise.allSettled(
+			updateResult.map(updatedData => Promise.allSettled(updatedData.returning.map(updatedUserObj =>
+				this.userService.addAuditLog(
+					updatedUserObj.id,
+					createdBy,
+					'program_beneficiaries.status',
+					updatedUserObj.id,
+					{
+						is_duplicate: preUpdateDataObj[updatedUserObj.id].is_duplicate,
+						duplicate_reason: preUpdateDataObj[updatedUserObj.id].duplicate_reason,
+						is_deactivated: preUpdateDataObj[updatedUserObj.id].is_deactivated
+					},
+					{
+						is_duplicate: updatedUserObj.is_duplicate,
+						duplicate_reason: updatedUserObj.duplicate_reason,
+						is_deactivated: updatedUserObj.is_deactivated
+					},
+					['is_duplicate', 'duplicate_reason', 'is_deactivated']
+				)
+			)))
+		);
+
+		return {
+			success: updateResult ? true : false,
+			data: updateResult ? updateResult : null
+		};
 	}
 
 	public async statusUpdate(body: any, request: any) {
@@ -1395,7 +1509,7 @@ export class BeneficiariesService {
 				) {
 					return response.status(400).json({
 						success: false,
-						message: 'Duplicate AG detected!',
+						message: 'Duplicate Beneficiary detected!',
 					});
 				}
 
@@ -1414,47 +1528,131 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.add_ag_duplication.users;
 				const tableName = 'users';
-				await this.hasuraService.q(tableName, req, userArr, update);
+				const updatedCurrentUser = (await this.hasuraService.q(tableName, req, userArr, update, ['id', 'is_duplicate', 'duplicate_reason'])).users;
+
+				// Audit duplicate flag history
+				if (updatedCurrentUser?.id) {
+					const audit = await this.userService.addAuditLog(
+						updatedCurrentUser.id,
+						request.mw_userid,
+						'program_beneficiaries.status',
+						updatedCurrentUser.id,
+						{
+							is_duplicate: beneficiaryUser.is_duplicate,
+							duplicate_reason: beneficiaryUser.duplicate_reason,
+						},
+						{
+							is_duplicate: updatedCurrentUser.is_duplicate,
+							duplicate_reason: updatedCurrentUser.duplicate_reason,
+						},
+						['is_duplicate', 'duplicate_reason'],
+					);
+				}
 
 				if (req.is_duplicate === 'yes') {
-					// Mark other AGs as duplicate where duplicate reason is null
-					let updateQuery = `
-						mutation MyMutation {
-							update_users(
+					// Store previous data before update
+					let getQuery = `
+						query MyQuery {
+							users(
 								where: {
 									_and: [
 										{ id: { _neq: ${beneficiaryUser.id} } },
-										{ aadhar_no: { _eq: "${aadhaar_no}" } },
-										{
-											_or: [
-												{ is_duplicate: { _neq: "yes" } },
-												{ is_duplicate: { _is_null: true } }
-												{ duplicate_reason: { _is_null: true } }
-											]
-										}
+										{ aadhar_no: { _eq: "${aadhaar_no}" } }
 									]
-								},
-								_set: {
-									is_duplicate: "yes",
-									duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
 								}
 							) {
-								affected_rows
-								returning {
 								id
 								aadhar_no
+								is_deactivated
 								is_duplicate
 								duplicate_reason
+							}
+						}
+					`;
+
+					const preUpdateData = (await this.hasuraServiceFromServices.getData({ query: getQuery })).data.users;
+					const preUpdateDataObj = {};
+					preUpdateData.forEach(userData => preUpdateDataObj[userData.id] = userData);
+
+					// Mark other beneficiaries as duplicate where duplicate reason is null
+					// Set is_deactivated flag from false to null for activated beneficiary after resolving duplications
+					const query = `
+						mutation MyMutation {
+							update_users_many (
+								updates: [
+									{
+										where: {
+											_and: [
+												{ id: { _neq: ${beneficiaryUser.id} } },
+												{ aadhar_no: { _eq: "${aadhaar_no}" } },
+												{
+													_or: [
+														{ is_deactivated: {_is_null: true} },
+														{ is_deactivated: {_neq: false} }, 
+													]
+												},
+												{
+													_or: [
+														{ is_duplicate: { _neq: "yes" } },
+														{ is_duplicate: { _is_null: true } }
+														{ duplicate_reason: { _is_null: true } }
+													]
+												}
+											]
+										},
+										_set: {
+											is_duplicate: "yes",
+											duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
+										}
+									},
+									{
+										where: {
+											_and: [
+												{ id: { _neq: ${beneficiaryUser.id} } },
+												{ aadhar_no: { _eq: "${aadhaar_no}" } },
+												{ is_deactivated: { _eq: false } }
+											]
+										},
+										_set: {
+											is_deactivated: null
+										}
+									}
+								]
+							) {
+								returning {
+									id
+									aadhar_no
+									is_duplicate
+									is_deactivated
+									duplicate_reason
 								}
 							}
 						}
 					`;
 
-					const data = {
-						query: updateQuery,
-					};
+					const updateResult = (await this.hasuraServiceFromServices.getData({ query }))?.data?.update_users_many;
 
-					await this.hasuraServiceFromServices.getData(data);
+					await Promise.allSettled(
+						updateResult.map(updatedData => Promise.allSettled(updatedData.returning.map(updatedUserObj =>
+							this.userService.addAuditLog(
+								updatedUserObj.id,
+								request.mw_userid,
+								'program_beneficiaries.status',
+								updatedUserObj.id,
+								{
+									is_duplicate: preUpdateDataObj[updatedUserObj.id].is_duplicate,
+									duplicate_reason: preUpdateDataObj[updatedUserObj.id].duplicate_reason,
+									is_deactivated: preUpdateDataObj[updatedUserObj.id].is_deactivated
+								},
+								{
+									is_duplicate: updatedUserObj.is_duplicate,
+									duplicate_reason: updatedUserObj.duplicate_reason,
+									is_deactivated: updatedUserObj.is_deactivated
+								},
+								['is_duplicate', 'duplicate_reason', 'is_deactivated']
+							)
+						)))
+					);
 				}
 				break;
 			}
@@ -2277,5 +2475,99 @@ export class BeneficiariesService {
 			message: 'User data fetched successfully.',
 			data: result,
 		};
+	}
+
+	public async getAllDuplicatesUnderIp(id: number) {
+		const user = (await this.findOne(id)).data;
+		const sql = `
+			SELECT
+				bu.aadhar_no AS "aadhar_no",
+				COUNT(*) AS "count"
+			FROM
+				users bu
+			INNER JOIN
+				program_beneficiaries pb
+			ON
+				bu.id = pb.user_id
+			LEFT OUTER JOIN
+				users fu
+			ON
+				pb.facilitator_id = fu.id
+			LEFT OUTER JOIN
+				program_faciltators pf
+			ON
+				fu.id = pf.user_id
+			WHERE
+				pf.parent_ip = '${user?.program_users?.organisation_id}'
+			AND
+				bu.aadhar_no IS NOT NULL
+			AND
+				bu.is_deactivated IS NOT true
+			GROUP BY
+				bu.aadhar_no
+			HAVING
+				COUNT(*) > 1
+			AND
+				COUNT(*) = (
+					SELECT
+						COUNT(*)
+					FROM
+						users bu2
+					INNER JOIN
+						program_beneficiaries pb2
+					ON
+						bu2.id = pb2.user_id
+					WHERE
+						bu2.aadhar_no = bu.aadhar_no
+					AND
+				        bu2.is_deactivated IS NOT true
+				)
+			;
+		`;
+		const duplicateListArr = (
+			await this.hasuraServiceFromServices.getDataFromSQL(sql)
+		).result;
+		return this.hasuraServiceFromServices.getFormattedData(
+			duplicateListArr,
+		);
+	}
+
+	public async getAllDuplicatesUnderPo() {
+		const sql = `
+			SELECT
+				bu.aadhar_no AS "aadhar_no",
+				COUNT(*) AS "count"
+			FROM
+				users bu
+			INNER JOIN
+				program_beneficiaries pb
+			ON
+				bu.id = pb.user_id
+			INNER JOIN
+				users fu
+			ON
+				pb.facilitator_id = fu.id
+			LEFT OUTER JOIN
+				program_faciltators pf
+			ON
+				fu.id = pf.user_id
+			WHERE
+				bu.aadhar_no IS NOT NULL
+			AND
+				bu.is_deactivated IS NOT true
+			GROUP BY
+				bu.aadhar_no
+			HAVING
+				COUNT(*) > 1
+			AND
+				array_length(array_agg(DISTINCT pf.parent_ip), 1) > 1
+			;
+		`;
+		const duplicateListArr = (
+			await this.hasuraServiceFromServices.getDataFromSQL(sql)
+		).result;
+		return this.hasuraServiceFromServices.getFormattedData(
+			duplicateListArr,
+		);
 	}
 }
