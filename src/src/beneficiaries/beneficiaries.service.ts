@@ -9,11 +9,11 @@ import { ConfigService } from '@nestjs/config';
 import { createObjectCsvStringifier } from 'csv-writer';
 import { S3Service } from 'src/services/s3/s3.service';
 import { UserService } from 'src/user/user.service';
+import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
-import { EnumService } from '../enum/enum.service';
 @Injectable()
 export class BeneficiariesService {
 	public url = process.env.HASURA_BASE_URL;
@@ -1107,7 +1107,6 @@ export class BeneficiariesService {
 					'type_of_enrollement',
 					'subjects',
 					'program_id',
-					'facilitator_id',
 					'academic_year_id',
 					'payment_receipt_document_id',
 					'enrollment_date',
@@ -1125,7 +1124,6 @@ export class BeneficiariesService {
 					'enrollment_middle_name',
 					'enrollment_last_name',
 					'enrollment_dob',
-					'enrollment_aadhaar_no',
 					'is_eligible',
 				],
 			},
@@ -1352,7 +1350,6 @@ export class BeneficiariesService {
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_family
 						.core_beneficiaries;
 				let tableName = 'core_beneficiaries';
-				console.log(beneficiaryUser?.core_beneficiaries?.id);
 				await this.hasuraService.q(
 					tableName,
 					{
@@ -1589,11 +1586,22 @@ export class BeneficiariesService {
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 				let myRequest = {};
+				if (
+					!beneficiaryUser.aadhar_no ||
+					beneficiaryUser.aadhar_no == 'null'
+				) {
+					return response.status(400).send({
+						success: false,
+						message: 'Aadhaar Number Not Found',
+						data: {},
+					});
+				}
 				if (req.enrollment_status == 'enrolled') {
 					let messageArray = [];
 					let tempArray = [
 						'enrollment_number',
 						'enrollment_status',
+						'enrollment_aadhaar_no',
 						'enrolled_for_board',
 						'subjects',
 						'enrollment_date',
@@ -1611,16 +1619,38 @@ export class BeneficiariesService {
 							data: {},
 						});
 					} else {
-						myRequest = {
-							...req,
-							subjects:
-								typeof req.subjects == 'object'
-									? JSON.stringify(req.subjects).replace(
-											/"/g,
-											'\\"',
-									  )
-									: null,
-						};
+						const { edit_page_type, ...copiedRequest } = req;
+
+						if (
+							req?.enrollment_aadhaar_no &&
+							req?.enrollment_aadhaar_no ==
+								beneficiaryUser?.aadhar_no
+						) {
+							myRequest = {
+								...copiedRequest,
+								subjects:
+									typeof req.subjects == 'object'
+										? JSON.stringify(req.subjects).replace(
+												/"/g,
+												'\\"',
+										  )
+										: null,
+							};
+							const status = await this.statusUpdate(
+								{
+									user_id: req.id,
+									status: 'enrolled',
+									reason_for_status_update: 'enrolled',
+								},
+								request,
+							);
+						}else {
+							return response.status(400).send({
+								success: false,
+								message: "Enrollment Aadhaar number Not matching with your Aadhaar Number",
+								data: {},
+							});
+						}
 					}
 				}
 				if (req.enrollment_status == 'not_enrolled') {
@@ -1725,12 +1755,18 @@ export class BeneficiariesService {
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 				let myRequest = {};
-				if (req.enrollment_status == 'enrolled') {
+				if (programDetails?.enrollment_status !== 'enrolled') {
+					return response.status(400).json({
+						success: false,
+						message:
+							'Make Sure Your Enrollement Status is Enrolled',
+						data: {},
+					});
+				} else {
 					let messageArray = [];
 					let tempArray = [
 						'enrollment_first_name',
 						'enrollment_dob',
-						'enrollment_aadhaar_no',
 						'is_eligible',
 					];
 					for (let info of tempArray) {
@@ -1778,18 +1814,7 @@ export class BeneficiariesService {
 							},
 							request,
 						);
-					} else if (
-						req?.enrollment_aadhaar_no === updatedUser?.aadhar_no
-					) {
-						const status = await this.statusUpdate(
-							{
-								user_id: req.id,
-								status: 'enrolled',
-								reason_for_status_update: 'enrolled',
-							},
-							request,
-						);
-					}
+					}  
 				}
 
 				break;
