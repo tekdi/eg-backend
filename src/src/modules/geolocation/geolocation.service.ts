@@ -124,6 +124,7 @@ export class GeolocationService {
 
 		return await this.hasuraService.postData(data);
 	}
+	
 	async getBlocksFromDistricts(body: any, resp: any) {
 		let data = {
 			query: `query MyQuery {
@@ -135,18 +136,20 @@ export class GeolocationService {
 				}
 			  }`,
 		};
+
 		const response = await this.hasuraServiceFromServices.getData(data);
+
 		if (response?.data?.address && response?.data?.address?.length > 0) {
 			return resp.status(200).json({
 				success: true,
-				message: 'Districts found success!',
+				message: 'Blocks found success!',
 				data: response?.data?.address,
 			});
 		} else {
 			return resp.status(200).send({
 				success: false,
 				status: 'Not Found',
-				message: 'Districts Not Found',
+				message: 'Blocks Not Found',
 				data: {},
 			});
 		}
