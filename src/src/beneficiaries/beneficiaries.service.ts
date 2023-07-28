@@ -993,32 +993,19 @@ export class BeneficiariesService {
 				this.userService.addAuditLog(
 					updatedUserObj.id,
 					createdBy,
-					'users.is_duplicate',
+					'program_beneficiaries.status',
 					updatedUserObj.id,
 					{
 						is_duplicate: preUpdateDataObj[updatedUserObj.id].is_duplicate,
 						duplicate_reason: preUpdateDataObj[updatedUserObj.id].duplicate_reason,
+						is_deactivated: preUpdateDataObj[updatedUserObj.id].is_deactivated
 					},
 					{
 						is_duplicate: updatedUserObj.is_duplicate,
 						duplicate_reason: updatedUserObj.duplicate_reason,
+						is_deactivated: updatedUserObj.is_deactivated
 					},
-					['is_duplicate', 'duplicate_reason']
-				)
-			)))
-		);
-
-		// Add audit logs of is_deactivated flag
-		await Promise.allSettled(
-			updateResult.map(updatedData => Promise.allSettled(updatedData.returning.map(updatedUserObj =>
-				this.userService.addAuditLog(
-					updatedUserObj.id,
-					createdBy,
-					'users.is_deactivated',
-					updatedUserObj.id,
-					{ is_deactivated: preUpdateDataObj[updatedUserObj.id].is_deactivated },
-					{ is_deactivated: updatedUserObj.is_deactivated },
-					['is_deactivated']
+					['is_duplicate', 'duplicate_reason', 'is_deactivated']
 				)
 			)))
 		);
@@ -1374,7 +1361,7 @@ export class BeneficiariesService {
 					const audit = await this.userService.addAuditLog(
 						updatedCurrentUser.id,
 						request.mw_userid,
-						'users.is_duplicate',
+						'program_beneficiaries.status',
 						updatedCurrentUser.id,
 						{
 							is_duplicate: beneficiaryUser.is_duplicate,
@@ -1414,108 +1401,83 @@ export class BeneficiariesService {
 					preUpdateData.forEach(userData => preUpdateDataObj[userData.id] = userData);
 
 					// Mark other beneficiaries as duplicate where duplicate reason is null
-					let updateQuery = `
-						mutation MyMutation {
-							update_users(
-								where: {
-									_and: [
-										{ id: { _neq: ${beneficiaryUser.id} } },
-										{ aadhar_no: { _eq: "${aadhaar_no}" } },
-										{
-											_or: [
-												{ is_duplicate: { _neq: "yes" } },
-												{ is_duplicate: { _is_null: true } }
-												{ duplicate_reason: { _is_null: true } }
-											]
-										}
-									]
-								},
-								_set: {
-									is_duplicate: "yes",
-									duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
-								}
-							) {
-								affected_rows
-								returning {
-								id
-								aadhar_no
-								is_duplicate
-								duplicate_reason
-								}
-							}
-						}
-					`;
-
-					let data = {
-						query: updateQuery,
-					};
-
-					let updatedDuplicateData = (await this.hasuraServiceFromServices.getData(data)).data.update_users;
-
-					// Audit duplicate flag history for all duplicate beneficiaries
-					await Promise.allSettled(
-						updatedDuplicateData.returning.map(updatedData => this.userService.addAuditLog(
-							updatedData.id,
-							request.mw_userid,
-							'users.is_duplicate',
-							updatedData.id,
-							{
-								is_duplicate: preUpdateDataObj[updatedData.id].is_duplicate,
-								duplicate_reason: preUpdateDataObj[updatedData.id].duplicate_reason,
-							},
-							{
-								is_duplicate: updatedData.is_duplicate,
-								duplicate_reason: updatedData.duplicate_reason,
-							},
-							['is_duplicate', 'duplicate_reason'],
-						))
-					);
-
 					// Set is_deactivated flag from false to null for activated beneficiary after resolving duplications
-					updateQuery = `
+					const query = `
 						mutation MyMutation {
-							update_users(
-								where: {
-									_and: [
-										{ id: { _neq: ${beneficiaryUser.id} } },
-										{ aadhar_no: { _eq: "${aadhaar_no}" } },
-										{ is_duplicate: { _eq: "yes" } },
-										{ is_deactivated: { _eq: false } }
-									]
-								},
-								_set: {
-									is_deactivated: null
-								}
+							update_users_many (
+								updates: [
+									{
+										where: {
+											_and: [
+												{ id: { _neq: ${beneficiaryUser.id} } },
+												{ aadhar_no: { _eq: "${aadhaar_no}" } },
+												{
+													_or: [
+														{ is_deactivated: {_is_null: true} },
+														{ is_deactivated: {_neq: false} }, 
+													]
+												},
+												{
+													_or: [
+														{ is_duplicate: { _neq: "yes" } },
+														{ is_duplicate: { _is_null: true } }
+														{ duplicate_reason: { _is_null: true } }
+													]
+												}
+											]
+										},
+										_set: {
+											is_duplicate: "yes",
+											duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
+										}
+									},
+									{
+										where: {
+											_and: [
+												{ id: { _neq: ${beneficiaryUser.id} } },
+												{ aadhar_no: { _eq: "${aadhaar_no}" } },
+												{ is_deactivated: { _eq: false } }
+											]
+										},
+										_set: {
+											is_deactivated: null
+										}
+									}
+								]
 							) {
-								affected_rows
 								returning {
 									id
 									aadhar_no
-									is_deactivated
 									is_duplicate
+									is_deactivated
 									duplicate_reason
 								}
 							}
 						}
 					`;
 
-					data = {
-						query: updateQuery,
-					};
+					const updateResult = (await this.hasuraServiceFromServices.getData({ query }))?.data?.update_users_many;
 
-					updatedDuplicateData = (await this.hasuraServiceFromServices.getData(data)).data.update_users;
-
-					// Audit duplicate flag history
 					await Promise.allSettled(
-						updatedDuplicateData.returning.map(updatedData => this.userService.addAuditLog(
-							updatedData.id,
-							request.mw_userid,
-							'users.is_deactivated',
-							updatedData.id,
-							{ is_deactivated: preUpdateDataObj[updatedData.id].is_deactivated },
-							{ is_deactivated: updatedData.is_deactivated },
-							['is_deactivated'],
-						))
+						updateResult.map(updatedData => Promise.allSettled(updatedData.returning.map(updatedUserObj =>
+							this.userService.addAuditLog(
+								updatedUserObj.id,
+								request.mw_userid,
+								'program_beneficiaries.status',
+								updatedUserObj.id,
+								{
+									is_duplicate: preUpdateDataObj[updatedUserObj.id].is_duplicate,
+									duplicate_reason: preUpdateDataObj[updatedUserObj.id].duplicate_reason,
+									is_deactivated: preUpdateDataObj[updatedUserObj.id].is_deactivated
+								},
+								{
+									is_duplicate: updatedUserObj.is_duplicate,
+									duplicate_reason: updatedUserObj.duplicate_reason,
+									is_deactivated: updatedUserObj.is_deactivated
+								},
+								['is_duplicate', 'duplicate_reason', 'is_deactivated']
+							)
+						)))
 					);
 				}
 				break;

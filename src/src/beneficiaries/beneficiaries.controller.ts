@@ -81,7 +81,7 @@ export class BeneficiariesController {
 		const roles = req.mw_roles;
 		let duplicateArr;
 		// Fetch aadhar number of user to set as active
-		const { aadhar_no } = (await this.beneficiariesService.findOne(+body.activeId)).data;
+		const aadhar_no = (await this.beneficiariesService.findOne(+body.activeId))?.data?.aadhar_no;
 
 		// Fetch valid duplication list of the token user
 		if (roles.includes('program_owner')) {
