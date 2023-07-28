@@ -303,10 +303,12 @@ export class BeneficiariesService {
 					district
 					block
 					mobile
+					dob
 				    program_beneficiaries {
 					id
 					facilitator_id
 					status
+					enrollment_date
 					
 				  }
 				}
