@@ -2525,7 +2525,7 @@ export class BeneficiariesService {
 			;
 		`;
 		const duplicateListArr = (
-			await this.hasuraServiceFromServices.getDataFromSQL(sql)
+			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
 		return this.hasuraServiceFromServices.getFormattedData(
 			duplicateListArr,
@@ -2564,7 +2564,7 @@ export class BeneficiariesService {
 			;
 		`;
 		const duplicateListArr = (
-			await this.hasuraServiceFromServices.getDataFromSQL(sql)
+			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
 		return this.hasuraServiceFromServices.getFormattedData(
 			duplicateListArr,
