@@ -387,7 +387,6 @@ export class UserService {
 						id: req?.program_faciltators?.id
 							? req?.program_faciltators?.id
 							: null,
-						status: 'lead',
 						user_id: user_id,
 					},
 					pFArr,
