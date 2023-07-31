@@ -528,10 +528,10 @@ export class BeneficiariesService {
 					dob
 					program_beneficiaries {
 						id
+						subjects
 						facilitator_id
 						status
 						enrollment_date
-						facilitator_id
 						facilitator_user {
 							id
 							first_name
