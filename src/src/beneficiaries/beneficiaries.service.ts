@@ -283,19 +283,20 @@ export class BeneficiariesService {
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		//facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
 		var data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
 				users_aggregate(where:${filterQuery}) {
-				  aggregate {
-					count
-				  }
+					aggregate {
+						count
+					}
 				}
 				users(where: ${filterQuery},
-				limit: $limit,
-                      offset: $offset,
-                      order_by: {
-                        created_at: ${sortType}
-                      }
+					limit: $limit,
+					offset: $offset,
+					order_by: {
+						created_at: ${sortType}
+					}
 				) {
 					id
 					first_name
@@ -304,21 +305,26 @@ export class BeneficiariesService {
 					block
 					mobile
 					dob
-				    program_beneficiaries {
-					id
-					facilitator_id
-					status
-					enrollment_date
-					
-				  }
+					program_beneficiaries {
+						id
+						facilitator_id
+						status
+						enrollment_date
+						facilitator_id
+						facilitator_user{
+							id
+							first_name
+							middle_name
+							last_name
+						}
+					}
 				}
-			  }`,
+			}`,
 			variables: {
 				limit: limit,
 				offset: offset,
 			},
 		};
-
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
 		let mappedResponse = result;
