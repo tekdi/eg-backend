@@ -72,6 +72,7 @@ export class InterviewController {
 			response,
 		);
 	}
+
 	@Delete(':id')
 	remove(@Param('id') id: string) {
 		return this.interviewService.remove(+id);
