@@ -1125,10 +1125,67 @@ export class FacilitatorService {
 		try {
 			const user = await this.userService.ipUserInfo(req);
 			const decoded: any = jwt_decode(req?.headers?.authorization);
-			console.log('user id', decoded?.name);
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return resp.status(400).send({
+					success: false,
+					message: 'Invalid User',
+					data: {},
+				});
+			}
+			
+		const variables: any = {};
+
+		let filterQueryArray = [];
+		let paramsQueryArray = [];
+
+		if (
+			body.hasOwnProperty('qualificationIds') &&
+			body.qualificationIds.length
+		) {
+			paramsQueryArray.push('$qualificationIds: [Int!]');
+			filterQueryArray.push(
+				'{qualifications: {qualification_master_id: {_in: $qualificationIds}}}',
+			);
+			variables.qualificationIds = body.qualificationIds;
+		}
+		if (body.search && body.search !== '') {
+			filterQueryArray.push(`{_or: [
+        { first_name: { _ilike: "%${body.search}%" } },
+        { last_name: { _ilike: "%${body.search}%" } },
+        { email_id: { _ilike: "%${body.search}%" } }
+      ]} `);
+		}
+		if (
+			body.hasOwnProperty('status') &&
+			this.isValidString(body.status) &&
+			this.allStatus.map((obj) => obj.value).includes(body.status)
+		) {
+			paramsQueryArray.push('$status: String');
+			filterQueryArray.push(
+				'{program_faciltators: {status: {_eq: $status}}}',
+			);
+			variables.status = body.status;
+		}
+
+		if (body.hasOwnProperty('district') && body.district.length) {
+			paramsQueryArray.push('$district: [String!]');
+			filterQueryArray.push('{district: { _in: $district }}');
+			variables.district = body.district;
+		}
+
+		filterQueryArray.unshift(
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
+		);
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		let paramsQuery = '';
+		if (paramsQueryArray.length) {
+			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+		}
+		let sortQuery = `{ created_at: desc }`;
 			const data = {
-				query: `query MyQuery {
-					users(where: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}){
+				query: `query MyQuery ${paramsQuery}{
+					users(where:${filterQuery}, order_by: ${sortQuery}){
 						first_name
 						last_name
 						district
@@ -1142,12 +1199,41 @@ export class FacilitatorService {
 					    program_faciltators{
 						status
 					  }
+					  experience {
+						description
+						end_year
+						experience_in_years
+						institution
+						start_year
+						organization
+						role_title
+						user_id
+						type
+					  }
 					}
 				  }
 				  `,
+				  variables: variables,
 			};
 			const hasuraResponse = await this.hasuraService.getData(data);
-			const allFacilitators = hasuraResponse?.data?.users;
+			let allFacilitators = hasuraResponse?.data?.users;
+			// checking allFacilitators ,body.work_experience available or not and body.work_experience is valid string or not 
+			if (
+				allFacilitators &&
+				body.hasOwnProperty('work_experience') &&
+				this.isValidString(body.work_experience)
+			) {
+				const isValidNumberFilter =
+					!isNaN(Number(body.work_experience)) ||
+					body.work_experience === '5+';
+				if (isValidNumberFilter) {
+					allFacilitators = this.filterFacilitatorsBasedOnExperience(
+						allFacilitators,
+						'experience',
+						body.work_experience,
+					);
+				}
+			}
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
