@@ -2112,33 +2112,35 @@ export class BeneficiariesService {
 						//delete document from s3 bucket
 						await this.s3Service.deletePhoto(documentDetails?.name);
 					}
-					const allDocumentStatus =
-						beneficiaryUser?.program_beneficiaries
-							?.documents_status;
-
-					let allDocumentsCompleted = false;
-					if (allDocumentStatus && allDocumentStatus !== null) {
-						allDocumentsCompleted = Object.values(
-							JSON.parse(allDocumentStatus),
-						).every((element: any) => {
-							return (
-								element === 'complete' ||
-								element === 'not_applicable'
-							);
-						});
+					if (beneficiaryUser.program_beneficiaries.status === 'enrolled') {
+						const allDocumentStatus =
+							beneficiaryUser?.program_beneficiaries
+								?.documents_status;
+	
+						let allDocumentsCompleted = false;
+						if (allDocumentStatus && allDocumentStatus !== null) {
+							allDocumentsCompleted = Object.values(
+								JSON.parse(allDocumentStatus),
+							).every((element: any) => {
+								return (
+									element === 'complete' ||
+									element === 'not_applicable'
+								);
+							});
+						}
+						const status = await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: allDocumentsCompleted
+									? 'ready_to_enrolled'
+									: 'identified',
+								reason_for_status_update: allDocumentsCompleted
+									? 'documents_completed'
+									: 'identified',
+							},
+							request,
+						);
 					}
-					const status = await this.statusUpdate(
-						{
-							user_id: req.id,
-							status: allDocumentsCompleted
-								? 'ready_to_enrolled'
-								: 'identified',
-							reason_for_status_update: allDocumentsCompleted
-								? 'documents_completed'
-								: 'identified',
-						},
-						request,
-					);
 				}
 				if (
 					req.enrollment_status == 'applied_but_pending' ||
@@ -2146,6 +2148,35 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
+					if (beneficiaryUser.program_beneficiaries.status === 'enrolled') {
+						const allDocumentStatus =
+							beneficiaryUser?.program_beneficiaries
+								?.documents_status;
+	
+						let allDocumentsCompleted = false;
+						if (allDocumentStatus && allDocumentStatus !== null) {
+							allDocumentsCompleted = Object.values(
+								JSON.parse(allDocumentStatus),
+							).every((element: any) => {
+								return (
+									element === 'complete' ||
+									element === 'not_applicable'
+								);
+							});
+						}
+						const status = await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: allDocumentsCompleted
+									? 'ready_to_enrolled'
+									: 'identified',
+								reason_for_status_update: allDocumentsCompleted
+									? 'documents_completed'
+									: 'identified',
+							},
+							request,
+						);
+					}
 				}
 				await this.hasuraService.q(
 					tableName,
@@ -2179,7 +2210,7 @@ export class BeneficiariesService {
 							'Make Sure Your Enrollement Status is Enrolled',
 						data: {},
 					});
-				} else {
+				} else if (programDetails?.is_eligible === 'yes' && beneficiaryUser.program_beneficiaries.status === 'enrolled') {
 					let messageArray = [];
 					let tempArray = [
 						'enrollment_first_name',
