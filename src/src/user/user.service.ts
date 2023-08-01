@@ -756,11 +756,12 @@ export class UserService {
 		  interviews {
 			id
 			owner_user_id
-			end_date_time
+			end_time
 			comment
 			created_at
 			created_by
-			start_date_time
+			date
+			start_time
 			status
 			title
 			updated_at
@@ -768,6 +769,9 @@ export class UserService {
 			user_id
 			location_type
 			location
+			interviewer_name
+			rsvp
+			reminder
 			owner {
 			  first_name
 			  last_name
@@ -997,11 +1001,12 @@ export class UserService {
 		  interviews {
 			id
 			owner_user_id
-			end_date_time
+			end_time
 			comment
 			created_at
 			created_by
-			start_date_time
+			date
+			start_time
 			status
 			title
 			updated_at
@@ -1009,6 +1014,9 @@ export class UserService {
 			user_id
 			location_type
 			location
+			interviewer_name
+			rsvp
+			reminder
 			owner {
 			  first_name
 			  last_name
