@@ -2116,7 +2116,7 @@ export class BeneficiariesService {
 						//delete document from s3 bucket
 						await this.s3Service.deletePhoto(documentDetails?.name);
 					}
-					if (beneficiaryUser.program_beneficiaries.enrollment_status === 'enrolled') {
+					if (beneficiaryUser.program_beneficiaries.status === 'enrolled') {
 						const allDocumentStatus =
 							beneficiaryUser?.program_beneficiaries
 								?.documents_status;
@@ -2136,7 +2136,7 @@ export class BeneficiariesService {
 							{
 								user_id: req.id,
 								status: allDocumentsCompleted
-									? 'ready_to_enrolled'
+									? 'ready_to_enroll'
 									: 'identified',
 								reason_for_status_update: allDocumentsCompleted
 									? 'documents_completed'
@@ -2152,7 +2152,7 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
-					if (beneficiaryUser.program_beneficiaries.enrollment_status === 'enrolled') {
+					if (beneficiaryUser.program_beneficiaries.status === 'enrolled') {
 						const allDocumentStatus =
 							beneficiaryUser?.program_beneficiaries
 								?.documents_status;
@@ -2172,7 +2172,7 @@ export class BeneficiariesService {
 							{
 								user_id: req.id,
 								status: allDocumentsCompleted
-									? 'ready_to_enrolled'
+									? 'ready_to_enroll'
 									: 'identified',
 								reason_for_status_update: allDocumentsCompleted
 									? 'documents_completed'
