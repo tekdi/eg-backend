@@ -2274,7 +2274,7 @@ export class BeneficiariesService {
 					if (req?.is_eligible === 'no') {
 						status = 'ineligible_for_pragati_camp';				
 						reason = 'The age of the learner should not be 14 to 29';
-					} else {
+					} else if (req?.is_eligible === 'yes') {
 						status = 'enrolled';				
 						reason = 'enrolled';
 					}
