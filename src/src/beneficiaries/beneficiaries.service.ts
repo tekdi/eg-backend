@@ -2057,14 +2057,14 @@ export class BeneficiariesService {
 										  )
 										: null,
 							};
-							const status = await this.statusUpdate(
-								{
-									user_id: req.id,
-									status: 'enrolled',
-									reason_for_status_update: 'enrolled',
-								},
-								request,
-							);
+							// const status = await this.statusUpdate(
+							// 	{
+							// 		user_id: req.id,
+							// 		status: 'enrolled',
+							// 		reason_for_status_update: 'enrolled',
+							// 	},
+							// 	request,
+							// );
 						}else {
 							return response.status(400).send({
 								success: false,
@@ -2269,17 +2269,23 @@ export class BeneficiariesService {
 
 				const { data: updatedUser } = await this.userById(req.id);
 				if (updatedUser.program_beneficiaries.enrollment_number) {
+					let status = null;
+					let reason = null;
 					if (req?.is_eligible === 'no') {
-						const status = await this.statusUpdate(
-							{
-								user_id: req.id,
-								status: 'ineligible_for_pragati_camp',
-								reason_for_status_update:
-									'The age of the learner should not be 14 to 29',
-							},
-							request,
-						);
-					}  
+						status = 'ineligible_for_pragati_camp';				
+						reason = 'The age of the learner should not be 14 to 29';
+					} else {
+						status = 'enrolled';				
+						reason = 'enrolled';
+					}
+					await this.statusUpdate(
+						{
+							user_id: req.id,
+							status,
+							reason_for_status_update: reason,
+						},
+						request,
+					);
 				}
 
 				break;
