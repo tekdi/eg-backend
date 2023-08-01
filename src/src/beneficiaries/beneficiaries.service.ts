@@ -87,9 +87,13 @@ export class BeneficiariesService {
 			}
 		`;
 
-		const resultData = (
+		let resultData = (
 			await this.hasuraServiceFromServices.getData({ query: beneficiariesByAadhaarQuery })
 		)?.data?.users;
+		resultData = resultData.map(user => {
+			user.program_beneficiaries = user?.program_beneficiaries?.[0] ?? {};
+			return user;
+		});
 		const success = resultData ? true : false;
 		return {
 			success,
