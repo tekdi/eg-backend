@@ -36,7 +36,7 @@ export class AuthService {
 		const reason = req.reason;
 
 		if (mobile && reason) {
-			const sendOtpRes = await this.generateAndSendOtp(mobile, reason);
+			const sendOtpRes = await this.generateAndSendOtp(mobile, reason, req.lang);
 			console.log('sendOtpRes', sendOtpRes);
 
 			if (sendOtpRes.success) {
@@ -231,6 +231,7 @@ export class AuthService {
 				const sendOtpRes = await this.generateAndSendOtp(
 					mobile,
 					reason,
+					req.lang
 				);
 				console.log('sendOtpRes', sendOtpRes);
 
@@ -452,6 +453,20 @@ export class AuthService {
 	}
 	public async register(body, response) {
 		console.log('body', body);
+		if (body.role === 'facilitator') {
+			let isMobileExist = await this.hasuraService.findAll('users', {
+				mobile: body?.mobile,
+			});
+			let userExist = isMobileExist?.data?.users;
+
+			if (userExist.length > 0) {
+				return response.status(422).send({
+					success: false,
+					message: 'Mobile Number Already Exist',
+					data: {},
+				});
+			}
+		}
 
 		// Generate random password
 		const password = `@${this.userHelperService.generateRandomPassword()}`;
@@ -560,7 +575,11 @@ export class AuthService {
 				// Send login details SMS
 				// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
 				if (body.role === 'facilitator') {
-					const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%85%E0%A4%95%E0%A4%BE%E0%A4%89%E0%A4%82%E0%A4%9F%20%E0%A4%AC%E0%A4%A8%E0%A4%BE%E0%A4%AF%E0%A4%BE%20%E0%A4%97%E0%A4%AF%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A5%8B%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A5%8D%E0%A4%A4%E0%A4%BE%20%E0%A4%A8%E0%A4%BE%E0%A4%AE%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%20%E0%A4%94%E0%A4%B0%20%E0%A4%AA%E0%A4%BE%E0%A4%B8%E0%A4%B5%E0%A4%B0%E0%A5%8D%E0%A4%A1%20%3Carg2%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
+					let SMS_TEMPLATE_REGISTRATION = this.configService.get<string>('SMS_TEMPLATE_REGISTRATION_HI');
+					if (['en', 'eng', 'english'].includes(body.lang)) {
+						SMS_TEMPLATE_REGISTRATION = this.configService.get<string>('SMS_TEMPLATE_REGISTRATION_EN');
+					}
+					const message = SMS_TEMPLATE_REGISTRATION;
 					const args = `arg1:${body.username},arg2:${body.password}`;
 					const otpRes = await this.sendSMS(
 						body.mobile,
@@ -596,7 +615,7 @@ export class AuthService {
 		}
 	}
 
-	public async generateAndSendOtp(mobile, reason) {
+	public async generateAndSendOtp(mobile, reason, lang) {
 		const otp = crypto.randomInt(100000, 999999);
 		const ttl = parseInt(process.env.OTP_EXPIRY_IN_MINUTES) * 60 * 1000;
 		const expires = Date.now() + ttl;
@@ -618,9 +637,13 @@ export class AuthService {
 		const mobileStr = mobile.toString();
 
 		if (otp && fullhash) {
+			let SMS_TEMPLATE_OTP = this.configService.get<string>('SMS_TEMPLATE_OTP_HI');
+			if (['en', 'eng', 'english'].includes(lang)) {
+				SMS_TEMPLATE_OTP = this.configService.get<string>('SMS_TEMPLATE_OTP_EN');
+			}
 			// Send OTP SMS
 			// नमस्ते, प्रगति प्लेटफॉर्म पर सत्यापन/लॉगिन के लिए आपका ओटीपी <arg1> है। FEGG
-			const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%A4%E0%A5%87,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%B8%E0%A4%A4%E0%A5%8D%E0%A4%AF%E0%A4%BE%E0%A4%AA%E0%A4%A8/%E0%A4%B2%E0%A5%89%E0%A4%97%E0%A4%BF%E0%A4%A8%20%E0%A4%95%E0%A5%87%20%E0%A4%B2%E0%A4%BF%E0%A4%8F%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%93%E0%A4%9F%E0%A5%80%E0%A4%AA%E0%A5%80%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
+			const message = SMS_TEMPLATE_OTP;
 			const args = `arg1:${otp}`;
 			const otpRes = await this.sendSMS(mobile, message, args);
 			console.log('otpRes', otpRes);
@@ -682,7 +705,7 @@ export class AuthService {
 		let config = {
 			method: 'get',
 			maxBodyLength: Infinity,
-			url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},${args}&language=2&credittype=8&senderid=FEGGPR&templateid=32490&message=${message}&isschd=false&isrefno=true&filetype=1`,
+			url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},${args}&language=2&credittype=7&senderid=FEGGPR&templateid=32490&message=${message}&isschd=false&isrefno=true&filetype=1`,
 			headers: {},
 		};
 
