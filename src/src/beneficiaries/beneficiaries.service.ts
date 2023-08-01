@@ -2210,35 +2210,48 @@ export class BeneficiariesService {
 							'Make Sure Your Enrollement Status is Enrolled',
 						data: {},
 					});
-				} else if (programDetails?.is_eligible === 'yes' && beneficiaryUser.program_beneficiaries.status === 'enrolled') {
-					let messageArray = [];
-					let tempArray = [
-						'enrollment_first_name',
-						'enrollment_dob',
-						'is_eligible',
-					];
-					for (let info of tempArray) {
-						if (req[info] === undefined || req[info] === '') {
-							messageArray.push(`please send ${info} `);
-						}
+				}
+				if (
+					!(
+						programDetails.enrollment_number &&
+						programDetails.enrollment_aadhaar_no ==
+							beneficiaryUser?.aadhar_no
+					)
+				) {
+					return response.status(400).json({
+						success: false,
+						message:
+							'Invalid Enrollment number or Enrollment Aadhaar number',
+						data: {},
+					});
+				}
+				let messageArray = [];
+				let tempArray = [
+					'enrollment_first_name',
+					'enrollment_dob',
+					'is_eligible',
+				];
+				for (let info of tempArray) {
+					if (req[info] === undefined || req[info] === '') {
+						messageArray.push(`please send ${info} `);
 					}
-					if (messageArray.length > 0) {
-						return response.status(400).send({
-							success: false,
-							message: messageArray,
-							data: {},
-						});
-					} else {
-						myRequest = {
-							...req,
-							...(req?.enrollment_middle_name == '' && {
-								enrollment_middle_name: null,
-							}),
-							...(req?.enrollment_last_name == '' && {
-								enrollment_last_name: null,
-							}),
-						};
-					}
+				}
+				if (messageArray.length > 0) {
+					return response.status(400).send({
+						success: false,
+						message: messageArray,
+						data: {},
+					});
+				} else {
+					myRequest = {
+						...req,
+						...(req?.enrollment_middle_name == '' && {
+							enrollment_middle_name: null,
+						}),
+						...(req?.enrollment_last_name == '' && {
+							enrollment_last_name: null,
+						}),
+					};
 				}
 				await this.hasuraService.q(
 					tableName,
