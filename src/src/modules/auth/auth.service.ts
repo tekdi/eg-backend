@@ -452,6 +452,20 @@ export class AuthService {
 	}
 	public async register(body, response) {
 		console.log('body', body);
+		if (body.role === 'facilitator') {
+			let isMobileExist = await this.hasuraService.findAll('users', {
+				mobile: body?.mobile,
+			});
+			let userExist = isMobileExist?.data?.users;
+
+			if (userExist.length > 0) {
+				return response.status(422).send({
+					success: false,
+					message: 'Mobile Number Already Exist',
+					data: {},
+				});
+			}
+		}
 
 		// Generate random password
 		const password = `@${this.userHelperService.generateRandomPassword()}`;
@@ -682,7 +696,7 @@ export class AuthService {
 		let config = {
 			method: 'get',
 			maxBodyLength: Infinity,
-			url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},${args}&language=2&credittype=8&senderid=FEGGPR&templateid=32490&message=${message}&isschd=false&isrefno=true&filetype=1`,
+			url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},${args}&language=2&credittype=7&senderid=FEGGPR&templateid=32490&message=${message}&isschd=false&isrefno=true&filetype=1`,
 			headers: {},
 		};
 
