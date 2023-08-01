@@ -221,7 +221,7 @@ export class AuthService {
                 }
               }`,
 		};
-		const userRes:any = await this.hasuraService.postData(query);
+		const userRes: any = await this.hasuraService.postData(query);
 		console.log('userRes', userRes);
 
 		if (userRes?.data?.users?.length > 0) {
@@ -697,17 +697,21 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
-		const newR = await this.hasuraService.q(tableName, {...req,aadhar_verified:'pending'}, [
-			'first_name',
-			'last_name',
-			'middle_name',
-			'mobile',
-			'email_id',
-			'dob',
-			'keycloak_id',
-			'username',
-			'aadhar_verified'
-		]);
+		const newR = await this.hasuraService.q(
+			tableName,
+			{ ...req, aadhar_verified: 'pending' },
+			[
+				'first_name',
+				'last_name',
+				'middle_name',
+				'mobile',
+				'email_id',
+				'dob',
+				'keycloak_id',
+				'username',
+				'aadhar_verified',
+			],
+		);
 
 		const user_id = newR[tableName]?.id;
 
@@ -848,26 +852,30 @@ export class AuthService {
                 }
               }
               interviews {
-                id
-                owner_user_id
-                end_date_time
-                comment
-                created_at
-                created_by
-                start_date_time
-                status
-                title
-                updated_at
-                updated_by
-                user_id
-                location_type
-                location
-                owner {
-                  first_name
-                  last_name
-                  id
-                }
-              }
+				id
+				owner_user_id
+				end_time
+				comment
+				created_at
+				created_by
+				date
+				start_time
+				status
+				title
+				updated_at
+				updated_by
+				user_id
+				location_type
+				location
+				interviewer_name
+				rsvp
+				reminder
+				owner {
+				  first_name
+				  last_name
+				  id
+				}
+			  }
               events {
                 context
                 context_id
