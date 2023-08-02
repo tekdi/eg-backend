@@ -12,17 +12,24 @@ export class CheckValidFacilitatorIdMiddleware implements NestMiddleware {
 	async use(req: any, res: Response, next: NextFunction) {
 		var data = {
 			query: `query searchById {
-				users_by_pk(id: ${req.params.id}) {
+				facilitator_user: users_by_pk(id: ${req.params.id}) {
 					id
 					program_faciltators {
 						parent_ip
+					}
+				}
+				token_user: users_by_pk(id: ${req.mw_userid}) {
+					id
+					program_users {
+						organisation_id
 					}
 				}
 			}`,
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
-		let result: any = response?.data?.users_by_pk;
+		let facilitatorUser: any = response?.data?.facilitator_user;
+		let tokenUser: any = response?.data?.token_user;
 		// const canAccess =
 		// 	result &&
 		// 	(result.program_beneficiaries[0]?.facilitator_id ===
@@ -31,8 +38,11 @@ export class CheckValidFacilitatorIdMiddleware implements NestMiddleware {
 		// 			?.program_faciltators[0]?.parent_ip === req.mw_userid ||
 		// 		req.mw_roles.includes('program_owner'));
 		const canAccess =
-			result &&
-			result.program_faciltators[0]?.parent_ip == req.mw_userid;
+			facilitatorUser &&
+			(facilitatorUser.id == req.mw_userid ||
+				(tokenUser &&
+					facilitatorUser.program_faciltators[0]?.parent_ip ==
+						tokenUser.program_users?.[0]?.organisation_id));
 		if (canAccess) {
 			next();
 		} else {
