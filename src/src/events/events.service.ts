@@ -522,9 +522,9 @@ export class EventsService {
 				const deletePromise = [];
 				if (
 					eventDetails?.attendances &&
-					eventDetails?.attendances?.length > 0
+					eventDetails.attendances.length > 0
 				) {
-					for (const iterator of eventDetails?.attendances) {
+					for (const iterator of eventDetails.attendances) {
 						deletePromise.push(
 							this.hasuraService.delete('attendance', {
 								id: +iterator.id,

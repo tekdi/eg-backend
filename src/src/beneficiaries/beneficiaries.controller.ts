@@ -49,9 +49,67 @@ export class BeneficiariesController {
 		return this.beneficiariesService.findAll(request, req, response);
 	}
 
+	@Post('/admin/list/duplicates-by-aadhaar')
+	@UseGuards(new AuthGuard())
+	async getBeneficiariesDuplicatesByAadhaar(
+		@Body() body: Record<string, any>,
+		@Res() response: Record<string, any>,
+	) {
+		const aadhaarNo = body.aadhar_no;
+		const resultPayload =
+			await this.beneficiariesService.getBeneficiariesDuplicatesByAadhaar(aadhaarNo);
+		if (resultPayload.success) {
+			return response.status(200).json({
+				success: true,
+				data: resultPayload.result,
+			});
+		} else {
+			return response.status(200).json({
+				success: false,
+				message: 'Error while fetching results',
+			});
+		}
+	}
+
+	@Post('admin/list/deactivate-duplicates')
+	@UseGuards(new AuthGuard())
+	async deactivateDuplicateBeneficiaries(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Record<string, any>,
+	) {
+		const roles = req.mw_roles;
+		let duplicateArr;
+		// Fetch aadhar number of user to set as active
+		const aadhar_no = (await this.beneficiariesService.findOne(+body.activeId))?.data?.aadhar_no;
+
+		// Fetch valid duplication list of the token user
+		if (roles.includes('program_owner')) {
+			duplicateArr = await this.beneficiariesService.getAllDuplicatesUnderPo();
+		} else if (roles.includes('staff')) {
+			duplicateArr = await this.beneficiariesService.getAllDuplicatesUnderIp(req.mw_userid);
+		}
+
+		// Check if the Aadhaar number exists or not in the list
+		if (!duplicateArr.some(aadhaarData => aadhaarData.aadhar_no == aadhar_no)) {
+			return response.status(400).json({
+				success: false,
+				message: 'Invalid Aadhaar!'
+			});
+		}
+
+		// Set other AGs as deactivated and set is_duplicate flag to false
+		const { success, data: updateData } = await this.beneficiariesService.deactivateDuplicateBeneficiaries(aadhar_no, +body.activeId, req.mw_userid);
+
+		return response.status(200).json({
+			success: success,
+			data: updateData,
+		});
+	}
+
 	@Post('/admin/list')
 	@UseGuards(new AuthGuard())
-	findAllAgForIp(
+	findAllBeneficiariesForIp(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Response,
@@ -76,6 +134,24 @@ export class BeneficiariesController {
 	@Get('/getStatuswiseCount')
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.beneficiariesService.getStatuswiseCount(request, response);
+	}
+
+	@Get('admin/list/duplicates-count-by-aadhaar')
+	@UseGuards(new AuthGuard())
+	async getAllDuplicateCountsByAadhaar(@Req() request: any, @Res() response: any) {
+		const roles = request.mw_roles;
+
+		// Fetch duplicate counts based on role
+		let resultPayload;
+		if (roles.includes('program_owner')) {
+			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderPo();
+		} else if (roles.includes('staff')) {
+			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderIp(request.mw_userid);
+		}
+		return response.status(200).json({
+			success: true,
+			data: resultPayload,
+		});
 	}
 
 	@Get(':id')
@@ -141,5 +217,15 @@ export class BeneficiariesController {
 		@Res() response: any,
 	) {
 		return this.beneficiariesService.exportCsv(request, body, response);
+	}
+
+	@Post('/admin/export-subjects-csv')
+	@UseGuards(new AuthGuard())
+	async exportSubjectsCsv(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.exportSubjectCsv(request, body, response);
 	}
 }
