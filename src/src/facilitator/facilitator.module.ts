@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+} from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 
 import { HasuraModule } from '../services/hasura/hasura.module';
@@ -10,6 +15,7 @@ import { S3Module } from '../services/s3/s3.module';
 import { FacilitatorService } from './facilitator.service';
 import { FacilitatorController } from './facilitator.controller';
 import { AuthMiddleware } from '../common/middlewares/authmiddleware';
+import { CheckValidFacilitatorIdMiddleware } from './middlewares/checkValidFacilitatorId';
 
 @Module({
 	imports: [
@@ -27,5 +33,11 @@ import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer
+			.apply(AuthMiddleware, CheckValidFacilitatorIdMiddleware)
+			.forRoutes({
+				method: RequestMethod.PATCH,
+				path: '/facilitators/:id',
+			});
 	}
 }

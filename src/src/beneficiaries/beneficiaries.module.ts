@@ -1,7 +1,8 @@
 import {
 	MiddlewareConsumer,
 	Module,
-	NestModule
+	NestModule,
+	RequestMethod
 } from '@nestjs/common';
 import { UserModule } from 'src/user/user.module';
 import { BeneficiariesController } from './beneficiaries.controller';
@@ -15,6 +16,7 @@ import { EnumModule } from '../enum/enum.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { BeneficiariesService } from './beneficiaries.service';
+import { CheckValidBeneficiaryIdMiddleware } from './middlewares/checkValidBeneficiaryId';
 
 @Module({
 	imports: [
@@ -25,7 +27,7 @@ import { BeneficiariesService } from './beneficiaries.service';
 		KeycloakModule,
 		HasuraModuleFromServices,
 		S3Module,
-		EnumModule
+		EnumModule,
 	],
 	controllers: [BeneficiariesController],
 	providers: [BeneficiariesService],
@@ -33,5 +35,17 @@ import { BeneficiariesService } from './beneficiaries.service';
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer
+			.apply(AuthMiddleware, CheckValidBeneficiaryIdMiddleware)
+			.forRoutes({
+				method: RequestMethod.GET,
+				path: '/beneficiaries/:id',
+			});
+		consumer
+			.apply(AuthMiddleware, CheckValidBeneficiaryIdMiddleware)
+			.forRoutes({
+				method: RequestMethod.PATCH,
+				path: '/beneficiaries/:id',
+			});
 	}
 }
