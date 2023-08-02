@@ -450,6 +450,7 @@ export class AuthService {
 			response,
 		);
 	}
+
 	public async register(body, response) {
 		if (body.role === 'facilitator') {
 			let isMobileExist = await this.hasuraService.findAll('users', {
@@ -695,7 +696,7 @@ export class AuthService {
 		let config = {
 			method: 'get',
 			maxBodyLength: Infinity,
-			url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},${args}&language=2&credittype=8&senderid=FEGGPR&templateid=32490&message=${message}&isschd=false&isrefno=true&filetype=1`,
+			url: `${process.env.SMS_GATEWAY_BASE_URL}/VoicenSMS/webresources/CreateSMSCampaignGet?ukey=${process.env.SMS_GATEWAY_API_KEY}&msisdnlist=phoneno:${mobileNo},${args}&language=2&credittype=7&senderid=FEGGPR&templateid=32490&message=${message}&isschd=false&isrefno=true&filetype=1`,
 			headers: {},
 		};
 
