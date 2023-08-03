@@ -106,7 +106,7 @@ export class BeneficiariesService {
 	async isEnrollmentNumberExists(beneficiaryId: string, body: any) {
 		const query = `
 				query MyQuery {
-					program_beneficiaries_aggregate(where: {enrollment_number: {_eq: ${body.enrollment_number}}, user_id: {_neq: ${beneficiaryId}}}) {
+					program_beneficiaries_aggregate(where: {enrollment_number: {_eq: "${body.enrollment_number}"}, user_id: {_neq: ${beneficiaryId}}}) {
 						aggregate {
 							count
 						}
@@ -2131,14 +2131,14 @@ export class BeneficiariesService {
 										  )
 										: null,
 							};
-							const status = await this.statusUpdate(
-								{
-									user_id: req.id,
-									status: 'enrolled',
-									reason_for_status_update: 'enrolled',
-								},
-								request,
-							);
+							// const status = await this.statusUpdate(
+							// 	{
+							// 		user_id: req.id,
+							// 		status: 'enrolled',
+							// 		reason_for_status_update: 'enrolled',
+							// 	},
+							// 	request,
+							// );
 						} else {
 							return response.status(400).send({
 								success: false,
@@ -2191,33 +2191,38 @@ export class BeneficiariesService {
 						//delete document from s3 bucket
 						await this.s3Service.deletePhoto(documentDetails?.name);
 					}
-					const allDocumentStatus =
-						beneficiaryUser?.program_beneficiaries
-							?.documents_status;
+					if (
+						beneficiaryUser.program_beneficiaries.status ===
+						'enrolled'
+					) {
+						const allDocumentStatus =
+							beneficiaryUser?.program_beneficiaries
+								?.documents_status;
 
-					let allDocumentsCompleted = false;
-					if (allDocumentStatus && allDocumentStatus !== null) {
-						allDocumentsCompleted = Object.values(
-							JSON.parse(allDocumentStatus),
-						).every((element: any) => {
-							return (
-								element === 'complete' ||
-								element === 'not_applicable'
-							);
-						});
+						let allDocumentsCompleted = false;
+						if (allDocumentStatus && allDocumentStatus !== null) {
+							allDocumentsCompleted = Object.values(
+								JSON.parse(allDocumentStatus),
+							).every((element: any) => {
+								return (
+									element === 'complete' ||
+									element === 'not_applicable'
+								);
+							});
+						}
+						const status = await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: allDocumentsCompleted
+									? 'ready_to_enroll'
+									: 'identified',
+								reason_for_status_update: allDocumentsCompleted
+									? 'documents_completed'
+									: 'identified',
+							},
+							request,
+						);
 					}
-					const status = await this.statusUpdate(
-						{
-							user_id: req.id,
-							status: allDocumentsCompleted
-								? 'ready_to_enrolled'
-								: 'identified',
-							reason_for_status_update: allDocumentsCompleted
-								? 'documents_completed'
-								: 'identified',
-						},
-						request,
-					);
 				}
 				if (
 					req.enrollment_status == 'applied_but_pending' ||
@@ -2225,6 +2230,38 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
+					if (
+						beneficiaryUser.program_beneficiaries.status ===
+						'enrolled'
+					) {
+						const allDocumentStatus =
+							beneficiaryUser?.program_beneficiaries
+								?.documents_status;
+
+						let allDocumentsCompleted = false;
+						if (allDocumentStatus && allDocumentStatus !== null) {
+							allDocumentsCompleted = Object.values(
+								JSON.parse(allDocumentStatus),
+							).every((element: any) => {
+								return (
+									element === 'complete' ||
+									element === 'not_applicable'
+								);
+							});
+						}
+						const status = await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: allDocumentsCompleted
+									? 'ready_to_enroll'
+									: 'identified',
+								reason_for_status_update: allDocumentsCompleted
+									? 'documents_completed'
+									: 'identified',
+							},
+							request,
+						);
+					}
 				}
 				await this.hasuraService.q(
 					tableName,
@@ -2258,35 +2295,48 @@ export class BeneficiariesService {
 							'Make Sure Your Enrollement Status is Enrolled',
 						data: {},
 					});
+				}
+				if (
+					!(
+						programDetails.enrollment_number &&
+						programDetails.enrollment_aadhaar_no ==
+							beneficiaryUser?.aadhar_no
+					)
+				) {
+					return response.status(400).json({
+						success: false,
+						message:
+							'Invalid Enrollment number or Enrollment Aadhaar number',
+						data: {},
+					});
+				}
+				let messageArray = [];
+				let tempArray = [
+					'enrollment_first_name',
+					'enrollment_dob',
+					'is_eligible',
+				];
+				for (let info of tempArray) {
+					if (req[info] === undefined || req[info] === '') {
+						messageArray.push(`please send ${info} `);
+					}
+				}
+				if (messageArray.length > 0) {
+					return response.status(400).send({
+						success: false,
+						message: messageArray,
+						data: {},
+					});
 				} else {
-					let messageArray = [];
-					let tempArray = [
-						'enrollment_first_name',
-						'enrollment_dob',
-						'is_eligible',
-					];
-					for (let info of tempArray) {
-						if (req[info] === undefined || req[info] === '') {
-							messageArray.push(`please send ${info} `);
-						}
-					}
-					if (messageArray.length > 0) {
-						return response.status(400).send({
-							success: false,
-							message: messageArray,
-							data: {},
-						});
-					} else {
-						myRequest = {
-							...req,
-							...(req?.enrollment_middle_name == '' && {
-								enrollment_middle_name: null,
-							}),
-							...(req?.enrollment_last_name == '' && {
-								enrollment_last_name: null,
-							}),
-						};
-					}
+					myRequest = {
+						...req,
+						...(req?.enrollment_middle_name == '' && {
+							enrollment_middle_name: null,
+						}),
+						...(req?.enrollment_last_name == '' && {
+							enrollment_last_name: null,
+						}),
+					};
 				}
 				await this.hasuraService.q(
 					tableName,
@@ -2300,17 +2350,24 @@ export class BeneficiariesService {
 
 				const { data: updatedUser } = await this.userById(req.id);
 				if (updatedUser.program_beneficiaries.enrollment_number) {
+					let status = null;
+					let reason = null;
 					if (req?.is_eligible === 'no') {
-						const status = await this.statusUpdate(
-							{
-								user_id: req.id,
-								status: 'ineligible_for_pragati_camp',
-								reason_for_status_update:
-									'The age of the learner should not be 14 to 29',
-							},
-							request,
-						);
+						status = 'ineligible_for_pragati_camp';
+						reason =
+							'The age of the learner should not be 14 to 29';
+					} else if (req?.is_eligible === 'yes') {
+						status = 'enrolled';
+						reason = 'enrolled';
 					}
+					await this.statusUpdate(
+						{
+							user_id: req.id,
+							status,
+							reason_for_status_update: reason,
+						},
+						request,
+					);
 				}
 
 				break;
