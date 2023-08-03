@@ -103,17 +103,16 @@ export class AuthService {
 			});
 		}
 	}
-	public async resetPasswordUsingOtp(req, response) {
-		console.log('req', req);
+	public async getUserByusername(req) {
 		const username = req.username;
-		const hash = req.hash;
-		const otp = req.otp;
-		const reason = req.reason;
+		const { user } = await this.keycloakService.getUserByUserName(
+			req.username,
+		);
 
 		//find mobile no.
 		let query = {
 			query: `query MyQuery2 {
-                users(where: {username: {_eq: ${username} }}) {
+                users(where: {keycloak_id: {_eq: "${user?.id}"}}) {
                   keycloak_id
                   last_name
                   id
@@ -123,7 +122,17 @@ export class AuthService {
               }`,
 		};
 		const userRes = await this.hasuraService.postData(query);
-		console.log('userRes', userRes);
+
+		return userRes;
+	}
+
+	public async resetPasswordUsingOtp(req, response) {
+		console.log('req', req);
+		const username = req.username;
+		const hash = req.hash;
+		const otp = req.otp;
+		const reason = req.reason;
+		const userRes = await this.getUserByusername(req);
 
 		if (userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
@@ -209,21 +218,7 @@ export class AuthService {
 		const username = req.username;
 		const reason = req.reason;
 
-		//find mobile by username
-		let query = {
-			query: `query MyQuery2 {
-                users(where: {username: {_eq: ${username} }}) {
-                  keycloak_id
-                  last_name
-                  id
-                  first_name
-                  mobile
-                }
-              }`,
-		};
-		const userRes: any = await this.hasuraService.postData(query);
-		console.log('userRes', userRes);
-
+		const userRes = await this.getUserByusername(req);
 		if (userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
 
@@ -711,17 +706,21 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
-		const newR = await this.hasuraService.q(tableName, {...req,aadhar_verified:'pending'}, [
-			'first_name',
-			'last_name',
-			'middle_name',
-			'mobile',
-			'email_id',
-			'dob',
-			'keycloak_id',
-			'username',
-			'aadhar_verified'
-		]);
+		const newR = await this.hasuraService.q(
+			tableName,
+			{ ...req, aadhar_verified: 'pending' },
+			[
+				'first_name',
+				'last_name',
+				'middle_name',
+				'mobile',
+				'email_id',
+				'dob',
+				'keycloak_id',
+				'username',
+				'aadhar_verified',
+			],
+		);
 
 		const user_id = newR[tableName]?.id;
 

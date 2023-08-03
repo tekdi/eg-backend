@@ -116,6 +116,46 @@ export class KeycloakService {
 		}
 	}
 
+	public async getUserByUserName(username): Promise<{ [key: string]: any }> {
+		try {
+			const adminResultData = await this.getAdminKeycloakToken();
+
+			if (adminResultData?.access_token) {
+				let url = `${this.configService.get<string>(
+					'KEYCLOAK_URL',
+				)}/admin/realms/${this.realm_name_app}/users`;
+
+				const {
+					headers,
+					status,
+					data: [user],
+				} = await lastValueFrom(
+					this.httpService
+						.get(url, {
+							params: { username },
+							headers: {
+								'Content-Type': 'application/json',
+								Authorization: `Bearer ${adminResultData.access_token}`,
+							},
+						})
+						.pipe(map((res) => res)),
+				);
+				return {
+					headers,
+					status,
+					user,
+				};
+			} else {
+				throw new BadRequestException('User not found in keycloak !');
+			}
+		} catch (e) {
+			console.log('error 105' + e.message);
+			throw new HttpException(e.message, HttpStatus.CONFLICT, {
+				cause: e,
+			});
+		}
+	}
+
 	public async createUser(userData): Promise<{ [key: string]: any }> {
 		try {
 			const adminResultData = await this.getAdminKeycloakToken();
@@ -123,7 +163,7 @@ export class KeycloakService {
 			if (adminResultData?.access_token) {
 				let url = `${this.configService.get<string>(
 					'KEYCLOAK_URL',
-				)}/admin/realms/eg-sso/users`;
+				)}/admin/realms/${this.realm_name_app}/users`;
 				let data = userData;
 
 				const { headers, status } = await lastValueFrom(
@@ -154,7 +194,7 @@ export class KeycloakService {
 	public async registerUser(data, token) {
 		console.log('inside registerUser', data);
 
-		const url = `${this.keycloak_url}/admin/realms/eg-sso/users`;
+		const url = `${this.keycloak_url}/admin/realms/${this.realm_name_app}/users`;
 
 		const config: AxiosRequestConfig = {
 			headers: {
@@ -185,7 +225,7 @@ export class KeycloakService {
 	public async findUser(data, token) {
 		console.log('inside findUser', data);
 
-		const url = `${this.keycloak_url}/admin/realms/eg-sso/users?username=${data}`;
+		const url = `${this.keycloak_url}/admin/realms/${this.realm_name_app}/users?username=${data}`;
 
 		const config: AxiosRequestConfig = {
 			headers: {
