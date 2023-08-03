@@ -7,6 +7,7 @@ import {
 	Patch,
 	Post,
 	Put,
+	Query,
 	Req,
 	Res,
 	UseGuards,
@@ -138,15 +139,21 @@ export class BeneficiariesController {
 
 	@Get('admin/list/duplicates-count-by-aadhaar')
 	@UseGuards(new AuthGuard())
-	async getAllDuplicateCountsByAadhaar(@Req() request: any, @Res() response: any) {
+	async getAllDuplicateCountsByAadhaar(@Req() request: any, @Query() query: any, @Res() response: any) {
 		const roles = request.mw_roles;
 
+		const limit = !isNaN(parseInt(query.limit)) ? parseInt(query.limit) : 0;
+		const page =
+			!isNaN(parseInt(query.page)) && parseInt(query.page) > 0
+				? parseInt(query.page)
+				: 1;
+		const skip = limit * (page - 1);
 		// Fetch duplicate counts based on role
 		let resultPayload;
 		if (roles.includes('program_owner')) {
-			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderPo();
+			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderPo(limit, skip);
 		} else if (roles.includes('staff')) {
-			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderIp(request.mw_userid);
+			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderIp(request.mw_userid, limit, skip);
 		}
 		return response.status(200).json({
 			success: true,

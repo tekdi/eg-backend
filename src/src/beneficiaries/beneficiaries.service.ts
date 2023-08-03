@@ -2537,7 +2537,7 @@ export class BeneficiariesService {
 		};
 	}
 
-	public async getAllDuplicatesUnderIp(id: number) {
+	public async getAllDuplicatesUnderIp(id: number, limit?: number, skip?: number) {
 		const user = (await this.findOne(id)).data;
 		const sql = `
 			SELECT
@@ -2582,6 +2582,12 @@ export class BeneficiariesService {
 					AND
 				        bu2.is_deactivated IS NOT true
 				)
+			${
+				limit ? `LIMIT ${limit}` : ''
+			}
+			${
+				skip ? `OFFSET ${skip}` : ''
+			}
 			;
 		`;
 		const duplicateListArr = (
@@ -2592,7 +2598,7 @@ export class BeneficiariesService {
 		);
 	}
 
-	public async getAllDuplicatesUnderPo() {
+	public async getAllDuplicatesUnderPo(limit?: number, skip?: number) {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -2621,6 +2627,12 @@ export class BeneficiariesService {
 				COUNT(*) > 1
 			AND
 				array_length(array_agg(DISTINCT pf.parent_ip), 1) > 1
+			${
+				limit ? `LIMIT ${limit}` : ''
+			}
+			${
+				skip ? `OFFSET ${skip}` : ''
+			}
 			;
 		`;
 		const duplicateListArr = (
