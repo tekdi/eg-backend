@@ -5,6 +5,7 @@ import { UserHelperService } from 'src/helper/userHelper.service';
 import { AadhaarKycService } from 'src/modules/aadhaar_kyc/aadhaar_kyc.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
+import { UserService } from 'src/user/user.service';
 
 const crypto = require('crypto');
 const axios = require('axios');
@@ -23,6 +24,7 @@ export class AuthService {
 		private readonly keycloakService: KeycloakService,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
+		private userService: UserService,
 	) {}
 
 	public returnFields = [
@@ -570,7 +572,27 @@ export class AuthService {
 				console.log('body 415', body);
 				const result = await this.newCreate(body);
 				console.log('result', result);
-
+				if (
+					body.role === 'beneficiary' &&
+					result.data.program_beneficiaries
+				) {
+					const audit = await this.userService.addAuditLog(
+						result?.data?.id,
+						body.role_fields.facilitator_id,
+						'program_beneficiaries.status',
+						result?.data?.program_beneficiaries[0]?.id,
+						{
+							status: '',
+							reason_for_status_update: '',
+						},
+						{
+							status: result?.data?.program_beneficiaries[0]
+								?.status,
+							reason_for_status_update: 'new registration',
+						},
+						['status', 'reason_for_status_update'],
+					);
+				}
 				// Send login details SMS
 				// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
 				if (body.role === 'facilitator') {
@@ -711,17 +733,21 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
-		const newR = await this.hasuraService.q(tableName, {...req,aadhar_verified:'pending'}, [
-			'first_name',
-			'last_name',
-			'middle_name',
-			'mobile',
-			'email_id',
-			'dob',
-			'keycloak_id',
-			'username',
-			'aadhar_verified'
-		]);
+		const newR = await this.hasuraService.q(
+			tableName,
+			{ ...req, aadhar_verified: 'pending' },
+			[
+				'first_name',
+				'last_name',
+				'middle_name',
+				'mobile',
+				'email_id',
+				'dob',
+				'keycloak_id',
+				'username',
+				'aadhar_verified',
+			],
+		);
 
 		const user_id = newR[tableName]?.id;
 
@@ -763,7 +789,8 @@ export class AuthService {
 			);
 		}
 
-		return await this.userById(user_id);
+		const result = await this.userById(user_id);
+		return result;
 	}
 
 	async userById(id: any) {
@@ -824,6 +851,16 @@ export class AuthService {
                 role_title
                 user_id
                 type
+              }
+              program_beneficiaries {
+                beneficiaries_found_at
+                created_by
+                facilitator_id
+                id
+                status
+                reason_for_status_update
+                academic_year_id
+                user_id
               }
               program_faciltators {
                 parent_ip
