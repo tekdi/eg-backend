@@ -861,7 +861,7 @@ export class AuthService {
                 reason_for_status_update
                 academic_year_id
                 user_id
-			}
+              }
               program_faciltators {
                 parent_ip
                 availability
