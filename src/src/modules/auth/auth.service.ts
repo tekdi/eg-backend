@@ -852,7 +852,7 @@ export class AuthService {
                 user_id
                 type
               }
-                program_beneficiaries {
+              program_beneficiaries {
                 beneficiaries_found_at
                 created_by
                 facilitator_id
