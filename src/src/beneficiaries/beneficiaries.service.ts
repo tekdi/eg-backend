@@ -189,10 +189,6 @@ export class BeneficiariesService {
 						id: 'aadhaar_verification_mode',
 						title: 'Aadhaar Verification Mode',
 					},
-					{
-						id: 'aadhaar_verification_mode',
-						title: 'Aadhaar Verification Mode',
-					},
 				],
 			});
 
@@ -221,12 +217,6 @@ export class BeneficiariesService {
 				dataObject['aadhaar_verification_mode'] =
 					data?.aadhaar_verification_mode;
 				records.push(dataObject);
-				dataObject['aadhar_no'] = data?.aadhar_no;
-				dataObject['aadhar_verified'] = data?.aadhar_verified
-					? data?.aadhar_verified
-					: 'no';
-				dataObject['aadhaar_verification_mode'] =
-					data?.aadhaar_verification_mode;
 			}
 			let fileName = `${
 				user?.data?.first_name + '_' + user?.data?.last_name

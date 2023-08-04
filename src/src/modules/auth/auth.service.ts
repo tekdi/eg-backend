@@ -852,16 +852,15 @@ export class AuthService {
                 user_id
                 type
               }
-			  program_beneficiaries {
-				beneficiaries_found_at
-				created_by
-				facilitator_id
-				id
-				status
-				reason_for_status_update
-				academic_year_id
-				user_id
-				
+                program_beneficiaries {
+                beneficiaries_found_at
+                created_by
+                facilitator_id
+                id
+                status
+                reason_for_status_update
+                academic_year_id
+                user_id
 			}
               program_faciltators {
                 parent_ip

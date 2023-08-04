@@ -92,7 +92,6 @@ export class AuthController {
 	public async register(
 		@Body() body: RegisterDTO,
 		@Res() response: Response,
-		@Req() request: any,
 	) {
 		return this.authService.register(body, response);
 	}
