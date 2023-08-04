@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import jwt_decode from 'jwt-decode';
 import { UserHelperService } from 'src/helper/userHelper.service';
@@ -491,6 +491,17 @@ export class AuthService {
 				group = `beneficiaries`;
 				break;
 			}
+		}
+
+		if (
+			!['beneficiaries', 'facilitators'].includes(group) ||
+			(group === 'beneficiaries' && !body.role_fields.facilitator_id) ||
+			(group === 'facilitators' && !body.role_fields.parent_ip)
+		) {
+			throw new BadRequestException({
+				success: false,
+				message: 'Invalid parameters',
+			});
 		}
 
 		let data_to_create_user = {
