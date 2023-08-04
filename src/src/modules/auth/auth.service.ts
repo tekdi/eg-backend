@@ -104,7 +104,7 @@ export class AuthService {
 		}
 	}
 
-	public async getUserByusername(req) {
+	public async getUserByUsername(req) {
 		const username = req.username;
 		const { user } = await this.keycloakService.getUserByUsername(
 			req.username,
@@ -133,7 +133,7 @@ export class AuthService {
 		const hash = req.hash;
 		const otp = req.otp;
 		const reason = req.reason;
-		const userRes = await this.getUserByusername(req);
+		const userRes = await this.getUserByUsername(req);
 
 		if (userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
@@ -219,7 +219,7 @@ export class AuthService {
 		const username = req.username;
 		const reason = req.reason;
 
-		const userRes = await this.getUserByusername(req);
+		const userRes = await this.getUserByUsername(req);
 		if (userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
 
