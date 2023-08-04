@@ -480,6 +480,13 @@ export class AuthService {
 			misssingFieldsFlag = true;
 		}
 
+		if (misssingFieldsFlag) {
+			throw new BadRequestException({
+				success: false,
+				message: 'Invalid parameters',
+			});
+		}
+		
 		// Generate random password
 		const password = `@${this.userHelperService.generateRandomPassword()}`;
 
@@ -504,13 +511,6 @@ export class AuthService {
 				group = `beneficiaries`;
 				break;
 			}
-		}
-
-		if (misssingFieldsFlag) {
-			throw new BadRequestException({
-				success: false,
-				message: 'Invalid parameters',
-			});
 		}
 
 		let data_to_create_user = {
