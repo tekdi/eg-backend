@@ -116,7 +116,7 @@ export class KeycloakService {
 		}
 	}
 
-	public async getUserByUserName(username): Promise<{ [key: string]: any }> {
+	public async getUserByUsername(username): Promise<{ [key: string]: any }> {
 		try {
 			const adminResultData = await this.getAdminKeycloakToken();
 

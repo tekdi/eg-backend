@@ -103,9 +103,10 @@ export class AuthService {
 			});
 		}
 	}
+
 	public async getUserByusername(req) {
 		const username = req.username;
-		const { user } = await this.keycloakService.getUserByUserName(
+		const { user } = await this.keycloakService.getUserByUsername(
 			req.username,
 		);
 
