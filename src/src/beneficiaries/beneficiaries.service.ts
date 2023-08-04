@@ -544,6 +544,13 @@ export class BeneficiariesService {
 							last_name
 						}
 					}
+					profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
 				}
 			}`,
 			variables: {
@@ -574,6 +581,8 @@ export class BeneficiariesService {
 						...e,
 						['program_beneficiaries']:
 							e?.['program_beneficiaries']?.[0],
+						['profile_photo_1']:
+							e?.['profile_photo_1']?.[0] || null,
 					})),
 					limit,
 					currentPage: page,
