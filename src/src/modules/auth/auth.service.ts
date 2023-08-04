@@ -452,6 +452,7 @@ export class AuthService {
 	}
 
 	public async register(body, response) {
+		let misssingFieldsFlag = false;
 		if (body.role === 'facilitator') {
 			let isMobileExist = await this.hasuraService.findAll('users', {
 				mobile: body?.mobile,
@@ -465,6 +466,18 @@ export class AuthService {
 					data: {},
 				});
 			}
+
+			// Validate role specific fields
+			if (!body.role_fields.parent_ip) {
+				misssingFieldsFlag = true;
+			}
+		} else if (body.role === 'beneficiary') {
+			// Validate role specific fields
+			if (!body.role_fields.facilitator_id) {
+				misssingFieldsFlag = true;
+			}
+		} else {
+			misssingFieldsFlag = true;
 		}
 
 		// Generate random password
@@ -493,11 +506,7 @@ export class AuthService {
 			}
 		}
 
-		if (
-			!['beneficiaries', 'facilitators'].includes(group) ||
-			(group === 'beneficiaries' && !body.role_fields.facilitator_id) ||
-			(group === 'facilitators' && !body.role_fields.parent_ip)
-		) {
+		if (misssingFieldsFlag) {
 			throw new BadRequestException({
 				success: false,
 				message: 'Invalid parameters',
