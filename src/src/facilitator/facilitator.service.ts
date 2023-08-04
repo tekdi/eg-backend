@@ -1333,6 +1333,12 @@ export class FacilitatorService {
 			variables.district = body.district;
 		}
 
+		if (body.hasOwnProperty('block') && body.block.length) {
+			paramsQueryArray.push('$block: [String!]');
+			filterQueryArray.push('{block: { _in: $block }}');
+			variables.block = body.block;
+		}
+
 		filterQueryArray.unshift(
 			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
 		);

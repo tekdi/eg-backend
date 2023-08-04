@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import jwt_decode from 'jwt-decode';
 import { UserHelperService } from 'src/helper/userHelper.service';
 import { AadhaarKycService } from 'src/modules/aadhaar_kyc/aadhaar_kyc.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
+import { UserService } from 'src/user/user.service';
 
 const crypto = require('crypto');
 const axios = require('axios');
@@ -23,6 +24,7 @@ export class AuthService {
 		private readonly keycloakService: KeycloakService,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
+		private userService: UserService,
 	) {}
 
 	public returnFields = [
@@ -103,17 +105,17 @@ export class AuthService {
 			});
 		}
 	}
-	public async resetPasswordUsingOtp(req, response) {
-		console.log('req', req);
+
+	public async getUserByUsername(req) {
 		const username = req.username;
-		const hash = req.hash;
-		const otp = req.otp;
-		const reason = req.reason;
+		const { user } = await this.keycloakService.getUserByUsername(
+			req.username,
+		);
 
 		//find mobile no.
 		let query = {
 			query: `query MyQuery2 {
-                users(where: {username: {_eq: ${username} }}) {
+                users(where: {keycloak_id: {_eq: "${user?.id}"}}) {
                   keycloak_id
                   last_name
                   id
@@ -123,7 +125,17 @@ export class AuthService {
               }`,
 		};
 		const userRes = await this.hasuraService.postData(query);
-		console.log('userRes', userRes);
+
+		return userRes;
+	}
+
+	public async resetPasswordUsingOtp(req, response) {
+		console.log('req', req);
+		const username = req.username;
+		const hash = req.hash;
+		const otp = req.otp;
+		const reason = req.reason;
+		const userRes = await this.getUserByUsername(req);
 
 		if (userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
@@ -209,21 +221,7 @@ export class AuthService {
 		const username = req.username;
 		const reason = req.reason;
 
-		//find mobile by username
-		let query = {
-			query: `query MyQuery2 {
-                users(where: {username: {_eq: ${username} }}) {
-                  keycloak_id
-                  last_name
-                  id
-                  first_name
-                  mobile
-                }
-              }`,
-		};
-		const userRes: any = await this.hasuraService.postData(query);
-		console.log('userRes', userRes);
-
+		const userRes = await this.getUserByUsername(req);
 		if (userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
 
@@ -452,6 +450,7 @@ export class AuthService {
 	}
 
 	public async register(body, response) {
+		let misssingFieldsFlag = false;
 		if (body.role === 'facilitator') {
 			let isMobileExist = await this.hasuraService.findAll('users', {
 				mobile: body?.mobile,
@@ -465,8 +464,27 @@ export class AuthService {
 					data: {},
 				});
 			}
+
+			// Validate role specific fields
+			if (!body.role_fields.parent_ip) {
+				misssingFieldsFlag = true;
+			}
+		} else if (body.role === 'beneficiary') {
+			// Validate role specific fields
+			if (!body.role_fields.facilitator_id) {
+				misssingFieldsFlag = true;
+			}
+		} else {
+			misssingFieldsFlag = true;
 		}
 
+		if (misssingFieldsFlag) {
+			throw new BadRequestException({
+				success: false,
+				message: 'Invalid parameters',
+			});
+		}
+		
 		// Generate random password
 		const password = `@${this.userHelperService.generateRandomPassword()}`;
 
@@ -570,7 +588,27 @@ export class AuthService {
 				console.log('body 415', body);
 				const result = await this.newCreate(body);
 				console.log('result', result);
-
+				if (
+					body.role === 'beneficiary' &&
+					result.data.program_beneficiaries
+				) {
+					const audit = await this.userService.addAuditLog(
+						result?.data?.id,
+						body.role_fields.facilitator_id,
+						'program_beneficiaries.status',
+						result?.data?.program_beneficiaries[0]?.id,
+						{
+							status: '',
+							reason_for_status_update: '',
+						},
+						{
+							status: result?.data?.program_beneficiaries[0]
+								?.status,
+							reason_for_status_update: 'new registration',
+						},
+						['status', 'reason_for_status_update'],
+					);
+				}
 				// Send login details SMS
 				// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
 				if (body.role === 'facilitator') {
@@ -711,17 +749,21 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
-		const newR = await this.hasuraService.q(tableName, {...req,aadhar_verified:'pending'}, [
-			'first_name',
-			'last_name',
-			'middle_name',
-			'mobile',
-			'email_id',
-			'dob',
-			'keycloak_id',
-			'username',
-			'aadhar_verified'
-		]);
+		const newR = await this.hasuraService.q(
+			tableName,
+			{ ...req, aadhar_verified: 'pending' },
+			[
+				'first_name',
+				'last_name',
+				'middle_name',
+				'mobile',
+				'email_id',
+				'dob',
+				'keycloak_id',
+				'username',
+				'aadhar_verified',
+			],
+		);
 
 		const user_id = newR[tableName]?.id;
 
@@ -763,7 +805,8 @@ export class AuthService {
 			);
 		}
 
-		return await this.userById(user_id);
+		const result = await this.userById(user_id);
+		return result;
 	}
 
 	async userById(id: any) {
@@ -824,6 +867,16 @@ export class AuthService {
                 role_title
                 user_id
                 type
+              }
+              program_beneficiaries {
+                beneficiaries_found_at
+                created_by
+                facilitator_id
+                id
+                status
+                reason_for_status_update
+                academic_year_id
+                user_id
               }
               program_faciltators {
                 parent_ip
