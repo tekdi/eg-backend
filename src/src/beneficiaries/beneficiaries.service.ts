@@ -128,6 +128,7 @@ export class BeneficiariesService {
 			limit,
 			currentPage: skip / limit + 1,
 			totalPages,
+			count,
 			result: usersData,
 		};
 	}
@@ -2713,6 +2714,7 @@ export class BeneficiariesService {
 			limit,
 			currentPage: skip / limit + 1,
 			totalPages,
+			count,
 			data: this.hasuraServiceFromServices.getFormattedData(
 				duplicateListArr,
 				[2],
@@ -2764,6 +2766,7 @@ export class BeneficiariesService {
 			limit,
 			currentPage: skip / limit + 1,
 			totalPages,
+			count,
 			data: this.hasuraServiceFromServices.getFormattedData(
 				duplicateListArr,
 				[2],
