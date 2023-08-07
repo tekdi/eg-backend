@@ -531,6 +531,7 @@ export class BeneficiariesService {
 					block
 					mobile
 					dob
+					is_duplicate
 					program_beneficiaries {
 						id
 						subjects
