@@ -68,7 +68,7 @@ export class BeneficiariesController {
 			await this.beneficiariesService.getBeneficiariesDuplicatesByAadhaar(
 				aadhaarNo,
 				limit,
-				skip
+				skip,
 			);
 		if (resultPayload.success) {
 			return response.status(200).json(resultPayload);

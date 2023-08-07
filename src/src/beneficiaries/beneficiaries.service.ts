@@ -49,7 +49,11 @@ export class BeneficiariesService {
 		'updated_by',
 	];
 
-	async getBeneficiariesDuplicatesByAadhaar(aadhaarNo: string, limit: number, skip: number) {
+	async getBeneficiariesDuplicatesByAadhaar(
+		aadhaarNo: string,
+		limit: number,
+		skip: number,
+	) {
 		const beneficiariesByAadhaarQuery = `
 			query MyQuery {
 				users_aggregate(where: {
@@ -2711,7 +2715,7 @@ export class BeneficiariesService {
 			totalPages,
 			data: this.hasuraServiceFromServices.getFormattedData(
 				duplicateListArr,
-				[2]
+				[2],
 			),
 		};
 	}
@@ -2762,7 +2766,7 @@ export class BeneficiariesService {
 			totalPages,
 			data: this.hasuraServiceFromServices.getFormattedData(
 				duplicateListArr,
-				[2]
+				[2],
 			),
 		};
 	}
