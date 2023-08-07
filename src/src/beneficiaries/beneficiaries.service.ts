@@ -49,10 +49,10 @@ export class BeneficiariesService {
 		'updated_by',
 	];
 
-	async getBeneficiariesDuplicatesByAadhaar(aadhaarNo: string) {
+	async getBeneficiariesDuplicatesByAadhaar(aadhaarNo: string, limit: number, skip: number) {
 		const beneficiariesByAadhaarQuery = `
 			query MyQuery {
-				users(where: {
+				users_aggregate(where: {
 					_and: [
 						{ aadhar_no: {_eq: "${aadhaarNo}"} },
 						{
@@ -64,6 +64,26 @@ export class BeneficiariesService {
 						{ program_beneficiaries: {} }
 					]
 				}) {
+					aggregate {
+						count
+					}
+				}
+
+				users(where: {
+					_and: [
+						{ aadhar_no: {_eq: "${aadhaarNo}"} },
+						{
+							_or: [
+								{ is_deactivated: {_is_null: true} },
+								{ is_deactivated: {_neq: true} },
+							]
+						},
+						{ program_beneficiaries: {} }
+					]
+				},
+				limit: ${limit},
+				offset: ${skip}
+				) {
 					id
 					first_name
 					last_name
@@ -87,19 +107,24 @@ export class BeneficiariesService {
 			}
 		`;
 
-		let resultData = (
+		let resultAllData = (
 			await this.hasuraServiceFromServices.getData({
 				query: beneficiariesByAadhaarQuery,
 			})
-		)?.data?.users;
-		resultData = resultData.map((user) => {
+		)?.data;
+		const usersData = resultAllData?.users.map((user) => {
 			user.program_beneficiaries = user?.program_beneficiaries?.[0] ?? {};
 			return user;
 		});
-		const success = resultData ? true : false;
+		const success = usersData ? true : false;
+		const count = resultAllData?.users_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
 		return {
 			success,
-			result: resultData,
+			limit,
+			currentPage: skip / limit + 1,
+			totalPages,
+			result: usersData,
 		};
 	}
 
@@ -2629,7 +2654,8 @@ export class BeneficiariesService {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
-				COUNT(*) AS "count"
+				COUNT(*) AS "count",
+				COUNT(*) OVER() AS "total_count"
 			FROM
 				users bu
 			INNER JOIN
@@ -2676,16 +2702,26 @@ export class BeneficiariesService {
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		return this.hasuraServiceFromServices.getFormattedData(
-			duplicateListArr,
-		);
+		const count = duplicateListArr?.[1]?.[2];
+		const totalPages = Math.ceil(count / limit);
+		return {
+			success: true,
+			limit,
+			currentPage: skip / limit + 1,
+			totalPages,
+			data: this.hasuraServiceFromServices.getFormattedData(
+				duplicateListArr,
+				[2]
+			),
+		};
 	}
 
 	public async getAllDuplicatesUnderPo(limit?: number, skip?: number) {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
-				COUNT(*) AS "count"
+				COUNT(*) AS "count",
+				COUNT(*) OVER() AS "total_count"
 			FROM
 				users bu
 			INNER JOIN
@@ -2717,8 +2753,17 @@ export class BeneficiariesService {
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		return this.hasuraServiceFromServices.getFormattedData(
-			duplicateListArr,
-		);
+		const count = duplicateListArr?.[1]?.[2];
+		const totalPages = Math.ceil(count / limit);
+		return {
+			success: true,
+			limit,
+			currentPage: skip / limit + 1,
+			totalPages,
+			data: this.hasuraServiceFromServices.getFormattedData(
+				duplicateListArr,
+				[2]
+			),
+		};
 	}
 }

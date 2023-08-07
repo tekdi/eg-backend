@@ -92,9 +92,10 @@ export class HasuraService {
 		}
 	}
 
-	public getFormattedData(arr) {
+	public getFormattedData(arr, excludeFieldsIndex?) {
+		excludeFieldsIndex = excludeFieldsIndex ?? [];
 		let result = [];
-		const columnNames = arr[0];
+		const columnNames = arr[0].filter((name, index) => !excludeFieldsIndex.includes(index));
 		if (arr.length > 1) {
 			result = arr.slice(1).map((record) => {
 				const modifiedRecord = {};
