@@ -54,18 +54,24 @@ export class BeneficiariesController {
 	@UseGuards(new AuthGuard())
 	async getBeneficiariesDuplicatesByAadhaar(
 		@Body() body: Record<string, any>,
+		@Query() query: any,
 		@Res() response: Record<string, any>,
 	) {
 		const aadhaarNo = body.aadhar_no;
+		const limit = !isNaN(parseInt(query.limit)) ? parseInt(query.limit) : 0;
+		const page =
+			!isNaN(parseInt(query.page)) && parseInt(query.page) > 0
+				? parseInt(query.page)
+				: 1;
+		const skip = limit * (page - 1);
 		const resultPayload =
 			await this.beneficiariesService.getBeneficiariesDuplicatesByAadhaar(
 				aadhaarNo,
+				limit,
+				skip,
 			);
 		if (resultPayload.success) {
-			return response.status(200).json({
-				success: true,
-				data: resultPayload.result,
-			});
+			return response.status(200).json(resultPayload);
 		} else {
 			return response.status(200).json({
 				success: false,
@@ -185,10 +191,7 @@ export class BeneficiariesController {
 					skip,
 				);
 		}
-		return response.status(200).json({
-			success: true,
-			data: resultPayload,
-		});
+		return response.status(200).json(resultPayload);
 	}
 
 	@Get(':id')

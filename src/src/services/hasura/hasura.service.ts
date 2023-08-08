@@ -62,11 +62,11 @@ export class HasuraService {
 			console.log('get data error', e.message);
 		}
 	}
-	
+
 	public async executeRawSql(sql: string) {
 		try {
 			let url = this.configService.get<string>('HASURA_SQL_BASE_URL');
-			const DBName = this.configService.get<string>('HASURA_DB_NAME',);
+			const DBName = this.configService.get<string>('HASURA_DB_NAME');
 			let admin_secret = this.configService.get<string>(
 				'HASURA_ADMIN_SECRET',
 			);
@@ -88,13 +88,15 @@ export class HasuraService {
 					})
 					.pipe(map((res) => res.data)),
 			);
-		} catch (e) {
-		}
+		} catch (e) {}
 	}
 
-	public getFormattedData(arr) {
+	public getFormattedData(arr, excludeFieldsIndex?) {
+		excludeFieldsIndex = excludeFieldsIndex ?? [];
 		let result = [];
-		const columnNames = arr[0];
+		const columnNames = arr[0].filter(
+			(name, index) => !excludeFieldsIndex.includes(index),
+		);
 		if (arr.length > 1) {
 			result = arr.slice(1).map((record) => {
 				const modifiedRecord = {};
@@ -106,7 +108,7 @@ export class HasuraService {
 		}
 		return result;
 	}
-	
+
 	public async findAll(tableName: String, filters: Object = {}) {
 		let query = '';
 		if (filters) {
@@ -296,7 +298,12 @@ export class HasuraService {
 		);
 	}
 
-	public async delete(tableName: String, item: Object, onlyFields: any = [], returnFields: any = null) {
+	public async delete(
+		tableName: string,
+		item: Object,
+		onlyFields: any = [],
+		returnFields: any = null,
+	) {
 		return this.getResponce(
 			await lastValueFrom(
 				this.httpService
@@ -307,7 +314,7 @@ export class HasuraService {
 								tableName,
 								item,
 								onlyFields,
-								returnFields
+								returnFields,
 							),
 						},
 						{
