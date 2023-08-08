@@ -120,7 +120,7 @@ export class BeneficiariesService {
 			user.program_beneficiaries = user?.program_beneficiaries?.[0] ?? {};
 			return user;
 		});
-		const success = usersData ? true : false;
+		const success = Boolean(usersData);
 		const count = resultAllData?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
 		return {

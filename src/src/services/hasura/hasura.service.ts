@@ -299,7 +299,7 @@ export class HasuraService {
 	}
 
 	public async delete(
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		returnFields: any = null,
