@@ -871,7 +871,7 @@ export class UserService {
 		}
 
 		if (resp) {
-			if (mappedResponse.keycloak_id) {
+			if (!mappedResponse.username && mappedResponse.keycloak_id) {
 				const keycloakresponse =
 					await this.keycloakService.findUserByKeycloakId(
 						mappedResponse.keycloak_id,
