@@ -96,13 +96,15 @@ export class BeneficiariesController {
 
 		// Fetch valid duplication list of the token user
 		if (roles.includes('program_owner')) {
-			duplicateArr =
-				await this.beneficiariesService.getAllDuplicatesUnderPo();
+			duplicateArr = (
+				await this.beneficiariesService.getAllDuplicatesUnderPo()
+			).data;
 		} else if (roles.includes('staff')) {
-			duplicateArr =
+			duplicateArr = (
 				await this.beneficiariesService.getAllDuplicatesUnderIp(
 					req.mw_userid,
-				);
+				)
+			).data;
 		}
 
 		// Check if the Aadhaar number exists or not in the list

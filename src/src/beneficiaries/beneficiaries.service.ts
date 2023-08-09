@@ -98,8 +98,11 @@ export class BeneficiariesService {
 					block
 					village
 					grampanchayat
+					is_duplicate
+					is_deactivated
 					duplicate_reason
 					program_beneficiaries {
+						status
 						facilitator_user {
 							id
 							first_name
