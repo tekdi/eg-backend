@@ -592,6 +592,39 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
+
+		data.query = `
+			query MyQuery {
+				program_faciltators (
+					where: {
+						id: { _in: ${JSON.stringify([
+							...new Set(
+								response?.data?.users.map(
+									(userData) =>
+										userData.program_beneficiaries[0]
+											.facilitator_user.id,
+								),
+							),
+						])} }
+					}
+				) {
+					user {
+						id
+						first_name
+						middle_name
+						last_name
+					}
+				}
+			}
+		`;
+		delete data.variables;
+
+		const facilitatorListResponse = (
+			await this.hasuraServiceFromServices.getData(data)
+		)?.data?.program_faciltators?.sort((a, b) =>
+			a.user.first_name.localeCompare(b.user.first_name),
+		);
+
 		let result = response?.data?.users;
 		let mappedResponse = result;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
@@ -616,6 +649,7 @@ export class BeneficiariesService {
 						['profile_photo_1']:
 							e?.['profile_photo_1']?.[0] || null,
 					})),
+					facilitatorList: facilitatorListResponse,
 					limit,
 					currentPage: page,
 					totalPages: `${totalPages}`,
