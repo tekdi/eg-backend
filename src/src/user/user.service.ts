@@ -8,7 +8,7 @@ import {
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
-
+import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
@@ -21,6 +21,7 @@ export class UserService {
 		private readonly httpService: HttpService,
 		private helper: UserHelperService,
 		private hasuraService: HasuraService,
+		private readonly keycloakService: KeycloakService,
 	) {}
 
 	public async update(userId: string, body: any, tableName: String) {
@@ -870,6 +871,14 @@ export class UserService {
 		}
 
 		if (resp) {
+			if (mappedResponse.keycloak_id) {
+				const keycloakresponse =
+					await this.keycloakService.findUserByKeycloakId(
+						mappedResponse.keycloak_id,
+					);
+				mappedResponse.username = keycloakresponse.username || null;
+			}
+
 			return resp.status(200).send({
 				success: true,
 				message: 'Data Fetched Successfully',
