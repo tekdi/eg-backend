@@ -505,8 +505,7 @@ export class BeneficiariesService {
 		filterQueryArray.push(
 			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 		);
-
-	   	 if (body.search && body.search !== '') {
+		if (body.search && body.search !== '') {
 			var first_name = body.search.split(" ")[0]
 			var last_name  = body.search.split(" ") ? body.search.split(" ")[1]:""
 		
@@ -523,8 +522,7 @@ export class BeneficiariesService {
 				 ]} `);
 		 }
 		}
-		
-		 if (body?.district && body?.district.length > 0) {
+		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
 			);
