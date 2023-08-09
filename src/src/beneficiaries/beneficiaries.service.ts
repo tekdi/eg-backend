@@ -502,6 +502,23 @@ export class BeneficiariesService {
 		filterQueryArray.push(
 			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 		);
+		if (body.search && body.search !== '') {
+			var first_name = body.search.split(" ")[0]
+			var last_name  = body.search.split(" ") ? body.search.split(" ")[1]:""
+		
+
+		 if(last_name?.lasy_namelength > 0){
+			filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
+				 ]} `);
+		 } else{
+            	
+			filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				 ]} `);
+		 }
+		}
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
@@ -539,6 +556,7 @@ export class BeneficiariesService {
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		
 		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
 		var data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
