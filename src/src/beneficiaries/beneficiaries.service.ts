@@ -574,7 +574,6 @@ export class BeneficiariesService {
 				 ]} `);
 			}
 		}
-
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
