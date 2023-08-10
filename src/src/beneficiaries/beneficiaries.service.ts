@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createObjectCsvStringifier } from 'csv-writer';
+import jwt_decode from 'jwt-decode';
 import { S3Service } from 'src/services/s3/s3.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
@@ -28,7 +29,9 @@ export class BeneficiariesService {
 		private keycloakService: KeycloakService,
 		private configService: ConfigService,
 		private enumService: EnumService,
-	) {}
+	) { }
+
+	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
 
 	public returnFields = [
 		'status',
@@ -171,13 +174,59 @@ export class BeneficiariesService {
 		try {
 			const user = await this.userService.ipUserInfo(req);
 
+			const variables: any = {};
+
+			let filterQueryArray = [];
+			let paramsQueryArray = [];
+
+			if (body.search && body.search !== '') {
+				var first_name = body.search.split(" ")[0]
+				var last_name = body.search.split(" ") ? body.search.split(" ")[1] : ""
+
+			if (last_name?.lasy_namelength > 0) {
+					filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
+				 ]} `);
+				} else {
+
+					filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				 ]} `);
+				}
+			}
+
+			if (body.hasOwnProperty('district') && body.district.length) {
+				paramsQueryArray.push('$district: [String!]');
+				filterQueryArray.push('{district: { _in: $district }}');
+				variables.district = body.district;
+			}
+
+			if (body.hasOwnProperty('block') && body.block.length) {
+				paramsQueryArray.push('$block: [String!]');
+				filterQueryArray.push('{block: { _in: $block }}');
+				variables.block = body.block;
+			}
+
+			if (body.facilitator && body.facilitator.length > 0) {
+				filterQueryArray.push(
+					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}`,
+				);
+			}
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+			let paramsQuery = '';
+			if (paramsQueryArray.length) {
+				paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+			}
+			let sortQuery = `{ created_at: desc }`;
+
 			const data = {
-				query: `query MyQuery {
-					users(where: {
-						_and: [
-							{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }
-						]
-					}){
+				query: `query MyQuery ${paramsQuery} {
+					users(where:${filterQuery}, order_by: ${sortQuery}){
 						first_name
 						last_name
 						dob
@@ -200,6 +249,7 @@ export class BeneficiariesService {
 					}
 				  }
 				  `,
+				variables: variables,
 			};
 			const hasuraResponse = await this.hasuraServiceFromServices.getData(
 				data,
@@ -251,9 +301,8 @@ export class BeneficiariesService {
 					data?.aadhaar_verification_mode;
 				records.push(dataObject);
 			}
-			let fileName = `${
-				user?.data?.first_name + '_' + user?.data?.last_name
-			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			let fileName = `${user?.data?.first_name + '_' + user?.data?.last_name
+				}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
 			const fileData =
 				csvStringifier.getHeaderString() +
 				csvStringifier.stringifyRecords(records);
@@ -412,13 +461,12 @@ export class BeneficiariesService {
 				records.push(dataObject);
 			}
 
-			let fileName = `${
-				user?.data?.first_name +
+			let fileName = `${user?.data?.first_name +
 				'_' +
 				user?.data?.last_name +
 				'_' +
 				'subjects'
-			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+				}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
 			const fileData =
 				csvStringifier.getHeaderString() +
 				csvStringifier.stringifyRecords(records);
@@ -449,9 +497,8 @@ export class BeneficiariesService {
 		];
 		let qury = `query MyQuery {
         ${status.map(
-			(item) => `${
-				!isNaN(Number(item[0])) ? '_' + item : item
-			}:program_beneficiaries_aggregate(where: {
+			(item) => `${!isNaN(Number(item[0])) ? '_' + item : item
+				}:program_beneficiaries_aggregate(where: {
             _and: [
               {
                 facilitator_id: {_eq: ${user.data.id}}
@@ -506,25 +553,25 @@ export class BeneficiariesService {
 			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 		);
 
-	   	 if (body.search && body.search !== '') {
+		if (body.search && body.search !== '') {
 			var first_name = body.search.split(" ")[0]
-			var last_name  = body.search.split(" ") ? body.search.split(" ")[1]:""
-		
+			var last_name = body.search.split(" ") ? body.search.split(" ")[1] : ""
 
-		 if(last_name?.lasy_namelength > 0){
-			filterQueryArray.push(`{_or: [
+
+			if (last_name?.lasy_namelength > 0) {
+				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${last_name}%" } }
 				 ]} `);
-		 } else{
-            	
-			filterQueryArray.push(`{_or: [
+			} else {
+
+				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
-		 }
+			}
 		}
-		
-		 if (body?.district && body?.district.length > 0) {
+
+		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
 			);
@@ -561,7 +608,7 @@ export class BeneficiariesService {
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-		
+
 		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
 		var data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
@@ -1607,7 +1654,7 @@ export class BeneficiariesService {
 
 				if (
 					hasuraResponse?.data?.users_aggregate?.aggregate.count >
-						0 &&
+					0 &&
 					req.is_duplicate !== 'yes'
 				) {
 					return response.status(400).json({
@@ -1618,7 +1665,7 @@ export class BeneficiariesService {
 
 				if (
 					hasuraResponse?.data?.users_aggregate?.aggregate.count <=
-						0 &&
+					0 &&
 					req.is_duplicate === 'yes'
 				) {
 					return response.status(400).json({
@@ -2005,15 +2052,15 @@ export class BeneficiariesService {
 
 				req.learning_motivation = req.learning_motivation.length
 					? JSON.stringify(req.learning_motivation).replace(
-							/"/g,
-							'\\"',
-					  )
+						/"/g,
+						'\\"',
+					)
 					: null;
 				req.type_of_support_needed = req.type_of_support_needed.length
 					? JSON.stringify(req.type_of_support_needed).replace(
-							/"/g,
-							'\\"',
-					  )
+						/"/g,
+						'\\"',
+					)
 					: null;
 
 				await this.hasuraService.q(
@@ -2038,15 +2085,15 @@ export class BeneficiariesService {
 
 				req.learning_motivation = req.learning_motivation.length
 					? JSON.stringify(req.learning_motivation).replace(
-							/"/g,
-							'\\"',
-					  )
+						/"/g,
+						'\\"',
+					)
 					: null;
 				req.type_of_support_needed = req.type_of_support_needed.length
 					? JSON.stringify(req.type_of_support_needed).replace(
-							/"/g,
-							'\\"',
-					  )
+						/"/g,
+						'\\"',
+					)
 					: null;
 
 				await this.hasuraService.q(
@@ -2173,16 +2220,16 @@ export class BeneficiariesService {
 						if (
 							req?.enrollment_aadhaar_no &&
 							req?.enrollment_aadhaar_no ==
-								beneficiaryUser?.aadhar_no
+							beneficiaryUser?.aadhar_no
 						) {
 							myRequest = {
 								...copiedRequest,
 								subjects:
 									typeof req.subjects == 'object'
 										? JSON.stringify(req.subjects).replace(
-												/"/g,
-												'\\"',
-										  )
+											/"/g,
+											'\\"',
+										)
 										: null,
 							};
 							// const status = await this.statusUpdate(
@@ -2354,7 +2401,7 @@ export class BeneficiariesService {
 					!(
 						programDetails.enrollment_number &&
 						programDetails.enrollment_aadhaar_no ==
-							beneficiaryUser?.aadhar_no
+						beneficiaryUser?.aadhar_no
 					)
 				) {
 					return response.status(400).json({
@@ -2449,9 +2496,9 @@ export class BeneficiariesService {
 						documents_status:
 							typeof req?.documents_status == 'object'
 								? JSON.stringify(req?.documents_status).replace(
-										/"/g,
-										'\\"',
-								  )
+									/"/g,
+									'\\"',
+								)
 								: null,
 					},
 					userArr,
