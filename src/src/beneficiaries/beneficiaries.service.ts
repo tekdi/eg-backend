@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createObjectCsvStringifier } from 'csv-writer';
+import jwt_decode from 'jwt-decode';
 import { S3Service } from 'src/services/s3/s3.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
@@ -574,8 +575,8 @@ export class BeneficiariesService {
 				 ]} `);
 			}
 		}
-		
-		 if (body?.district && body?.district.length > 0) {
+
+		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
 			);
