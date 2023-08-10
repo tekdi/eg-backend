@@ -108,9 +108,12 @@ export class AuthService {
 
 	public async getUserByUsername(req) {
 		const username = req.username;
-		const { user } = await this.keycloakService.getUserByUsername(
-			req.username,
-		);
+		const { user, isUserExist } =
+			await this.keycloakService.getUserByUsername(req.username);
+
+		if (isUserExist === false) {
+			return { isUserExist: false, user: null };
+		}
 
 		//find mobile no.
 		let query = {
@@ -222,7 +225,8 @@ export class AuthService {
 		const reason = req.reason;
 
 		const userRes = await this.getUserByUsername(req);
-		if (userRes?.data?.users?.length > 0) {
+
+		if (userRes.isUserExist !== false && userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
 
 			if (mobile) {
@@ -484,7 +488,7 @@ export class AuthService {
 				message: 'Invalid parameters',
 			});
 		}
-		
+
 		// Generate random password
 		const password = `@${this.userHelperService.generateRandomPassword()}`;
 
