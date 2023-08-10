@@ -38,11 +38,8 @@ export class EventsController {
 
 	@Get('/list')
 	@UseGuards(new AuthGuard())
-	getEventsList(
-		@Req() header: Request,
-		@Res() response: Response,
-	) {
-		return this.eventsService.getEventsList( header, response);
+	getEventsList(@Req() header: Request, @Res() response: Response) {
+		return this.eventsService.getEventsList(header, response);
 	}
 
 	@Post()
@@ -54,6 +51,16 @@ export class EventsController {
 	@UseGuards(new AuthGuard())
 	findOne(@Param('id') id: string, @Res() response: Response) {
 		return this.eventsService.findOne(+id, response);
+	}
+
+	@Get('/attended/user/:id')
+	@UseGuards(new AuthGuard())
+	async getAllEventsAttendedByUserId(
+		@Param('id') id: string,
+		@Res() response: Response,
+	) {
+		const res = await this.eventsService.getAllEventsAttendedByUserId(+id);
+		response.status(200).json(res);
 	}
 
 	@Patch(':id')
@@ -77,7 +84,7 @@ export class EventsController {
 	) {
 		return this.eventsService.updateEventAcceptDetail(
 			+id,
-			{rsvp:request.rsvp},
+			{ rsvp: request.rsvp },
 			response,
 		);
 	}
@@ -98,7 +105,11 @@ export class EventsController {
 
 	@Delete(':id')
 	@UseGuards(new AuthGuard())
-	remove(@Param('id') id: string,@Req() header: Request,@Res() response: Response) {
-		return this.eventsService.remove(+id,header,response);
+	remove(
+		@Param('id') id: string,
+		@Req() header: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.remove(+id, header, response);
 	}
 }
