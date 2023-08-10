@@ -182,7 +182,7 @@ export class BeneficiariesService {
 				 let first_name = body.search.split(" ")[0]
 				 let last_name = body.search.split(" ") ? body.search.split(" ")[1] : ""
 
-			if (last_name?.lasy_namelength > 0) {
+			if (last_name?.last_name.length > 0) {
 					filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${last_name}%" } }
@@ -557,7 +557,7 @@ export class BeneficiariesService {
 			var last_name = body.search.split(" ") ? body.search.split(" ")[1] : ""
 
 
-			if (last_name?.lasy_namelength > 0) {
+			if (last_name?.last_name.length > 0) {
 				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${last_name}%" } }
