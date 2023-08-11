@@ -186,7 +186,7 @@ export class BeneficiariesService {
 				 let first_name = body.search.split(" ")[0]
 				 let last_name = body.search.split(" ")[1] || "";
 
-			if (last_name?.last_name.length > 0) {
+			if (last_name?.length > 0){       
 					filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${last_name}%" } }
@@ -562,7 +562,7 @@ export class BeneficiariesService {
 			let last_name = body.search.split(" ")[1] || "";
 
 
-			if (last_name?.last_name.length > 0) {
+			if (last_name?.length > 0){
 				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${last_name}%" } }
@@ -612,6 +612,7 @@ export class BeneficiariesService {
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		console.log("filterQuery-->>",filterQuery)
 
 		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
 		var data = {
