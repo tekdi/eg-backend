@@ -612,7 +612,6 @@ export class BeneficiariesService {
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-		console.log("filterQuery-->>",filterQuery)
 
 		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
 		var data = {
@@ -978,7 +977,6 @@ export class BeneficiariesService {
 	}
 
 	public async findOne(id: number, resp?: any) {
-		console.log('id', id);
 		var data = {
 			query: `query searchById {
             users_by_pk(id: ${id}) {
