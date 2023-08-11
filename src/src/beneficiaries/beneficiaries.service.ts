@@ -1721,7 +1721,7 @@ export class BeneficiariesService {
 										},
 										_set: {
 											is_duplicate: "yes",
-											duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
+											duplicate_reason: "FIRST_TIME_REGISTRATION"
 										}
 									},
 									{
