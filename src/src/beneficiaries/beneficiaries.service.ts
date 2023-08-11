@@ -180,7 +180,7 @@ export class BeneficiariesService {
 
 			if (body.search && body.search !== '') {
 				 let first_name = body.search.split(" ")[0]
-				 let last_name = body.search.split(" ") ? body.search.split(" ")[1] : ""
+				 let last_name = body.search.split(" ")[1] || "";
 
 			if (last_name?.last_name.length > 0) {
 					filterQueryArray.push(`{_or: [
@@ -553,8 +553,8 @@ export class BeneficiariesService {
 		);
 
 		if (body.search && body.search !== '') {
-			var first_name = body.search.split(" ")[0]
-			var last_name = body.search.split(" ") ? body.search.split(" ")[1] : ""
+			let  first_name = body.search.split(" ")[0]
+			let last_name = body.search.split(" ")[1] || "";
 
 
 			if (last_name?.last_name.length > 0) {
