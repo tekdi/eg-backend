@@ -121,17 +121,20 @@ export class HasuraService {
 
 		var data = {
 			query: `query SearchUser {
-            ${tableName}_aggregate(where:{${query}}) {
-              aggregate {
-                count
-              }
-            }
-            ${tableName}(where:{${query}}) {
-              id
-              mobile
-              aadhar_token
-              aadhar_no
-            }}`,
+			${tableName}_aggregate(where:{${query}}) {
+			  aggregate {
+				count
+			  }
+			}
+			${tableName}(where:{${query}}) {
+			  id
+			  mobile
+			  aadhar_token
+			  aadhar_no
+			  program_beneficiaries{
+				facilitator_id
+			 }
+			}}`,
 		};
 
 		return await lastValueFrom(

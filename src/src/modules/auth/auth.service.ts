@@ -374,13 +374,23 @@ export class AuthService {
 		}
 	}
 
-	public async isUserExist(req, response) {
+	public async isUserExist(body, req, response) {
 		// Set User table name
 		const tableName = 'users';
 
 		// Calling hasura common method find all
-		const data_exist = await this.hasuraService.findAll(tableName, req);
+		const data_exist = await this.hasuraService.findAll(tableName, body);
 		let userExist = data_exist.data.users;
+		let userRoles = req.mw_roles;
+		let tokenUserId = req.mw_userid;
+		const underSameFacilitatorCond =
+			userExist.length > 0 &&
+			userRoles.includes('facilitator') &&
+			userExist.some(
+				(user) =>
+					user.program_beneficiaries[0]?.facilitator_id ==
+					tokenUserId,
+			);
 
 		// Check wheather user is exist or not based on response
 		if (userExist.length > 0) {
@@ -388,6 +398,7 @@ export class AuthService {
 				success: true,
 				message: 'User exist',
 				data: {},
+				underSameFacilitator: underSameFacilitatorCond ? true : false,
 			});
 		} else {
 			return response.status(200).send({
