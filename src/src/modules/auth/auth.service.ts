@@ -398,7 +398,7 @@ export class AuthService {
 				success: true,
 				message: 'User exist',
 				data: {},
-				underSameFacilitator: underSameFacilitatorCond ? true : false,
+				underSameFacilitator: underSameFacilitatorCond  || false
 			});
 		} else {
 			return response.status(200).send({
