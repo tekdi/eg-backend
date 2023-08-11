@@ -178,6 +178,10 @@ export class BeneficiariesService {
 			let filterQueryArray = [];
 			let paramsQueryArray = [];
 
+			filterQueryArray.push(
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			);
+
 			if (body.search && body.search !== '') {
 				 let first_name = body.search.split(" ")[0]
 				 let last_name = body.search.split(" ")[1] || "";
@@ -214,6 +218,7 @@ export class BeneficiariesService {
 					)}}}}`,
 				);
 			}
+			
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
