@@ -489,6 +489,14 @@ export class BeneficiariesService {
 	//status count
 	public async getStatuswiseCount(req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+
+		if(!user?.data?.id){
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+				
+			});
+		}
 		const status = [
 			'identified',
 			'ready_to_enroll',
@@ -500,13 +508,14 @@ export class BeneficiariesService {
 			'dropout',
 			'10th_passed',
 		];
-		let qury = `query MyQuery {
+		
+	    let qury = `query MyQuery {
         ${status.map(
 			(item) => `${!isNaN(Number(item[0])) ? '_' + item : item
 				}:program_beneficiaries_aggregate(where: {
             _and: [
               {
-                facilitator_id: {_eq: ${user.data.id}}
+				facilitator_id: { _eq: ${user?.data?.id} }
               },{
               status: {_eq: "${item}"}
             },
