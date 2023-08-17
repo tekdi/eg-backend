@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createObjectCsvStringifier } from 'csv-writer';
-import jwt_decode from 'jwt-decode';
 import { S3Service } from 'src/services/s3/s3.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
