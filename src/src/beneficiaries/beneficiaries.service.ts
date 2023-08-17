@@ -240,6 +240,8 @@ export class BeneficiariesService {
 						block
 						district
 						program_beneficiaries{
+						user_id
+					    facilitator_id
 						status
 						enrollment_number
 						facilitator_user{
@@ -260,11 +262,13 @@ export class BeneficiariesService {
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
+					{ id: 'user_id' , title: 'LearnerId'},
 					{ id: 'district', title: 'District' },
 					{ id: 'block', title: 'Block' },
 					{ id: 'village', title: 'Village' },
 					{ id: 'dob', title: 'DOB' },
 					{ id: 'prerak', title: 'Prerak' },
+					{ id: 'facilitator_id', title: 'FacilitatorId'},
 					{ id: 'mobile', title: 'Mobile Number' },
 					{ id: 'status', title: 'Status' },
 					{ id: 'enrollment_number', title: 'Enrollment Number' },
@@ -281,6 +285,7 @@ export class BeneficiariesService {
 			for (let data of allBeneficiaries) {
 				const dataObject = {};
 				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['district'] = data?.district;
 				dataObject['block'] = data?.block;
 				dataObject['village'] = data?.village;
@@ -290,6 +295,7 @@ export class BeneficiariesService {
 						?.first_name +
 					' ' +
 					data?.program_beneficiaries[0]?.facilitator_user?.last_name;
+					dataObject['facilitator_id'] = data?.program_beneficiaries[0]?.facilitator_id;
 				dataObject['mobile'] = data?.mobile;
 				dataObject['status'] = data?.program_beneficiaries[0]?.status;
 				dataObject['enrollment_number'] =
@@ -390,6 +396,8 @@ export class BeneficiariesService {
 					mobile
 				    program_beneficiaries {
 					id
+					user_id,
+					facilitator_id,
 					enrolled_for_board
 					subjects
 					facilitator_id
@@ -427,6 +435,8 @@ export class BeneficiariesService {
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
+					{ id: 'user_id' , title: 'LearnerId'},
+					{ id: 'facilitator_id' , title: 'FacilitatorId'},
 					{ id: 'enrolled_for_board', title: 'Enrolled For Board' },
 					...subjectHeader,
 				],
@@ -440,6 +450,8 @@ export class BeneficiariesService {
 				);
 				const dataObject = {};
 				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
+				dataObject['facilitator_id'] = data?.program_beneficiaries[0]?.facilitator_id;
 				dataObject['enrolled_for_board'] =
 					data?.program_beneficiaries[0]?.enrolled_for_board;
 				// executing loop for all subject ,check if ag has selected subject then mark "Yes" else "No"
