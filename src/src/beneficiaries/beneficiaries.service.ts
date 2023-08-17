@@ -28,7 +28,7 @@ export class BeneficiariesService {
 		private keycloakService: KeycloakService,
 		private configService: ConfigService,
 		private enumService: EnumService,
-	) { }
+	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
 
@@ -183,16 +183,15 @@ export class BeneficiariesService {
 			);
 
 			if (body.search && body.search !== '') {
-				 let first_name = body.search.split(" ")[0]
-				 let last_name = body.search.split(" ")[1] || "";
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
 
-			if (last_name?.length > 0){       
+				if (last_name?.length > 0) {
 					filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${last_name}%" } }
 				 ]} `);
 				} else {
-
 					filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
@@ -218,7 +217,6 @@ export class BeneficiariesService {
 					)}}}}`,
 				);
 			}
-			
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
@@ -305,8 +303,9 @@ export class BeneficiariesService {
 					data?.aadhaar_verification_mode;
 				records.push(dataObject);
 			}
-			let fileName = `${user?.data?.first_name + '_' + user?.data?.last_name
-				}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			let fileName = `${
+				user?.data?.first_name + '_' + user?.data?.last_name
+			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
 			const fileData =
 				csvStringifier.getHeaderString() +
 				csvStringifier.stringifyRecords(records);
@@ -465,12 +464,13 @@ export class BeneficiariesService {
 				records.push(dataObject);
 			}
 
-			let fileName = `${user?.data?.first_name +
+			let fileName = `${
+				user?.data?.first_name +
 				'_' +
 				user?.data?.last_name +
 				'_' +
 				'subjects'
-				}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
 			const fileData =
 				csvStringifier.getHeaderString() +
 				csvStringifier.stringifyRecords(records);
@@ -501,8 +501,9 @@ export class BeneficiariesService {
 		];
 		let qury = `query MyQuery {
         ${status.map(
-			(item) => `${!isNaN(Number(item[0])) ? '_' + item : item
-				}:program_beneficiaries_aggregate(where: {
+			(item) => `${
+				!isNaN(Number(item[0])) ? '_' + item : item
+			}:program_beneficiaries_aggregate(where: {
             _and: [
               {
                 facilitator_id: {_eq: ${user.data.id}}
@@ -558,17 +559,15 @@ export class BeneficiariesService {
 		);
 
 		if (body.search && body.search !== '') {
-			let  first_name = body.search.split(" ")[0]
-			let last_name = body.search.split(" ")[1] || "";
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
 
-
-			if (last_name?.length > 0){
+			if (last_name?.length > 0) {
 				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${last_name}%" } }
 				 ]} `);
 			} else {
-
 				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
@@ -1249,6 +1248,9 @@ export class BeneficiariesService {
 					is_duplicate
 					is_deactivated
 					duplicate_reason
+					program_beneficiaries {
+						status
+					}
 				}
 			}
 		`;
@@ -1291,48 +1293,88 @@ export class BeneficiariesService {
 						duplicate_reason
 					}
 				}
+
+				update_program_beneficiaries (
+					where: {
+						user: {
+							aadhar_no: {_eq: "${AadhaarNo}"},
+							id: {_neq: ${exceptId}}
+						}
+					},
+					_set: {
+						status: "deactivated"
+					}
+				) {
+					returning {
+						status
+					}
+				}
+			}
+		`;
+
+		await this.hasuraServiceFromServices.getData({ query });
+
+		const fetchUpdatedResultQuery = `
+			query MyQuery {
+				users (where: {aadhar_no: {_eq: "${AadhaarNo}"}}) {
+					id
+					aadhar_no
+					is_duplicate
+					is_deactivated
+					duplicate_reason
+					program_beneficiaries {
+						status
+					}
+				}
 			}
 		`;
 
 		const updateResult = (
-			await this.hasuraServiceFromServices.getData({ query })
-		)?.data?.update_users_many;
+			await this.hasuraServiceFromServices.getData({
+				query: fetchUpdatedResultQuery,
+			})
+		)?.data?.users;
 
 		// Add audit logs of is_duplicate flag
 		await Promise.allSettled(
-			updateResult.map((updatedData) =>
-				Promise.allSettled(
-					updatedData.returning.map((updatedUserObj) =>
-						this.userService.addAuditLog(
-							updatedUserObj.id,
-							createdBy,
-							'program_beneficiaries.status',
-							updatedUserObj.id,
-							{
-								is_duplicate:
-									preUpdateDataObj[updatedUserObj.id]
-										.is_duplicate,
-								duplicate_reason:
-									preUpdateDataObj[updatedUserObj.id]
-										.duplicate_reason,
-								is_deactivated:
-									preUpdateDataObj[updatedUserObj.id]
-										.is_deactivated,
-							},
-							{
-								is_duplicate: updatedUserObj.is_duplicate,
-								duplicate_reason:
-									updatedUserObj.duplicate_reason,
-								is_deactivated: updatedUserObj.is_deactivated,
-							},
-							[
-								'is_duplicate',
-								'duplicate_reason',
-								'is_deactivated',
-							],
-						),
+			updateResult.map(
+				(updatedUserObj) =>
+					// Promise.allSettled(
+					// 	updatedData.returning.map((updatedUserObj) =>
+					this.userService.addAuditLog(
+						updatedUserObj.id,
+						createdBy,
+						'program_beneficiaries.status',
+						updatedUserObj.id,
+						{
+							status: preUpdateDataObj[updatedUserObj.id]
+								.program_beneficiaries[0].status,
+							is_duplicate:
+								preUpdateDataObj[updatedUserObj.id]
+									.is_duplicate,
+							duplicate_reason:
+								preUpdateDataObj[updatedUserObj.id]
+									.duplicate_reason,
+							is_deactivated:
+								preUpdateDataObj[updatedUserObj.id]
+									.is_deactivated,
+						},
+						{
+							status: updatedUserObj.program_beneficiaries[0]
+								.status,
+							is_duplicate: updatedUserObj.is_duplicate,
+							duplicate_reason: updatedUserObj.duplicate_reason,
+							is_deactivated: updatedUserObj.is_deactivated,
+						},
+						[
+							'status',
+							'is_duplicate',
+							'duplicate_reason',
+							'is_deactivated',
+						],
 					),
-				),
+				// 	),
+				// ),
 			),
 		);
 
@@ -1657,7 +1699,7 @@ export class BeneficiariesService {
 
 				if (
 					hasuraResponse?.data?.users_aggregate?.aggregate.count >
-					0 &&
+						0 &&
 					req.is_duplicate !== 'yes'
 				) {
 					return response.status(400).json({
@@ -1668,7 +1710,7 @@ export class BeneficiariesService {
 
 				if (
 					hasuraResponse?.data?.users_aggregate?.aggregate.count <=
-					0 &&
+						0 &&
 					req.is_duplicate === 'yes'
 				) {
 					return response.status(400).json({
@@ -2055,15 +2097,15 @@ export class BeneficiariesService {
 
 				req.learning_motivation = req.learning_motivation.length
 					? JSON.stringify(req.learning_motivation).replace(
-						/"/g,
-						'\\"',
-					)
+							/"/g,
+							'\\"',
+					  )
 					: null;
 				req.type_of_support_needed = req.type_of_support_needed.length
 					? JSON.stringify(req.type_of_support_needed).replace(
-						/"/g,
-						'\\"',
-					)
+							/"/g,
+							'\\"',
+					  )
 					: null;
 
 				await this.hasuraService.q(
@@ -2088,15 +2130,15 @@ export class BeneficiariesService {
 
 				req.learning_motivation = req.learning_motivation.length
 					? JSON.stringify(req.learning_motivation).replace(
-						/"/g,
-						'\\"',
-					)
+							/"/g,
+							'\\"',
+					  )
 					: null;
 				req.type_of_support_needed = req.type_of_support_needed.length
 					? JSON.stringify(req.type_of_support_needed).replace(
-						/"/g,
-						'\\"',
-					)
+							/"/g,
+							'\\"',
+					  )
 					: null;
 
 				await this.hasuraService.q(
@@ -2223,16 +2265,16 @@ export class BeneficiariesService {
 						if (
 							req?.enrollment_aadhaar_no &&
 							req?.enrollment_aadhaar_no ==
-							beneficiaryUser?.aadhar_no
+								beneficiaryUser?.aadhar_no
 						) {
 							myRequest = {
 								...copiedRequest,
 								subjects:
 									typeof req.subjects == 'object'
 										? JSON.stringify(req.subjects).replace(
-											/"/g,
-											'\\"',
-										)
+												/"/g,
+												'\\"',
+										  )
 										: null,
 							};
 							// const status = await this.statusUpdate(
@@ -2404,7 +2446,7 @@ export class BeneficiariesService {
 					!(
 						programDetails.enrollment_number &&
 						programDetails.enrollment_aadhaar_no ==
-						beneficiaryUser?.aadhar_no
+							beneficiaryUser?.aadhar_no
 					)
 				) {
 					return response.status(400).json({
@@ -2499,9 +2541,9 @@ export class BeneficiariesService {
 						documents_status:
 							typeof req?.documents_status == 'object'
 								? JSON.stringify(req?.documents_status).replace(
-									/"/g,
-									'\\"',
-								)
+										/"/g,
+										'\\"',
+								  )
 								: null,
 					},
 					userArr,

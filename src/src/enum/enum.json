@@ -95,6 +95,7 @@
 		},
 		{ "title": "BENEFICIARY_STATUS_REJECTED", "value": "rejected" },
 		{ "title": "BENEFICIARY_STATUS_DROPOUT", "value": "dropout" },
+		{ "title": "BENEFICIARY_STATUS_DEACTIVATED", "value": "deactivated" },
 		{
 			"title": "BENEFICIARY_STATUS_INELIGIBLE_FOR_PRAGATI_CAMP",
 			"value": "ineligible_for_pragati_camp"
