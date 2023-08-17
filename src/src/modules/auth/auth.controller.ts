@@ -80,10 +80,11 @@ export class AuthController {
 	// users/is_user_exist by mobile and adhaar etc filter.
 	@Post('/is_user_exist')
 	public async isUserExist(
-		@Body() req: UserExistDTO,
+		@Body() body: UserExistDTO,
+		@Req() req: Request,
 		@Res() response: Response,
 	) {
-		return this.authService.isUserExist(req, response);
+		return this.authService.isUserExist(body, req, response);
 	}
 
 	// users/register on keycloak and hasura both side.

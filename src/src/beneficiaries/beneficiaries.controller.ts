@@ -225,7 +225,12 @@ export class BeneficiariesController {
 		@Res() response: any,
 	) {
 		return this.beneficiariesService.create(
-			{ ...req, id: id },
+			{
+				...req,
+				id: id,
+				mw_userid: request.mw_userid,
+				mw_roles: request.mw_roles,
+			},
 			request,
 			response,
 			true,

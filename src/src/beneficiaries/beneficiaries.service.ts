@@ -1743,6 +1743,17 @@ export class BeneficiariesService {
 				}
 
 				if (
+					req.mw_roles.includes('facilitator') 
+					&&
+					hasuraResponse?.data.users.some(user=>user.program_beneficiaries[0]?.facilitator_id == req.mw_userid)
+				) {
+					return response.status(400).json({
+						success: false,
+						message: 'You have already added this Aadhaar number!',
+					});
+				}
+
+				if (
 					hasuraResponse?.data?.users_aggregate?.aggregate.count <=
 						0 &&
 					req.is_duplicate === 'yes'
