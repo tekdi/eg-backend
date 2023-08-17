@@ -97,9 +97,10 @@ export class FacilitatorController {
 
 	@Post('/exportCsv')
 	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
 	async exportFileToCsv(
 		@Req() request: any,
-		@Body() body: any,
+		@Body() body: FilterFacilitatorDto,
 		@Res() response: any,
 	) {
 		return this.facilitatorService.exportFileToCsv(request, body, response);
