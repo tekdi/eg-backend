@@ -318,4 +318,53 @@ export class BeneficiariesController {
 			data: result.data,
 		});
 	}
+
+	@Post('reassign')
+	@UseGuards(new AuthGuard())
+	async reassignBeneficiary(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		const result: any = {
+			success: false,
+		};
+
+		let isInvalidParams = false;
+
+		const isValidBeneficiary = await this.beneficiariesService.verifyEntity(
+			body.beneficiaryId,
+			'beneficiary',
+			request.mw_userid,
+			body.programId,
+		);
+		if (!isValidBeneficiary.isVerified) isInvalidParams = true;
+		
+		if (!isInvalidParams) {
+			const isValidFacilitator =
+				await this.beneficiariesService.verifyEntity(
+					body.facilitatorId,
+					'facilitator',
+					request.mw_userid,
+					body.programId,
+				);
+			if (!isValidFacilitator.isVerified) isInvalidParams = true;
+		}
+
+		if (isInvalidParams) {
+			result.message = 'Invalid params';
+			return response.status(400).json(result);
+		}
+
+		const updatedResult =
+			await this.beneficiariesService.reassignBeneficiary(
+				body.beneficiaryId,
+				body.facilitatorId,
+			);
+
+		return response.status(200).json({
+			success: true,
+			data: updatedResult,
+		});
+	}
 }
