@@ -70,6 +70,14 @@ export class BeneficiariesController {
 				limit,
 				skip,
 			);
+
+		if (resultPayload.count <= 1) {
+			return response.status(200).json({
+				success: false,
+				message: 'Duplication not happening for this Aadhaar number!',
+			});
+		}
+
 		if (resultPayload.success) {
 			return response.status(200).json(resultPayload);
 		} else {
