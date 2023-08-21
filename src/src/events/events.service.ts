@@ -153,7 +153,16 @@ export class EventsService {
 			  }`
 		}
 		const getIps = await this.hasuraServiceFromServices.getData(data);
-		const allIpList=getIps.data.users.map((curr)=>curr.id)
+
+		if(!getIps?.data?.users){
+			return response.status(500).send({
+				success: false,
+				message: 'Hasura Error!'
+				
+			});
+		}
+		
+		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
 		events(where: {created_by: {_in: ${JSON.stringify(

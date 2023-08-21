@@ -30,6 +30,8 @@ export class BeneficiariesService {
 		private enumService: EnumService,
 	) {}
 
+	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
+
 	public returnFields = [
 		'status',
 		'user_id',
@@ -49,10 +51,14 @@ export class BeneficiariesService {
 		'updated_by',
 	];
 
-	async getBeneficiariesDuplicatesByAadhaar(aadhaarNo: string) {
+	async getBeneficiariesDuplicatesByAadhaar(
+		aadhaarNo: string,
+		limit: number,
+		skip: number,
+	) {
 		const beneficiariesByAadhaarQuery = `
 			query MyQuery {
-				users(where: {
+				users_aggregate(where: {
 					_and: [
 						{ aadhar_no: {_eq: "${aadhaarNo}"} },
 						{
@@ -64,6 +70,26 @@ export class BeneficiariesService {
 						{ program_beneficiaries: {} }
 					]
 				}) {
+					aggregate {
+						count
+					}
+				}
+
+				users(where: {
+					_and: [
+						{ aadhar_no: {_eq: "${aadhaarNo}"} },
+						{
+							_or: [
+								{ is_deactivated: {_is_null: true} },
+								{ is_deactivated: {_neq: true} },
+							]
+						},
+						{ program_beneficiaries: {} }
+					]
+				},
+				limit: ${limit},
+				offset: ${skip}
+				) {
 					id
 					first_name
 					last_name
@@ -74,8 +100,11 @@ export class BeneficiariesService {
 					block
 					village
 					grampanchayat
+					is_duplicate
+					is_deactivated
 					duplicate_reason
 					program_beneficiaries {
+						status
 						facilitator_user {
 							id
 							first_name
@@ -87,19 +116,25 @@ export class BeneficiariesService {
 			}
 		`;
 
-		let resultData = (
+		let resultAllData = (
 			await this.hasuraServiceFromServices.getData({
 				query: beneficiariesByAadhaarQuery,
 			})
-		)?.data?.users;
-		resultData = resultData.map((user) => {
+		)?.data;
+		const usersData = resultAllData?.users.map((user) => {
 			user.program_beneficiaries = user?.program_beneficiaries?.[0] ?? {};
 			return user;
 		});
-		const success = resultData ? true : false;
+		const success = Boolean(usersData);
+		const count = resultAllData?.users_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
 		return {
 			success,
-			result: resultData,
+			limit,
+			currentPage: skip / limit + 1,
+			totalPages,
+			count,
+			result: usersData,
 		};
 	}
 
@@ -138,13 +173,62 @@ export class BeneficiariesService {
 		try {
 			const user = await this.userService.ipUserInfo(req);
 
+			const variables: any = {};
+
+			let filterQueryArray = [];
+			let paramsQueryArray = [];
+
+			filterQueryArray.push(
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			);
+
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
+				 ]} `);
+				} else {
+					filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				 ]} `);
+				}
+			}
+
+			if (body.hasOwnProperty('district') && body.district.length) {
+				paramsQueryArray.push('$district: [String!]');
+				filterQueryArray.push('{district: { _in: $district }}');
+				variables.district = body.district;
+			}
+
+			if (body.hasOwnProperty('block') && body.block.length) {
+				paramsQueryArray.push('$block: [String!]');
+				filterQueryArray.push('{block: { _in: $block }}');
+				variables.block = body.block;
+			}
+
+			if (body.facilitator && body.facilitator.length > 0) {
+				filterQueryArray.push(
+					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}`,
+				);
+			}
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+			let paramsQuery = '';
+			if (paramsQueryArray.length) {
+				paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+			}
+			let sortQuery = `{ created_at: desc }`;
+
 			const data = {
-				query: `query MyQuery {
-					users(where: {
-						_and: [
-							{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }
-						]
-					}){
+				query: `query MyQuery ${paramsQuery} {
+					users(where:${filterQuery}, order_by: ${sortQuery}){
 						first_name
 						last_name
 						dob
@@ -156,6 +240,8 @@ export class BeneficiariesService {
 						block
 						district
 						program_beneficiaries{
+						user_id
+					    facilitator_id
 						status
 						enrollment_number
 						facilitator_user{
@@ -167,6 +253,7 @@ export class BeneficiariesService {
 					}
 				  }
 				  `,
+				variables: variables,
 			};
 			const hasuraResponse = await this.hasuraServiceFromServices.getData(
 				data,
@@ -175,11 +262,13 @@ export class BeneficiariesService {
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
+					{ id: 'user_id' , title: 'LearnerId'},
 					{ id: 'district', title: 'District' },
 					{ id: 'block', title: 'Block' },
 					{ id: 'village', title: 'Village' },
 					{ id: 'dob', title: 'DOB' },
 					{ id: 'prerak', title: 'Prerak' },
+					{ id: 'facilitator_id', title: 'FacilitatorId'},
 					{ id: 'mobile', title: 'Mobile Number' },
 					{ id: 'status', title: 'Status' },
 					{ id: 'enrollment_number', title: 'Enrollment Number' },
@@ -196,6 +285,7 @@ export class BeneficiariesService {
 			for (let data of allBeneficiaries) {
 				const dataObject = {};
 				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['district'] = data?.district;
 				dataObject['block'] = data?.block;
 				dataObject['village'] = data?.village;
@@ -205,6 +295,7 @@ export class BeneficiariesService {
 						?.first_name +
 					' ' +
 					data?.program_beneficiaries[0]?.facilitator_user?.last_name;
+					dataObject['facilitator_id'] = data?.program_beneficiaries[0]?.facilitator_id;
 				dataObject['mobile'] = data?.mobile;
 				dataObject['status'] = data?.program_beneficiaries[0]?.status;
 				dataObject['enrollment_number'] =
@@ -305,6 +396,8 @@ export class BeneficiariesService {
 					mobile
 				    program_beneficiaries {
 					id
+					user_id,
+					facilitator_id,
 					enrolled_for_board
 					subjects
 					facilitator_id
@@ -342,6 +435,8 @@ export class BeneficiariesService {
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
+					{ id: 'user_id' , title: 'LearnerId'},
+					{ id: 'facilitator_id' , title: 'FacilitatorId'},
 					{ id: 'enrolled_for_board', title: 'Enrolled For Board' },
 					...subjectHeader,
 				],
@@ -355,6 +450,8 @@ export class BeneficiariesService {
 				);
 				const dataObject = {};
 				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
+				dataObject['facilitator_id'] = data?.program_beneficiaries[0]?.facilitator_id;
 				dataObject['enrolled_for_board'] =
 					data?.program_beneficiaries[0]?.enrolled_for_board;
 				// executing loop for all subject ,check if ag has selected subject then mark "Yes" else "No"
@@ -403,6 +500,14 @@ export class BeneficiariesService {
 	//status count
 	public async getStatuswiseCount(req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+
+		if(!user?.data?.id){
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+				
+			});
+		}
 		const status = [
 			'identified',
 			'ready_to_enroll',
@@ -414,14 +519,15 @@ export class BeneficiariesService {
 			'dropout',
 			'10th_passed',
 		];
-		let qury = `query MyQuery {
+		
+	    let qury = `query MyQuery {
         ${status.map(
 			(item) => `${
 				!isNaN(Number(item[0])) ? '_' + item : item
 			}:program_beneficiaries_aggregate(where: {
             _and: [
               {
-                facilitator_id: {_eq: ${user.data.id}}
+				facilitator_id: { _eq: ${user?.data?.id} }
               },{
               status: {_eq: "${item}"}
             },
@@ -472,6 +578,23 @@ export class BeneficiariesService {
 		filterQueryArray.push(
 			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 		);
+
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
+				 ]} `);
+			} else {
+				filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				 ]} `);
+			}
+		}
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
@@ -509,6 +632,7 @@ export class BeneficiariesService {
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
 		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
 		var data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
@@ -531,6 +655,8 @@ export class BeneficiariesService {
 					block
 					mobile
 					dob
+					is_duplicate
+					is_deactivated
 					program_beneficiaries {
 						id
 						subjects
@@ -544,6 +670,13 @@ export class BeneficiariesService {
 							last_name
 						}
 					}
+					profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
 				}
 			}`,
 			variables: {
@@ -553,6 +686,39 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
+
+		data.query = `
+			query MyQuery {
+				program_faciltators (
+					where: {
+						id: { _in: ${JSON.stringify([
+							...new Set(
+								response?.data?.users.map(
+									(userData) =>
+										userData.program_beneficiaries[0]
+											.facilitator_user.id,
+								),
+							),
+						])} }
+					}
+				) {
+					user {
+						id
+						first_name
+						middle_name
+						last_name
+					}
+				}
+			}
+		`;
+		delete data.variables;
+
+		const facilitatorListResponse = (
+			await this.hasuraServiceFromServices.getData(data)
+		)?.data?.program_faciltators?.sort((a, b) =>
+			a.user.first_name.localeCompare(b.user.first_name),
+		);
+
 		let result = response?.data?.users;
 		let mappedResponse = result;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
@@ -574,7 +740,10 @@ export class BeneficiariesService {
 						...e,
 						['program_beneficiaries']:
 							e?.['program_beneficiaries']?.[0],
+						['profile_photo_1']:
+							e?.['profile_photo_1']?.[0] || null,
 					})),
+					facilitatorList: facilitatorListResponse,
 					limit,
 					currentPage: page,
 					totalPages: `${totalPages}`,
@@ -862,7 +1031,6 @@ export class BeneficiariesService {
 	}
 
 	public async findOne(id: number, resp?: any) {
-		console.log('id', id);
 		var data = {
 			query: `query searchById {
             users_by_pk(id: ${id}) {
@@ -1135,6 +1303,9 @@ export class BeneficiariesService {
 					is_duplicate
 					is_deactivated
 					duplicate_reason
+					program_beneficiaries {
+						status
+					}
 				}
 			}
 		`;
@@ -1177,48 +1348,88 @@ export class BeneficiariesService {
 						duplicate_reason
 					}
 				}
+
+				update_program_beneficiaries (
+					where: {
+						user: {
+							aadhar_no: {_eq: "${AadhaarNo}"},
+							id: {_neq: ${exceptId}}
+						}
+					},
+					_set: {
+						status: "deactivated"
+					}
+				) {
+					returning {
+						status
+					}
+				}
+			}
+		`;
+
+		await this.hasuraServiceFromServices.getData({ query });
+
+		const fetchUpdatedResultQuery = `
+			query MyQuery {
+				users (where: {aadhar_no: {_eq: "${AadhaarNo}"}}) {
+					id
+					aadhar_no
+					is_duplicate
+					is_deactivated
+					duplicate_reason
+					program_beneficiaries {
+						status
+					}
+				}
 			}
 		`;
 
 		const updateResult = (
-			await this.hasuraServiceFromServices.getData({ query })
-		)?.data?.update_users_many;
+			await this.hasuraServiceFromServices.getData({
+				query: fetchUpdatedResultQuery,
+			})
+		)?.data?.users;
 
 		// Add audit logs of is_duplicate flag
 		await Promise.allSettled(
-			updateResult.map((updatedData) =>
-				Promise.allSettled(
-					updatedData.returning.map((updatedUserObj) =>
-						this.userService.addAuditLog(
-							updatedUserObj.id,
-							createdBy,
-							'program_beneficiaries.status',
-							updatedUserObj.id,
-							{
-								is_duplicate:
-									preUpdateDataObj[updatedUserObj.id]
-										.is_duplicate,
-								duplicate_reason:
-									preUpdateDataObj[updatedUserObj.id]
-										.duplicate_reason,
-								is_deactivated:
-									preUpdateDataObj[updatedUserObj.id]
-										.is_deactivated,
-							},
-							{
-								is_duplicate: updatedUserObj.is_duplicate,
-								duplicate_reason:
-									updatedUserObj.duplicate_reason,
-								is_deactivated: updatedUserObj.is_deactivated,
-							},
-							[
-								'is_duplicate',
-								'duplicate_reason',
-								'is_deactivated',
-							],
-						),
+			updateResult.map(
+				(updatedUserObj) =>
+					// Promise.allSettled(
+					// 	updatedData.returning.map((updatedUserObj) =>
+					this.userService.addAuditLog(
+						updatedUserObj.id,
+						createdBy,
+						'program_beneficiaries.status',
+						updatedUserObj.id,
+						{
+							status: preUpdateDataObj[updatedUserObj.id]
+								.program_beneficiaries[0].status,
+							is_duplicate:
+								preUpdateDataObj[updatedUserObj.id]
+									.is_duplicate,
+							duplicate_reason:
+								preUpdateDataObj[updatedUserObj.id]
+									.duplicate_reason,
+							is_deactivated:
+								preUpdateDataObj[updatedUserObj.id]
+									.is_deactivated,
+						},
+						{
+							status: updatedUserObj.program_beneficiaries[0]
+								.status,
+							is_duplicate: updatedUserObj.is_duplicate,
+							duplicate_reason: updatedUserObj.duplicate_reason,
+							is_deactivated: updatedUserObj.is_deactivated,
+						},
+						[
+							'status',
+							'is_duplicate',
+							'duplicate_reason',
+							'is_deactivated',
+						],
 					),
-				),
+				// 	),
+				// ),
 			),
 		);
 
@@ -1553,6 +1764,17 @@ export class BeneficiariesService {
 				}
 
 				if (
+					req.mw_roles.includes('facilitator') 
+					&&
+					hasuraResponse?.data.users.some(user=>user.program_beneficiaries[0]?.facilitator_id == req.mw_userid)
+				) {
+					return response.status(400).json({
+						success: false,
+						message: 'You have already added this Aadhaar number!',
+					});
+				}
+
+				if (
 					hasuraResponse?.data?.users_aggregate?.aggregate.count <=
 						0 &&
 					req.is_duplicate === 'yes'
@@ -1657,7 +1879,7 @@ export class BeneficiariesService {
 										},
 										_set: {
 											is_duplicate: "yes",
-											duplicate_reason: "SYSTEM_DETECTED_DUPLICATES"
+											duplicate_reason: "FIRST_TIME_REGISTRATION"
 										}
 									},
 									{
@@ -2609,12 +2831,17 @@ export class BeneficiariesService {
 		};
 	}
 
-	public async getAllDuplicatesUnderIp(id: number) {
+	public async getAllDuplicatesUnderIp(
+		id: number,
+		limit?: number,
+		skip?: number,
+	) {
 		const user = (await this.findOne(id)).data;
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
-				COUNT(*) AS "count"
+				COUNT(*) AS "count",
+				COUNT(*) OVER() AS "total_count"
 			FROM
 				users bu
 			INNER JOIN
@@ -2654,21 +2881,34 @@ export class BeneficiariesService {
 					AND
 				        bu2.is_deactivated IS NOT true
 				)
+			${limit ? `LIMIT ${limit}` : ''}
+			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		return this.hasuraServiceFromServices.getFormattedData(
-			duplicateListArr,
-		);
+		const count = duplicateListArr?.[1]?.[2];
+		const totalPages = Math.ceil(count / limit);
+		return {
+			success: true,
+			limit,
+			currentPage: skip / limit + 1,
+			totalPages,
+			count,
+			data: this.hasuraServiceFromServices.getFormattedData(
+				duplicateListArr,
+				[2],
+			),
+		};
 	}
 
-	public async getAllDuplicatesUnderPo() {
+	public async getAllDuplicatesUnderPo(limit?: number, skip?: number) {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
-				COUNT(*) AS "count"
+				COUNT(*) AS "count",
+				COUNT(*) OVER() AS "total_count"
 			FROM
 				users bu
 			INNER JOIN
@@ -2693,13 +2933,25 @@ export class BeneficiariesService {
 				COUNT(*) > 1
 			AND
 				array_length(array_agg(DISTINCT pf.parent_ip), 1) > 1
+			${limit ? `LIMIT ${limit}` : ''}
+			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		return this.hasuraServiceFromServices.getFormattedData(
-			duplicateListArr,
-		);
+		const count = duplicateListArr?.[1]?.[2];
+		const totalPages = Math.ceil(count / limit);
+		return {
+			success: true,
+			limit,
+			currentPage: skip / limit + 1,
+			totalPages,
+			count,
+			data: this.hasuraServiceFromServices.getFormattedData(
+				duplicateListArr,
+				[2],
+			),
+		};
 	}
 }

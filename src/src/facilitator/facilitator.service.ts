@@ -1552,6 +1552,10 @@ export class FacilitatorService {
 
 		let mappedResponse = response?.data?.users;
 
+		if(!mappedResponse){
+			throw new InternalServerErrorException("Hasura Error!");
+		}
+
 		if (
 			mappedResponse &&
 			body.hasOwnProperty('work_experience') &&
@@ -1587,14 +1591,14 @@ export class FacilitatorService {
 		}
 
 		let responseWithPagination = mappedResponse.slice(skip, skip + limit);
-
-		responseWithPagination = responseWithPagination.map((obj) => {
-			obj.program_faciltators = obj.program_faciltators?.[0] || {};
-			obj.qualifications = obj.qualifications?.[0] || {};
-			obj.profile_photo_1 = obj.profile_photo_1?.[0] || {};
-			return obj;
-		});
-
+       		
+			responseWithPagination = responseWithPagination.map((obj) => {
+				obj.program_faciltators = obj.program_faciltators?.[0] || {};
+				obj.qualifications = obj.qualifications?.[0] || {};
+				obj.profile_photo_1 = obj.profile_photo_1?.[0] || {};
+				return obj;
+			});
+	
 		const count = mappedResponse.length;
 		const totalPages = Math.ceil(count / limit);
 

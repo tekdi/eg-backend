@@ -19,6 +19,7 @@ import { S3Module } from './services/s3/s3.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
 	imports: [
@@ -44,6 +45,7 @@ import { UserModule } from './user/user.module';
 		SubjectsModule,
 		UploadFileModule,
 		UserModule,
+		CommentsModule,
 	],
 	controllers: [],
 	providers: [],
