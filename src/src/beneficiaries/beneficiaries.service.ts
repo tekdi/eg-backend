@@ -262,13 +262,13 @@ export class BeneficiariesService {
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
-					{ id: 'user_id' , title: 'LearnerId'},
+					{ id: 'user_id', title: 'LearnerId' },
 					{ id: 'district', title: 'District' },
 					{ id: 'block', title: 'Block' },
 					{ id: 'village', title: 'Village' },
 					{ id: 'dob', title: 'DOB' },
 					{ id: 'prerak', title: 'Prerak' },
-					{ id: 'facilitator_id', title: 'FacilitatorId'},
+					{ id: 'facilitator_id', title: 'FacilitatorId' },
 					{ id: 'mobile', title: 'Mobile Number' },
 					{ id: 'status', title: 'Status' },
 					{ id: 'enrollment_number', title: 'Enrollment Number' },
@@ -295,7 +295,8 @@ export class BeneficiariesService {
 						?.first_name +
 					' ' +
 					data?.program_beneficiaries[0]?.facilitator_user?.last_name;
-					dataObject['facilitator_id'] = data?.program_beneficiaries[0]?.facilitator_id;
+				dataObject['facilitator_id'] =
+					data?.program_beneficiaries[0]?.facilitator_id;
 				dataObject['mobile'] = data?.mobile;
 				dataObject['status'] = data?.program_beneficiaries[0]?.status;
 				dataObject['enrollment_number'] =
@@ -435,8 +436,8 @@ export class BeneficiariesService {
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
-					{ id: 'user_id' , title: 'LearnerId'},
-					{ id: 'facilitator_id' , title: 'FacilitatorId'},
+					{ id: 'user_id', title: 'LearnerId' },
+					{ id: 'facilitator_id', title: 'FacilitatorId' },
 					{ id: 'enrolled_for_board', title: 'Enrolled For Board' },
 					...subjectHeader,
 				],
@@ -451,7 +452,8 @@ export class BeneficiariesService {
 				const dataObject = {};
 				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
 				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
-				dataObject['facilitator_id'] = data?.program_beneficiaries[0]?.facilitator_id;
+				dataObject['facilitator_id'] =
+					data?.program_beneficiaries[0]?.facilitator_id;
 				dataObject['enrolled_for_board'] =
 					data?.program_beneficiaries[0]?.enrolled_for_board;
 				// executing loop for all subject ,check if ag has selected subject then mark "Yes" else "No"
@@ -501,11 +503,10 @@ export class BeneficiariesService {
 	public async getStatuswiseCount(req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
 
-		if(!user?.data?.id){
+		if (!user?.data?.id) {
 			return resp.status(401).json({
 				success: false,
 				message: 'Unauthenticated User!',
-				
 			});
 		}
 		const status = [
@@ -519,8 +520,8 @@ export class BeneficiariesService {
 			'dropout',
 			'10th_passed',
 		];
-		
-	    let qury = `query MyQuery {
+
+		let qury = `query MyQuery {
         ${status.map(
 			(item) => `${
 				!isNaN(Number(item[0])) ? '_' + item : item
@@ -663,6 +664,9 @@ export class BeneficiariesService {
 						facilitator_id
 						status
 						enrollment_date
+						enrollment_dob
+						enrollment_first_name
+						enrollment_last_name
 						facilitator_user {
 							id
 							first_name
@@ -1764,9 +1768,12 @@ export class BeneficiariesService {
 				}
 
 				if (
-					req.mw_roles.includes('facilitator') 
-					&&
-					hasuraResponse?.data.users.some(user=>user.program_beneficiaries[0]?.facilitator_id == req.mw_userid)
+					req.mw_roles.includes('facilitator') &&
+					hasuraResponse?.data.users.some(
+						(user) =>
+							user.program_beneficiaries[0]?.facilitator_id ==
+							req.mw_userid,
+					)
 				) {
 					return response.status(400).json({
 						success: false,
