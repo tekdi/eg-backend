@@ -108,9 +108,12 @@ export class AuthService {
 
 	public async getUserByUsername(req) {
 		const username = req.username;
-		const { user } = await this.keycloakService.getUserByUsername(
-			req.username,
-		);
+		const { user, isUserExist } =
+			await this.keycloakService.getUserByUsername(req.username);
+
+		if (isUserExist === false) {
+			return { isUserExist: false, user: null };
+		}
 
 		//find mobile no.
 		let query = {
@@ -131,7 +134,6 @@ export class AuthService {
 
 	public async resetPasswordUsingOtp(req, response) {
 		console.log('req', req);
-		const username = req.username;
 		const hash = req.hash;
 		const otp = req.otp;
 		const reason = req.reason;
@@ -218,11 +220,11 @@ export class AuthService {
 	}
 
 	public async getMobileByUsernameSendOtp(req, response) {
-		const username = req.username;
 		const reason = req.reason;
 
 		const userRes = await this.getUserByUsername(req);
-		if (userRes?.data?.users?.length > 0) {
+
+		if (userRes.isUserExist !== false && userRes?.data?.users?.length > 0) {
 			const mobile = userRes?.data?.users[0]?.mobile;
 
 			if (mobile) {
@@ -370,13 +372,23 @@ export class AuthService {
 		}
 	}
 
-	public async isUserExist(req, response) {
+	public async isUserExist(body, req, response) {
 		// Set User table name
 		const tableName = 'users';
 
 		// Calling hasura common method find all
-		const data_exist = await this.hasuraService.findAll(tableName, req);
+		const data_exist = await this.hasuraService.findAll(tableName, body);
 		let userExist = data_exist.data.users;
+		let userRoles = req.mw_roles;
+		let tokenUserId = req.mw_userid;
+		const underSameFacilitatorCond =
+			userExist.length > 0 &&
+			userRoles.includes('facilitator') &&
+			userExist.some(
+				(user) =>
+					user.program_beneficiaries[0]?.facilitator_id ==
+					tokenUserId,
+			);
 
 		// Check wheather user is exist or not based on response
 		if (userExist.length > 0) {
@@ -384,6 +396,7 @@ export class AuthService {
 				success: true,
 				message: 'User exist',
 				data: {},
+				underSameFacilitator: underSameFacilitatorCond || false,
 			});
 		} else {
 			return response.status(200).send({
@@ -484,7 +497,7 @@ export class AuthService {
 				message: 'Invalid parameters',
 			});
 		}
-		
+
 		// Generate random password
 		const password = `@${this.userHelperService.generateRandomPassword()}`;
 
@@ -592,7 +605,7 @@ export class AuthService {
 					body.role === 'beneficiary' &&
 					result.data.program_beneficiaries
 				) {
-					const audit = await this.userService.addAuditLog(
+					await this.userService.addAuditLog(
 						result?.data?.id,
 						body.role_fields.facilitator_id,
 						'program_beneficiaries.status',

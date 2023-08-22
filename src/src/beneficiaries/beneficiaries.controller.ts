@@ -7,6 +7,7 @@ import {
 	Patch,
 	Post,
 	Put,
+	Query,
 	Req,
 	Res,
 	UseGuards,
@@ -53,16 +54,32 @@ export class BeneficiariesController {
 	@UseGuards(new AuthGuard())
 	async getBeneficiariesDuplicatesByAadhaar(
 		@Body() body: Record<string, any>,
+		@Query() query: any,
 		@Res() response: Record<string, any>,
 	) {
 		const aadhaarNo = body.aadhar_no;
+		const limit = !isNaN(parseInt(query.limit)) ? parseInt(query.limit) : 0;
+		const page =
+			!isNaN(parseInt(query.page)) && parseInt(query.page) > 0
+				? parseInt(query.page)
+				: 1;
+		const skip = limit * (page - 1);
 		const resultPayload =
-			await this.beneficiariesService.getBeneficiariesDuplicatesByAadhaar(aadhaarNo);
-		if (resultPayload.success) {
+			await this.beneficiariesService.getBeneficiariesDuplicatesByAadhaar(
+				aadhaarNo,
+				limit,
+				skip,
+			);
+
+		if (resultPayload.count <= 1) {
 			return response.status(200).json({
-				success: true,
-				data: resultPayload.result,
+				success: false,
+				message: 'Duplication not happening for this Aadhaar number!',
 			});
+		}
+
+		if (resultPayload.success) {
+			return response.status(200).json(resultPayload);
 		} else {
 			return response.status(200).json({
 				success: false,
@@ -81,25 +98,42 @@ export class BeneficiariesController {
 		const roles = req.mw_roles;
 		let duplicateArr;
 		// Fetch aadhar number of user to set as active
-		const aadhar_no = (await this.beneficiariesService.findOne(+body.activeId))?.data?.aadhar_no;
+		const aadhar_no = (
+			await this.beneficiariesService.findOne(+body.activeId)
+		)?.data?.aadhar_no;
 
 		// Fetch valid duplication list of the token user
 		if (roles.includes('program_owner')) {
-			duplicateArr = await this.beneficiariesService.getAllDuplicatesUnderPo();
+			duplicateArr = (
+				await this.beneficiariesService.getAllDuplicatesUnderPo()
+			).data;
 		} else if (roles.includes('staff')) {
-			duplicateArr = await this.beneficiariesService.getAllDuplicatesUnderIp(req.mw_userid);
+			duplicateArr = (
+				await this.beneficiariesService.getAllDuplicatesUnderIp(
+					req.mw_userid,
+				)
+			).data;
 		}
 
 		// Check if the Aadhaar number exists or not in the list
-		if (!duplicateArr.some(aadhaarData => aadhaarData.aadhar_no == aadhar_no)) {
+		if (
+			!duplicateArr.some(
+				(aadhaarData) => aadhaarData.aadhar_no == aadhar_no,
+			)
+		) {
 			return response.status(400).json({
 				success: false,
-				message: 'Invalid Aadhaar!'
+				message: 'Invalid Aadhaar!',
 			});
 		}
 
 		// Set other AGs as deactivated and set is_duplicate flag to false
-		const { success, data: updateData } = await this.beneficiariesService.deactivateDuplicateBeneficiaries(aadhar_no, +body.activeId, req.mw_userid);
+		const { success, data: updateData } =
+			await this.beneficiariesService.deactivateDuplicateBeneficiaries(
+				aadhar_no,
+				+body.activeId,
+				req.mw_userid,
+			);
 
 		return response.status(200).json({
 			success: success,
@@ -138,20 +172,36 @@ export class BeneficiariesController {
 
 	@Get('admin/list/duplicates-count-by-aadhaar')
 	@UseGuards(new AuthGuard())
-	async getAllDuplicateCountsByAadhaar(@Req() request: any, @Res() response: any) {
+	async getAllDuplicateCountsByAadhaar(
+		@Req() request: any,
+		@Query() query: any,
+		@Res() response: any,
+	) {
 		const roles = request.mw_roles;
 
+		const limit = !isNaN(parseInt(query.limit)) ? parseInt(query.limit) : 0;
+		const page =
+			!isNaN(parseInt(query.page)) && parseInt(query.page) > 0
+				? parseInt(query.page)
+				: 1;
+		const skip = limit * (page - 1);
 		// Fetch duplicate counts based on role
 		let resultPayload;
 		if (roles.includes('program_owner')) {
-			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderPo();
+			resultPayload =
+				await this.beneficiariesService.getAllDuplicatesUnderPo(
+					limit,
+					skip,
+				);
 		} else if (roles.includes('staff')) {
-			resultPayload = await this.beneficiariesService.getAllDuplicatesUnderIp(request.mw_userid);
+			resultPayload =
+				await this.beneficiariesService.getAllDuplicatesUnderIp(
+					request.mw_userid,
+					limit,
+					skip,
+				);
 		}
-		return response.status(200).json({
-			success: true,
-			data: resultPayload,
-		});
+		return response.status(200).json(resultPayload);
 	}
 
 	@Get(':id')
@@ -183,7 +233,12 @@ export class BeneficiariesController {
 		@Res() response: any,
 	) {
 		return this.beneficiariesService.create(
-			{ ...req, id: id },
+			{
+				...req,
+				id: id,
+				mw_userid: request.mw_userid,
+				mw_roles: request.mw_roles,
+			},
 			request,
 			response,
 			true,
@@ -226,6 +281,10 @@ export class BeneficiariesController {
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		return this.beneficiariesService.exportSubjectCsv(request, body, response);
+		return this.beneficiariesService.exportSubjectCsv(
+			request,
+			body,
+			response,
+		);
 	}
 }
