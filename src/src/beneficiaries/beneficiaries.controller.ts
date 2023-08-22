@@ -288,7 +288,7 @@ export class BeneficiariesController {
 		);
 	}
 
-	@Post('verify-enrollment')
+	@Post('admin/verify-enrollment')
 	@UseGuards(new AuthGuard())
 	async verifyEnrollment(
 		@Body() body: any,
