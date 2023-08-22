@@ -1439,7 +1439,7 @@ export class BeneficiariesService {
 
 		return {
 			success: updateResult ? true : false,
-			data: updateResult ? updateResult : null,
+			data: updateResult,
 		};
 	}
 
