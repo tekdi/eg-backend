@@ -1525,6 +1525,8 @@ export class BeneficiariesService {
 			};
 		}
 
+		delete body.status;
+
 		if (body.enrollment_verification_status == 'verified') {
 			body.status = 'enrolled_ip_verified';
 		}
@@ -1532,34 +1534,19 @@ export class BeneficiariesService {
 		if (body.enrollment_verification_status == 'pending') {
 			body.status = 'not_enrolled';
 			body.enrollment_status = 'not_enrolled';
-			(body.enrollment_date = null),
-				(body.enrollment_first_name = null),
-				(body.enrollment_middle_name = null),
-				(body.enrollment_last_name = null),
-				(body.enrollment_dob = null),
-				(body.enrollment_aadhaar_no = null),
-				(body.enrollment_number = null),
-				(body.enrolled_for_board = null),
-				(body.subjects = null),
-				(body.payment_receipt_document_id = null);
+			body.enrollment_date = null,
+			body.enrollment_first_name = null,
+			body.enrollment_middle_name = null,
+			body.enrollment_last_name = null,
+			body.enrollment_dob = null,
+			body.enrollment_aadhaar_no = null,
+			body.enrollment_number = null,
+			body.enrolled_for_board = null,
+			body.subjects = null,
+			body.payment_receipt_document_id = null;
 			body.is_eligible = null;
 		}
-
-		if (body?.status) {
-			const allStatuses = this.enumService
-				.getEnumValue('BENEFICIARY_STATUS')
-				.data.map((enumData) => enumData.value);
-
-			if (!allStatuses.includes(body.status)) {
-				return {
-					status: 400,
-					success: false,
-					message: `Invalid status`,
-					data: {},
-				};
-			}
-		}
-
+		
 		const res = await this.hasuraService.q(
 			'program_beneficiaries',
 			{
