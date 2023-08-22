@@ -693,7 +693,7 @@ export class BeneficiariesService {
 
 		data.query = `
 			query MyQuery {
-				program_faciltators (
+				users (
 					where: {
 						id: { _in: ${JSON.stringify([
 							...new Set(
@@ -706,12 +706,10 @@ export class BeneficiariesService {
 						])} }
 					}
 				) {
-					user {
-						id
-						first_name
-						middle_name
-						last_name
-					}
+					id
+					first_name
+					middle_name
+					last_name
 				}
 			}
 		`;
@@ -719,8 +717,8 @@ export class BeneficiariesService {
 
 		const facilitatorListResponse = (
 			await this.hasuraServiceFromServices.getData(data)
-		)?.data?.program_faciltators?.sort((a, b) =>
-			a.user.first_name.localeCompare(b.user.first_name),
+		)?.data?.users?.sort((a, b) =>
+			a.first_name.localeCompare(b.first_name),
 		);
 
 		let result = response?.data?.users;
