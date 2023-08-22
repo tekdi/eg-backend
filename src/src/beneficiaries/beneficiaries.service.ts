@@ -2703,6 +2703,7 @@ export class BeneficiariesService {
 							user_id: req.id,
 							status,
 							reason_for_status_update: reason,
+							enrollment_verification_status:updatedUser.program_beneficiaries?.enrollment_verification_status === "change_required"?"reverification_required":"pending"
 						},
 						request,
 					);
