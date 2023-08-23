@@ -301,7 +301,7 @@ export class BeneficiariesController {
 			user_id: body.user_id,
 			enrollment_verification_status: body.enrollment_verification_status,
 			enrollment_verification_reason:
-				body.enrollment_verification_reason.length > 0
+				body.enrollment_verification_reason 
 					? JSON.stringify(
 							body.enrollment_verification_reason,
 					  ).replace(/"/g, '\\"')
