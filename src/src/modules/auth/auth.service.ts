@@ -134,7 +134,6 @@ export class AuthService {
 
 	public async resetPasswordUsingOtp(req, response) {
 		console.log('req', req);
-		const username = req.username;
 		const hash = req.hash;
 		const otp = req.otp;
 		const reason = req.reason;
@@ -221,7 +220,6 @@ export class AuthService {
 	}
 
 	public async getMobileByUsernameSendOtp(req, response) {
-		const username = req.username;
 		const reason = req.reason;
 
 		const userRes = await this.getUserByUsername(req);
@@ -398,7 +396,7 @@ export class AuthService {
 				success: true,
 				message: 'User exist',
 				data: {},
-				underSameFacilitator: underSameFacilitatorCond  || false
+				underSameFacilitator: underSameFacilitatorCond || false,
 			});
 		} else {
 			return response.status(200).send({
@@ -607,7 +605,7 @@ export class AuthService {
 					body.role === 'beneficiary' &&
 					result.data.program_beneficiaries
 				) {
-					const audit = await this.userService.addAuditLog(
+					await this.userService.addAuditLog(
 						result?.data?.id,
 						body.role_fields.facilitator_id,
 						'program_beneficiaries.status',
