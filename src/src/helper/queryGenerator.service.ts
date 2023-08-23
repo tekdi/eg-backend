@@ -79,7 +79,7 @@ export class QueryGeneratorService {
 			str += `}`;
 			return str;
 		};
-
+		
 		return `mutation MyQuery {
       ${tableName}(${getObjStr(item)}) {
         affected_rows
@@ -135,6 +135,7 @@ export class QueryGeneratorService {
 								'enrollment_dob',
 								'enrolled_for_board',
 								'subjects',
+								'reason_for_status_update',
 								'enrollment_first_name',
 								'enrollment_middle_name',
 								'enrollment_last_name',

@@ -49,6 +49,16 @@ export class BeneficiariesService {
 		'reason_for_status_update',
 		'created_by',
 		'updated_by',
+		'enrollment_date',
+		'enrollment_first_name',
+		'enrollment_middle_name',
+		'enrollment_last_name',
+		'enrollment_dob',
+		'enrollment_aadhaar_no',
+		'enrollment_verification_reason',
+		'enrollment_verification_status',
+		'subjects',
+		'is_eligible',
 	];
 
 	async getBeneficiariesDuplicatesByAadhaar(
@@ -1490,6 +1500,119 @@ export class BeneficiariesService {
 			},
 			['status', 'reason_for_status_update'],
 		);
+
+		return {
+			status: 200,
+			success: true,
+			message: 'Status Updated successfully!',
+			data: (await this.userById(res?.program_beneficiaries?.user_id))
+				.data,
+		};
+	}
+
+	public async setEnrollmentStatus(body: any, request: any) {
+		const { data: updatedUser } = await this.userById(body.user_id);
+		const allEnrollmentStatuses = this.enumService
+			.getEnumValue('ENROLLEMENT_VERIFICATION_STATUS')
+			.data.map((enumData) => enumData.value);
+
+		if (
+			!allEnrollmentStatuses.includes(body.enrollment_verification_status)
+		) {
+			return {
+				status: 400,
+				success: false,
+				message: `Invalid status`,
+				data: {},
+			};
+		}
+
+		delete body.status;
+
+		if (body.enrollment_verification_status == 'verified') {
+			body.status = 'enrolled_ip_verified';
+		}
+
+		if (body.enrollment_verification_status == 'pending') {
+			body.status = 'not_enrolled';
+			body.enrollment_status = 'not_enrolled';
+			body.enrollment_date = null,
+			body.enrollment_first_name = null,
+			body.enrollment_middle_name = null,
+			body.enrollment_last_name = null,
+			body.enrollment_dob = null,
+			body.enrollment_aadhaar_no = null,
+			body.enrollment_number = null,
+			body.enrolled_for_board = null,
+			body.subjects = null,
+			body.payment_receipt_document_id = null;
+			body.is_eligible = null;
+		}
+		
+		const res = await this.hasuraService.q(
+			'program_beneficiaries',
+			{
+				...body,
+				id: updatedUser?.program_beneficiaries?.id,
+			},
+			[],
+			true,
+			[...this.returnFields, 'id'],
+		);
+
+		if (body.enrollment_verification_status == 'pending') {
+			const data = {
+				query: `query searchById {
+					users_by_pk(id: ${updatedUser?.program_beneficiaries?.user_id}) {
+						id
+						program_beneficiaries{
+							payment_receipt_document_id
+							document {
+								id
+								name
+						  }
+					  }
+					}
+			}`,
+			};
+
+			const response = await this.hasuraServiceFromServices.getData(data);
+			const documentDetails =
+				response?.data?.users_by_pk?.program_beneficiaries[0]?.document;
+			if (documentDetails?.id) {
+				//delete document from documnet table
+				await this.hasuraService.delete('documents', {
+					id: documentDetails?.id,
+				});
+			}
+			if (documentDetails?.name) {
+				//delete document from s3 bucket
+				await this.s3Service.deletePhoto(documentDetails?.name);
+			}
+		}
+
+		const newdata = (
+			await this.userById(res?.program_beneficiaries?.user_id)
+		).data;
+
+		const audit = await this.userService.addAuditLog(
+			body?.user_id,
+			request.mw_userid,
+			'program_beneficiaries.status',
+			updatedUser?.program_beneficiaries?.id,
+			{
+				status: updatedUser?.program_beneficiaries?.status,
+				reason_for_status_update:
+					updatedUser?.program_beneficiaries
+						?.reason_for_status_update,
+			},
+			{
+				status: newdata?.program_beneficiaries?.status,
+				reason_for_status_update:
+					newdata?.program_beneficiaries?.reason_for_status_update,
+			},
+			['status', 'reason_for_status_update'],
+		);
 		return {
 			status: 200,
 			success: true,
@@ -2582,6 +2705,7 @@ export class BeneficiariesService {
 							user_id: req.id,
 							status,
 							reason_for_status_update: reason,
+							enrollment_verification_status:updatedUser.program_beneficiaries?.enrollment_verification_status === "change_required" ? "reverification_required" : "pending"
 						},
 						request,
 					);
@@ -2753,6 +2877,8 @@ export class BeneficiariesService {
 			enrollment_dob
 			enrollment_aadhaar_no
 			is_eligible
+			enrollment_verification_reason
+			enrollment_verification_status
 			document {
 				context
 				context_id
