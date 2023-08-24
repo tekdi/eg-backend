@@ -11,7 +11,7 @@ import { S3Service } from '../services/s3/s3.service';
 export class FacilitatorService {
 	constructor(
 		private readonly httpService: HttpService,
-		private authService:AuthService,
+		private authService: AuthService,
 		private enumService: EnumService,
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
@@ -1132,57 +1132,57 @@ export class FacilitatorService {
 					data: {},
 				});
 			}
-			
-		const variables: any = {};
 
-		let filterQueryArray = [];
-		let paramsQueryArray = [];
+			const variables: any = {};
 
-		if (
-			body.hasOwnProperty('qualificationIds') &&
-			body.qualificationIds.length
-		) {
-			paramsQueryArray.push('$qualificationIds: [Int!]');
-			filterQueryArray.push(
-				'{qualifications: {qualification_master_id: {_in: $qualificationIds}}}',
-			);
-			variables.qualificationIds = body.qualificationIds;
-		}
-		if (body.search && body.search !== '') {
-			filterQueryArray.push(`{_or: [
+			let filterQueryArray = [];
+			let paramsQueryArray = [];
+
+			if (
+				body.hasOwnProperty('qualificationIds') &&
+				body.qualificationIds.length
+			) {
+				paramsQueryArray.push('$qualificationIds: [Int!]');
+				filterQueryArray.push(
+					'{qualifications: {qualification_master_id: {_in: $qualificationIds}}}',
+				);
+				variables.qualificationIds = body.qualificationIds;
+			}
+			if (body.search && body.search !== '') {
+				filterQueryArray.push(`{_or: [
         { first_name: { _ilike: "%${body.search}%" } },
         { last_name: { _ilike: "%${body.search}%" } },
         { email_id: { _ilike: "%${body.search}%" } }
       ]} `);
-		}
-		if (
-			body.hasOwnProperty('status') &&
-			this.isValidString(body.status) &&
-			this.allStatus.map((obj) => obj.value).includes(body.status)
-		) {
-			paramsQueryArray.push('$status: String');
-			filterQueryArray.push(
-				'{program_faciltators: {status: {_eq: $status}}}',
+			}
+			if (
+				body.hasOwnProperty('status') &&
+				this.isValidString(body.status) &&
+				this.allStatus.map((obj) => obj.value).includes(body.status)
+			) {
+				paramsQueryArray.push('$status: String');
+				filterQueryArray.push(
+					'{program_faciltators: {status: {_eq: $status}}}',
+				);
+				variables.status = body.status;
+			}
+
+			if (body.hasOwnProperty('district') && body.district.length) {
+				paramsQueryArray.push('$district: [String!]');
+				filterQueryArray.push('{district: { _in: $district }}');
+				variables.district = body.district;
+			}
+
+			filterQueryArray.unshift(
+				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
 			);
-			variables.status = body.status;
-		}
 
-		if (body.hasOwnProperty('district') && body.district.length) {
-			paramsQueryArray.push('$district: [String!]');
-			filterQueryArray.push('{district: { _in: $district }}');
-			variables.district = body.district;
-		}
-
-		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
-		);
-
-		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-		let paramsQuery = '';
-		if (paramsQueryArray.length) {
-			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
-		}
-		let sortQuery = `{ created_at: desc }`;
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+			let paramsQuery = '';
+			if (paramsQueryArray.length) {
+				paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+			}
+			let sortQuery = `{ created_at: desc }`;
 			const data = {
 				query: `query MyQuery ${paramsQuery}{
 					users(where:${filterQuery}, order_by: ${sortQuery}){
@@ -1213,11 +1213,11 @@ export class FacilitatorService {
 					}
 				  }
 				  `,
-				  variables: variables,
+				variables: variables,
 			};
 			const hasuraResponse = await this.hasuraService.getData(data);
 			let allFacilitators = hasuraResponse?.data?.users;
-			// checking allFacilitators ,body.work_experience available or not and body.work_experience is valid string or not 
+			// checking allFacilitators ,body.work_experience available or not and body.work_experience is valid string or not
 			if (
 				allFacilitators &&
 				body.hasOwnProperty('work_experience') &&
@@ -1244,7 +1244,10 @@ export class FacilitatorService {
 					{ id: 'gender', title: 'Gender' },
 					{ id: 'aadhar_no', title: 'Aadhaar Number' },
 					{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
-					{ id: 'aadhaar_verification_mode', title: 'Aadhaar Verification Mode' },
+					{
+						id: 'aadhaar_verification_mode',
+						title: 'Aadhaar Verification Mode',
+					},
 				],
 			});
 
@@ -1257,9 +1260,12 @@ export class FacilitatorService {
 				dataObject['mobile'] = data?.mobile;
 				dataObject['status'] = data?.program_faciltators[0]?.status;
 				dataObject['gender'] = data?.gender;
-				dataObject['aadhar_no']=data?.aadhar_no; 
-				dataObject['aadhar_verified']=data?.aadhar_verified ? data?.aadhar_verified:'no';
-				dataObject['aadhaar_verification_mode']=data?.aadhaar_verification_mode;
+				dataObject['aadhar_no'] = data?.aadhar_no;
+				dataObject['aadhar_verified'] = data?.aadhar_verified
+					? data?.aadhar_verified
+					: 'no';
+				dataObject['aadhaar_verification_mode'] =
+					data?.aadhaar_verification_mode;
 				records.push(dataObject);
 			}
 			let fileName = `${decoded?.name.replace(' ', '_')}_${new Date()
@@ -1277,6 +1283,78 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
+	}
+
+	async getFacilitatorsFromIds(ids: number[], search: string) {
+		let searchQuery = '';
+		if (search.trim()) {
+			if (search.split(' ').length <= 1) {
+				searchQuery = `
+					{
+						_or: [
+							{ first_name: { _ilike: "%${search}%" } },
+							{ last_name: { _ilike: "%${search}%" } },
+						]
+					}
+				`;
+			} else if (search.split(' ').length <= 2) {
+				const firstWord = search.split(' ')[0];
+				const lastWord = search.split(' ')[1];
+				searchQuery = `
+					{
+						_or: [
+							{
+								_and: [
+									{ first_name: { _ilike: "%${firstWord}%" } },
+									{ last_name: { _ilike: "%${lastWord}%" } },
+								],
+							},
+							{
+								_and: [
+									{ first_name: { _ilike: "%${lastWord}%" } },
+									{ last_name: { _ilike: "%${firstWord}%" } },
+								]
+							}
+						]
+					}
+				`;
+			}
+		}
+		// ${ids.length ? '{ id: { _in: ${JSON.stringify(ids)} } }' : ''},
+		const data = {
+			query: `query MyQuery {
+				users ( where: {
+					_and: [
+						{ id: { _in: ${JSON.stringify(ids)} } },
+						${searchQuery}
+					]
+				} ) {
+					id
+					first_name
+					last_name
+					middle_name
+				}
+			}`,
+		};
+
+		const response = {
+			success: false,
+			users: null,
+			message: '',
+		};
+		let users;
+		try {
+			users = (await this.hasuraService.getData(data)).data?.users;
+			if (!users) {
+				response.message = 'Hasura error';
+			}
+		} catch (error) {
+			response.message = 'Hasura error';
+		}
+
+		response.success = true;
+		response.users = users;
+		return response;
 	}
 
 	async getFacilitators(req: any, body: any, resp: any) {
@@ -1552,8 +1630,8 @@ export class FacilitatorService {
 
 		let mappedResponse = response?.data?.users;
 
-		if(!mappedResponse){
-			throw new InternalServerErrorException("Hasura Error!");
+		if (!mappedResponse) {
+			throw new InternalServerErrorException('Hasura Error!');
 		}
 
 		if (
@@ -1591,14 +1669,14 @@ export class FacilitatorService {
 		}
 
 		let responseWithPagination = mappedResponse.slice(skip, skip + limit);
-       		
-			responseWithPagination = responseWithPagination.map((obj) => {
-				obj.program_faciltators = obj.program_faciltators?.[0] || {};
-				obj.qualifications = obj.qualifications?.[0] || {};
-				obj.profile_photo_1 = obj.profile_photo_1?.[0] || {};
-				return obj;
-			});
-	
+
+		responseWithPagination = responseWithPagination.map((obj) => {
+			obj.program_faciltators = obj.program_faciltators?.[0] || {};
+			obj.qualifications = obj.qualifications?.[0] || {};
+			obj.profile_photo_1 = obj.profile_photo_1?.[0] || {};
+			return obj;
+		});
+
 		const count = mappedResponse.length;
 		const totalPages = Math.ceil(count / limit);
 

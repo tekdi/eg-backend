@@ -95,6 +95,20 @@ export class FacilitatorController {
 		return this.facilitatorService.getFacilitators(req, body, response);
 	}
 
+	@Post('/search-from-Ids')
+	@UsePipes(ValidationPipe)
+	async getFacilitatorsFromIds(@Body() body: any, @Res() res: any) {
+		const result = await this.facilitatorService.getFacilitatorsFromIds(
+			body.Ids,
+			body.search,
+		);
+		return res.status(result.success ? 200 : 500).json({
+			success: result.success,
+			message: result.message,
+			data: result.users,
+		});
+	}
+
 	@Post('/exportCsv')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
