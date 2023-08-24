@@ -519,17 +519,10 @@ export class BeneficiariesService {
 				message: 'Unauthenticated User!',
 			});
 		}
-		const status = [
-			'identified',
-			'ready_to_enroll',
-			'enrolled',
-			'enrolled_ip_verified',
-			'registered_in_camp',
-			'rejected',
-			'ineligible_for_pragati_camp',
-			'dropout',
-			'10th_passed',
-		];
+
+		const status = (
+			await this.enumService.getEnumValue('BENEFICIARY_STATUS')
+		).data.map((item) => item.value);
 
 		let qury = `query MyQuery {
         ${status.map(
@@ -1558,19 +1551,19 @@ export class BeneficiariesService {
 		if (body.enrollment_verification_status == 'pending') {
 			body.status = 'not_enrolled';
 			body.enrollment_status = 'not_enrolled';
-			body.enrollment_date = null,
-			body.enrollment_first_name = null,
-			body.enrollment_middle_name = null,
-			body.enrollment_last_name = null,
-			body.enrollment_dob = null,
-			body.enrollment_aadhaar_no = null,
-			body.enrollment_number = null,
-			body.enrolled_for_board = null,
-			body.subjects = null,
-			body.payment_receipt_document_id = null;
+			(body.enrollment_date = null),
+				(body.enrollment_first_name = null),
+				(body.enrollment_middle_name = null),
+				(body.enrollment_last_name = null),
+				(body.enrollment_dob = null),
+				(body.enrollment_aadhaar_no = null),
+				(body.enrollment_number = null),
+				(body.enrolled_for_board = null),
+				(body.subjects = null),
+				(body.payment_receipt_document_id = null);
 			body.is_eligible = null;
 		}
-		
+
 		const res = await this.hasuraService.q(
 			'program_beneficiaries',
 			{
@@ -2680,7 +2673,12 @@ export class BeneficiariesService {
 							user_id: req.id,
 							status,
 							reason_for_status_update: reason,
-							enrollment_verification_status:updatedUser.program_beneficiaries?.enrollment_verification_status === "change_required" ? "reverification_required" : "pending"
+							enrollment_verification_status:
+								updatedUser.program_beneficiaries
+									?.enrollment_verification_status ===
+								'change_required'
+									? 'reverification_required'
+									: 'pending',
 						},
 						request,
 					);
