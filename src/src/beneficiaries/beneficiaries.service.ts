@@ -120,6 +120,9 @@ export class BeneficiariesService {
 							first_name
 							last_name
 							mobile
+							program_faciltators {
+								parent_ip
+							}
 						}
 					}
 				}
@@ -131,10 +134,48 @@ export class BeneficiariesService {
 				query: beneficiariesByAadhaarQuery,
 			})
 		)?.data;
+		const allIpIds = new Set();
+
 		const usersData = resultAllData?.users.map((user) => {
 			user.program_beneficiaries = user?.program_beneficiaries?.[0] ?? {};
+			allIpIds.add(
+				parseInt(
+					user.program_beneficiaries.facilitator_user
+						.program_faciltators[0].parent_ip,
+				),
+			);
 			return user;
 		});
+
+		const getIpDataQuery = `
+			query MyQuery {
+				organisations(
+					where: { id: { _in: ${JSON.stringify(Array.from(allIpIds))} } }
+				) {
+					id
+					name
+				}
+			}
+		`;
+
+		const allIpData = (
+			await this.hasuraServiceFromServices.getData({
+				query: getIpDataQuery,
+			})
+		).data?.organisations;
+
+		const allIpDataObj = {};
+		allIpData.forEach(
+			(ipData) => (allIpDataObj[String(ipData.id)] = ipData.name),
+		);
+
+		usersData.forEach((userObj) => {
+			userObj['IP_name'] =
+				allIpDataObj[
+					userObj.program_beneficiaries.facilitator_user.program_faciltators[0].parent_ip
+				];
+		});
+
 		const success = Boolean(usersData);
 		const count = resultAllData?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
