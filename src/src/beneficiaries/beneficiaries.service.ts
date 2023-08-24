@@ -606,6 +606,24 @@ export class BeneficiariesService {
 			}
 		}
 
+		if (body?.enrollment_verification_status && body?.enrollment_verification_status !== '') {
+			filterQueryArray.push(
+				`{program_beneficiaries:{enrollment_verification_status:{_eq:${body?.enrollment_verification_status}}}}`,
+			);
+		}
+
+		if (body?.is_deactivated && body?.is_deactivated !== '') {
+			filterQueryArray.push(
+				`{is_deactivated:{_eq:${body?.is_deactivated}}}`,
+			);
+		}
+
+		if (body?.is_duplicate && body?.is_duplicate !== '') {
+			filterQueryArray.push(
+				`{is_duplicate:{_eq:${body?.is_duplicate}}}`,
+			);
+		}
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
@@ -677,6 +695,8 @@ export class BeneficiariesService {
 						enrollment_dob
 						enrollment_first_name
 						enrollment_last_name
+						enrollment_verification_status
+						enrollment_verification_reason
 						facilitator_user {
 							id
 							first_name
@@ -1161,6 +1181,8 @@ export class BeneficiariesService {
 				enrollment_dob
 				enrollment_aadhaar_no
 				is_eligible
+				enrollment_verification_status
+				enrollment_verification_reason
 				document {
 					context
 					context_id
