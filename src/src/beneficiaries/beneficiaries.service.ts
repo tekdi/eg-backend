@@ -794,8 +794,9 @@ export class BeneficiariesService {
 		let offset = page > 1 ? limit * (page - 1) : 0;
 
 		let filterQueryArray = [];
+		// only facilitator_id learners lits
 		filterQueryArray.push(
-			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			`{program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}}`,
 		);
 
 		if (status && status !== '') {
