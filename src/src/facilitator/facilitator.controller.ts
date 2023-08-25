@@ -95,7 +95,7 @@ export class FacilitatorController {
 		return this.facilitatorService.getFacilitators(req, body, response);
 	}
 
-	@Post('/search-from-Ids')
+	@Post('/admin/search-by-ids')
 	@UsePipes(ValidationPipe)
 	async getFacilitatorsFromIds(@Body() body: any, @Res() res: any) {
 		const result = await this.facilitatorService.getFacilitatorsFromIds(
