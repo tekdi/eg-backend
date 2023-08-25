@@ -794,6 +794,7 @@ export class BeneficiariesService {
 		let offset = page > 1 ? limit * (page - 1) : 0;
 
 		let filterQueryArray = [];
+		// only facilitator_id learners lits
 		filterQueryArray.push(
 			`{program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}}`,
 		);
