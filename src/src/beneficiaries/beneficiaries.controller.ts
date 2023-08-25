@@ -362,9 +362,10 @@ export class BeneficiariesController {
 				body.facilitatorId,
 			);
 
-		return response.status(200).json({
-			success: true,
-			data: updatedResult,
+		return response.status(updatedResult.success ? 200 : 400).json({
+			success: updatedResult.success,
+			data: updatedResult.data,
+			message: updatedResult.message
 		});
 	}
 }

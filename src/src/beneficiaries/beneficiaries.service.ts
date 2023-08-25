@@ -3198,6 +3198,14 @@ export class BeneficiariesService {
 	) {
 		const beneficiaryDetails = (await this.userById(beneficiaryId)).data;
 
+		if (beneficiaryDetails.program_beneficiaries.facilitator_id === newFacilitatorId) {
+			return {
+				success: false,
+				message: "Can not reassign to same facilitator",
+				data: null
+			}
+		}
+
 		const updatePayload: any = {
 			facilitator_id: newFacilitatorId,
 		};
@@ -3217,6 +3225,10 @@ export class BeneficiariesService {
 			)
 		).program_beneficiaries;
 
-		return updateResult;
+		return {
+			success: true,
+			data: updateResult,
+			message: ''
+		};
 	}
 }
