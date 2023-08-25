@@ -1555,16 +1555,16 @@ export class BeneficiariesService {
 		if (body.enrollment_verification_status == 'pending') {
 			body.status = 'not_enrolled';
 			body.enrollment_status = 'not_enrolled';
-			(body.enrollment_date = null),
-				(body.enrollment_first_name = null),
-				(body.enrollment_middle_name = null),
-				(body.enrollment_last_name = null),
-				(body.enrollment_dob = null),
-				(body.enrollment_aadhaar_no = null),
-				(body.enrollment_number = null),
-				(body.enrolled_for_board = null),
-				(body.subjects = null),
-				(body.payment_receipt_document_id = null);
+			body.enrollment_date = null;
+			body.enrollment_first_name = null;
+			body.enrollment_middle_name = null;
+			body.enrollment_last_name = null;
+			body.enrollment_dob = null;
+			body.enrollment_aadhaar_no = null;
+			body.enrollment_number = null;
+			body.enrolled_for_board = null;
+			body.subjects = null;
+			body.payment_receipt_document_id = null;
 			body.is_eligible = null;
 		}
 
