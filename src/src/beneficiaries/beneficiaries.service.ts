@@ -599,7 +599,10 @@ export class BeneficiariesService {
 			}
 		}
 
-		if (body?.enrollment_verification_status && body?.enrollment_verification_status !== '') {
+		if (
+			body?.enrollment_verification_status &&
+			body?.enrollment_verification_status !== ''
+		) {
 			filterQueryArray.push(
 				`{program_beneficiaries:{enrollment_verification_status:{_eq:${body?.enrollment_verification_status}}}}`,
 			);
@@ -612,9 +615,7 @@ export class BeneficiariesService {
 		}
 
 		if (body?.is_duplicate && body?.is_duplicate !== '') {
-			filterQueryArray.push(
-				`{is_duplicate:{_eq:${body?.is_duplicate}}}`,
-			);
+			filterQueryArray.push(`{is_duplicate:{_eq:${body?.is_duplicate}}}`);
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -792,158 +793,161 @@ export class BeneficiariesService {
 
 		let offset = page > 1 ? limit * (page - 1) : 0;
 
-		let query = '';
+		let filterQueryArray = [];
+		filterQueryArray.push(
+			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+		);
+
 		if (status && status !== '') {
 			if (status === 'identified') {
-				query = `{
+				filterQueryArray.push(`{
 					_or: [
 						{ program_beneficiaries: { status: { _eq: "identified" } } },
 						{ program_beneficiaries: { status: { _is_null: true } } },
 						{ program_beneficiaries: { status: { _eq: "" } } },
 					]
-				}`;
+				}`);
 			} else {
-				query = `{program_beneficiaries:{status:{_eq:${status}}}}`;
+				filterQueryArray.push(
+					`{program_beneficiaries:{status:{_eq:${status}}}}`,
+				);
 			}
 		}
-		let search = '';
 
 		if (body.search && body.search !== '') {
-			search = `{_or: [
-        { first_name: { _ilike: "%${body.search}%" } },
-        { last_name: { _ilike: "%${body.search}%" } }
-      ]} `;
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
+				 ]} `);
+			} else {
+				filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				 ]} `);
+			}
 		}
 
-		var data = {
+		if (
+			body?.enrollment_verification_status &&
+			body?.enrollment_verification_status !== ''
+		) {
+			filterQueryArray.push(
+				`{program_beneficiaries:{enrollment_verification_status:{_eq:${body?.enrollment_verification_status}}}}`,
+			);
+		}
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+		let data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
-                    users_aggregate( where:
-                        {
-                          _and: [
-                              {
-                                program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
-                              },
-                             ${query},
-                             ${search}
-
-                          ]
-                        }){
-                          aggregate{
-                            count
-                          }
-                            }
-                    users(
-                      where:
-                      {
-                        _and: [
-                            {
-                              program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}
-                            },
-                            ${query},
-                            ${search}
-
-                        ]
-                      },
-                      limit: $limit,
-                      offset: $offset,
-                      order_by: {
-                        created_at: ${sortType}
-                      }
-                    ) {
-                        aadhaar_verification_mode
-						aadhar_no
-						aadhar_token
-						aadhar_verified
-						address
-						address_line_1
-						address_line_2
-						alternative_mobile_number
-						block
-						block_id
-						block_village_id
-						created_at
-						created_by
-						district
-						district_id
-						dob
-						duplicate_reason
-						email_id
-						email_verified
-						first_name
-						gender
-						grampanchayat
-						id
-						is_duplicate
-						is_deactivated
-						keycloak_id
-						last_name
-						lat
-						long
-						middle_name
-						mobile
-						mobile_no_verified
-						password
-						pincode
-						profile_photo_1: documents (where: { document_sub_type: {_eq: "profile_photo_1"}}) {
-							id
-							name
-							doument_type
-							document_sub_type
-							path
-						}
-						profile_photo_2: documents (where: { document_sub_type: {_eq: "profile_photo_2"}}) {
-							id
-							name
-							doument_type
-							document_sub_type
-							path
-						}
-						profile_photo_3: documents (where: { document_sub_type: {_eq: "profile_photo_3"}}) {
-							id
-							name
-							doument_type
-							document_sub_type
-							path
-						}
-						profile_url
-						state
-						state_id
-						updated_at
-						updated_by
-						village
-						username
-						documents{
-						context
-						context_id
-						created_by
-						document_sub_type
-						doument_type
+				users_aggregate(where:${filterQuery}) {
+					aggregate {
+						count
+					}
+				}
+				users(where: ${filterQuery},
+					limit: $limit,
+					offset: $offset,
+					order_by: {
+						created_at: ${sortType}
+					}
+				) {
+					aadhaar_verification_mode
+					aadhar_no
+					aadhar_token
+					aadhar_verified
+					address
+					address_line_1
+					address_line_2
+					alternative_mobile_number
+					block
+					block_id
+					block_village_id
+					created_at
+					created_by
+					district
+					district_id
+					dob
+					duplicate_reason
+					email_id
+					email_verified
+					first_name
+					gender
+					grampanchayat
+					id
+					is_duplicate
+					is_deactivated
+					keycloak_id
+					last_name
+					lat
+					long
+					middle_name
+					mobile
+					mobile_no_verified
+					password
+					pincode
+					profile_photo_1: documents (where: { document_sub_type: {_eq: "profile_photo_1"}}) {
 						id
 						name
+						doument_type
+						document_sub_type
 						path
-						provider
+					}
+					profile_photo_2: documents (where: { document_sub_type: {_eq: "profile_photo_2"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+					profile_photo_3: documents (where: { document_sub_type: {_eq: "profile_photo_3"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+					profile_url
+					state
+					state_id
+					updated_at
+					updated_by
+					village
+					username
+					documents{
+					context
+					context_id
+					created_by
+					document_sub_type
+					doument_type
+					id
+					name
+					path
+					provider
+					updated_by
+					user_id
+						}
+					program_beneficiaries{
+						id
+						enrollment_status
+						enrolled_for_board
+						type_of_enrollement
+						subjects
+						academic_year_id
+						payment_receipt_document_id
+						program_id
+						enrollment_number
+						status
+						reason_for_status_update
+						documents_status
+						document_checklist
 						updated_by
 						user_id
-						  }
-                        program_beneficiaries{
-                        id
-                        enrollment_status
-                        enrolled_for_board
-                        type_of_enrollement
-                        subjects
-                        academic_year_id
-                        payment_receipt_document_id
-                        program_id
-                        enrollment_number
-                        status
-                        reason_for_status_update
-                        documents_status
-                        document_checklist
-                        updated_by
-                        user_id
-                        facilitator_id
-                        created_by
-                        beneficiaries_found_at
+						facilitator_id
+						created_by
+						beneficiaries_found_at
 						enrollment_date
 						enrollment_first_name
 						enrollment_middle_name
@@ -951,6 +955,8 @@ export class BeneficiariesService {
 						enrollment_dob
 						enrollment_aadhaar_no
 						is_eligible
+						enrollment_verification_status
+						enrollment_verification_reason
 						document {
 							context
 							context_id
@@ -963,55 +969,53 @@ export class BeneficiariesService {
 							provider
 							updated_by
 							user_id
-						  }
-                          }
-                          core_beneficiaries {
-                        career_aspiration
-                        updated_by
-                        mark_as_whatsapp_number
-                        alternative_device_ownership
-                        alternative_device_type
-                        father_first_name
-                        father_middle_name
-                        father_last_name
-                        mother_first_name
-                        mother_last_name
-                        mother_middle_name
-                        career_aspiration_details
-                        enrollment_number
-                        type_of_learner
-                        status
-                        reason_of_leaving_education
-                        previous_school_type
-                        mobile_ownership
-                        learner_wish_to_pursue_education
-                        last_standard_of_education_year
-                        last_standard_of_education
-                        last_school_type
-                        id
-                        connect_via_refrence
-                        created_by
-                        device_ownership
-                        device_type
-                        document_id
-                        enrolled_for_board
-                        enrollement_status
-                      }
-                      extended_users {
-                        marital_status
-                        designation
-                        created_by
-                        id
-                        user_id
-                        updated_by
-                        social_category
-                        qualification_id
-                      }
+						}
+					}
+					core_beneficiaries {
+						career_aspiration
+						updated_by
+						mark_as_whatsapp_number
+						alternative_device_ownership
+						alternative_device_type
+						father_first_name
+						father_middle_name
+						father_last_name
+						mother_first_name
+						mother_last_name
+						mother_middle_name
+						career_aspiration_details
+						enrollment_number
+						type_of_learner
+						status
+						reason_of_leaving_education
+						previous_school_type
+						mobile_ownership
+						learner_wish_to_pursue_education
+						last_standard_of_education_year
+						last_standard_of_education
+						last_school_type
+						id
+						connect_via_refrence
+						created_by
+						device_ownership
+						device_type
+						document_id
+						enrolled_for_board
+						enrollement_status
+					}
+					extended_users {
+						marital_status
+						designation
+						created_by
+						id
+						user_id
+						updated_by
+						social_category
+						qualification_id
+					}
 
-                    }
-
-
-                  }`,
+				}
+			}`,
 			variables: {
 				limit: limit,
 				offset: offset,
@@ -2550,8 +2554,7 @@ export class BeneficiariesService {
 						{
 							user_id: req.id,
 							status: req.enrollment_status,
-						    reason_for_status_update: req.enrollment_status
-								
+							reason_for_status_update: req.enrollment_status,
 						},
 						request,
 					);
@@ -2566,7 +2569,7 @@ export class BeneficiariesService {
 						{
 							user_id: req.id,
 							status: req.enrollment_status,
-							reason_for_status_update: req.enrollment_status
+							reason_for_status_update: req.enrollment_status,
 						},
 						request,
 					);
