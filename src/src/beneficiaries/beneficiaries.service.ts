@@ -138,12 +138,12 @@ export class BeneficiariesService {
 
 		const usersData = resultAllData?.users.map((user) => {
 			user.program_beneficiaries = user?.program_beneficiaries?.[0] ?? {};
-			allIpIds.add(
-				parseInt(
-					user.program_beneficiaries.facilitator_user
-						.program_faciltators[0].parent_ip,
-				),
-			);
+			const parentIp =
+				user.program_beneficiaries.facilitator_user
+					.program_faciltators[0].parent_ip;
+			if (parentIp) {
+				allIpIds.add(parseInt(parentIp));
+			}
 			return user;
 		});
 
@@ -172,8 +172,9 @@ export class BeneficiariesService {
 		usersData.forEach((userObj) => {
 			userObj['IP_name'] =
 				allIpDataObj[
-					userObj.program_beneficiaries.facilitator_user.program_faciltators[0].parent_ip
-				];
+					userObj.program_beneficiaries.facilitator_user
+						.program_faciltators[0].parent_ip
+				] || '';
 		});
 
 		const success = Boolean(usersData);
