@@ -119,5 +119,17 @@ export class FacilitatorController {
 		@Res() response: any,
 	) {
 		return this.facilitatorService.exportFileToCsv(request, body, response);
+
+		
+	}
+  
+	@Post('/admin/learner-status-distribution')
+	@UsePipes(ValidationPipe)
+	async getLearnerStatusDistribution(
+		@Req() req: any,
+		@Body() body: FilterFacilitatorDto,
+		@Res() response: any,
+	) {
+		return this.facilitatorService.getLearnerStatusDistribution(req, body, response);
 	}
 }
