@@ -1761,7 +1761,7 @@ export class FacilitatorService {
 
       
 		const status = (
-			await this.enumService.getEnumValue('BENEFICIARY_STATUS')
+			 this.enumService.getEnumValue('BENEFICIARY_STATUS')
 		).data.map((item) => item.value);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
