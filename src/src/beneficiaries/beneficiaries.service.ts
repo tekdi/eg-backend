@@ -1974,6 +1974,20 @@ export class BeneficiariesService {
 					});
 				}
 
+				if (
+					req.is_duplicate === 'yes' &&
+					!(
+						req.duplicate_reason &&
+						typeof req.duplicate_reason === 'string' &&
+						req.duplicate_reason.trim()
+					)
+				) {
+					return response.status(400).json({
+						success: false,
+						message: 'Please send valid duplicate reason!',
+					});
+				}
+
 				// Update Users table data
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.add_ag_duplication.users;
