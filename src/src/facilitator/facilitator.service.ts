@@ -1799,11 +1799,10 @@ export class FacilitatorService {
 			}
 		)
 		{
-        aggregate 
-		 {
-          count
-         }
-	    }
+			aggregate {
+			  count
+			}
+	    } 
 		  ${status
 				.filter((item) => item != 'identified')
 				.map(
