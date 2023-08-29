@@ -877,6 +877,14 @@ export class UserService {
 						mappedResponse.keycloak_id,
 					);
 				mappedResponse.username = keycloakresponse.username || null;
+				if (mappedResponse.username) {
+					await this.hasuraService.update(
+						mappedResponse.id,
+						'users',
+						{ username: mappedResponse.username },
+						['username'],
+					);
+				}
 			}
 
 			return resp.status(200).send({
