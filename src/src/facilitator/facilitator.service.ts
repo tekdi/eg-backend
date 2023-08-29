@@ -1713,8 +1713,9 @@ export class FacilitatorService {
 				message: 'Unauthenticated User!',
 			});
 		}
-
-		const sortType = body?.sortType ? body?.sortType : 'desc';
+	
+		const sortType = body?.sortType ? body?.sortType : 'desc'
+	
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
@@ -1731,14 +1732,12 @@ export class FacilitatorService {
 			let last_name = body.search.split(' ')[1] || '';
 
 			if (last_name?.length > 0) {
-				filterQueryArray.push(`{_or: [
+				filterQueryArray.push(`{_and: [
 				{ user:{ first_name: { _ilike: "%${first_name}%" } } }
 				{user :{ last_name: { _ilike: "%${last_name}%" } } }
 				 ]} `);
 			} else {
-				filterQueryArray.push(`{_or: [
-				{ user: { first_name: { _ilike: "%${first_name}%" } } }
-				 ]} `);
+				filterQueryArray.push(`{ user: { first_name: { _ilike: "%${first_name}%" } } }`);
 			}
 		}
 
@@ -1755,11 +1754,7 @@ export class FacilitatorService {
 		}
 
 		if (body.facilitator && body.facilitator.length > 0) {
-			filterQueryArray.push(
-				`{beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
-					body.facilitator,
-				)}}}}`,
-			);
+			filterQueryArray.push(`{user_id: {_in: ${JSON.stringify(body.facilitator)}}}`);
 		}
 
 		const status = this.enumService
@@ -1774,8 +1769,13 @@ export class FacilitatorService {
 		};
 
 		let qury = `query MyQuery($limit:Int, $offset:Int) {
+		program_faciltators_aggregate(where: ${filterQuery}) {
+				aggregate {
+					count
+				  }
+			}
 		program_faciltators(limit: $limit,
-			offset: $offset,where: ${filterQuery},order_by: ${sortType}) {
+			offset: $offset,where: ${filterQuery},order_by:{id:${sortType}}) {
 		  user {
 			first_name
 			last_name
@@ -1799,10 +1799,11 @@ export class FacilitatorService {
 			}
 		)
 		{
-        aggregate {
+        aggregate 
+		 {
           count
-        }
-	}
+         }
+	    }
 		  ${status
 				.filter((item) => item != 'identified')
 				.map(
@@ -1847,15 +1848,15 @@ export class FacilitatorService {
 			};
 		});
 
-		let responseWithPagination = res.slice(offset, offset + limit);
-		const count = res.length;
+		
+		const count = newQdata.program_faciltators_aggregate.aggregate.count;
 		const totalPages = Math.ceil(count / limit);
 
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
 			data: {
-				data: responseWithPagination,
+				data: res,
 				totalCount: count,
 				totalPages: totalPages,
 			},
@@ -1907,8 +1908,6 @@ export class FacilitatorService {
 					status,
 					enrollment_date
 				  }
-				  
-				  
 				}
 			  }
 			}
@@ -1949,7 +1948,7 @@ export class FacilitatorService {
 				};
 			});
 
-			let responseWithPagination = res.slice(offset, offset + limit);
+			
 			const count = res[0].learnerData.length;
 			const totalPages = Math.ceil(count / limit);
 
@@ -1957,7 +1956,7 @@ export class FacilitatorService {
 				success: true,
 				message: 'Data found successfully!',
 				data: {
-					data: responseWithPagination,
+					data: res,
 					totalCount: count,
 					totalPages: totalPages,
 				},
@@ -1967,8 +1966,10 @@ export class FacilitatorService {
 				success: true,
 				message: 'Data found successfully!',
 				data: {
-					data: {},
-				},
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+					},
 			});
 		}
 	}
