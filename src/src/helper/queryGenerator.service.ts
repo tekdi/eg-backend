@@ -137,26 +137,29 @@ export class QueryGeneratorService {
 			return str;
 		};
 
+		let returnFieldsQuery = '';
+		if (!(item?.id && update)) {
+			if (fields && fields.length > 0) {
+				returnFieldsQuery = this.getParam(fields);
+			} else if (onlyFields && onlyFields.length > 0) {
+				returnFieldsQuery = this.getParam([...onlyFields, 'id']);
+			} else {
+				returnFieldsQuery = this.getParam(keys);
+			}
+		} else if (fields.length) {
+			returnFieldsQuery = `
+				affected_rows
+				returning {
+					${this.getParam(fields)}
+				}
+			`;
+		} else {
+			returnFieldsQuery = 'affected_rows';
+		}
+
 		return `mutation MyQuery {
       ${tableName}(${getObjStr(item, 'obj')}) {
-        ${
-			!(item?.id && update)
-				? this.getParam(
-						fields && fields.length > 0
-							? fields
-							: onlyFields
-							? [...onlyFields, 'id']
-							: keys,
-				  )
-				: fields.length
-				? `
-					affected_rows
-					returning {
-						${this.getParam(fields)}
-					}
-				`
-				: 'affected_rows'
-		}
+        ${returnFieldsQuery}
       }
     }
     `;
