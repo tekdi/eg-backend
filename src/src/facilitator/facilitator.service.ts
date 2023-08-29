@@ -5,7 +5,10 @@ import jwt_decode from 'jwt-decode';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
-import { HasuraService, HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import {
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
+} from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 @Injectable()
 export class FacilitatorService {
@@ -1702,8 +1705,7 @@ export class FacilitatorService {
 		};
 	}
 
-	public async getLearnerStatusDistribution(req: any,body:any, resp: any) {
-		
+	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.id) {
 			return resp.status(401).json({
@@ -1718,9 +1720,11 @@ export class FacilitatorService {
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let filterQueryArray = [];
 
-		filterQueryArray.push(`{id: {_is_null: false}}`)
+		filterQueryArray.push(`{id: {_is_null: false}}`);
 
-		filterQueryArray.push(`{parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}`)
+		filterQueryArray.push(
+			`{parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}`,
+		);
 
 		if (body.search && body.search !== '') {
 			let first_name = body.search.split(' ')[0];
@@ -1737,7 +1741,6 @@ export class FacilitatorService {
 				 ]} `);
 			}
 		}
-	
 
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
@@ -1759,19 +1762,18 @@ export class FacilitatorService {
 			);
 		}
 
-      
-		const status = (
-			 this.enumService.getEnumValue('BENEFICIARY_STATUS')
-		).data.map((item) => item.value);
+		const status = this.enumService
+			.getEnumValue('BENEFICIARY_STATUS')
+			.data.map((item) => item.value);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
 		let variables = {
-		limit: limit,
-		offset: offset
-		}
-		
-	let qury = `query MyQuery($limit:Int, $offset:Int) {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
 		program_faciltators(limit: $limit,
 			offset: $offset,where: ${filterQuery},order_by: ${sortType}) {
 		  user {
@@ -1789,7 +1791,9 @@ export class FacilitatorService {
 			where: {
 				user: {id: {_is_null: false}},
 				_or: [
-					{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'identified'))}}},
+					{status: {_nin: ${JSON.stringify(
+						status.filter((item) => item != 'identified'),
+					)}}},
 					{ status: { _is_null: true } }
 			 ]
 			}
@@ -1799,11 +1803,12 @@ export class FacilitatorService {
           count
         }
 	}
-		  ${status.filter((item) => item != 'identified')
-		  .map(
-			(item) => `${
-				!isNaN(Number(item[0])) ? '_' + item : item
-			}:beneficiaries_aggregate(where: {
+		  ${status
+				.filter((item) => item != 'identified')
+				.map(
+					(item) => `${
+						!isNaN(Number(item[0])) ? '_' + item : item
+					}:beneficiaries_aggregate(where: {
             _and: [
               {
               status: {_eq: "${item}"}
@@ -1817,43 +1822,154 @@ export class FacilitatorService {
         }
       }`,
 	 
-		)}
+				)}
 		
 		  
 		}
 	  }
-	  `
-		const data = { query: qury,variables: variables};
+	  `;
+		const data = { query: qury, variables: variables };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data;
-			const res = newQdata.program_faciltators.map(facilitator => {
-			const statusCount = status.map(statusKey => ({
-			  status: statusKey,
-			  count: facilitator[statusKey]?.aggregate?.count || 0, // Use conditional chaining and provide default value
+		const res = newQdata.program_faciltators.map((facilitator) => {
+			const statusCount = status.map((statusKey) => ({
+				status: statusKey,
+				count: facilitator[statusKey]?.aggregate?.count || 0, // Use conditional chaining and provide default value
 			}));
-		  
+
 			return {
-			  first_name: facilitator.user.first_name,
-			  last_name: facilitator.user.last_name,
-			  id:facilitator.user.id,
-			  learner_total_count: facilitator.learner_total_count.aggregate.count,
-			  status_count: statusCount,
+				first_name: facilitator.user.first_name,
+				last_name: facilitator.user.last_name,
+				id: facilitator.user.id,
+				learner_total_count:
+					facilitator.learner_total_count.aggregate.count,
+				status_count: statusCount,
 			};
-		  });
-		  
-		  let responseWithPagination = res.slice(offset, offset + limit);
-		  const count = res.length;
-		  const totalPages = Math.ceil(count / limit);
-			  
+		});
+
+		let responseWithPagination = res.slice(offset, offset + limit);
+		const count = res.length;
+		const totalPages = Math.ceil(count / limit);
+
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
 			data: {
 				data: responseWithPagination,
-				totalCount : count,
-				totalPages:totalPages
-
+				totalCount: count,
+				totalPages: totalPages,
 			},
 		});
+	}
+
+	public async getLearnerListByPrerakId(
+		req: any,
+		id: any,
+		body: any,
+		resp: any,
+	) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+	
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let variables = {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int){
+			program_faciltators(limit: $limit,
+				offset: $offset,where: {user_id: {_eq: ${id}}}) {
+			  user{
+				id,
+				first_name,
+				last_name,
+				mobile
+			  }
+			  beneficiaries{
+				 user{
+				  id,
+				  first_name,
+				  last_name,
+				  mobile,
+				  dob,
+				  address,
+				  address_line_1,
+				  address_line_2,
+				  program_beneficiaries{
+					status,
+					enrollment_date
+				  }
+				  
+				  
+				}
+			  }
+			}
+		  }
+		  `;
+
+		const data = { query: qury, variables: variables };
+
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const newQdata = response?.data;
+
+		if (newQdata.program_faciltators[0].beneficiaries.length > 0) {
+			const res = newQdata.program_faciltators.map((facilitator) => {
+				const learnerData = facilitator.beneficiaries.map((data) => ({
+					learner_first_name: data.user.first_name,
+					learner_last_name: data.user.last_name,
+					learner_id: data.user.id,
+					mobile_no: data.user.mobile,
+					dob: data.user.dob,
+					address: data.user.address,
+					address_line_1: data.user.address_line_1,
+					address_line_2: data.user.address_line_2,
+					status:
+						data.user.program_beneficiaries[0].status == null
+							? 'identified'
+							: data.user.program_beneficiaries[0].status,
+					enrollment_date:
+						data.user.program_beneficiaries[0].enrollment_date,
+				}));
+
+				return {
+					facilitator_first_name: facilitator.user.first_name,
+					facilitator_last_name: facilitator.user.last_name,
+					facilitator_id: facilitator.user.id,
+					facilitator_mobile_no: facilitator.user.mobile,
+					learnerData: learnerData,
+				};
+			});
+
+			let responseWithPagination = res.slice(offset, offset + limit);
+			const count = res[0].learnerData.length;
+			const totalPages = Math.ceil(count / limit);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: responseWithPagination,
+					totalCount: count,
+					totalPages: totalPages,
+				},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: {},
+				},
+			});
+		}
 	}
 }

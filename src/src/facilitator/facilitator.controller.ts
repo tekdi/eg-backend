@@ -122,7 +122,7 @@ export class FacilitatorController {
 
 		
 	}
-  
+
 	@Post('/admin/learner-status-distribution')
 	@UsePipes(ValidationPipe)
 	async getLearnerStatusDistribution(
@@ -130,6 +130,26 @@ export class FacilitatorController {
 		@Body() body: FilterFacilitatorDto,
 		@Res() response: any,
 	) {
-		return this.facilitatorService.getLearnerStatusDistribution(req, body, response);
+		return this.facilitatorService.getLearnerStatusDistribution(
+			req,
+			body,
+			response,
+		);
+	}
+
+	@Get('/admin/prerak-learner-list/:id')
+	@UsePipes(ValidationPipe)
+	async getLearnerListByPrerakId(
+		@Req() req: any,
+		@Body() body: FilterFacilitatorDto,
+		@Param('id') id: string,
+		@Res() response: any,
+	) {
+		return this.facilitatorService.getLearnerListByPrerakId(
+			req,
+			id,
+			body,
+			response,
+		);
 	}
 }
