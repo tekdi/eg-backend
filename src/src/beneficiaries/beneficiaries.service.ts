@@ -3160,6 +3160,8 @@ export class BeneficiariesService {
 					id
 					program_beneficiaries {
 						id
+						facilitator_id
+						original_facilitator_id
 					}
 					program_faciltators {
 						id
@@ -3176,6 +3178,7 @@ export class BeneficiariesService {
 			success: false,
 			message: '',
 			isVerified: false,
+			data: null,
 		};
 
 		if (!hasuraResult) {
@@ -3187,6 +3190,7 @@ export class BeneficiariesService {
 		if (hasuraResult.length) {
 			result.success = true;
 			result.isVerified = true;
+			result.data = hasuraResult[0];
 		}
 
 		return result;
@@ -3197,14 +3201,6 @@ export class BeneficiariesService {
 		newFacilitatorId: number,
 	) {
 		const beneficiaryDetails = (await this.userById(beneficiaryId)).data;
-
-		if (beneficiaryDetails.program_beneficiaries.facilitator_id === newFacilitatorId) {
-			return {
-				success: false,
-				message: "Can not reassign to same facilitator",
-				data: null
-			}
-		}
 
 		const updatePayload: any = {
 			facilitator_id: newFacilitatorId,
@@ -3225,10 +3221,17 @@ export class BeneficiariesService {
 			)
 		).program_beneficiaries;
 
-		return {
-			success: true,
-			data: updateResult,
-			message: ''
+		const response = {
+			success: false,
+			data: null,
+			message: '',
 		};
+
+		if (updateResult) {
+			response.success = true;
+			response.data = updateResult;
+		}
+
+		return response;
 	}
 }
