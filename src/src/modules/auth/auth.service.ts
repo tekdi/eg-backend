@@ -385,10 +385,17 @@ export class AuthService {
 			userExist.length > 0 &&
 			userRoles.includes('facilitator') &&
 			userExist.some(
+				(user) => user.program_beneficiaries[0]?.facilitator_id,
+			) &&
+			userExist.some(
 				(user) =>
 					user.program_beneficiaries[0]?.facilitator_id ==
 					tokenUserId,
 			);
+
+		const aadhaarRegisteredForFacilitator =
+			userExist.length > 0 &&
+			userExist.some((user) => user.program_faciltators[0]?.id);
 
 		// Check wheather user is exist or not based on response
 		if (userExist.length > 0) {
@@ -397,6 +404,8 @@ export class AuthService {
 				message: 'User exist',
 				data: {},
 				underSameFacilitator: underSameFacilitatorCond || false,
+				aadhaarRegisteredForFacilitator:
+					aadhaarRegisteredForFacilitator || false,
 			});
 		} else {
 			return response.status(200).send({
