@@ -1931,12 +1931,8 @@ export class FacilitatorService {
 					address: data.user.address,
 					address_line_1: data.user.address_line_1,
 					address_line_2: data.user.address_line_2,
-					status:
-						data.user.program_beneficiaries[0].status == null
-							? 'identified'
-							: data.user.program_beneficiaries[0].status,
-					enrollment_date:
-						data.user.program_beneficiaries[0].enrollment_date,
+					status: data.user.program_beneficiaries[0].status ?? 'identified',
+                    enrollment_date: data.user.program_beneficiaries[0].enrollment_date,
 				}));
 
 				return {
