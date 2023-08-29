@@ -916,20 +916,34 @@ export class FacilitatorService {
 				break;
 			}
 			case 'contact_details': {
-				let isMobileExist = await this.hasuraService.findAll('users', {
-					mobile: body?.mobile,
-				});
-				let userExist = isMobileExist?.data?.users;
-				const isDuplicateMobile = userExist.some(
-					(data) => data.id !== id,
-				);
-				if (userExist.length > 0 && isDuplicateMobile) {
+				
+				let qury = `query MyQuery1 {
+					users(where: {id: {_neq: 931}, mobile: {_eq: "8446421109"}, program_faciltators: {id: {_is_null: false}}}) {
+					  id
+					  mobile
+					  first_name
+					  last_name
+					  program_beneficiaries {
+						facilitator_id
+						status
+					  }
+					  program_faciltators {
+						status
+					  }
+					}
+				  }
+				  `
+				  const data = { query: qury };
+				  const resp = await this.hasuraServiceFromServices.getData(data);
+				  const newQdata = resp?.data;
+				  if(newQdata.users.length > 0){
 					return response.status(422).send({
-						success: false,
-						message: 'Mobile Number Already Exist',
-						data: {},
-					});
-				}
+								success: false,
+								message: 'Mobile Number Already Exist',
+								data: {},
+							});
+				  }
+
 				await this.updateContactDetails(id, body, facilitatorUser);
 				break;
 			}
