@@ -323,7 +323,7 @@ export class BeneficiariesController {
 		});
 	}
 
-	@Post('reassign')
+	@Post('admin/reassign')
 	@UseGuards(new AuthGuard())
 	async reassignBeneficiary(
 		@Req() request: any,
