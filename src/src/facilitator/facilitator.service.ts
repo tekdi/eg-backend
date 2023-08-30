@@ -1891,6 +1891,7 @@ export class FacilitatorService {
 			});
 		}
 	
+		const program_id = body?.program_id || 1;
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
@@ -1899,67 +1900,57 @@ export class FacilitatorService {
 			offset: offset,
 		};
 
-		let qury = `query MyQuery($limit:Int, $offset:Int){
-			program_faciltators(limit: $limit,
-				offset: $offset,where: {user_id: {_eq: ${id}}}) {
-			  user{
-				id,
-				first_name,
-				last_name,
-				mobile
-			  }
-			  beneficiaries{
-				 user{
-				  id,
-				  first_name,
-				  last_name,
-				  mobile,
-				  dob,
-				  address,
-				  address_line_1,
-				  address_line_2,
-				  program_beneficiaries{
-					status,
-					enrollment_date
-				  }
-				}
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
+			  aggregate {
+				count
 			  }
 			}
-		  }
-		  `;
+			users(limit: $limit,
+				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq:2}, program_id:{_eq:1}}}) {
+			  id
+			  first_name
+			  last_name
+			  mobile
+			  aadhar_no
+			  address
+              address_line_1
+              address_line_2
+			  program_beneficiaries{
+				id
+				program_id
+				status
+				enrollment_dob
+				enrollment_date
+				enrollment_first_name
+				enrollment_last_name
+			  }
+			}
+		  }`;
 
 		const data = { query: qury, variables: variables };
 
 		const response = await this.hasuraServiceFromServices.getData(data);
 
 		const newQdata = response?.data;
-
-		if (newQdata.program_faciltators[0].beneficiaries.length > 0) {
-			const res = newQdata.program_faciltators.map((facilitator) => {
-				const learnerData = facilitator.beneficiaries.map((data) => ({
-					learner_first_name: data.user.first_name,
-					learner_last_name: data.user.last_name,
-					learner_id: data.user.id,
-					mobile_no: data.user.mobile,
-					dob: data.user.dob,
-					address: data.user.address,
-					address_line_1: data.user.address_line_1,
-					address_line_2: data.user.address_line_2,
-					status: data.user.program_beneficiaries[0].status ?? 'identified',
-                    enrollment_date: data.user.program_beneficiaries[0].enrollment_date,
-				}));
-
-				return {
-					facilitator_first_name: facilitator.user.first_name,
-					facilitator_last_name: facilitator.user.last_name,
-					facilitator_id: facilitator.user.id,
-					facilitator_mobile_no: facilitator.user.mobile,
-					learnerData: learnerData,
-				};
-			});
-
+		
+		if (newQdata.users.length > 0) {
+			const res = newQdata.users.map((user) => ({
 			
-			const count = res[0].learnerData.length;
+					learner_first_name: user.first_name,
+					learner_last_name: user.last_name,
+					learner_id:user.id,
+					mobile_no:user.mobile,
+					dob:user.dob,
+					address:user.address,
+					address_line_1:user.address_line_1,
+					address_line_2: user.address_line_2,
+					status: user.program_beneficiaries[0].status ?? 'identified',
+                    enrollment_date:user.program_beneficiaries[0].enrollment_date,
+				}));
+			
+			const count = res.length;
+			
 			const totalPages = Math.ceil(count / limit);
 
 			return resp.status(200).json({
