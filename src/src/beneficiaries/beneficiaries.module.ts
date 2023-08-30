@@ -1,12 +1,4 @@
-<<<<<<< HEAD
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-=======
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule
-} from '@nestjs/common';
->>>>>>> upstream/release-1.3.0
 import { UserModule } from 'src/user/user.module';
 import { BeneficiariesController } from './beneficiaries.controller';
 
