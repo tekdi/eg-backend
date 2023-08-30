@@ -902,6 +902,7 @@ export class FacilitatorService {
 
 	async update(id: number, body: any, response: any) {
 		const { data: facilitatorUser } = await this.userById(id);
+		const mobile_no = body.mobile
 		switch (body.page_type) {
 			case 'add_basic_details': {
 				await this.updateAddBasicDetails(id, body);
@@ -918,7 +919,7 @@ export class FacilitatorService {
 			case 'contact_details': {
 				
 				let qury = `query MyQuery1 {
-					users(where: {id: {_neq: 931}, mobile: {_eq: "8446421109"}, program_faciltators: {id: {_is_null: false}}}) {
+					users(where: {id: {_neq: ${id}}, mobile: {_eq:${mobile_no}}, program_faciltators: {id: {_is_null: false}}}) {
 					  id
 					  mobile
 					  first_name
