@@ -1722,6 +1722,7 @@ export class FacilitatorService {
 
 	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+		console.log("user-->>",user.data.id)
 		if (!user?.data?.id) {
 			return resp.status(401).json({
 				success: false,
@@ -1732,14 +1733,14 @@ export class FacilitatorService {
 		const sortType = body?.sortType ? body?.sortType : 'desc'
 	
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let filterQueryArray = [];
 
-		filterQueryArray.push(`{id: {_is_null: false}}`);
+		
 
 		filterQueryArray.push(
-			`{parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}`,
+			`{program_faciltators:{parent_ip:{_eq:${user.data.id}}}}`,
 		);
 
 		if (body.search && body.search !== '') {
@@ -1748,28 +1749,32 @@ export class FacilitatorService {
 
 			if (last_name?.length > 0) {
 				filterQueryArray.push(`{_and: [
-				{ user:{ first_name: { _ilike: "%${first_name}%" } } }
-				{user :{ last_name: { _ilike: "%${last_name}%" } } }
+				{first_name: { _ilike: "%${first_name}%" } } 
+				{ last_name: { _ilike: "%${last_name}%" } } 
 				 ]} `);
 			} else {
-				filterQueryArray.push(`{ user: { first_name: { _ilike: "%${first_name}%" } } }`);
+				filterQueryArray.push(`{ first_name: { _ilike: "%${first_name}%" } }`);
 			}
 		}
 
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
-				`{user:{district:{_in: ${JSON.stringify(body?.district)}}}}`,
+				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
 			);
 		}
 
 		if (body?.block && body?.block.length > 0) {
 			filterQueryArray.push(
-				`{user:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
+				`{block:{_in: ${JSON.stringify(body?.block)}}}`,
 			);
 		}
 
 		if (body.facilitator && body.facilitator.length > 0) {
-			filterQueryArray.push(`{user_id: {_in: ${JSON.stringify(body.facilitator)}}}`);
+			filterQueryArray.push(
+				`{program_facilitators: {user_id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}}`,
+			);
 		}
 
 		const status = this.enumService
@@ -1784,97 +1789,118 @@ export class FacilitatorService {
 		};
 
 		let qury = `query MyQuery($limit:Int, $offset:Int) {
-		program_faciltators_aggregate(where: ${filterQuery}) {
+		users_aggregate(where: ${filterQuery}) {
 				aggregate {
 					count
 				  }
 			}
-		program_faciltators(limit: $limit,
-			offset: $offset,where: ${filterQuery},order_by:{id:${sortType}}) {
-		  user {
+		users(limit: $limit,
+			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
+		  
 			first_name
 			last_name
 			middle_name
 			id
-		  }
-		  learner_total_count:beneficiaries_aggregate {
-			aggregate {
-			  count
+			program_faciltators{
+				learner_total_count:beneficiaries_aggregate {
+					aggregate {
+					  count
+					}
+				  },
+				  identified:beneficiaries_aggregate(
+					where: {
+						user: {id: {_is_null: false}},
+						_or: [
+							{status: {_nin: ${JSON.stringify(
+								status.filter((item) => item != 'identified'),
+							)}}},
+							{ status: { _is_null: true } }
+					 ]
+					}
+				)
+				{
+					aggregate {
+					  count
+					}
+				} ,
+				${status
+					.filter((item) => item != 'identified')
+					.map(
+						(item) => `${
+							!isNaN(Number(item[0])) ? '_' + item : item
+						}:beneficiaries_aggregate(where: {
+				_and: [
+				  {
+				  status: {_eq: "${item}"}
+				},
+					{ user:	{ id: { _is_null: false } } }
+				
+										 ]
+		    	}
+			) 
+			{
+				aggregate {
+				  count
+				}
+			} 
+			`,
+		 
+			)}
 			}
-		  },
-		  identified:beneficiaries_aggregate(
-			where: {
-				user: {id: {_is_null: false}},
-				_or: [
-					{status: {_nin: ${JSON.stringify(
-						status.filter((item) => item != 'identified'),
-					)}}},
-					{ status: { _is_null: true } }
-			 ]
-			}
-		)
-		{
-			aggregate {
-			  count
-			}
-	    } 
-		  ${status
-				.filter((item) => item != 'identified')
-				.map(
-					(item) => `${
-						!isNaN(Number(item[0])) ? '_' + item : item
-					}:beneficiaries_aggregate(where: {
-            _and: [
-              {
-              status: {_eq: "${item}"}
-            },
-				{ user:	{ id: { _is_null: false } } }
-			
-                                     ]
-        }) {
-        aggregate {
-          count
-        }
-      }`,
-	 
-				)}
-		
-		  
 		}
 	  }
 	  `;
+	 
 		const data = { query: qury, variables: variables };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data;
-		const res = newQdata.program_faciltators.map((facilitator) => {
-			const statusCount = status.map((statusKey) => ({
-				status: statusKey,
-				count: facilitator[statusKey]?.aggregate?.count || 0, // Use conditional chaining and provide default value
-			}));
-
-			return {
-				first_name: facilitator.user.first_name,
-				last_name: facilitator.user.last_name,
-				id: facilitator.user.id,
-				learner_total_count:
-					facilitator.learner_total_count.aggregate.count,
-				status_count: statusCount,
-			};
-		});
-
+	
+		if(newQdata?.users.length>0){
+			const res = newQdata.users.map((facilitator) => {
+				const benefeciaryData = facilitator.program_faciltators.map((benefeciary) => {
+				  const statusCount = status.map((statusKey) => ({
+					status: statusKey,
+					count: benefeciary[statusKey]?.aggregate?.count || 0,
+				  }));
+			  
+				  return {
+					first_name: facilitator.first_name,
+					last_name: facilitator.last_name,
+					id: facilitator.id,
+					learner_total_count: benefeciary.learner_total_count.aggregate.count,
+					status_count: statusCount,
+				  };
+				});
+			  
+				return benefeciaryData;
+			  });
+			  
+					 
+			const count = newQdata.users_aggregate.aggregate.count;
+			const totalPages = Math.ceil(count / limit);
+			const flattenedRes = res.flat();
+	
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: flattenedRes,
+					totalCount: count,
+					totalPages: totalPages,
+				},
+			});
+		} else{
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+				},
+			});
+		}
 		
-		const count = newQdata.program_faciltators_aggregate.aggregate.count;
-		const totalPages = Math.ceil(count / limit);
-
-		return resp.status(200).json({
-			success: true,
-			message: 'Data found successfully!',
-			data: {
-				data: res,
-				totalCount: count,
-				totalPages: totalPages,
-			},
-		});
 	}
 
 	public async getLearnerListByPrerakId(
