@@ -91,9 +91,12 @@ export class HasuraService {
 		} catch (e) {}
 	}
 
-	public getFormattedData(arr) {
+	public getFormattedData(arr, excludeFieldsIndex?) {
+		excludeFieldsIndex = excludeFieldsIndex ?? [];
 		let result = [];
-		const columnNames = arr[0];
+		const columnNames = arr[0].filter(
+			(name, index) => !excludeFieldsIndex.includes(index),
+		);
 		if (arr.length > 1) {
 			result = arr.slice(1).map((record) => {
 				const modifiedRecord = {};
@@ -118,17 +121,23 @@ export class HasuraService {
 
 		var data = {
 			query: `query SearchUser {
-            ${tableName}_aggregate(where:{${query}}) {
-              aggregate {
-                count
-              }
-            }
-            ${tableName}(where:{${query}}) {
-              id
-              mobile
-              aadhar_token
-              aadhar_no
-            }}`,
+			${tableName}_aggregate(where:{${query}}) {
+			  aggregate {
+				count
+			  }
+			}
+			${tableName}(where:{${query}}) {
+			  id
+			  mobile
+			  aadhar_token
+			  aadhar_no
+			  program_beneficiaries{
+				facilitator_id
+			  }
+			  program_faciltators {
+				id
+			  }
+			}}`,
 		};
 
 		return await lastValueFrom(

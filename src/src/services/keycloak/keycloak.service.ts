@@ -132,7 +132,7 @@ export class KeycloakService {
 				} = await lastValueFrom(
 					this.httpService
 						.get(url, {
-							params: { username },
+							params: { username, exact: true },
 							headers: {
 								'Content-Type': 'application/json',
 								Authorization: `Bearer ${adminResultData.access_token}`,
@@ -140,6 +140,9 @@ export class KeycloakService {
 						})
 						.pipe(map((res) => res)),
 				);
+				if (!user) {
+					return { isUserExist: false, user: null };
+				}
 				return {
 					headers,
 					status,
