@@ -96,7 +96,7 @@ export class BeneficiariesService {
 			user.program_beneficiaries = user?.program_beneficiaries?.[0] ?? {};
 			return user;
 		});
-		const success = resultData ? true : false;
+		const success = !!resultData;
 		return {
 			success,
 			result: resultData,
@@ -631,7 +631,7 @@ export class BeneficiariesService {
       ]} `;
 		}
 
-		var data = {
+		let data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
                     users_aggregate( where:
                         {
@@ -1233,8 +1233,8 @@ export class BeneficiariesService {
 		);
 
 		return {
-			success: updateResult ? true : false,
-			data: updateResult ? updateResult : null,
+			success: !!updateResult,
+			data: updateResult || null,
 		};
 	}
 
