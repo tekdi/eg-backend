@@ -5,7 +5,10 @@ import jwt_decode from 'jwt-decode';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
-import { HasuraService, HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import {
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
+} from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 @Injectable()
 export class FacilitatorService {
@@ -899,6 +902,7 @@ export class FacilitatorService {
 
 	async update(id: number, body: any, response: any) {
 		const { data: facilitatorUser } = await this.userById(id);
+		const mobile_no = body.mobile
 		switch (body.page_type) {
 			case 'add_basic_details': {
 				await this.updateAddBasicDetails(id, body);
@@ -913,20 +917,34 @@ export class FacilitatorService {
 				break;
 			}
 			case 'contact_details': {
-				let isMobileExist = await this.hasuraService.findAll('users', {
-					mobile: body?.mobile,
-				});
-				let userExist = isMobileExist?.data?.users;
-				const isDuplicateMobile = userExist.some(
-					(data) => data.id !== id,
-				);
-				if (userExist.length > 0 && isDuplicateMobile) {
+				
+				let qury = `query MyQuery1 {
+					users(where: {id: {_neq: ${id}}, mobile: {_eq:${mobile_no}}, program_faciltators: {id: {_is_null: false}}}) {
+					  id
+					  mobile
+					  first_name
+					  last_name
+					  program_beneficiaries {
+						facilitator_id
+						status
+					  }
+					  program_faciltators {
+						status
+					  }
+					}
+				  }
+				  `
+				  const data = { query: qury };
+				  const resp = await this.hasuraServiceFromServices.getData(data);
+				  const newQdata = resp?.data;
+				  if(newQdata.users.length > 0){
 					return response.status(422).send({
-						success: false,
-						message: 'Mobile Number Already Exist',
-						data: {},
-					});
-				}
+								success: false,
+								message: 'Mobile Number Already Exist',
+								data: {},
+							});
+				  }
+
 				await this.updateContactDetails(id, body, facilitatorUser);
 				break;
 			}
@@ -1700,5 +1718,285 @@ export class FacilitatorService {
 			message: 'User data fetched successfully.',
 			data: userData,
 		};
+	}
+
+	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
+		const user = await this.userService.ipUserInfo(req);
+		 if (!user?.data?.id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+	
+		const sortType = body?.sortType ? body?.sortType : 'desc'
+	
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let filterQueryArray = [];
+
+		
+
+		filterQueryArray.push(
+			`{program_faciltators:{parent_ip:{_eq:"${user.data.program_users[0].organisation_id}"}}}`,
+		);
+
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`{_and: [
+				{first_name: { _ilike: "%${first_name}%" } } 
+				{ last_name: { _ilike: "%${last_name}%" } } 
+				 ]} `);
+			} else {
+				filterQueryArray.push(`{ first_name: { _ilike: "%${first_name}%" } }`);
+			}
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+			);
+		}
+
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				` {id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}`,
+			);
+		}
+
+		const status = this.enumService
+			.getEnumValue('BENEFICIARY_STATUS')
+			.data.map((item) => item.value);
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+		let variables = {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
+		users_aggregate(where: ${filterQuery}) {
+				aggregate {
+					count
+				  }
+			}
+		users(limit: $limit,
+			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
+		  
+			first_name
+			last_name
+			middle_name
+			id
+			program_faciltators{
+				learner_total_count:beneficiaries_aggregate {
+					aggregate {
+					  count
+					}
+				  },
+				  identified:beneficiaries_aggregate(
+					where: {
+						user: {id: {_is_null: false}},
+						_or: [
+							{status: {_nin: ${JSON.stringify(
+								status.filter((item) => item != 'identified'),
+							)}}},
+							{ status: { _is_null: true } }
+					 ]
+					}
+				)
+				{
+					aggregate {
+					  count
+					}
+				} ,
+				${status
+					.filter((item) => item != 'identified')
+					.map(
+						(item) => `${
+							!isNaN(Number(item[0])) ? '_' + item : item
+						}:beneficiaries_aggregate(where: {
+				_and: [
+				  {
+				  status: {_eq: "${item}"}
+				},
+					{ user:	{ id: { _is_null: false } } }
+				
+										 ]
+		    	}
+			) 
+			{
+				aggregate {
+				  count
+				}
+			} 
+			`,
+		 
+			)}
+			}
+		}
+	  }
+	  `;
+	 
+		const data = { query: qury, variables: variables };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data;
+	
+		if(newQdata?.users.length>0){
+			const res = newQdata.users.map((facilitator) => {
+				const benefeciaryData = facilitator.program_faciltators.map((benefeciary) => {
+				  const statusCount = status.map((statusKey) => ({
+					status: statusKey,
+					count: benefeciary[statusKey]?.aggregate?.count || 0,
+				  }));
+			  
+				  return {
+					first_name: facilitator.first_name,
+					last_name: facilitator.last_name,
+					id: facilitator.id,
+					learner_total_count: benefeciary.learner_total_count.aggregate.count,
+					status_count: statusCount,
+				  };
+				});
+			  
+				return benefeciaryData;
+			  });
+			  
+					 
+			const count = newQdata.users_aggregate.aggregate.count;
+			const totalPages = Math.ceil(count / limit);
+			const flattenedRes = res.flat();
+	
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: flattenedRes,
+					totalCount: count,
+					totalPages: totalPages,
+				},
+			});
+		} else{
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+				},
+			});
+		}
+		
+	}
+
+	public async getLearnerListByPrerakId(
+		req: any,
+		id: any,
+		body: any,
+		resp: any,
+	) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+	
+		const program_id = body?.program_id || 1;
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let variables = {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
+			  aggregate {
+				count
+			  }
+			}
+			users(limit: $limit,
+				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  mobile
+			  aadhar_no
+			  address
+              address_line_1
+              address_line_2
+			  program_beneficiaries{
+				id
+				program_id
+				status
+				enrollment_dob
+				enrollment_date
+				enrollment_first_name
+				enrollment_last_name
+			  }
+			}
+		  }`;
+
+		const data = { query: qury, variables: variables };
+
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const newQdata = response?.data;
+		
+		if (newQdata.users.length > 0) {
+			const res = newQdata.users.map((user) => ({
+			
+					learner_first_name: user.first_name,
+					learner_last_name: user.last_name,
+					learner_id:user.id,
+					mobile_no:user.mobile,
+					dob:user.dob,
+					address:user.address,
+					address_line_1:user.address_line_1,
+					address_line_2: user.address_line_2,
+					status: user.program_beneficiaries[0].status ?? 'identified',
+                    enrollment_date:user.program_beneficiaries[0].enrollment_date,
+				}));
+			
+			const count = newQdata.users_aggregate.aggregate.count
+			
+			const totalPages = Math.ceil(count / limit);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: res,
+					totalCount: count,
+					totalPages: totalPages,
+				},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+					},
+			});
+		}
 	}
 }

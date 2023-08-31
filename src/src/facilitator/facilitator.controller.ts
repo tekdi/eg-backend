@@ -119,5 +119,36 @@ export class FacilitatorController {
 		@Res() response: any,
 	) {
 		return this.facilitatorService.exportFileToCsv(request, body, response);
+ 	}
+
+	@Post('/admin/learner-status-distribution')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	async getLearnerStatusDistribution(
+		@Req() req: any,
+		@Body() body: FilterFacilitatorDto,
+		@Res() response: any,
+	) {
+		return this.facilitatorService.getLearnerStatusDistribution(
+			req,
+			body,
+			response,
+		);
+	}
+
+	@Get('/admin/prerak-learner-list/:id')
+	@UsePipes(ValidationPipe)
+	async getLearnerListByPrerakId(
+		@Req() req: any,
+		@Body() body: FilterFacilitatorDto,
+		@Param('id') id: string,
+		@Res() response: any,
+	) {
+		return this.facilitatorService.getLearnerListByPrerakId(
+			req,
+			id,
+			body,
+			response,
+		);
 	}
 }
