@@ -1375,6 +1375,124 @@ export class FacilitatorService {
 		return response;
 	}
 
+	async getFilter_By_Beneficiaries(body: any) {
+		const { district, block, status, search } = body;
+
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
+		let variables = { limit: limit, offset: offset };
+		let split = search.split(' ');
+		let searchQuery = '';
+		if (search.trim()) {
+			if (split.length <= 1) {
+				searchQuery = `
+					{
+						_or: [
+							{ first_name: { _ilike: "%${search}%" } },
+							{ last_name: { _ilike: "%${search}%" } },
+						]
+					}
+				`;
+			} else if (split.length <= 2) {
+				const firstWord = split[0];
+				const lastWord = split[1];
+				searchQuery = `
+					{
+						_or: [
+							{
+								_and: [
+									{ first_name: { _ilike: "%${firstWord}%" } },
+									{ last_name: { _ilike: "%${lastWord}%" } },
+								],
+							},
+							{
+								_and: [
+									{ first_name: { _ilike: "%${lastWord}%" } },
+									{ last_name: { _ilike: "%${firstWord}%" } },
+								]
+							}
+						]
+					}
+				`;
+			}
+		}
+
+		const data = {
+			query: `query MyQuery1($limit:Int,$offset:Int) {
+				users_aggregate(limit:$limit,offset:$offset,where: {
+					_and:[
+						{
+							program_faciltators: {
+								beneficiaries: {
+									user: {
+										district: {_in: ${JSON.stringify(district)}},
+										block: {_in: ${JSON.stringify(block)}}
+									},
+									status: {_eq: "${status}"}
+								}
+							}
+						},
+						${searchQuery}
+					]
+				}) {
+					aggregate {
+					  count
+					}
+				  }
+				users(where: {
+					_and:[
+						{
+							program_faciltators: {
+								beneficiaries: {
+									user: {
+										district: {_in: ${JSON.stringify(district)}},
+										block: {_in: ${JSON.stringify(block)}}
+									},
+									status: {_eq: "${status}"}
+								}
+							}
+						},
+						${searchQuery}
+					]
+				}) {
+				  id
+				  first_name
+				  middle_name
+				  last_name
+				}
+			  }`,
+			variables: variables,
+		};
+
+		const response = {
+			success: false,
+			users: [],
+			message: '',
+			count: '',
+		};
+
+		try {
+			let users = (await this.hasuraService.getData(data)).data;
+			let count = users.users_aggregate.aggregate.count;
+			let user_response = users.users;
+
+			if (!users) {
+				response.message = 'Hasura error';
+			}
+
+			response.success = true;
+			response.count = count;
+			response.users = user_response;
+			response.message = 'success';
+
+			return response;
+		} catch (error) {
+			response.message = 'Hasura error';
+		}
+	}
+
 	async getFacilitators(req: any, body: any, resp: any) {
 		const user: any = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
