@@ -59,6 +59,7 @@ export class BeneficiariesService {
 		'enrollment_verification_status',
 		'subjects',
 		'is_eligible',
+		'original_facilitator_id',
 	];
 
 	async getBeneficiariesDuplicatesByAadhaar(
@@ -2893,6 +2894,7 @@ export class BeneficiariesService {
             beneficiaries_found_at
             created_by
             facilitator_id
+			original_facilitator_id
             id
             status
             reason_for_status_update
@@ -3124,5 +3126,126 @@ export class BeneficiariesService {
 				[2],
 			),
 		};
+	}
+
+	public async verifyEntity(
+		entityId: number,
+		role: string,
+		ipId: number,
+		programId?: number,
+	) {
+		if (!programId) programId = 1;
+
+		const ipUser = (await this.userService.userById(ipId)).data;
+
+		let dynamicRoleBasedQuery;
+		if (role === 'beneficiary') {
+			dynamicRoleBasedQuery = `
+				{
+					program_beneficiaries: {
+						program_id: {_eq: "${programId}"},
+						facilitator_user: {
+							program_faciltators: { parent_ip: { _eq: "${ipUser.program_users[0].organisation_id}" } }
+						}
+					}
+				}
+			`;
+		} else if (role === 'facilitator') {
+			dynamicRoleBasedQuery = `
+				{
+					program_faciltators: {
+						program_id: { _eq: "${programId}" },
+						parent_ip: { _eq: "${ipUser.program_users[0].organisation_id}" }
+					}
+				}
+			`;
+		}
+
+		const data = {
+			query: `query MyQuery {
+				users (
+					where: {
+						_and: [
+							{ id: { _eq: ${entityId} } },
+							${dynamicRoleBasedQuery}
+						]
+					}
+				) {
+					id
+					program_beneficiaries {
+						id
+						facilitator_id
+						original_facilitator_id
+					}
+					program_faciltators {
+						id
+					}
+				}
+			}`,
+		};
+
+		const hasuraResult = (
+			await this.hasuraServiceFromServices.getData(data)
+		)?.data.users;
+
+		const result = {
+			success: false,
+			message: '',
+			isVerified: false,
+			data: null,
+		};
+
+		if (!hasuraResult) {
+			result.success = false;
+			result.message = 'Hasura error';
+			return result;
+		}
+
+		if (hasuraResult.length) {
+			result.success = true;
+			result.isVerified = true;
+			result.data = hasuraResult[0];
+		}
+
+		return result;
+	}
+
+	public async reassignBeneficiary(
+		beneficiaryId: number,
+		newFacilitatorId: number,
+	) {
+		const beneficiaryDetails = (await this.userById(beneficiaryId)).data;
+
+		const updatePayload: any = {
+			facilitator_id: newFacilitatorId,
+		};
+
+		if (!beneficiaryDetails.program_beneficiaries.original_facilitator_id) {
+			updatePayload.original_facilitator_id =
+				beneficiaryDetails.program_beneficiaries.facilitator_id;
+		}
+
+		const updateResult = (
+			await this.hasuraService.update(
+				beneficiaryDetails.program_beneficiaries.id,
+				'program_beneficiaries',
+				updatePayload,
+				this.returnFields,
+				[...this.returnFields, 'id'],
+			)
+		).program_beneficiaries;
+
+		const response = {
+			success: false,
+			data: null,
+			message: '',
+		};
+
+		if (updateResult) {
+			response.success = true;
+			response.data = updateResult;
+		}
+
+		return response;
 	}
 }
