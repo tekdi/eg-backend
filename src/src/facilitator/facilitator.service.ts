@@ -1360,15 +1360,18 @@ export class FacilitatorService {
 		return response;
 	}
 
-	async getFilter_By_Beneficiaries(
-		district: string[],
-		block: string[],
-		status: string,
-		search: string,
-	) {
+	async getFilter_By_Beneficiaries(body: any) {
+		const { district, block, status, search } = body;
+
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
+		let variables = { limit: limit, offset: offset };
+		let split = search.split(' ');
 		let searchQuery = '';
 		if (search.trim()) {
-			if (search.split(' ').length <= 1) {
+			if (split.length <= 1) {
 				searchQuery = `
 					{
 						_or: [
@@ -1377,9 +1380,9 @@ export class FacilitatorService {
 						]
 					}
 				`;
-			} else if (search.split(' ').length <= 2) {
-				const firstWord = search.split(' ')[0];
-				const lastWord = search.split(' ')[1];
+			} else if (split.length <= 2) {
+				const firstWord = split[0];
+				const lastWord = split[1];
 				searchQuery = `
 					{
 						_or: [
@@ -1402,7 +1405,27 @@ export class FacilitatorService {
 		}
 
 		const data = {
-			query: `query MyQuery1 {
+			query: `query MyQuery1($limit:Int,$offset:Int) {
+				users_aggregate(limit:$limit,offset:$offset,where: {
+					_and:[
+						{
+							program_faciltators: {
+								beneficiaries: {
+									user: {
+										district: {_in: ${JSON.stringify(district)}},
+										block: {_in: ${JSON.stringify(block)}}
+									},
+									status: {_eq: "${status}"}
+								}
+							}
+						},
+						${searchQuery}
+					]
+				}) {
+					aggregate {
+					  count
+					}
+				  }
 				users(where: {
 					_and:[
 						{
@@ -1425,26 +1448,34 @@ export class FacilitatorService {
 				  last_name
 				}
 			  }`,
+			variables: variables,
 		};
 
 		const response = {
 			success: false,
-			users: null,
+			users: [],
 			message: '',
+			count: '',
 		};
-		let users;
+
 		try {
-			users = (await this.hasuraService.getData(data)).data?.users;
+			let users = (await this.hasuraService.getData(data)).data;
+			let count = users.users_aggregate.aggregate.count;
+			let user_response = users.users;
+
 			if (!users) {
 				response.message = 'Hasura error';
 			}
+
+			response.success = true;
+			response.count = count;
+			response.users = user_response;
+			response.message = 'success';
+
+			return response;
 		} catch (error) {
 			response.message = 'Hasura error';
 		}
-
-		response.success = true;
-		response.users = users;
-		return response;
 	}
 
 	async getFacilitators(req: any, body: any, resp: any) {
