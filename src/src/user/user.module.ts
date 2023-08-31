@@ -6,8 +6,14 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { AuthMiddleware } from '../common/middlewares/authmiddleware';
+import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 @Module({
-	imports: [HelperModule, HasuraModule, HasuraModuleFromServices],
+	imports: [
+		HelperModule,
+		HasuraModule,
+		HasuraModuleFromServices,
+		KeycloakModule,
+	],
 	providers: [UserService, AuthMiddleware],
 	controllers: [UserController],
 	exports: [UserService],

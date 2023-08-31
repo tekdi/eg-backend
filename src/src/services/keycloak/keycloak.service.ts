@@ -250,4 +250,27 @@ export class KeycloakService {
 		}
 		return registerUserRes;
 	}
+
+	public async findUserByKeycloakId(keycloak_id) {
+		const token = await this.getAdminKeycloakToken();
+		const url = `${this.keycloak_url}/admin/realms/${this.realm_name_app}/users/${keycloak_id}`;
+		const config: AxiosRequestConfig = {
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token?.access_token}`,
+			},
+		};
+
+		let registerUserRes: any;
+		try {
+			const observable = this.httpService.get(url, config);
+			const promise = observable.toPromise();
+			const response = await promise;
+			return response.data;
+		} catch (err) {
+			console.log('findUser err', err);
+			registerUserRes = { error: err };
+		}
+		return registerUserRes;
+	}
 }

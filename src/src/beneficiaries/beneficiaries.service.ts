@@ -1508,8 +1508,8 @@ export class BeneficiariesService {
 		);
 
 		return {
-			success: updateResult ? true : false,
-			data: updateResult,
+			success: !!updateResult,
+			data: updateResult || null,
 		};
 	}
 
@@ -1939,7 +1939,11 @@ export class BeneficiariesService {
 						aadhar_no: aadhaar_no,
 					});
 
-				if (hasuraResponse.data?.users?.some(user => user.program_faciltators[0]?.id)) {
+				if (
+					hasuraResponse.data?.users?.some(
+						(user) => user.program_faciltators[0]?.id,
+					)
+				) {
 					return response.status(400).json({
 						success: false,
 						message: 'Sorry! You can not add this Aadhaar number!',

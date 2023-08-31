@@ -1,8 +1,4 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UserModule } from 'src/user/user.module';
 import { BeneficiariesController } from './beneficiaries.controller';
 
@@ -25,7 +21,7 @@ import { BeneficiariesService } from './beneficiaries.service';
 		KeycloakModule,
 		HasuraModuleFromServices,
 		S3Module,
-		EnumModule
+		EnumModule,
 	],
 	controllers: [BeneficiariesController],
 	providers: [BeneficiariesService],
