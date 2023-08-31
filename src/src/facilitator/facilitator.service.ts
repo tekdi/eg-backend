@@ -1919,6 +1919,7 @@ export class FacilitatorService {
 			middle_name
 			id
 			program_faciltators{
+				status
 				learner_total_count:beneficiaries_aggregate {
 					aggregate {
 					  count
@@ -1984,6 +1985,7 @@ export class FacilitatorService {
 					first_name: facilitator.first_name,
 					last_name: facilitator.last_name,
 					id: facilitator.id,
+					status:benefeciary.status,
 					learner_total_count: benefeciary.learner_total_count.aggregate.count,
 					status_count: statusCount,
 				  };
@@ -1994,7 +1996,7 @@ export class FacilitatorService {
 			  
 					 
 			const count = newQdata.users_aggregate.aggregate.count;
-			const totalPages = Math.ceil(count / limit);
+			const totalPages = Math.ceil(count/limit);
 			const flattenedRes = res.flat();
 	
 			return resp.status(200).json({
@@ -2004,6 +2006,8 @@ export class FacilitatorService {
 					data: flattenedRes,
 					totalCount: count,
 					totalPages: totalPages,
+					currentPage: offset / limit + 1,
+					limit:limit
 				},
 			});
 		} else{
@@ -2014,6 +2018,8 @@ export class FacilitatorService {
 					data: [],
 					totalCount: 0,
 					totalPages: 0,
+					currentPage: offset / limit + 1,
+					limit:limit
 				},
 			});
 		}
@@ -2036,7 +2042,7 @@ export class FacilitatorService {
 	
 		const program_id = body?.program_id || 1;
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let variables = {
 			limit: limit,
@@ -2059,6 +2065,8 @@ export class FacilitatorService {
 			  address
               address_line_1
               address_line_2
+			  district
+			  block
 			  program_beneficiaries{
 				id
 				program_id
@@ -2078,19 +2086,7 @@ export class FacilitatorService {
 		const newQdata = response?.data;
 		
 		if (newQdata.users.length > 0) {
-			const res = newQdata.users.map((user) => ({
-			
-					learner_first_name: user.first_name,
-					learner_last_name: user.last_name,
-					learner_id:user.id,
-					mobile_no:user.mobile,
-					dob:user.dob,
-					address:user.address,
-					address_line_1:user.address_line_1,
-					address_line_2: user.address_line_2,
-					status: user.program_beneficiaries[0].status ?? 'identified',
-                    enrollment_date:user.program_beneficiaries[0].enrollment_date,
-				}));
+			const res = newQdata.users
 			
 			const count = newQdata.users_aggregate.aggregate.count
 			
@@ -2103,6 +2099,8 @@ export class FacilitatorService {
 					data: res,
 					totalCount: count,
 					totalPages: totalPages,
+					currentPage: offset / limit + 1,
+					limit:limit
 				},
 			});
 		} else {
@@ -2113,6 +2111,8 @@ export class FacilitatorService {
 					data: [],
 					totalCount: 0,
 					totalPages: 0,
+					currentPage: offset / limit + 1,
+					limit:limit
 					},
 			});
 		}
