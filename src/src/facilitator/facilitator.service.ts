@@ -1722,8 +1722,7 @@ export class FacilitatorService {
 
 	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-		console.log("user-->>",user.data.id)
-		if (!user?.data?.id) {
+		 if (!user?.data?.id) {
 			return resp.status(401).json({
 				success: false,
 				message: 'Unauthenticated User!',
@@ -1740,7 +1739,7 @@ export class FacilitatorService {
 		
 
 		filterQueryArray.push(
-			`{program_faciltators:{parent_ip:{_eq:${user.data.id}}}}`,
+			`{program_faciltators:{parent_ip:{_eq:"${user.data.program_users[0].organisation_id}"}}}`,
 		);
 
 		if (body.search && body.search !== '') {
@@ -1933,7 +1932,7 @@ export class FacilitatorService {
 			  }
 			}
 			users(limit: $limit,
-				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq:2}, program_id:{_eq:1}}}) {
+				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
 			  id
 			  first_name
 			  last_name
