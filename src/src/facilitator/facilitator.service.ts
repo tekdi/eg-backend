@@ -1772,7 +1772,7 @@ export class FacilitatorService {
 			filterQueryArray.push(
 				` {id:{_in: ${JSON.stringify(
 					body.facilitator,
-				)}}}}`,
+				)}}}`,
 			);
 		}
 
