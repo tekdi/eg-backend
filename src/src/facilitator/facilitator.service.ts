@@ -5,7 +5,10 @@ import jwt_decode from 'jwt-decode';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
-import { HasuraService, HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import {
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
+} from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 @Injectable()
 export class FacilitatorService {
@@ -1335,6 +1338,93 @@ export class FacilitatorService {
 					middle_name
 				}
 			}`,
+		};
+
+		const response = {
+			success: false,
+			users: null,
+			message: '',
+		};
+		let users;
+		try {
+			users = (await this.hasuraService.getData(data)).data?.users;
+			if (!users) {
+				response.message = 'Hasura error';
+			}
+		} catch (error) {
+			response.message = 'Hasura error';
+		}
+
+		response.success = true;
+		response.users = users;
+		return response;
+	}
+
+	async getFilter_By_Beneficiaries(
+		district: string[],
+		block: string[],
+		status: string,
+		search: string,
+	) {
+		let searchQuery = '';
+		if (search.trim()) {
+			if (search.split(' ').length <= 1) {
+				searchQuery = `
+					{
+						_or: [
+							{ first_name: { _ilike: "%${search}%" } },
+							{ last_name: { _ilike: "%${search}%" } },
+						]
+					}
+				`;
+			} else if (search.split(' ').length <= 2) {
+				const firstWord = search.split(' ')[0];
+				const lastWord = search.split(' ')[1];
+				searchQuery = `
+					{
+						_or: [
+							{
+								_and: [
+									{ first_name: { _ilike: "%${firstWord}%" } },
+									{ last_name: { _ilike: "%${lastWord}%" } },
+								],
+							},
+							{
+								_and: [
+									{ first_name: { _ilike: "%${lastWord}%" } },
+									{ last_name: { _ilike: "%${firstWord}%" } },
+								]
+							}
+						]
+					}
+				`;
+			}
+		}
+
+		const data = {
+			query: `query MyQuery1 {
+				users(where: {
+					_and:[
+						{
+							program_faciltators: {
+								beneficiaries: {
+									user: {
+										district: {_in: ${JSON.stringify(district)}},
+										block: {_in: ${JSON.stringify(block)}}
+									},
+									status: {_eq: "${status}"}
+								}
+							}
+						},
+						${searchQuery}
+					]
+				}) {
+				  id
+				  first_name
+				  middle_name
+				  last_name
+				}
+			  }`,
 		};
 
 		const response = {
