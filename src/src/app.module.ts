@@ -20,6 +20,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { CommentsModule } from './comments/comments.module';
+import { CaslModule } from './casl/casl.module';
 
 @Module({
 	imports: [
@@ -46,6 +47,7 @@ import { CommentsModule } from './comments/comments.module';
 		UploadFileModule,
 		UserModule,
 		CommentsModule,
+		CaslModule,
 	],
 	controllers: [],
 	providers: [],

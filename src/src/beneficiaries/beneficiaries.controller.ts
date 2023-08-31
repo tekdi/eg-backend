@@ -21,27 +21,25 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { BeneficiariesService } from './beneficiaries.service';
 import { RegisterBeneficiaryDto } from './dto/register-beneficiary.dto';
 import { StatusUpdateDTO } from './dto/status-update.dto';
+import { PoliciesGuard } from 'src/casl/guards/policiesGuard.guard';
+import { CheckPolicies } from 'src/casl/types/policyHandler.type';
+import {
+	ReadAllBeneficiariesPolicyHandler,
+	ReadOneBeneficiaryPolicyHandler,
+} from './policyHandlers/policyHandlers';
+import { RoleGuard } from 'src/common/guards/role.guard';
+import Role from 'src/casl/enums/roles';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('beneficiaries')
 export class BeneficiariesController {
 	constructor(private beneficiariesService: BeneficiariesService) {}
 
-	// @Get('/list')
-	// public async getAgList(
-	//   @Body() request: Record<string, any>,
-	//   @Req() req:any
-	// ) {
-	//    return this.beneficiariesService.getAgList(request,req);
-	// }
-
-	// @Post('/create')
-	// create(@Body() createEventDto: CreateEventDto) {
-	//   return this.beneficiariesService.create(createEventDto);
-	// }
-
 	@Post()
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard([Role.Facilitator]))
+	@UseGuards(PoliciesGuard)
+	@CheckPolicies(new ReadAllBeneficiariesPolicyHandler())
 	findAll(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -52,6 +50,9 @@ export class BeneficiariesController {
 
 	@Post('/admin/list/duplicates-by-aadhaar')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard([Role.ImplementationPartner, Role.ProgramOwner]))
+	@UseGuards(PoliciesGuard)
+	@CheckPolicies(new ReadAllBeneficiariesPolicyHandler())
 	async getBeneficiariesDuplicatesByAadhaar(
 		@Body() body: Record<string, any>,
 		@Query() query: any,
@@ -206,6 +207,8 @@ export class BeneficiariesController {
 
 	@Get(':id')
 	@UseGuards(new AuthGuard())
+	@UseGuards(PoliciesGuard)
+	@CheckPolicies(new ReadOneBeneficiaryPolicyHandler())
 	findOne(@Param('id') id: string, @Res() response: Response) {
 		return this.beneficiariesService.findOne(+id, response);
 	}
