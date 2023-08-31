@@ -133,7 +133,10 @@ export class HasuraService {
 			  aadhar_no
 			  program_beneficiaries{
 				facilitator_id
-			 }
+			  }
+			  program_faciltators {
+				id
+			  }
 			}}`,
 		};
 

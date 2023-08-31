@@ -85,6 +85,15 @@
 			"value": "ready_to_enroll"
 		},
 		{ "title": "BENEFICIARY_STATUS_ENROLLED", "value": "enrolled" },
+		{ "title": "BENEFICIARY_STATUS_NOT_ENROLLED", "value": "not_enrolled" },
+		{
+			"title": "BENEFICIARY_STATUS_ENROLLMENT_AWAITED",
+			"value": "enrollment_awaited"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_ENROLLMENT_REJECTED",
+			"value": "enrollment_rejected"
+		},
 		{
 			"title": "BENEFICIARY_STATUS_ENROLLED_IP_VERIFIED",
 			"value": "enrolled_ip_verified"
@@ -138,8 +147,26 @@
 	"ENROLLEMENT_STATUS": [
 		{ "title": "ENROLLED", "value": "enrolled" },
 		{ "title": "NOT_ENROLLED", "value": "not_enrolled" },
-		{ "title": "APPLIED_BUT_PENDING", "value": "applied_but_pending" },
+		{ "title": "ENROLLMENT_AWAITED", "value": "enrollment_awaited" },
 		{ "title": "ENROLLMENT_REJECTED", "value": "enrollment_rejected" }
+	],
+	"ENROLLEMENT_VERIFICATION_STATUS": [
+		{
+			"title": "ENROLLEMENT_VERIFICATION_STATUS_PENDING",
+			"value": "pending"
+		},
+		{
+			"title": "ENROLLEMENT_VERIFICATION_STATUS_REVERIFICATION_REQUIRED",
+			"value": "reverification_required"
+		},
+		{
+			"title": "ENROLLEMENT_VERIFICATION_STATUS_CHANGE_REQUIRED",
+			"value": "change_required"
+		},
+		{
+			"title": "ENROLLEMENT_VERIFICATION_STATUS_VERIFIED",
+			"value": "verified"
+		}
 	],
 	"ENROLLED_FOR_BOARD": [
 		{ "title": "RSOS", "value": "rsos" },

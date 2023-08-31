@@ -287,4 +287,35 @@ export class BeneficiariesController {
 			response,
 		);
 	}
+
+	@Post('admin/verify-enrollment')
+	@UseGuards(new AuthGuard())
+	async verifyEnrollment(
+		@Body() body: any,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		let result;
+
+		const payload = {
+			user_id: body.user_id,
+			enrollment_verification_status: body.enrollment_verification_status,
+			enrollment_verification_reason:
+				body.enrollment_verification_reason 
+					? JSON.stringify(
+							body.enrollment_verification_reason,
+					  ).replace(/"/g, '\\"')
+					: '',
+		};
+		result = await this.beneficiariesService.setEnrollmentStatus(
+			payload,
+			request,
+		);
+
+		return response.status(result.status).json({
+			success: result.success,
+			message: result.message,
+			data: result.data,
+		});
+	}
 }
