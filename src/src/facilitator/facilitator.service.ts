@@ -1770,7 +1770,7 @@ export class FacilitatorService {
 
 		if (body.facilitator && body.facilitator.length > 0) {
 			filterQueryArray.push(
-				`{program_facilitators: {user_id:{_in: ${JSON.stringify(
+				` {id:{_in: ${JSON.stringify(
 					body.facilitator,
 				)}}}}`,
 			);
@@ -1974,7 +1974,7 @@ export class FacilitatorService {
                     enrollment_date:user.program_beneficiaries[0].enrollment_date,
 				}));
 			
-			const count = res.length;
+			const count = newQdata.users_aggregate.aggregate.count
 			
 			const totalPages = Math.ceil(count / limit);
 
