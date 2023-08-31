@@ -1801,6 +1801,7 @@ export class FacilitatorService {
 			middle_name
 			id
 			program_faciltators{
+				status
 				learner_total_count:beneficiaries_aggregate {
 					aggregate {
 					  count
@@ -1866,6 +1867,7 @@ export class FacilitatorService {
 					first_name: facilitator.first_name,
 					last_name: facilitator.last_name,
 					id: facilitator.id,
+					status:benefeciary.status,
 					learner_total_count: benefeciary.learner_total_count.aggregate.count,
 					status_count: statusCount,
 				  };
@@ -1898,6 +1900,8 @@ export class FacilitatorService {
 					data: [],
 					totalCount: 0,
 					totalPages: 0,
+					currentPage: offset / limit + 1,
+					limit:limit
 				},
 			});
 		}
