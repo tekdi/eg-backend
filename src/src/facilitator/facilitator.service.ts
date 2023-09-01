@@ -2090,8 +2090,7 @@ export class FacilitatorService {
 			
 			const res = newQdata.users.map(item => ({
 				...item,
-				...item.program_beneficiaries[0],
-				program_beneficiaries: undefined // Remove the program_beneficiaries property
+				program_beneficiaries: item.program_beneficiaries[0] // Remove the program_beneficiaries property
 			}));
 			
 			const count = newQdata.users_aggregate.aggregate.count
