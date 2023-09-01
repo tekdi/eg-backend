@@ -6,6 +6,7 @@ import {
 	Param,
 	Patch,
 	Post,
+	Query,
 	Req,
 	Res,
 	UseGuards,
@@ -158,12 +159,13 @@ export class FacilitatorController {
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
 		@Param('id') id: string,
+		@Query() query: any,
 		@Res() response: any,
 	) {
 		return this.facilitatorService.getLearnerListByPrerakId(
 			req,
 			id,
-			body,
+			query,
 			response,
 		);
 	}

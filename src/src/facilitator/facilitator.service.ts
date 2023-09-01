@@ -2029,7 +2029,7 @@ export class FacilitatorService {
 	public async getLearnerListByPrerakId(
 		req: any,
 		id: any,
-		body: any,
+	    query:any,
 		resp: any,
 	) {
 		const user = await this.userService.ipUserInfo(req);
@@ -2040,9 +2040,9 @@ export class FacilitatorService {
 			});
 		}
 	
-		const program_id = body?.program_id || 1;
-		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+		const program_id = query.program_id || 1;
+		const page = isNaN(query.page) ? 1 : parseInt(query.page);
+		const limit = isNaN(query.limit) ? 10 : parseInt(query.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let variables = {
 			limit: limit,
@@ -2084,9 +2084,15 @@ export class FacilitatorService {
 		const response = await this.hasuraServiceFromServices.getData(data);
 
 		const newQdata = response?.data;
+
 		
 		if (newQdata.users.length > 0) {
-			const res = newQdata.users
+			
+			const res = newQdata.users.map(item => ({
+				...item,
+				...item.program_beneficiaries[0],
+				program_beneficiaries: undefined // Remove the program_beneficiaries property
+			}));
 			
 			const count = newQdata.users_aggregate.aggregate.count
 			
