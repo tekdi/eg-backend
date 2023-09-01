@@ -2122,4 +2122,62 @@ export class FacilitatorService {
 			});
 		}
 	}
+	
+	public async updatePrerakAadhar(id: any,req:any,body: any,response:any) {
+		const user = await this.userService.ipUserInfo(req);
+		 if (!user?.data?.id) {
+			return response.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+		let facilitator_id = id
+		let aadhaar_no = body?.aadhar_no
+		const query = `query MyQuery {
+				users_aggregate(where: {id: {_neq: ${facilitator_id}}, aadhar_no: {_eq:"${aadhaar_no}"},program_faciltators: {id: {_is_null: false}, parent_ip: {_eq:"${user?.data?.program_users[0]?.organisation_id}"}}}){
+				aggregate {
+					count
+				  }
+			}
+		  }`
+
+		  const data = { query: query };
+		const hashura_response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = hashura_response.data
+	    if(newQdata.users_aggregate.aggregate.count > 0){
+		return response.json({
+			status: 400,
+			success: false,
+			message: 'You have already added this Aadhaar number!',
+			data: []
+		}) 
+		}
+
+
+		const userArr = ['aadhar_no'];
+		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+		if (keyExist.length) {
+			const tableName = 'users';
+			body.id = id;
+		 const res = await this.hasuraService.q(tableName,body, userArr, true,["id","aadhar_no"]);
+		 return response.json({
+			status: 200,
+			success: true,
+			message: 'Data updated successfully!',
+			data:{
+				data:[res]
+			}
+		 })
+		}
+		return response.json({
+
+			status: 400,
+			success: true,
+			message: 'Provide valid aadhar number!',
+			data:[]
+			
+		}) 
+		
+	}
+
 }
