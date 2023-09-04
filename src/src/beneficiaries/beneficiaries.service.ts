@@ -1428,24 +1428,6 @@ export class BeneficiariesService {
 				};
 			}
 		}
-
-		// result.program_beneficiaries =
-		// 	result?.program_beneficiaries?.[0] ?? {};
-		// //response mapping convert array to object
-		// for (const key of [
-		// 	'profile_photo_1',
-		// 	'profile_photo_2',
-		// 	'profile_photo_3',
-		// 	'aadhaar_front',
-		// 	'aadhaar_back',
-		// 	'program_users',
-		// ]) {
-		// 	if (result?.[key] && result?.[key][0]) {
-		// 		result[key] = result[key][0];
-		// 	} else {
-		// 		result = { ...result, [key]: {} };
-		// 	}
-		// }
 	}
 
 	update(id: number, req: any) {
@@ -2498,39 +2480,6 @@ export class BeneficiariesService {
 				);
 				break;
 			}
-
-			// case 'edit_other_details': {
-			// 	// Update other details in program_beneficiaries table
-			// 	let userArr =
-			// 		PAGE_WISE_UPDATE_TABLE_DETAILS.add_other_details
-			// 			.program_beneficiaries;
-			// 	const programDetails = beneficiaryUser.program_beneficiaries;
-			// 	let tableName = 'program_beneficiaries';
-
-			// 	req.learning_motivation = req.learning_motivation.length
-			// 		? JSON.stringify(req.learning_motivation).replace(
-			// 				/"/g,
-			// 				'\\"',
-			// 		  )
-			// 		: null;
-			// 	req.type_of_support_needed = req.type_of_support_needed.length
-			// 		? JSON.stringify(req.type_of_support_needed).replace(
-			// 				/"/g,
-			// 				'\\"',
-			// 		  )
-			// 		: null;
-
-			// 	await this.hasuraService.q(
-			// 		tableName,
-			// 		{
-			// 			...req,
-			// 			id: programDetails?.id ? programDetails.id : null,
-			// 		},
-			// 		userArr,
-			// 		update,
-			// 	);
-			// 	break;
-			// }
 
 			case 'edit_further_studies': {
 				// Update Core beneficiaries table data
