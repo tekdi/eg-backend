@@ -66,10 +66,12 @@ export class HasuraService {
 	public async executeRawSql(sql: string) {
 		try {
 			let url = this.configService.get<string>('HASURA_SQL_BASE_URL');
+
 			const DBName = this.configService.get<string>('HASURA_DB_NAME');
 			let admin_secret = this.configService.get<string>(
 				'HASURA_ADMIN_SECRET',
 			);
+
 			const data = {
 				type: 'run_sql',
 				args: {
@@ -94,7 +96,7 @@ export class HasuraService {
 	public getFormattedData(arr, excludeFieldsIndex?) {
 		excludeFieldsIndex = excludeFieldsIndex ?? [];
 		let result = [];
-		const columnNames = arr[0].filter(
+		const columnNames = arr[0]?.filter(
 			(name, index) => !excludeFieldsIndex.includes(index),
 		);
 		if (arr.length > 1) {
