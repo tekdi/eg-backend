@@ -3015,6 +3015,8 @@ export class BeneficiariesService {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
+				STRING_AGG(bu.district, ', ') AS "districts",
+				STRING_AGG(bu.block, ', ') AS "block",
 				COUNT(*) AS "count",
 				COUNT(*) OVER() AS "total_count"
 			FROM
@@ -3036,6 +3038,10 @@ export class BeneficiariesService {
 			AND
 				bu.aadhar_no IS NOT NULL
 			AND
+				bu.district IS NOT NULL
+			AND
+				bu.block IS NOT NULL
+			AND 
 				bu.is_deactivated IS NOT true
 			GROUP BY
 				bu.aadhar_no
@@ -3060,28 +3066,43 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
+
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		const count = duplicateListArr?.[1]?.[2];
-		const totalPages = Math.ceil(count / limit);
-		return {
-			success: true,
-			limit,
-			currentPage: skip / limit + 1,
-			totalPages,
-			count,
-			data: this.hasuraServiceFromServices.getFormattedData(
-				duplicateListArr,
-				[2],
-			),
-		};
+
+		if (duplicateListArr != undefined) {
+			const count = duplicateListArr?.[1]?.[2];
+			const totalPages = Math.ceil(count / limit);
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages,
+				count,
+				data: this.hasuraServiceFromServices.getFormattedData(
+					duplicateListArr,
+					[2],
+				),
+			};
+		} else {
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages: 0,
+				count: 0,
+				data: [],
+			};
+		}
 	}
 
 	public async getAllDuplicatesUnderPo(limit?: number, skip?: number) {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
+				STRING_AGG(bu.district, ', ') AS "districts",
+				STRING_AGG(bu.block, ', ') AS "block",
 				COUNT(*) AS "count",
 				COUNT(*) OVER() AS "total_count"
 			FROM
@@ -3101,6 +3122,10 @@ export class BeneficiariesService {
 			WHERE
 				bu.aadhar_no IS NOT NULL
 			AND
+				bu.district IS NOT NULL
+			AND
+				bu.block IS NOT NULL
+			AND
 				bu.is_deactivated IS NOT true
 			GROUP BY
 				bu.aadhar_no
@@ -3115,18 +3140,29 @@ export class BeneficiariesService {
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		const count = duplicateListArr?.[1]?.[2];
-		const totalPages = Math.ceil(count / limit);
-		return {
-			success: true,
-			limit,
-			currentPage: skip / limit + 1,
-			totalPages,
-			count,
-			data: this.hasuraServiceFromServices.getFormattedData(
-				duplicateListArr,
-				[2],
-			),
-		};
+		if (duplicateListArr != undefined) {
+			const count = duplicateListArr?.[1]?.[2];
+			const totalPages = Math.ceil(count / limit);
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages,
+				count,
+				data: this.hasuraServiceFromServices.getFormattedData(
+					duplicateListArr,
+					[2],
+				),
+			};
+		} else {
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages: 0,
+				count: 0,
+				data: [],
+			};
+		}
 	}
 }
