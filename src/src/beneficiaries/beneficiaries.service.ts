@@ -3070,19 +3070,18 @@ export class BeneficiariesService {
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-
 		if (duplicateListArr != undefined) {
-			const count = duplicateListArr?.[1]?.[2];
+			const count = duplicateListArr?.[1]?.[2].length;
 			const totalPages = Math.ceil(count / limit);
 			return {
 				success: true,
 				limit,
 				currentPage: skip / limit + 1,
-				totalPages,
+				totalPages: totalPages,
 				count,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					duplicateListArr,
-					[2],
+					[5],
 				),
 			};
 		} else {
@@ -3141,7 +3140,7 @@ export class BeneficiariesService {
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
 		if (duplicateListArr != undefined) {
-			const count = duplicateListArr?.[1]?.[2];
+			const count = duplicateListArr?.[1]?.[2].length;
 			const totalPages = Math.ceil(count / limit);
 			return {
 				success: true,
@@ -3151,7 +3150,7 @@ export class BeneficiariesService {
 				count,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					duplicateListArr,
-					[2],
+					[5],
 				),
 			};
 		} else {
