@@ -3015,8 +3015,8 @@ export class BeneficiariesService {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
-				STRING_AGG(bu.district, ', ') AS "districts",
-				STRING_AGG(bu.block, ', ') AS "block",
+				STRING_AGG(CASE WHEN bu.district IS NOT NULL THEN bu.district ELSE '-' END, ', ') AS "districts",
+				STRING_AGG(CASE WHEN bu.block IS NOT NULL THEN bu.block ELSE '-' END, ', ') AS "block",
 				COUNT(*) AS "count",
 				COUNT(*) OVER() AS "total_count"
 			FROM
@@ -3037,10 +3037,6 @@ export class BeneficiariesService {
 				pf.parent_ip = '${user?.program_users?.organisation_id}'
 			AND
 				bu.aadhar_no IS NOT NULL
-			AND
-				bu.district IS NOT NULL
-			AND
-				bu.block IS NOT NULL
 			AND 
 				bu.is_deactivated IS NOT true
 			GROUP BY
@@ -3100,8 +3096,8 @@ export class BeneficiariesService {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
-				STRING_AGG(bu.district, ', ') AS "districts",
-				STRING_AGG(bu.block, ', ') AS "block",
+				STRING_AGG(CASE WHEN bu.district IS NOT NULL THEN bu.district ELSE '-' END, ', ') AS "districts",
+				STRING_AGG(CASE WHEN bu.block IS NOT NULL THEN bu.block ELSE '-' END, ', ') AS "block",
 				COUNT(*) AS "count",
 				COUNT(*) OVER() AS "total_count"
 			FROM
@@ -3120,10 +3116,6 @@ export class BeneficiariesService {
 				fu.id = pf.user_id
 			WHERE
 				bu.aadhar_no IS NOT NULL
-			AND
-				bu.district IS NOT NULL
-			AND
-				bu.block IS NOT NULL
 			AND
 				bu.is_deactivated IS NOT true
 			GROUP BY
