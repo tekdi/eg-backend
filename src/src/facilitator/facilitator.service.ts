@@ -1190,6 +1190,11 @@ export class FacilitatorService {
 				filterQueryArray.push('{district: { _in: $district }}');
 				variables.district = body.district;
 			}
+			if (body.hasOwnProperty('block') && body.block.length) {
+				paramsQueryArray.push('$block: [String!]');
+				filterQueryArray.push('{block: { _in: $block }}');
+				variables.block = body.block;
+			}
 
 			filterQueryArray.unshift(
 				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
@@ -1204,6 +1209,7 @@ export class FacilitatorService {
 			const data = {
 				query: `query MyQuery ${paramsQuery}{
 					users(where:${filterQuery}, order_by: ${sortQuery}){
+						id
 						first_name
 						last_name
 						district
@@ -1233,6 +1239,7 @@ export class FacilitatorService {
 				  `,
 				variables: variables,
 			};
+
 			const hasuraResponse = await this.hasuraService.getData(data);
 			let allFacilitators = hasuraResponse?.data?.users;
 			// checking allFacilitators ,body.work_experience available or not and body.work_experience is valid string or not
@@ -1254,6 +1261,7 @@ export class FacilitatorService {
 			}
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
+					{ id: 'id', title: 'Id' },
 					{ id: 'name', title: 'Name' },
 					{ id: 'district', title: 'District' },
 					{ id: 'block', title: 'Block' },
@@ -1272,6 +1280,7 @@ export class FacilitatorService {
 			const records = [];
 			for (let data of allFacilitators) {
 				const dataObject = {};
+				dataObject['id'] = data?.id;
 				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
 				dataObject['district'] = data?.district;
 				dataObject['block'] = data?.block;
