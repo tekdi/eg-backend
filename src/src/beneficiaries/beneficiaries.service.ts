@@ -3146,7 +3146,7 @@ export class BeneficiariesService {
 				success: true,
 				limit,
 				currentPage: skip / limit + 1,
-				totalPages,
+				totalPages: totalPages,
 				count,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					duplicateListArr,
