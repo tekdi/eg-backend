@@ -802,14 +802,14 @@ export class AuthService {
 		if (req.role === 'facilitator' || req.role === 'facilitators') {
 			programRoleTableName = 'program_faciltators';
 			groupId = 'parent_ip';
-			req.parent_ip = req.role_fields.parent_ip;
+			req.parent_ip = `${req.role_fields.parent_ip}`;
 			req.status = 'applied';
 		}
 		console.log('tableName', programRoleTableName);
 		console.log('groupId', groupId);
 
 		if (user_id) {
-			await this.hasuraService.q(
+			const resultData = await this.hasuraService.q(
 				`${programRoleTableName}`,
 				{
 					...req,
@@ -825,6 +825,7 @@ export class AuthService {
 					'status',
 				],
 			);
+			console.log('program role resultData', resultData);
 		}
 
 		const result = await this.userById(user_id);
