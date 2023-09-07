@@ -809,7 +809,7 @@ export class AuthService {
 		console.log('groupId', groupId);
 
 		if (user_id) {
-			const resultData = await this.hasuraService.q(
+			await this.hasuraService.q(
 				`${programRoleTableName}`,
 				{
 					...req,
@@ -825,7 +825,6 @@ export class AuthService {
 					'status',
 				],
 			);
-			console.log('program role resultData', resultData);
 		}
 
 		const result = await this.userById(user_id);
