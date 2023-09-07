@@ -136,9 +136,8 @@ export class EventsService {
 		}
 	}
 
-	public async getEventsList(req, header, response) {
-		const userDetail:any = await this.userService.ipUserInfo(header);
-		console.log('user details', userDetail?.data?.id);
+	public async getEventsList( header, response) {
+		const userDetail:any = await this.userService.ipUserInfo(header);		
 		if(!userDetail?.data?.id){
 			return response.status(400).send({
 				success: false,
@@ -146,9 +145,29 @@ export class EventsService {
 				data: {},
 			});
 		}
+		const data={
+			query:`query MyQuery {
+				users(where: {program_users: {organisation_id: {_eq: "${userDetail?.data?.program_users[0]?.organisation_id}"}}}){
+				  id
+				}
+			  }`
+		}
+		const getIps = await this.hasuraServiceFromServices.getData(data);
+
+		if(!getIps?.data?.users){
+			return response.status(500).send({
+				success: false,
+				message: 'Hasura Error!'
+				
+			});
+		}
+		
+		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
-		events(where: {created_by: {_eq: ${userDetail?.data?.id}}}) {
+		events(where: {created_by: {_in: ${JSON.stringify(
+			allIpList,
+		)}}}) {
 		  id
 		  location
 		  location_type
@@ -245,6 +264,8 @@ export class EventsService {
 		  status
 		  long
 		  rsvp
+		  fa_is_processed
+		  fa_similarity_percentage
 		  user{
 			first_name
 			id
@@ -510,9 +531,9 @@ export class EventsService {
 				const deletePromise = [];
 				if (
 					eventDetails?.attendances &&
-					eventDetails?.attendances?.length > 0
+					eventDetails.attendances.length > 0
 				) {
-					for (const iterator of eventDetails?.attendances) {
+					for (const iterator of eventDetails.attendances) {
 						deletePromise.push(
 							this.hasuraService.delete('attendance', {
 								id: +iterator.id,

@@ -122,26 +122,7 @@ export class QueryGeneratorService {
 					(onlyFields.length < 1 || onlyFields.includes(e))
 				) {
 					if (type === 'obj') {
-						if (
-							typeof item[e] !== 'string' &&
-							[
-								'mobile',
-								'alternative_mobile_number',
-								'dob',
-								'enrollment_number',
-								'payment_receipt_document_id',
-								'enrollment_date',
-								'enrollment_dob',
-								'enrolled_for_board',
-								'subjects',
-								'enrollment_first_name',
-								'enrollment_middle_name',
-								'enrollment_last_name',
-								'enrollment_aadhaar_no',
-								'documents_status',
-								'is_eligible',
-							].includes(e)
-						) {
+						if (typeof item[e] !== 'string') {
 							strArr = [...strArr, `${e}:${item[e]}`];
 						} else {
 							strArr = [...strArr, `${e}:"${item[e]}"`];
@@ -156,19 +137,29 @@ export class QueryGeneratorService {
 			return str;
 		};
 
+		let returnFieldsQuery = '';
+		if (!(item?.id && update)) {
+			if (fields && fields.length > 0) {
+				returnFieldsQuery = this.getParam(fields);
+			} else if (onlyFields && onlyFields.length > 0) {
+				returnFieldsQuery = this.getParam([...onlyFields, 'id']);
+			} else {
+				returnFieldsQuery = this.getParam(keys);
+			}
+		} else if (fields.length) {
+			returnFieldsQuery = `
+				affected_rows
+				returning {
+					${this.getParam(fields)}
+				}
+			`;
+		} else {
+			returnFieldsQuery = 'affected_rows';
+		}
+
 		return `mutation MyQuery {
       ${tableName}(${getObjStr(item, 'obj')}) {
-        ${
-			!(item?.id && update)
-				? this.getParam(
-						fields && fields.length > 0
-							? fields
-							: onlyFields
-							? [...onlyFields, 'id']
-							: keys,
-				  )
-				: 'affected_rows'
-		}
+        ${returnFieldsQuery}
       }
     }
     `;

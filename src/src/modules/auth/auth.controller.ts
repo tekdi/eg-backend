@@ -80,10 +80,11 @@ export class AuthController {
 	// users/is_user_exist by mobile and adhaar etc filter.
 	@Post('/is_user_exist')
 	public async isUserExist(
-		@Body() req: UserExistDTO,
+		@Body() body: UserExistDTO,
+		@Req() req: Request,
 		@Res() response: Response,
 	) {
-		return this.authService.isUserExist(req, response);
+		return this.authService.isUserExist(body, req, response);
 	}
 
 	// users/register on keycloak and hasura both side.
@@ -175,21 +176,17 @@ export class AuthController {
 		return this.authService.verifyAadhaarKyc({ ...req, id: id }, response);
 	}
 
-	@Post('api/okyc2/aadhaar/verify')
+	@Post('/okyc2/aadhaar/verify')
 	@UseGuards(new AuthGuard())
 	private async okyc2AadhaarVerify(
-		@Body() body:any,
+		@Body() body: any,
 		@Req() request: any,
 		@Res() response: Response,
 	) {
-		return this.authService.okyc2AadhaarVerify(
-			body,
-			request,
-			response,
-		);
+		return this.authService.okyc2AadhaarVerify(body, request, response);
 	}
 
-	@Get('api/okyc2/aadhaar/verify/:id')
+	@Get('/okyc2/aadhaar/verify/:id')
 	@UseGuards(new AuthGuard())
 	private async getOkyc2AadhaarVerificationStatus(
 		@Param('id') id: string,

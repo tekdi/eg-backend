@@ -116,6 +116,49 @@ export class KeycloakService {
 		}
 	}
 
+	public async getUserByUsername(username): Promise<{ [key: string]: any }> {
+		try {
+			const adminResultData = await this.getAdminKeycloakToken();
+
+			if (adminResultData?.access_token) {
+				let url = `${this.configService.get<string>(
+					'KEYCLOAK_URL',
+				)}/admin/realms/${this.realm_name_app}/users`;
+
+				const {
+					headers,
+					status,
+					data: [user],
+				} = await lastValueFrom(
+					this.httpService
+						.get(url, {
+							params: { username, exact: true },
+							headers: {
+								'Content-Type': 'application/json',
+								Authorization: `Bearer ${adminResultData.access_token}`,
+							},
+						})
+						.pipe(map((res) => res)),
+				);
+				if (!user) {
+					return { isUserExist: false, user: null };
+				}
+				return {
+					headers,
+					status,
+					user,
+				};
+			} else {
+				throw new BadRequestException('User not found in keycloak !');
+			}
+		} catch (e) {
+			console.log('error 105' + e.message);
+			throw new HttpException(e.message, HttpStatus.CONFLICT, {
+				cause: e,
+			});
+		}
+	}
+
 	public async createUser(userData): Promise<{ [key: string]: any }> {
 		try {
 			const adminResultData = await this.getAdminKeycloakToken();
@@ -123,7 +166,7 @@ export class KeycloakService {
 			if (adminResultData?.access_token) {
 				let url = `${this.configService.get<string>(
 					'KEYCLOAK_URL',
-				)}/admin/realms/eg-sso/users`;
+				)}/admin/realms/${this.realm_name_app}/users`;
 				let data = userData;
 
 				const { headers, status } = await lastValueFrom(
@@ -154,7 +197,7 @@ export class KeycloakService {
 	public async registerUser(data, token) {
 		console.log('inside registerUser', data);
 
-		const url = `${this.keycloak_url}/admin/realms/eg-sso/users`;
+		const url = `${this.keycloak_url}/admin/realms/${this.realm_name_app}/users`;
 
 		const config: AxiosRequestConfig = {
 			headers: {
@@ -185,7 +228,7 @@ export class KeycloakService {
 	public async findUser(data, token) {
 		console.log('inside findUser', data);
 
-		const url = `${this.keycloak_url}/admin/realms/eg-sso/users?username=${data}`;
+		const url = `${this.keycloak_url}/admin/realms/${this.realm_name_app}/users?username=${data}`;
 
 		const config: AxiosRequestConfig = {
 			headers: {
@@ -200,6 +243,29 @@ export class KeycloakService {
 			const promise = observable.toPromise();
 			const response = await promise;
 			console.log('response 171', response.data);
+			return response.data;
+		} catch (err) {
+			console.log('findUser err', err);
+			registerUserRes = { error: err };
+		}
+		return registerUserRes;
+	}
+
+	public async findUserByKeycloakId(keycloak_id) {
+		const token = await this.getAdminKeycloakToken();
+		const url = `${this.keycloak_url}/admin/realms/${this.realm_name_app}/users/${keycloak_id}`;
+		const config: AxiosRequestConfig = {
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token?.access_token}`,
+			},
+		};
+
+		let registerUserRes: any;
+		try {
+			const observable = this.httpService.get(url, config);
+			const promise = observable.toPromise();
+			const response = await promise;
 			return response.data;
 		} catch (err) {
 			console.log('findUser err', err);

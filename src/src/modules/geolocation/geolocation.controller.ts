@@ -1,17 +1,31 @@
-import { Controller, Get, Param, UseInterceptors } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	Param,
+	Post,
+	Query,
+	Res,
+	UseGuards,
+	UseInterceptors,
+	UsePipes,
+	ValidationPipe,
+} from '@nestjs/common';
 import { GeolocationService } from './geolocation.service';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
+import { MultipleBlocksDto } from '../geolocation/dto/multipleblock.dto';
+import { AuthGuard } from '../auth/auth.guard';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/locationmaster')
 export class GeolocationController {
 	constructor(private geolocationService: GeolocationService) {}
 
-	// states list API filter pagination
+	// Get states list
 	@Get('/states')
-	public async states() {
+	public async getStates() {
 		const tableName = 'address';
-		const response = await this.geolocationService.states();
+		const response = await this.geolocationService.getStates();
 		let mappedResponse = response?.data[tableName];
 		const count =
 			response?.data[`${tableName}_aggregate`]?.aggregate?.count;
@@ -25,11 +39,11 @@ export class GeolocationController {
 		};
 	}
 
-	// districts list API filter pagination
+	// Get districts list
 	@Get('/districts/:name')
-	public async districts(@Param('name') name: string, state_id: string) {
+	public async getDistricts(@Param('name') name: string, state_id: string) {
 		const tableName = 'address';
-		const response = await this.geolocationService.districts(name);
+		const response = await this.geolocationService.getDistricts(name);
 		let mappedResponse = response?.data[tableName];
 		const count =
 			response?.data[`${tableName}_aggregate`]?.aggregate?.count;
@@ -43,15 +57,27 @@ export class GeolocationController {
 		};
 	}
 
-	// blocks list API filter pagination
+	// Get multiple blocks list
+	@Post('/multipleblocks')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	public async getBlocksFromDistricts(
+		@Body() districts: MultipleBlocksDto,
+		@Res() response: any,
+	) {
+		return await this.geolocationService.getBlocksFromDistricts(
+			districts,
+			response,
+		);
+	}
+
 	@Get('/blocks/:name')
-	public async blocks(@Param('name') name: string) {
+	public async getBlocks(@Param('name') name: string) {
 		const tableName = 'address';
-		const response = await this.geolocationService.blocks(name);
+		const response = await this.geolocationService.getBlocks(name);
 		let mappedResponse = response?.data[tableName];
 		const count =
 			response?.data[`${tableName}_aggregate`]?.aggregate?.count;
-
 		return {
 			success: 'true',
 			data: {
@@ -61,11 +87,11 @@ export class GeolocationController {
 		};
 	}
 
-	// villages list API filter pagination
+	// Get villages list
 	@Get('/villages/:name')
-	public async villages(@Param('name') name: string) {
+	public async getVillages(@Param('name') name: string) {
 		const tableName = 'address';
-		const response = await this.geolocationService.villages(name);
+		const response = await this.geolocationService.getVillages(name);
 		let mappedResponse = response?.data[tableName];
 		const count =
 			response?.data[`${tableName}_aggregate`]?.aggregate?.count;

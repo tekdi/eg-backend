@@ -21,6 +21,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { CronModule } from './cron/cron.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
 	imports: [
@@ -47,7 +48,8 @@ import { CronModule } from './cron/cron.module';
 		SubjectsModule,
 		UploadFileModule,
 		UserModule,
-		CronModule
+		CronModule,
+		CommentsModule,
 	],
 	controllers: [],
 	providers: [],

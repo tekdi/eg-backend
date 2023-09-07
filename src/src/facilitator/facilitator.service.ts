@@ -2,16 +2,22 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createObjectCsvStringifier } from 'csv-writer';
 import jwt_decode from 'jwt-decode';
+import { AuthService } from 'src/modules/auth/auth.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
-import { HasuraService } from '../services/hasura/hasura.service';
+import {
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
+} from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 @Injectable()
 export class FacilitatorService {
 	constructor(
 		private readonly httpService: HttpService,
+		private authService: AuthService,
 		private enumService: EnumService,
 		private hasuraService: HasuraService,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private userService: UserService,
 		private s3Service: S3Service,
 	) {}
@@ -83,7 +89,10 @@ export class FacilitatorService {
 								},
 								{
 									attendances_aggregate: {
-										count: { predicate: {_eq: 0} }
+										count: {
+											predicate: {_eq: 0},
+											filter: {event: {type: {_eq: "${body.type}"}}}
+										}
 									}
 								}
 							]
@@ -105,7 +114,10 @@ export class FacilitatorService {
 								},
 								{
 									attendances_aggregate: {
-										count: { predicate: {_eq: 0} }
+										count: {
+											predicate: {_eq: 0},
+											filter: {event: {type: {_eq: "${body.type}"}}}
+										}
 									}
 								}
 							]
@@ -206,25 +218,28 @@ export class FacilitatorService {
 						}
 						interviews {
 							id
-							owner_user_id
-							end_date_time
-							comment
-							created_at
-							created_by
-							start_date_time
-							status
 							title
-							updated_at
-							updated_by
 							user_id
+							owner_user_id
+							date
+							start_time
+							end_time
+							interviewer_name
+							status
+							comment
+							reminder
 							location_type
 							location
+							created_at
+							created_by
+							updated_at
+							updated_by
 							owner {
-							first_name
-							last_name
-							id
+							  first_name
+							  last_name
+							  id
 							}
-						}
+						  }
 						events {
 							context
 							context_id
@@ -355,8 +370,11 @@ export class FacilitatorService {
 	}
 
 	async updateAadhaarDetails(id: number, body: any) {
-		const aadhaar_no = body.aadhar_no;
+		let aadhaar_no = body.aadhar_no;
 
+		if (typeof aadhaar_no === 'number') {
+			aadhaar_no = String(aadhaar_no);
+		}
 		if (
 			typeof aadhaar_no !== 'string' ||
 			!aadhaar_no.trim() ||
@@ -416,6 +434,66 @@ export class FacilitatorService {
 		}
 	}
 
+	//status count
+	public async getStatuswiseCount(req: any, resp: any) {
+		const user = await this.userService.ipUserInfo(req);
+		const status = (
+			await this.enumService.getEnumValue('FACILITATOR_STATUS')
+		).data.map((item) => item.value);
+
+		let query = `query MyQuery {
+			all:program_faciltators_aggregate(where: {
+				parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
+				user: {id: {_is_null: false}}
+			}) 
+			{
+				aggregate {
+					count
+				}
+			},
+			
+			applied: program_faciltators_aggregate(
+				where: {
+					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, 
+					user: {id: {_is_null: false}},
+					_or: [
+						{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
+						{ status: { _is_null: true } }
+				 ]
+				}
+			) {
+				aggregate {
+					count
+				}
+			},
+			${status
+				.filter((item) => item != 'applied')
+				.map(
+					(item) => `${item}:program_faciltators_aggregate(where: {
+							parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, user: {id: {_is_null: false}}, status: {_eq: "${item}"}
+						}) {
+						aggregate {
+							count
+						}}`,
+				)}
+		}`;
+		const response = await this.hasuraServiceFromServices.getData({
+			query,
+		});
+		const newQdata = response?.data;
+		const res = ['all', ...status].map((item) => {
+			return {
+				status: item,
+				count: newQdata?.[item]?.aggregate?.count,
+			};
+		});
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: res,
+		});
+	}
+
 	async updateContactDetails(id: number, body: any, facilitatorUser: any) {
 		// Update Users table data
 		const userArr = ['mobile', 'alternative_mobile_number', 'email_id'];
@@ -432,8 +510,6 @@ export class FacilitatorService {
 			) {
 				body.alternative_mobile_number = null;
 			}
-			body.mobile = body.mobile;
-			body.alternative_mobile_number = body.alternative_mobile_number;
 			await this.hasuraService.q(tableName, body, userArr, true);
 		}
 
@@ -723,6 +799,10 @@ export class FacilitatorService {
 					tableName,
 					{
 						...body,
+						qualification_reference_document_id:
+							body.qualification_reference_document_id
+								? body.qualification_reference_document_id
+								: null,
 						id: qualificationDetails?.id ?? null,
 						user_id: id,
 					},
@@ -822,6 +902,7 @@ export class FacilitatorService {
 
 	async update(id: number, body: any, response: any) {
 		const { data: facilitatorUser } = await this.userById(id);
+		const mobile_no = body.mobile
 		switch (body.page_type) {
 			case 'add_basic_details': {
 				await this.updateAddBasicDetails(id, body);
@@ -836,6 +917,34 @@ export class FacilitatorService {
 				break;
 			}
 			case 'contact_details': {
+				
+				let qury = `query MyQuery1 {
+					users(where: {id: {_neq: ${id}}, mobile: {_eq:${mobile_no}}, program_faciltators: {id: {_is_null: false}}}) {
+					  id
+					  mobile
+					  first_name
+					  last_name
+					  program_beneficiaries {
+						facilitator_id
+						status
+					  }
+					  program_faciltators {
+						status
+					  }
+					}
+				  }
+				  `
+				  const data = { query: qury };
+				  const resp = await this.hasuraServiceFromServices.getData(data);
+				  const newQdata = resp?.data;
+				  if(newQdata.users.length > 0){
+					return response.status(422).send({
+								success: false,
+								message: 'Mobile Number Already Exist',
+								data: {},
+							});
+				  }
+
 				await this.updateContactDetails(id, body, facilitatorUser);
 				break;
 			}
@@ -1034,46 +1143,156 @@ export class FacilitatorService {
 		try {
 			const user = await this.userService.ipUserInfo(req);
 			const decoded: any = jwt_decode(req?.headers?.authorization);
-			console.log('user id', decoded?.name);
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return resp.status(400).send({
+					success: false,
+					message: 'Invalid User',
+					data: {},
+				});
+			}
+
+			const variables: any = {};
+
+			let filterQueryArray = [];
+			let paramsQueryArray = [];
+
+			if (
+				body.hasOwnProperty('qualificationIds') &&
+				body.qualificationIds.length
+			) {
+				paramsQueryArray.push('$qualificationIds: [Int!]');
+				filterQueryArray.push(
+					'{qualifications: {qualification_master_id: {_in: $qualificationIds}}}',
+				);
+				variables.qualificationIds = body.qualificationIds;
+			}
+			if (body.search && body.search !== '') {
+				filterQueryArray.push(`{_or: [
+        { first_name: { _ilike: "%${body.search}%" } },
+        { last_name: { _ilike: "%${body.search}%" } },
+        { email_id: { _ilike: "%${body.search}%" } }
+      ]} `);
+			}
+			if (
+				body.hasOwnProperty('status') &&
+				this.isValidString(body.status) &&
+				this.allStatus.map((obj) => obj.value).includes(body.status)
+			) {
+				paramsQueryArray.push('$status: String');
+				filterQueryArray.push(
+					'{program_faciltators: {status: {_eq: $status}}}',
+				);
+				variables.status = body.status;
+			}
+
+			if (body.hasOwnProperty('district') && body.district.length) {
+				paramsQueryArray.push('$district: [String!]');
+				filterQueryArray.push('{district: { _in: $district }}');
+				variables.district = body.district;
+			}
+			if (body.hasOwnProperty('block') && body.block.length) {
+				paramsQueryArray.push('$block: [String!]');
+				filterQueryArray.push('{block: { _in: $block }}');
+				variables.block = body.block;
+			}
+
+			filterQueryArray.unshift(
+				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
+			);
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+			let paramsQuery = '';
+			if (paramsQueryArray.length) {
+				paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+			}
+			let sortQuery = `{ created_at: desc }`;
 			const data = {
-				query: `query MyQuery {
-					users(where: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}){
+				query: `query MyQuery ${paramsQuery}{
+					users(where:${filterQuery}, order_by: ${sortQuery}){
+						id
 						first_name
 						last_name
 						district
 						mobile
+						aadhar_no
+						aadhar_verified
+						aadhaar_verification_mode
 						block
 						gender
 						district
 					    program_faciltators{
 						status
 					  }
+					  experience {
+						description
+						end_year
+						experience_in_years
+						institution
+						start_year
+						organization
+						role_title
+						user_id
+						type
+					  }
 					}
 				  }
 				  `,
+				variables: variables,
 			};
+
 			const hasuraResponse = await this.hasuraService.getData(data);
-			const allFacilitators = hasuraResponse?.data?.users;
+			let allFacilitators = hasuraResponse?.data?.users;
+			// checking allFacilitators ,body.work_experience available or not and body.work_experience is valid string or not
+			if (
+				allFacilitators &&
+				body.hasOwnProperty('work_experience') &&
+				this.isValidString(body.work_experience)
+			) {
+				const isValidNumberFilter =
+					!isNaN(Number(body.work_experience)) ||
+					body.work_experience === '5+';
+				if (isValidNumberFilter) {
+					allFacilitators = this.filterFacilitatorsBasedOnExperience(
+						allFacilitators,
+						'experience',
+						body.work_experience,
+					);
+				}
+			}
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
+					{ id: 'id', title: 'Id' },
 					{ id: 'name', title: 'Name' },
 					{ id: 'district', title: 'District' },
 					{ id: 'block', title: 'Block' },
 					{ id: 'mobile', title: 'Mobile Number' },
 					{ id: 'status', title: 'Status' },
 					{ id: 'gender', title: 'Gender' },
+					{ id: 'aadhar_no', title: 'Aadhaar Number' },
+					{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
+					{
+						id: 'aadhaar_verification_mode',
+						title: 'Aadhaar Verification Mode',
+					},
 				],
 			});
 
 			const records = [];
 			for (let data of allFacilitators) {
 				const dataObject = {};
+				dataObject['id'] = data?.id;
 				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
 				dataObject['district'] = data?.district;
 				dataObject['block'] = data?.block;
 				dataObject['mobile'] = data?.mobile;
 				dataObject['status'] = data?.program_faciltators[0]?.status;
 				dataObject['gender'] = data?.gender;
+				dataObject['aadhar_no'] = data?.aadhar_no;
+				dataObject['aadhar_verified'] = data?.aadhar_verified
+					? data?.aadhar_verified
+					: 'no';
+				dataObject['aadhaar_verification_mode'] =
+					data?.aadhaar_verification_mode;
 				records.push(dataObject);
 			}
 			let fileName = `${decoded?.name.replace(' ', '_')}_${new Date()
@@ -1090,6 +1309,196 @@ export class FacilitatorService {
 				message: 'File Does Not Export!',
 				data: {},
 			});
+		}
+	}
+
+	async getFacilitatorsFromIds(ids: number[], search: string) {
+		let searchQuery = '';
+		if (search.trim()) {
+			if (search.split(' ').length <= 1) {
+				searchQuery = `
+					{
+						_or: [
+							{ first_name: { _ilike: "%${search}%" } },
+							{ last_name: { _ilike: "%${search}%" } },
+						]
+					}
+				`;
+			} else if (search.split(' ').length <= 2) {
+				const firstWord = search.split(' ')[0];
+				const lastWord = search.split(' ')[1];
+				searchQuery = `
+					{
+						_or: [
+							{
+								_and: [
+									{ first_name: { _ilike: "%${firstWord}%" } },
+									{ last_name: { _ilike: "%${lastWord}%" } },
+								],
+							},
+							{
+								_and: [
+									{ first_name: { _ilike: "%${lastWord}%" } },
+									{ last_name: { _ilike: "%${firstWord}%" } },
+								]
+							}
+						]
+					}
+				`;
+			}
+		}
+		// ${ids.length ? '{ id: { _in: ${JSON.stringify(ids)} } }' : ''},
+		const data = {
+			query: `query MyQuery {
+				users ( where: {
+					_and: [
+						{ id: { _in: ${JSON.stringify(ids)} } },
+						${searchQuery}
+					]
+				} ) {
+					id
+					first_name
+					last_name
+					middle_name
+				}
+			}`,
+		};
+
+		const response = {
+			success: false,
+			users: null,
+			message: '',
+		};
+		let users;
+		try {
+			users = (await this.hasuraService.getData(data)).data?.users;
+			if (!users) {
+				response.message = 'Hasura error';
+			}
+		} catch (error) {
+			response.message = 'Hasura error';
+		}
+
+		response.success = true;
+		response.users = users;
+		return response;
+	}
+
+	async getFilter_By_Beneficiaries(body: any) {
+		const { district, block, status, search } = body;
+
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
+		let variables = { limit: limit, offset: offset };
+		let split = search.split(' ');
+		let searchQuery = '';
+		if (search.trim()) {
+			if (split.length <= 1) {
+				searchQuery = `
+					{
+						_or: [
+							{ first_name: { _ilike: "%${search}%" } },
+							{ last_name: { _ilike: "%${search}%" } },
+						]
+					}
+				`;
+			} else if (split.length <= 2) {
+				const firstWord = split[0];
+				const lastWord = split[1];
+				searchQuery = `
+					{
+						_or: [
+							{
+								_and: [
+									{ first_name: { _ilike: "%${firstWord}%" } },
+									{ last_name: { _ilike: "%${lastWord}%" } },
+								],
+							},
+							{
+								_and: [
+									{ first_name: { _ilike: "%${lastWord}%" } },
+									{ last_name: { _ilike: "%${firstWord}%" } },
+								]
+							}
+						]
+					}
+				`;
+			}
+		}
+
+		const data = {
+			query: `query MyQuery1($limit:Int,$offset:Int) {
+				users_aggregate(limit:$limit,offset:$offset,where: {
+					_and:[
+						{
+							program_faciltators: {
+								beneficiaries: {
+									user: {
+										district: {_in: ${JSON.stringify(district)}},
+										block: {_in: ${JSON.stringify(block)}}
+									},
+									status: {_eq: "${status}"}
+								}
+							}
+						},
+						${searchQuery}
+					]
+				}) {
+					aggregate {
+					  count
+					}
+				  }
+				users(where: {
+					_and:[
+						{
+							program_faciltators: {
+								beneficiaries: {
+									user: {
+										district: {_in: ${JSON.stringify(district)}},
+										block: {_in: ${JSON.stringify(block)}}
+									},
+									status: {_eq: "${status}"}
+								}
+							}
+						},
+						${searchQuery}
+					]
+				}) {
+				  id
+				  first_name
+				  middle_name
+				  last_name
+				}
+			  }`,
+			variables: variables,
+		};
+
+		const response = {
+			success: false,
+			users: [],
+			message: '',
+			count: '',
+		};
+
+		try {
+			let users = (await this.hasuraService.getData(data)).data;
+			let count = users.users_aggregate.aggregate.count;
+			let user_response = users.users;
+
+			if (!users) {
+				response.message = 'Hasura error';
+			}
+
+			response.success = true;
+			response.count = count;
+			response.users = user_response;
+			response.message = 'success';
+
+			return response;
+		} catch (error) {
+			response.message = 'Hasura error';
 		}
 	}
 
@@ -1145,6 +1554,12 @@ export class FacilitatorService {
 			paramsQueryArray.push('$district: [String!]');
 			filterQueryArray.push('{district: { _in: $district }}');
 			variables.district = body.district;
+		}
+
+		if (body.hasOwnProperty('block') && body.block.length) {
+			paramsQueryArray.push('$block: [String!]');
+			filterQueryArray.push('{block: { _in: $block }}');
+			variables.block = body.block;
 		}
 
 		filterQueryArray.unshift(
@@ -1308,27 +1723,30 @@ export class FacilitatorService {
               updated_by
             }
           }
-          interviews {
-            id
-            owner_user_id
-            end_date_time
-            comment
-            created_at
-            created_by
-            start_date_time
-            status
-            title
-            updated_at
-            updated_by
-            user_id
-            location_type
-            location
-            owner {
-              first_name
-              last_name
-              id
-            }
-          }
+		  interviews {
+			id
+			title
+			user_id
+			owner_user_id
+			date
+			start_time
+			end_time
+			interviewer_name
+			status
+			comment
+			reminder
+			location_type
+			location
+			created_at
+			created_by
+			updated_at
+			updated_by
+			owner {
+			  first_name
+			  last_name
+			  id
+			}
+		  }
           events {
             context
             context_id
@@ -1356,6 +1774,10 @@ export class FacilitatorService {
 		}
 
 		let mappedResponse = response?.data?.users;
+
+		if (!mappedResponse) {
+			throw new InternalServerErrorException('Hasura Error!');
+		}
 
 		if (
 			mappedResponse &&
@@ -1423,5 +1845,290 @@ export class FacilitatorService {
 			message: 'User data fetched successfully.',
 			data: userData,
 		};
+	}
+
+	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
+		const user = await this.userService.ipUserInfo(req);
+		 if (!user?.data?.id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+	
+		const sortType = body?.sortType ? body?.sortType : 'desc'
+	
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let filterQueryArray = [];
+
+		
+
+		filterQueryArray.push(
+			`{program_faciltators:{parent_ip:{_eq:"${user.data.program_users[0].organisation_id}"}}}`,
+		);
+
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`{_and: [
+				{first_name: { _ilike: "%${first_name}%" } } 
+				{ last_name: { _ilike: "%${last_name}%" } } 
+				 ]} `);
+			} else {
+				filterQueryArray.push(`{ first_name: { _ilike: "%${first_name}%" } }`);
+			}
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+			);
+		}
+
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				` {id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}`,
+			);
+		}
+
+		const status = this.enumService
+			.getEnumValue('BENEFICIARY_STATUS')
+			.data.map((item) => item.value);
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+		let variables = {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
+		users_aggregate(where: ${filterQuery}) {
+				aggregate {
+					count
+				  }
+			}
+		users(limit: $limit,
+			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
+		  
+			first_name
+			last_name
+			middle_name
+			id
+			program_faciltators{
+				status
+				learner_total_count:beneficiaries_aggregate {
+					aggregate {
+					  count
+					}
+				  },
+				  identified:beneficiaries_aggregate(
+					where: {
+						user: {id: {_is_null: false}},
+						_or: [
+							{status: {_nin: ${JSON.stringify(
+								status.filter((item) => item != 'identified'),
+							)}}},
+							{ status: { _is_null: true } }
+					 ]
+					}
+				)
+				{
+					aggregate {
+					  count
+					}
+				} ,
+				${status
+					.filter((item) => item != 'identified')
+					.map(
+						(item) => `${
+							!isNaN(Number(item[0])) ? '_' + item : item
+						}:beneficiaries_aggregate(where: {
+				_and: [
+				  {
+				  status: {_eq: "${item}"}
+				},
+					{ user:	{ id: { _is_null: false } } }
+				
+										 ]
+		    	}
+			) 
+			{
+				aggregate {
+				  count
+				}
+			} 
+			`,
+		 
+			)}
+			}
+		}
+	  }
+	  `;
+	 
+		const data = { query: qury, variables: variables };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data;
+	
+		if(newQdata?.users.length>0){
+			const res = newQdata.users.map((facilitator) => {
+				const benefeciaryData = facilitator.program_faciltators.map((benefeciary) => {
+				  const statusCount = status.map((statusKey) => ({
+					status: statusKey,
+					count: benefeciary[statusKey]?.aggregate?.count || 0,
+				  }));
+			  
+				  return {
+					first_name: facilitator.first_name,
+					last_name: facilitator.last_name,
+					id: facilitator.id,
+					status:benefeciary.status,
+					learner_total_count: benefeciary.learner_total_count.aggregate.count,
+					status_count: statusCount,
+				  };
+				});
+			  
+				return benefeciaryData;
+			  });
+			  
+					 
+			const count = newQdata.users_aggregate.aggregate.count;
+			const totalPages = Math.ceil(count/limit);
+			const flattenedRes = res.flat();
+	
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: flattenedRes,
+					totalCount: count,
+					totalPages: totalPages,
+					currentPage: offset / limit + 1,
+					limit:limit
+				},
+			});
+		} else{
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+					currentPage: offset / limit + 1,
+					limit:limit
+				},
+			});
+		}
+		
+	}
+
+	public async getLearnerListByPrerakId(
+		req: any,
+		id: any,
+	    query:any,
+		resp: any,
+	) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+	
+		const program_id = query.program_id || 1;
+		const page = isNaN(query.page) ? 1 : parseInt(query.page);
+		const limit = isNaN(query.limit) ? 10 : parseInt(query.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let variables = {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
+			  aggregate {
+				count
+			  }
+			}
+			users(limit: $limit,
+				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  mobile
+			  aadhar_no
+			  address
+              address_line_1
+              address_line_2
+			  district
+			  block
+			  program_beneficiaries{
+				id
+				program_id
+				status
+				enrollment_dob
+				enrollment_date
+				enrollment_first_name
+				enrollment_last_name
+			  }
+			}
+		  }`;
+
+		const data = { query: qury, variables: variables };
+
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const newQdata = response?.data;
+
+		
+		if (newQdata.users.length > 0) {
+			
+			const res = newQdata.users.map(item => ({
+				...item,
+				program_beneficiaries: item.program_beneficiaries[0] // Remove the program_beneficiaries property
+			}));
+			
+			const count = newQdata.users_aggregate.aggregate.count
+			
+			const totalPages = Math.ceil(count / limit);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: res,
+					totalCount: count,
+					totalPages: totalPages,
+					currentPage: offset / limit + 1,
+					limit:limit
+				},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+					currentPage: offset / limit + 1,
+					limit:limit
+					},
+			});
+		}
 	}
 }

@@ -8,9 +8,11 @@ import {
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
+import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+
 @Injectable()
 export class UserService {
 	public url = process.env.HASURA_BASE_URL;
@@ -19,12 +21,27 @@ export class UserService {
 		private readonly httpService: HttpService,
 		private helper: UserHelperService,
 		private hasuraService: HasuraService,
+		private readonly keycloakService: KeycloakService,
 	) {}
-	public async update(userId: string, request: any, tableName: String) {
+
+	public async update(userId: string, body: any, tableName: String) {
 		try {
+			const user: any = await this.hasuraService.getOne(
+				parseInt(userId),
+				'program_faciltators',
+				['id', 'user_id', 'status'],
+			);
+			const oldStatus = user?.program_faciltators?.status;
+			const statusArray = [
+				'shortlisted_for_orientation',
+				'selected_for_training',
+				'pragati_mobilizer',
+				'selected_for_onboarding',
+				'selected_prerak',
+			];
 			var axios = require('axios');
-			const userDataSchema = request;
-			let userData = request;
+			const userDataSchema = body;
+			let userData = body;
 			let query = '';
 			Object.keys(userData).forEach((e) => {
 				if (
@@ -32,13 +49,20 @@ export class UserService {
 					userData[e] != '' &&
 					Object.keys(userDataSchema).includes(e)
 				) {
+					if (
+						e === 'status' &&
+						userData[e] === 'on_hold' &&
+						statusArray.includes(oldStatus)
+					) {
+						return;
+					}
 					query += `${e}: "${userData[e]}", `;
 				}
 			});
 
 			var data = {
 				query: `mutation update($id:Int) {
-			update_${tableName}(where: {id: {_eq: $id}}, _set: {${query}}) {
+			  update_${tableName}(where: {id: {_eq: $id}}, _set: {${query}}) {
 				affected_rows
 			}
 		}`,
@@ -126,8 +150,37 @@ export class UserService {
 	}
 
 	public async ipUserInfo(request: any) {
+		let userData = null;
+		let bearerToken = null;
+		let bearerTokenTemp = null;
+
 		// Get userid from  auth/login jwt token
 		const authToken = request?.headers?.authorization;
+		const authTokenTemp = request?.headers?.authorization.split(' ');
+
+		// If Bearer word not found in auth header value
+		if (authTokenTemp[0] !== 'Bearer') {
+			return userData;
+		}
+		// Get trimmed Bearer token value by skipping Bearer value
+		else {
+			bearerToken = authToken.trim().substr(7, authToken.length).trim();
+		}
+
+		// If Bearer token value is not passed
+		if (!bearerToken) {
+			return userData;
+		}
+		// Lets split token by dot (.)
+		else {
+			bearerTokenTemp = bearerToken.split('.');
+		}
+
+		// Since JWT has three parts - seperated by dots(.), lets split token
+		if (bearerTokenTemp.length < 3) {
+			return userData;
+		}
+
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
 
@@ -156,10 +209,10 @@ export class UserService {
 
 		const response = await axios(configData);
 
-		let userData = null;
 		if (response?.data?.data?.users[0]) {
-			userData = (await this.userById(+response?.data?.data?.users[0]?.id))
-				.data;
+			userData = (
+				await this.userById(+response?.data?.data?.users[0]?.id)
+			).data;
 		}
 
 		return {
@@ -335,7 +388,6 @@ export class UserService {
 						id: req?.program_faciltators?.id
 							? req?.program_faciltators?.id
 							: null,
-						status: 'lead',
 						user_id: user_id,
 					},
 					pFArr,
@@ -453,7 +505,6 @@ export class UserService {
 		);
 		let result = response?.data?.organisations_by_pk;
 		const mappedResponse = result;
-
 		return {
 			statusCode: 200,
 			message: 'Ok.',
@@ -541,6 +592,7 @@ export class UserService {
 		  grampanchayat
 		  id
 		  is_duplicate
+		  is_deactivated
 		  keycloak_id
 		  last_name
 		  lat
@@ -704,19 +756,22 @@ export class UserService {
 		  }
 		  interviews {
 			id
-			owner_user_id
-			end_date_time
-			comment
-			created_at
-			created_by
-			start_date_time
-			status
 			title
-			updated_at
-			updated_by
 			user_id
+			owner_user_id
+			date
+			start_time
+			end_time
+			interviewer_name
+			status
+			comment
+			reminder
 			location_type
 			location
+			created_at
+			created_by
+			updated_at
+			updated_by
 			owner {
 			  first_name
 			  last_name
@@ -816,6 +871,22 @@ export class UserService {
 		}
 
 		if (resp) {
+			if (!mappedResponse.username && mappedResponse.keycloak_id) {
+				const keycloakresponse =
+					await this.keycloakService.findUserByKeycloakId(
+						mappedResponse.keycloak_id,
+					);
+				mappedResponse.username = keycloakresponse.username || null;
+				if (mappedResponse.username) {
+					await this.hasuraService.update(
+						mappedResponse.id,
+						'users',
+						{ username: mappedResponse.username },
+						['username'],
+					);
+				}
+			}
+
 			return resp.status(200).send({
 				success: true,
 				message: 'Data Fetched Successfully',
@@ -945,19 +1016,22 @@ export class UserService {
 		  }
 		  interviews {
 			id
-			owner_user_id
-			end_date_time
-			comment
-			created_at
-			created_by
-			start_date_time
-			status
 			title
-			updated_at
-			updated_by
 			user_id
+			owner_user_id
+			date
+			start_time
+			end_time
+			interviewer_name
+			status
+			comment
+			reminder
 			location_type
 			location
+			created_at
+			created_by
+			updated_at
+			updated_by
 			owner {
 			  first_name
 			  last_name
@@ -1046,6 +1120,92 @@ export class UserService {
 				message: 'User not exist',
 				isUserExist: false,
 			};
+		}
+	}
+
+	async addAuditLog(
+		userId,
+		mw_userid,
+		context,
+		context_id,
+		oldData,
+		newData,
+		tempArray,
+	) {
+		let storeOld = {};
+		let storeNew = {};
+		for (let data of tempArray) {
+			if (oldData[data] !== newData[data]) {
+				storeOld[data] = oldData[data];
+				storeNew[data] = newData[data];
+			}
+		}
+		if (
+			Object.keys(storeOld).length !== 0 &&
+			Object.keys(storeNew).length !== 0
+		) {
+			const res = await this.hasuraService.create(
+				'audit_logs',
+				{
+					new_data: JSON.stringify(storeNew).replace(/"/g, '\\"'),
+					old_data: JSON.stringify(storeOld).replace(/"/g, '\\"'),
+					user_id: userId,
+					context: context,
+					context_id: context_id,
+					updated_by_user: mw_userid,
+				},
+				[
+					'id',
+					'user_id',
+					'new_data',
+					'old_data',
+					'context',
+					'context_id',
+					'updated_at',
+					'created_at',
+					'updated_by_user',
+				],
+			);
+			return res;
+		}
+	}
+
+	public async getAuditLogs(context_id, context, req: any, resp: any) {
+		const data = {
+			query: `query MyQuery {
+				audit_logs(where: {_and:[{context_id: {_eq: ${context_id}}},{context:{_eq:"${context}"}}]},order_by: {created_at:desc}) {
+				  context_id
+				  context
+				  created_at
+				  id
+				  new_data
+				  old_data
+				  updated_at
+				  user_id
+				  updated_by_user
+				  user{
+					id
+					first_name
+					last_name
+					middle_name
+				  }
+				}
+			  }`,
+		};
+		const response = await this.hasuraServiceFromServices.getData(data);
+		let result: any = response?.data?.audit_logs;
+		if (!result) {
+			return resp.status(404).send({
+				success: false,
+				message: 'Audit Logs Not Found',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Audit Logs found successfully!',
+				data: result,
+			});
 		}
 	}
 }
