@@ -1508,8 +1508,8 @@ export class BeneficiariesService {
 		);
 
 		return {
-			success: updateResult ? true : false,
-			data: updateResult,
+			success: !!updateResult,
+			data: updateResult || null,
 		};
 	}
 
@@ -1939,7 +1939,11 @@ export class BeneficiariesService {
 						aadhar_no: aadhaar_no,
 					});
 
-				if (hasuraResponse.data?.users?.some(user => user.program_faciltators[0]?.id)) {
+				if (
+					hasuraResponse.data?.users?.some(
+						(user) => user.program_faciltators[0]?.id,
+					)
+				) {
 					return response.status(400).json({
 						success: false,
 						message: 'Sorry! You can not add this Aadhaar number!',
@@ -3011,6 +3015,8 @@ export class BeneficiariesService {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
+				STRING_AGG(CASE WHEN bu.district IS NOT NULL THEN bu.district ELSE '-' END, ', ') AS "districts",
+				STRING_AGG(CASE WHEN bu.block IS NOT NULL THEN bu.block ELSE '-' END, ', ') AS "block",
 				COUNT(*) AS "count",
 				COUNT(*) OVER() AS "total_count"
 			FROM
@@ -3031,7 +3037,7 @@ export class BeneficiariesService {
 				pf.parent_ip = '${user?.program_users?.organisation_id}'
 			AND
 				bu.aadhar_no IS NOT NULL
-			AND
+			AND 
 				bu.is_deactivated IS NOT true
 			GROUP BY
 				bu.aadhar_no
@@ -3056,28 +3062,42 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
+
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		const count = duplicateListArr?.[1]?.[2];
-		const totalPages = Math.ceil(count / limit);
-		return {
-			success: true,
-			limit,
-			currentPage: skip / limit + 1,
-			totalPages,
-			count,
-			data: this.hasuraServiceFromServices.getFormattedData(
-				duplicateListArr,
-				[2],
-			),
-		};
+		if (duplicateListArr != undefined) {
+			const count = duplicateListArr?.[1]?.[2].length;
+			const totalPages = Math.ceil(count / limit);
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages: totalPages,
+				count,
+				data: this.hasuraServiceFromServices.getFormattedData(
+					duplicateListArr,
+					[5],
+				),
+			};
+		} else {
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages: 0,
+				count: 0,
+				data: [],
+			};
+		}
 	}
 
 	public async getAllDuplicatesUnderPo(limit?: number, skip?: number) {
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
+				STRING_AGG(CASE WHEN bu.district IS NOT NULL THEN bu.district ELSE '-' END, ', ') AS "districts",
+				STRING_AGG(CASE WHEN bu.block IS NOT NULL THEN bu.block ELSE '-' END, ', ') AS "block",
 				COUNT(*) AS "count",
 				COUNT(*) OVER() AS "total_count"
 			FROM
@@ -3111,18 +3131,29 @@ export class BeneficiariesService {
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
-		const count = duplicateListArr?.[1]?.[2];
-		const totalPages = Math.ceil(count / limit);
-		return {
-			success: true,
-			limit,
-			currentPage: skip / limit + 1,
-			totalPages,
-			count,
-			data: this.hasuraServiceFromServices.getFormattedData(
-				duplicateListArr,
-				[2],
-			),
-		};
+		if (duplicateListArr != undefined) {
+			const count = duplicateListArr?.[1]?.[2].length;
+			const totalPages = Math.ceil(count / limit);
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages: totalPages,
+				count,
+				data: this.hasuraServiceFromServices.getFormattedData(
+					duplicateListArr,
+					[5],
+				),
+			};
+		} else {
+			return {
+				success: true,
+				limit,
+				currentPage: skip / limit + 1,
+				totalPages: 0,
+				count: 0,
+				data: [],
+			};
+		}
 	}
 }
