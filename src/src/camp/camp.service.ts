@@ -13,7 +13,7 @@ export class CampService {
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
-	public returnFieldsgroups = ['id', 'name', 'description', 'type', 'status'];
+	public returnFieldsgroups = ['id', 'name','type', 'status'];
 
 	public returnFieldscamps = [
 		'kit_received',
@@ -102,9 +102,8 @@ export class CampService {
 				});
 			}
 
-			let create_camp_object = {
-				name: body.name,
-				description: body.description,
+			let create_group_object = {
+				name: "untitled",
 				type: body.type,
 				status: body.status,
 				program_id: body?.program_id || 1,
@@ -115,7 +114,7 @@ export class CampService {
 			let createresponse = await this.hasuraService.q(
 				'groups',
 				{
-					...create_camp_object,
+					...create_group_object,
 				},
 				[],
 				false,
@@ -123,7 +122,6 @@ export class CampService {
 					...this.returnFieldsgroups,
 					'id',
 					'name',
-					'description',
 					'type',
 					'status',
 				],
