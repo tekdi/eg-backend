@@ -1128,18 +1128,27 @@ export class UserService {
 		mw_userid,
 		context,
 		context_id,
-		oldData,
+	    oldData,
 		newData,
 		tempArray,
+		action?
+		
 	) {
 		let storeOld = {};
 		let storeNew = {};
+		if(!action || action !="create"){
 		for (let data of tempArray) {
 			if (oldData[data] !== newData[data]) {
 				storeOld[data] = oldData[data];
 				storeNew[data] = newData[data];
 			}
 		}
+	}else{
+		storeOld = oldData;
+		storeNew = newData;
+	}
+		
+
 		if (
 			Object.keys(storeOld).length !== 0 &&
 			Object.keys(storeNew).length !== 0
@@ -1153,6 +1162,7 @@ export class UserService {
 					context: context,
 					context_id: context_id,
 					updated_by_user: mw_userid,
+					action:action
 				},
 				[
 					'id',
@@ -1164,6 +1174,7 @@ export class UserService {
 					'updated_at',
 					'created_at',
 					'updated_by_user',
+					 'action'
 				],
 			);
 			return res;
