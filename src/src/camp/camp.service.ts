@@ -145,7 +145,7 @@ export class CampService {
 					[...this.returnFieldscamps, 'group_id', 'id'],
 				);
 			}
-
+     
 			let camp_id = createcampResponse?.camps?.id;
 
 			if (!createcampResponse?.camps?.group_id) {
@@ -241,7 +241,7 @@ export class CampService {
 
 			return response.status(200).json({
 				success: true,
-        data:camp_id,
+        data:{camp:createcampResponse.camps},
 				message: 'Camp registered successfully.',
 			});
 
