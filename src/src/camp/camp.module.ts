@@ -4,7 +4,6 @@ import { CampController } from './camp.controller';
 import { UserModule } from 'src/user/user.module';
 import { HttpModule } from '@nestjs/axios';
 import { S3Module } from 'src/services/s3/s3.module';
-import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 import { HasuraModule } from '../hasura/hasura.module';
 import { HelperModule } from '../helper/helper.module';
 import { EnumModule } from '../enum/enum.module';

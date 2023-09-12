@@ -1,35 +1,20 @@
 // camp.service.ts
-
-import { HttpService } from '@nestjs/axios';
 import {
-	BadRequestException,
-	HttpException,
-	HttpStatus,
 	Injectable,
 } from '@nestjs/common';
 
-import { ConfigService } from '@nestjs/config';
-import { createObjectCsvStringifier } from 'csv-writer';
-import { S3Service } from 'src/services/s3/s3.service';
 import { UserService } from 'src/user/user.service';
-import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../hasura/hasura.service';
-import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { KeycloakService } from '../services/keycloak/keycloak.service';
+
 
 @Injectable()
 export class CampService {
 	constructor(
-		private readonly s3Service: S3Service,
-		private readonly httpService: HttpService,
 		private userService: UserService,
-		private helper: UserHelperService,
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private keycloakService: KeycloakService,
-		private configService: ConfigService,
-		private enumService: EnumService,
+	
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'description', 'type', 'status'];
@@ -51,6 +36,8 @@ export class CampService {
       let program_id = body?.program_id || 1;
       let academic_year_id = body?.academic_year_id || 1;
 			let beneficiary_status = 'enrolled_ip_verified';
+      let createcampResponse:any;
+      let creategroupwoner:any
 
       let facilitator_status =  await this.checkFaciltatorStatus(facilitator_id,program_id,academic_year_id)
        if(facilitator_status?.data?.users_aggregate?.aggregate?.count == 0 ){
@@ -151,7 +138,7 @@ export class CampService {
 					updated_by: facilitator_id,
 				};
 
-				var createcampResponse = await this.hasuraService.q(
+				createcampResponse = await this.hasuraService.q(
 					'camps',
 					{
 						...camp_request_json,
@@ -186,7 +173,7 @@ export class CampService {
         updated_by:facilitator_id
 			};
 
-			var creategroupwoner = await this.hasuraService.q(
+			 creategroupwoner = await this.hasuraService.q(
 				'group_users',
 				{
 					...group_user_owner,
@@ -223,7 +210,7 @@ export class CampService {
           updated_by:facilitator_id
 				};
 
-				var groupuserRespon = await this.hasuraService.q(
+				 await this.hasuraService.q(
 					'group_users',
 					{
 						...group_user_member,
