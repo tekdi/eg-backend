@@ -239,7 +239,7 @@ export class CampService {
 				action: 'create',
 			};
 
-			const audit = await this.userService.addAuditLogAction(auditData);
+			 await this.userService.addAuditLogAction(auditData);
 
 			return response.status(200).json({
 				success: true,
