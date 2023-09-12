@@ -241,6 +241,7 @@ export class CampService {
 
 			return response.status(200).json({
 				success: true,
+        data:camp_id,
 				message: 'Camp registered successfully.',
 			});
 
