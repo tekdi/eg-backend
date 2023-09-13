@@ -71,7 +71,6 @@ export class HasuraService {
 			let admin_secret = this.configService.get<string>(
 				'HASURA_ADMIN_SECRET',
 			);
-
 			const data = {
 				type: 'run_sql',
 				args: {
@@ -99,6 +98,7 @@ export class HasuraService {
 		const columnNames = arr[0]?.filter(
 			(name, index) => !excludeFieldsIndex.includes(index),
 		);
+
 		if (arr.length > 1) {
 			result = arr.slice(1).map((record) => {
 				const modifiedRecord = {};
