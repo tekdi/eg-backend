@@ -161,8 +161,9 @@ export class CampService {
 			
 				return response.status(500).json({
 					success: false,
-					data: {},
 					message: 'Camp registration failed.',
+					data: {}
+					
 				});
 			}
 
@@ -198,8 +199,9 @@ export class CampService {
 
 				return response.status(500).json({
 					success: false,
-					data: {},
 					message: 'error occured during creating group user.',
+					data: {}
+					
 				});
 			}
 
