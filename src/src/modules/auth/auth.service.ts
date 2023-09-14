@@ -802,7 +802,7 @@ export class AuthService {
 		if (req.role === 'facilitator' || req.role === 'facilitators') {
 			programRoleTableName = 'program_faciltators';
 			groupId = 'parent_ip';
-			req.parent_ip = req.role_fields.parent_ip;
+			req.parent_ip = `${req.role_fields.parent_ip}`;
 			req.status = 'applied';
 		}
 		console.log('tableName', programRoleTableName);
@@ -948,6 +948,7 @@ export class AuthService {
 				status
 				comment
 				reminder
+				rsvp
 				location_type
 				location
 				created_at

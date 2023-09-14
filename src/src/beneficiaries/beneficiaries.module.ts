@@ -11,6 +11,7 @@ import { EnumModule } from '../enum/enum.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { BeneficiariesService } from './beneficiaries.service';
+import { UploadFileModule } from 'src/upload-file/upload-file.module';
 
 @Module({
 	imports: [
@@ -22,6 +23,7 @@ import { BeneficiariesService } from './beneficiaries.service';
 		HasuraModuleFromServices,
 		S3Module,
 		EnumModule,
+		UploadFileModule,
 	],
 	controllers: [BeneficiariesController],
 	providers: [BeneficiariesService],
