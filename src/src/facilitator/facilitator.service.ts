@@ -228,6 +228,7 @@ export class FacilitatorService {
 							status
 							comment
 							reminder
+							rsvp
 							location_type
 							location
 							created_at
@@ -1013,6 +1014,21 @@ export class FacilitatorService {
 				break;
 			}
 			case 'aadhaar_details': {
+				let isAdharExist = await this.hasuraService.findAll('users', {
+					aadhar_no: body?.aadhar_no,
+				});
+				let userExist = isAdharExist?.data?.users;
+				const isDuplicateAdhar = userExist.some(
+					(data) => data.id !== id,
+				);
+				if (userExist.length > 0 && isDuplicateAdhar) {
+					return response.status(422).send({
+						success: false,
+						message: 'Aadhaar Number Already Exist',
+						data: {},
+					});
+				}
+
 				const result = await this.updateAadhaarDetails(id, body);
 				if (result && !result.success) {
 					return response.status(result.statusCode).json({
@@ -1735,6 +1751,7 @@ export class FacilitatorService {
 			status
 			comment
 			reminder
+			rsvp
 			location_type
 			location
 			created_at
