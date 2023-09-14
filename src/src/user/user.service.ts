@@ -766,6 +766,7 @@ export class UserService {
 			status
 			comment
 			reminder
+			rsvp
 			location_type
 			location
 			created_at
@@ -1026,6 +1027,7 @@ export class UserService {
 			status
 			comment
 			reminder
+			rsvp
 			location_type
 			location
 			created_at

@@ -948,6 +948,7 @@ export class AuthService {
 				status
 				comment
 				reminder
+				rsvp
 				location_type
 				location
 				created_at
