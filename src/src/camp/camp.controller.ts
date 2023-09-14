@@ -34,7 +34,7 @@ export class CampController {
 	@UseGuards(new AuthGuard())
 	campById(@Req() request: any,
 	@Body() body: any,
-	@Param('id') id: Number,
+	@Param('id') id: number,
 	@Res() response: any,) {
 		return this.campService.campById(id,body, request,response);
 	}

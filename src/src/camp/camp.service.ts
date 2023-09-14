@@ -356,7 +356,7 @@ export class CampService {
 		await Promise.all(newQdata?.map(async (item) => {
 			await Promise.all(item.group_users.map(async (userObj) => {
 			  let profilePhoto = userObj.user.profile_photo_1;
-			  if (profilePhoto !== null && profilePhoto[0]?.id !== undefined) {
+			  if (profilePhoto?.[0]?.id !== undefined) {
 				const { success, data: fileData } = await this.uploadFileService.getDocumentById(userObj.user.profile_photo_1[0].id);
 		    	if (success && fileData?.fileUrl) {
 				  userObj.user.profile_photo_1[0].fileUrl = fileData.fileUrl;
@@ -433,7 +433,7 @@ export class CampService {
 		await Promise.all(newQdata?.map(async (item) => {
 			await Promise.all(item.group_users.map(async (userObj) => {
 			  let profilePhoto = userObj.user.profile_photo_1;
-			  if (profilePhoto !== null && profilePhoto[0]?.id !== undefined) {
+			  if (profilePhoto?.[0]?.id !== undefined) {
 				const { success, data: fileData } = await this.uploadFileService.getDocumentById(userObj.user.profile_photo_1[0].id);
 		    	if (success && fileData?.fileUrl) {
 				  userObj.user.profile_photo_1[0].fileUrl = fileData.fileUrl;
