@@ -1,6 +1,6 @@
 // camp.controller.ts
 
-import { Controller,Post,UsePipes,ValidationPipe,Body,Req,UseGuards,Res } from '@nestjs/common';
+import { Controller,Post,UsePipes,ValidationPipe,Body,Req,UseGuards,Res, Param } from '@nestjs/common';
 import { CampService } from './camp.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 
@@ -21,4 +21,22 @@ export class CampController {
 	) {
 		return this.campService.registerCamp(body, request,response);
 	}
+
+	@Post('/camp-list')
+	@UseGuards(new AuthGuard())
+	campList(@Req() request: any,
+	@Body() body: any,
+	@Res() response: any,) {
+		return this.campService.campList(body, request,response);
+	}
+
+	@Post('/camp-details/:id')
+	@UseGuards(new AuthGuard())
+	campById(@Req() request: any,
+	@Body() body: any,
+	@Param('id') id: Number,
+	@Res() response: any,) {
+		return this.campService.campById(id,body, request,response);
+	}
+
 }

@@ -196,7 +196,7 @@ export class UploadFileService {
 		}
 	}
 
-	async getDocumentById(id: string, response: Response) {
+	async getDocumentById(id: string, response?: Response) {
 		const hasuraData = {
 			query: `
 				query MyQuery {
@@ -218,16 +218,22 @@ export class UploadFileService {
 
 		const documentData: any = hasuraResponse?.data?.documents_by_pk;
 		if (!documentData?.name) {
-			return response.status(400).send({
+			const result = {
 				success: false,
 				message: 'Document not exists!',
 				data: null,
-			});
+			};
+			if (response) {
+				return response.status(400).send(result);
+			} else {
+				return result;
+			}
 		}
 
 		const fileUrl = await this.s3Service.getFileUrl(documentData.name);
+		let result;
 		if (fileUrl) {
-			return response.status(200).send({
+			result = {
 				success: true,
 				message: 'File url fethed successfully!',
 				data: {
@@ -235,13 +241,24 @@ export class UploadFileService {
 					fileUrl: fileUrl,
 					documentData,
 				},
-			});
+			};
+			if (response) {
+				return response.status(200).send(result);
+			} else {
+				return result;
+			}
 		} else {
-			return response.status(200).send({
+			let result = {
 				success: false,
 				message: 'Unable to get file',
 				data: null,
-			});
+			};
+
+			if (response) {
+				return response.status(200).send(result);
+			} else {
+				return result;
+			}
 		}
 	}
 }

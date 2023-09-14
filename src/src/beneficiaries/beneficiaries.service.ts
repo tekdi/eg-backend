@@ -3279,4 +3279,47 @@ export class BeneficiariesService {
 
 		return response;
 	}
+
+	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
+		const facilitator_id = req.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+		let status = 'enrolled_ip_verified';
+
+		if (!facilitator_id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+
+		let qury = `query MyQuery {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}, program_id: {_eq:${program_id}}, status: {_eq:${status}}}, _not: {group_users: {group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}}) {
+			  id
+			  profile_url
+			  program_beneficiaries {
+				status,
+				enrollment_first_name,
+				enrollment_middle_name,
+				enrollment_last_name
+			  }
+			}
+		  }
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.users;
+		const userData = newQdata?.map((item) => ({
+			...item,
+			program_beneficiaries: item.program_beneficiaries[0],
+		}));
+
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: {
+				data: userData,
+			},
+		});
+	}
 }

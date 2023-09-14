@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 
 @Injectable()
 export class CampService {
@@ -11,6 +12,7 @@ export class CampService {
 		private userService: UserService,
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private uploadFileService: UploadFileService,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name','type', 'status'];
@@ -295,4 +297,160 @@ export class CampService {
 		const res = await this.hasuraServiceFromServices.getData(data);
 		return res;
 	}
+
+	
+	public async campList(body: any, req: any, resp) {
+		const facilitator_id = req.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+		let member_type = "owner"
+		let status = "active"
+		
+
+		if (!facilitator_id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+
+		let qury = `query MyQuery {
+			camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
+			  id
+			  kit_ratings
+			  kit_feedback
+			  kit_received
+			  kit_was_sufficient
+			  group{
+				name
+				description
+			  }
+			  
+			  group_users(where: {member_type: {_neq: "owner"}}) {
+				user {
+				  id
+				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+				  }
+				  program_beneficiaries {
+					user_id
+					enrollment_first_name
+					enrollment_last_name
+					enrollment_middle_name
+				  }
+				}
+			  }
+			}
+		  }
+		  
+		  
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.camps;
+	
+		await Promise.all(newQdata?.map(async (item) => {
+			await Promise.all(item.group_users.map(async (userObj) => {
+			  let profilePhoto = userObj.user.profile_photo_1;
+			  if (profilePhoto !== null && profilePhoto[0]?.id !== undefined) {
+				const { success, data: fileData } = await this.uploadFileService.getDocumentById(userObj.user.profile_photo_1[0].id);
+		    	if (success && fileData?.fileUrl) {
+				  userObj.user.profile_photo_1[0].fileUrl = fileData.fileUrl;
+				}
+			  }
+			}));
+		  }));
+
+		
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: {
+				data: newQdata,
+			},
+		});
+	}
+
+	public async campById(id:any,body: any, req: any, resp) {;
+		const camp_id = id
+		const facilitator_id = req.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+		let member_type = "owner"
+		let status = "active"
+		
+
+		if (!facilitator_id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+
+		let qury = `query MyQuery {
+			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
+			  id
+			  kit_ratings
+			  kit_feedback
+			  kit_received
+			  kit_was_sufficient
+			  group{
+				name
+				description
+			  }
+			  
+			  group_users(where: {member_type: {_neq: "owner"}}) {
+				user {
+				  id
+				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+				  }
+				  program_beneficiaries {
+					user_id
+					enrollment_first_name
+					enrollment_last_name
+					enrollment_middle_name
+				  }
+				}
+			  }
+			}
+		  }
+		  
+		  
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.camps;
+		
+		await Promise.all(newQdata?.map(async (item) => {
+			await Promise.all(item.group_users.map(async (userObj) => {
+			  let profilePhoto = userObj.user.profile_photo_1;
+			  if (profilePhoto !== null && profilePhoto[0]?.id !== undefined) {
+				const { success, data: fileData } = await this.uploadFileService.getDocumentById(userObj.user.profile_photo_1[0].id);
+		    	if (success && fileData?.fileUrl) {
+				  userObj.user.profile_photo_1[0].fileUrl = fileData.fileUrl;
+				}
+			  }
+			}));
+		  }));
+
+		
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: {
+				data: newQdata,
+			},
+		});
+	}
+
+
 }

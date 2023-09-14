@@ -9,6 +9,8 @@ import { HelperModule } from '../helper/helper.module';
 import { EnumModule } from '../enum/enum.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
+import { UploadFileModule } from 'src/upload-file/upload-file.module';
+
 
 
 @Module({
@@ -20,6 +22,7 @@ import { KeycloakModule } from '../services/keycloak/keycloak.module';
 		KeycloakModule,
 		HasuraModuleFromServices,
 		S3Module,
+		UploadFileModule,
 		EnumModule,
 	],
   providers: [CampService],
