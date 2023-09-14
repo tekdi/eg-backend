@@ -21,6 +21,7 @@ import { UploadFileModule } from 'src/upload-file/upload-file.module';
 		HelperModule,
 		KeycloakModule,
 		HasuraModuleFromServices,
+		UploadFileModule,
 		S3Module,
 		EnumModule,
 		UploadFileModule,

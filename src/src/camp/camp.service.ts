@@ -27,10 +27,10 @@ export class CampService {
 
 	public returnFieldsgroupUsers = ['group_id', 'id'];
 
-	async registerCamp(body: any, request: any, response: any) {
+	async create(body: any, request: any, response: any) {
 		try {
 			let facilitator_id = request.mw_userid;
-			let learner_id = body?.learner_id;
+			let learner_ids = body?.learner_ids;
 			let program_id = body?.program_id || 1;
 			let academic_year_id = body?.academic_year_id || 1;
 			let beneficiary_status = 'enrolled_ip_verified';
@@ -56,6 +56,8 @@ export class CampService {
 
 			let faciltator_camp_data = await this.checkCampInformation(
 				facilitator_id,
+				program_id,
+				academic_year_id,
 			);
 			if (
 				faciltator_camp_data?.data?.camps_aggregate?.aggregate?.count >
@@ -69,7 +71,7 @@ export class CampService {
 			}
 
 			let query = `query MyQuery {
-            users(where: {_and: {program_beneficiaries: {_and: {user_id: {_in: [${learner_id}]}},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}}){
+            users(where: {_and: {program_beneficiaries: {_and: {user_id: {_in: [${learner_ids}]}},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}}){
               id
               program_beneficiaries{
                 user_id
@@ -79,13 +81,13 @@ export class CampService {
 
 			const data = { query: query };
 			const res = await this.hasuraServiceFromServices.getData(data);
-			const newQdata = res?.data?.users;
+			let learner_data = res?.data?.users;
 
 			// Check if learner_data is defined
 			if (
-				!newQdata ||
-				!Array.isArray(newQdata) ||
-				newQdata.length === 0
+				!learner_data ||
+				!Array.isArray(learner_data) ||
+				learner_data.length === 0
 			) {
 				return response.status(400).json({
 					success: false,
@@ -93,10 +95,10 @@ export class CampService {
 				});
 			}
 
-			let learner_data = newQdata;
+			
 
 			// Check if facilitator_id and learner_data have the same length
-			if (learner_id.length !== learner_data.length) {
+			if (learner_ids.length !== learner_data.length) {
 				return response.status(400).json({
 					success: false,
 					message:
@@ -106,8 +108,8 @@ export class CampService {
 
 			let create_group_object = {
 				name: "untitled",
-				type: body.type,
-				status: body.status,
+				type: "camp",
+				status: "Registered",
 				program_id: body?.program_id || 1,
 				academic_year_id: body?.academic_year_id || 1,
 				created_by: facilitator_id,
@@ -130,7 +132,7 @@ export class CampService {
 			);
 
 			let group_id = createresponse?.groups?.id;
-			if (createresponse?.groups?.id) {
+			if (group_id) {
 				let camp_request_json = {
 					group_id: createresponse?.groups?.id,
 					created_by: facilitator_id,
@@ -150,10 +152,13 @@ export class CampService {
      
 			let camp_id = createcampResponse?.camps?.id;
 
-			if (!createcampResponse?.camps?.group_id) {
-				await this.hasuraService.delete('groups', {
-					id: group_id,
-				});
+			if (!camp_id) {
+				if(group_id){
+					await this.hasuraService.delete('groups', {
+						id: group_id,
+					});
+				}
+			
 				return response.status(500).json({
 					success: false,
 					data: {},
@@ -198,21 +203,23 @@ export class CampService {
 				});
 			}
 
-			//add learners to the group users
-			learner_id.forEach(async (id) => {
-				let group_user_member = {
-					group_id: group_id,
-					user_id: id,
-					member_type: 'member',
+			let group_user_member = {
+	     			group_id: group_id,
+ 	    			member_type: 'member',
 					status: 'active',
 					created_by: facilitator_id,
 					updated_by: facilitator_id,
-				};
+			}
+
+			//add learners to the group users
+			learner_ids.forEach(async (id) => {
+				
 
 				await this.hasuraService.q(
 					'group_users',
 					{
 						...group_user_member,
+						user_id:id
 					},
 					[],
 					false,
@@ -227,13 +234,13 @@ export class CampService {
 				context_id: camp_id,
 				oldData: {
 					group_id: group_id,
-					status: body?.status,
-					learner_id: [learner_id],
+				    status: "not_registered",
+					learner_id: [learner_ids],
 				},
 				newData: {
 					group_id: group_id,
-					status: body?.status,
-					learner_id: [learner_id],
+					status: "not_registered",
+					learner_id: [learner_ids],
 				},
 				tempArray: ['group_id', 'status', 'learner_id'],
 				action: 'create',
@@ -258,15 +265,18 @@ export class CampService {
 		}
 	}
 
-	async checkCampInformation(id: any) {
+	async checkCampInformation(id: any,program_id:any,academic_year_id:any) {
 		let facilitator_id = id;
+		let facilitator_id_program_id = program_id;
+		let facilitator_id_academic_id = academic_year_id;
 		let query = `query MyQuery {
-            camps_aggregate(where: {group_users: {status: {_eq: "active"}, member_type: {_eq: "owner"}, user_id: {_eq:${facilitator_id}}}}){
-              aggregate{
-                count
-              }
-            }
-          }
+			camps_aggregate(where: {group_users: {status: {_eq: "active"}, member_type: {_eq: "owner"}, user_id: {_eq: ${facilitator_id}}, group: {academic_year_id: {_eq:${facilitator_id_academic_id}}, program_id: {_eq:${facilitator_id_program_id}}}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }
+		  
           
           `;
 		const data = { query: query };

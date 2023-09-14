@@ -11,7 +11,7 @@ export class CampController {
 		
 	) {}
  
-  @Post('/register')
+  @Post('/')
 	@UsePipes(ValidationPipe)
     @UseGuards(new AuthGuard())
 	 registerCamp(
@@ -19,10 +19,10 @@ export class CampController {
 		@Req() request: any,
         @Res() response: Response,
 	) {
-		return this.campService.registerCamp(body, request,response);
+		return this.campService.create(body, request,response);
 	}
 
-	@Post('/camp-list')
+	@Post('/list')
 	@UseGuards(new AuthGuard())
 	campList(@Req() request: any,
 	@Body() body: any,
@@ -30,7 +30,7 @@ export class CampController {
 		return this.campService.campList(body, request,response);
 	}
 
-	@Post('/camp-details/:id')
+	@Post('/:id')
 	@UseGuards(new AuthGuard())
 	campById(@Req() request: any,
 	@Body() body: any,

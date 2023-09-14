@@ -3343,7 +3343,13 @@ export class BeneficiariesService {
 		let qury = `query MyQuery {
 			users(where: {program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}, program_id: {_eq:${program_id}}, status: {_eq:${status}}}, _not: {group_users: {group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}}) {
 			  id
-			  profile_url
+			  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+				id
+				name
+				doument_type
+				document_sub_type
+				path
+			  }
 			  program_beneficiaries {
 				status,
 				enrollment_first_name,
@@ -3355,17 +3361,22 @@ export class BeneficiariesService {
 		  `;
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const newQdata = response?.data?.users;
-		const userData = newQdata?.map((item) => ({
-			...item,
-			program_beneficiaries: item.program_beneficiaries[0],
-		}));
+		for (const user of response?.data?.users) {
+			// Check if profile_photo_1 is not empty and has an element
+			if (user.profile_photo_1.length > 0 && user.profile_photo_1[0]?.id !== undefined) {
+			  // Add fileUrl property to the profile_photo_1 object
+			  const { success, data: fileData } = await this.uploadFileService.getDocumentById(user.profile_photo_1[0].id);
+			   if (success && fileData?.fileUrl) {
+				user.profile_photo_1[0].fileUrl = fileData.fileUrl;
+			  }
+			}
+		  }
 
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
 			data: {
-				data: userData,
+				data: response,
 			},
 		});
 	}
