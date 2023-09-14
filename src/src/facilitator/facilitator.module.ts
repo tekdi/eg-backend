@@ -10,6 +10,7 @@ import { S3Module } from '../services/s3/s3.module';
 import { FacilitatorService } from './facilitator.service';
 import { FacilitatorController } from './facilitator.controller';
 import { AuthMiddleware } from '../common/middlewares/authmiddleware';
+import { UploadFileModule } from 'src/upload-file/upload-file.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 		EnumModule,
 		AuthModule,
 		S3Module,
+		UploadFileModule,
 	],
 	providers: [FacilitatorService],
 	controllers: [FacilitatorController],

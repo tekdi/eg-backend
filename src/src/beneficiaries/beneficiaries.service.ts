@@ -14,6 +14,7 @@ import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 @Injectable()
 export class BeneficiariesService {
 	public url = process.env.HASURA_BASE_URL;
@@ -28,6 +29,7 @@ export class BeneficiariesService {
 		private keycloakService: KeycloakService,
 		private configService: ConfigService,
 		private enumService: EnumService,
+		private uploadFileService: UploadFileService,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -800,18 +802,35 @@ export class BeneficiariesService {
 				data: {},
 			});
 		} else {
-			return resp.status(200).json({
-				success: true,
-				message: 'Benificiaries found success!',
-				data: {
-					totalCount: count,
-					data: mappedResponse?.map((e) => ({
+			mappedResponse = await Promise.allSettled(
+				mappedResponse?.map(async (e) => {
+					let mappedData = {
 						...e,
 						['program_beneficiaries']:
 							e?.['program_beneficiaries']?.[0],
 						['profile_photo_1']:
 							e?.['profile_photo_1']?.[0] || null,
-					})),
+					};
+					if (mappedData?.profile_photo_1?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_1?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_1.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					return mappedData;
+				}),
+			);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Benificiaries found success!',
+				data: {
+					totalCount: count,
+					data: mappedResponse,
 					facilitatorList: facilitatorListResponse,
 					limit,
 					currentPage: page,
@@ -1080,12 +1099,9 @@ export class BeneficiariesService {
 				data: {},
 			});
 		} else {
-			return resp.status(200).json({
-				success: true,
-				message: 'Benificiaries found success!',
-				data: {
-					totalCount: count,
-					data: mappedResponse?.map((e) => ({
+			mappedResponse = await Promise.allSettled(
+				mappedResponse?.map(async (e) => {
+					let mappedData = {
 						...e,
 						['program_faciltators']:
 							e?.['program_faciltators']?.[0],
@@ -1094,7 +1110,47 @@ export class BeneficiariesService {
 						['profile_photo_1']: e?.['profile_photo_1']?.[0] || {},
 						['profile_photo_2']: e?.['profile_photo_2']?.[0] || {},
 						['profile_photo_3']: e?.['profile_photo_3']?.[0] || {},
-					})),
+					};
+					if (mappedData?.profile_photo_1?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_1?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_1.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					if (mappedData?.profile_photo_2?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_2?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_2.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					if (mappedData?.profile_photo_3?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_3?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_3.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					return mappedData;
+				}),
+			);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Benificiaries found success!',
+				data: {
+					totalCount: count,
+					data: mappedResponse,
 					limit,
 					currentPage: page,
 					totalPages: `${totalPages}`,
@@ -1320,28 +1376,50 @@ export class BeneficiariesService {
 				return { success: false };
 			}
 		} else {
-			result.program_beneficiaries =
-				result?.program_beneficiaries?.[0] ?? {};
-			//response mapping convert array to object
-			for (const key of [
-				'profile_photo_1',
-				'profile_photo_2',
-				'profile_photo_3',
-				'aadhaar_front',
-				'aadhaar_back',
-				'program_users',
-			]) {
-				if (result?.[key] && result?.[key][0]) {
-					result[key] = result[key][0];
-				} else {
-					result = { ...result, [key]: {} };
+			let mappedData = {
+				...result,
+				['program_beneficiaries']:
+					result?.['program_beneficiaries']?.[0] || {},
+				['profile_photo_1']: result?.['profile_photo_1']?.[0] || {},
+				['profile_photo_2']: result?.['profile_photo_2']?.[0] || {},
+				['profile_photo_3']: result?.['profile_photo_3']?.[0] || {},
+				['aadhaar_front']: result?.['aadhaar_front']?.[0] || {},
+				['aadhaar_back']: result?.['aadhaar_back']?.[0] || {},
+				['program_users']: result?.['program_users']?.[0] || {},
+			};
+
+			if (mappedData?.profile_photo_1?.id) {
+				const { success, data: fileData } =
+					await this.uploadFileService.getDocumentById(
+						mappedData?.profile_photo_1?.id,
+					);
+				if (success && fileData?.fileUrl) {
+					mappedData.profile_photo_1.fileUrl = fileData.fileUrl;
+				}
+			}
+			if (mappedData?.profile_photo_2?.id) {
+				const { success, data: fileData } =
+					await this.uploadFileService.getDocumentById(
+						mappedData?.profile_photo_2?.id,
+					);
+				if (success && fileData?.fileUrl) {
+					mappedData.profile_photo_2.fileUrl = fileData.fileUrl;
+				}
+			}
+			if (mappedData?.profile_photo_3?.id) {
+				const { success, data: fileData } =
+					await this.uploadFileService.getDocumentById(
+						mappedData?.profile_photo_3?.id,
+					);
+				if (success && fileData?.fileUrl) {
+					mappedData.profile_photo_3.fileUrl = fileData.fileUrl;
 				}
 			}
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
 					message: 'Benificiaries found successfully!',
-					data: { result: result },
+					data: { result: mappedData },
 				});
 			} else {
 				return {
@@ -2369,39 +2447,7 @@ export class BeneficiariesService {
 				break;
 			}
 
-			case 'add_other_details': {
-				// Update other details in program_beneficiaries table
-				let userArr =
-					PAGE_WISE_UPDATE_TABLE_DETAILS.add_other_details
-						.program_beneficiaries;
-				const programDetails = beneficiaryUser.program_beneficiaries;
-				let tableName = 'program_beneficiaries';
-
-				req.learning_motivation = req.learning_motivation.length
-					? JSON.stringify(req.learning_motivation).replace(
-							/"/g,
-							'\\"',
-					  )
-					: null;
-				req.type_of_support_needed = req.type_of_support_needed.length
-					? JSON.stringify(req.type_of_support_needed).replace(
-							/"/g,
-							'\\"',
-					  )
-					: null;
-
-				await this.hasuraService.q(
-					tableName,
-					{
-						...req,
-						id: programDetails?.id ? programDetails.id : null,
-					},
-					userArr,
-					update,
-				);
-				break;
-			}
-
+			case 'add_other_details':
 			case 'edit_other_details': {
 				// Update other details in program_beneficiaries table
 				let userArr =

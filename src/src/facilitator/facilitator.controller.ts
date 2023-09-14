@@ -88,6 +88,7 @@ export class FacilitatorController {
 
 	@Post('/')
 	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
 	async getFacilitators(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -136,7 +137,7 @@ export class FacilitatorController {
 		@Res() response: any,
 	) {
 		return this.facilitatorService.exportFileToCsv(request, body, response);
- 	}
+	}
 
 	@Post('/admin/learner-status-distribution')
 	@UseGuards(new AuthGuard())
