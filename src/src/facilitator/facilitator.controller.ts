@@ -139,6 +139,22 @@ export class FacilitatorController {
 		return this.facilitatorService.exportFileToCsv(request, body, response);
 	}
 
+	@Patch('update-facilitator-aadhar/:id')
+	@UseGuards(new AuthGuard())
+	updatePrerakAadhar(
+		@Param('id') id: string,
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: any,
+	) {
+		return this.facilitatorService.updatePrerakAadhar(
+			id,
+			req,
+			body,
+			response,
+		);
+	}
+
 	@Post('/admin/learner-status-distribution')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
