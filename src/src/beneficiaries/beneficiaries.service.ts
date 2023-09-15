@@ -802,7 +802,7 @@ export class BeneficiariesService {
 				data: {},
 			});
 		} else {
-			mappedResponse = await Promise.allSettled(
+			mappedResponse = await Promise.all(
 				mappedResponse?.map(async (e) => {
 					let mappedData = {
 						...e,
@@ -824,7 +824,6 @@ export class BeneficiariesService {
 					return mappedData;
 				}),
 			);
-
 			return resp.status(200).json({
 				success: true,
 				message: 'Benificiaries found success!',
@@ -1099,7 +1098,7 @@ export class BeneficiariesService {
 				data: {},
 			});
 		} else {
-			mappedResponse = await Promise.allSettled(
+			mappedResponse = await Promise.all(
 				mappedResponse?.map(async (e) => {
 					let mappedData = {
 						...e,
@@ -1144,7 +1143,6 @@ export class BeneficiariesService {
 					return mappedData;
 				}),
 			);
-
 			return resp.status(200).json({
 				success: true,
 				message: 'Benificiaries found success!',

@@ -1833,7 +1833,7 @@ export class FacilitatorService {
 
 		let responseWithPagination = mappedResponse.slice(skip, skip + limit);
 
-		responseWithPagination = await Promise.allSettled(
+		responseWithPagination = await Promise.all(
 			responseWithPagination?.map(async (obj) => {
 				let mappedData = {
 					...obj,
