@@ -3361,34 +3361,40 @@ export class BeneficiariesService {
 		  `;
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const users = response?.data?.users ?? []
-		const userPromises = (users).map(async (user) => {
-			if (user.profile_photo_1.length > 0 && user.profile_photo_1[0]?.id !== undefined) {
-			  return this.uploadFileService.getDocumentById(user.profile_photo_1[0].id)
-				.then(({ success, data: fileData }) => {
-				  if (success && fileData?.fileUrl) {
-					user.profile_photo_1 = {
-						id: user.profile_photo_1[0]?.id,
-						name: user.profile_photo_1[0]?.name,
-						doument_type: user.profile_photo_1[0]?.doument_type,
-						document_sub_type: user.profile_photo_1[0]?.document_sub_type,
-						path: user.profile_photo_1[0]?.path,
-						fileUrl: fileData.fileUrl,
-					  };
-				  }
-				});
-			} else{
-				user.profile_photo_1 = {}
-			} 
+		const users = response?.data?.users ?? [];
+		const userPromises = users.map(async (user) => {
+			if (
+				user.profile_photo_1.length > 0 &&
+				user.profile_photo_1[0]?.id !== undefined
+			) {
+				return this.uploadFileService
+					.getDocumentById(user.profile_photo_1[0].id)
+					.then(({ success, data: fileData }) => {
+						if (success && fileData?.fileUrl) {
+							user.profile_photo_1 = {
+								id: user.profile_photo_1[0]?.id,
+								name: user.profile_photo_1[0]?.name,
+								doument_type:
+									user.profile_photo_1[0]?.doument_type,
+								document_sub_type:
+									user.profile_photo_1[0]?.document_sub_type,
+								path: user.profile_photo_1[0]?.path,
+								fileUrl: fileData.fileUrl,
+							};
+						}
+					});
+			} else {
+				user.profile_photo_1 = {};
+			}
 			return Promise.resolve(); // Return a resolved promise for users that don't need processing
-		  });
-		  
-		  const userResponse = await Promise.all(userPromises);
-		
+		});
+
+		await Promise.all(userPromises);
+
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data:response?.data || {}
+			data: response?.data || {},
 		});
 	}
 }
