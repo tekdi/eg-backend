@@ -1838,15 +1838,10 @@ export class FacilitatorService {
 		body: any,
 		response: any,
 	) {
+
+		//get ip information from token id
 		const user = await this.userService.ipUserInfo(req);
 		
-		if (!user?.data?.id) {
-			return response.status(401).json({
-				success: false,
-				message: 'Unauthenticated User!',
-			});
-		}
-
 		let facilitator_id = id;
 		let aadhaar_no = body?.aadhar_no;
 
@@ -1948,11 +1943,6 @@ export class FacilitatorService {
 				
 			});
 		}
-		return response.json({
-			status: 400,
-			success: false,
-			message: 'Provide valid aadhar number!',
-			data: {},
-		});
+		
 	}
 }
