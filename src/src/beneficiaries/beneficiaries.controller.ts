@@ -21,11 +21,15 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { BeneficiariesService } from './beneficiaries.service';
 import { RegisterBeneficiaryDto } from './dto/register-beneficiary.dto';
 import { StatusUpdateDTO } from './dto/status-update.dto';
+import { UserService } from 'src/user/user.service';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('beneficiaries')
 export class BeneficiariesController {
-	constructor(private beneficiariesService: BeneficiariesService) {}
+	constructor(
+		private beneficiariesService: BeneficiariesService,
+		private userService: UserService,
+	) {}
 
 	// @Get('/list')
 	// public async getAgList(
@@ -317,5 +321,109 @@ export class BeneficiariesController {
 			message: result.message,
 			data: result.data,
 		});
+	}
+
+	@Post('admin/reassign')
+	@UseGuards(new AuthGuard())
+	async reassignBeneficiary(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		const result = {
+			success: false,
+			message: '',
+			data: {
+				unsuccessfulReassignmentIds: [],
+			},
+		};
+
+		let isInvalidParams = false;
+
+		// Check if facilitator-ID is valid and verify if it is under given IP
+		const isValidFacilitator = await this.beneficiariesService.verifyEntity(
+			body.facilitatorId,
+			'facilitator',
+			request.mw_userid,
+			body.programId,
+		);
+		if (!isValidFacilitator.isVerified) isInvalidParams = true;
+
+		// Check if beneficiary-IDs are valid and verify if they are under given IP
+		const allBenDetails = {};
+		if (!isInvalidParams) {
+			for (const benId of body.beneficiaryIds) {
+				const isValidBeneficiary =
+					await this.beneficiariesService.verifyEntity(
+						benId,
+						'beneficiary',
+						request.mw_userid,
+						body.programId,
+					);
+				if (!isValidBeneficiary.isVerified) {
+					isInvalidParams = true;
+					break;
+				}
+				allBenDetails[isValidBeneficiary.data.id] =
+					isValidBeneficiary.data;
+			}
+		}
+
+		// Check if beneficiaries' facilitator ID and new reassigned facilitator-ID is not same
+		if (!isInvalidParams) {
+			isInvalidParams = Object.values(allBenDetails).some(
+				(benData: any) =>
+					benData.program_beneficiaries[0].facilitator_id ===
+					body.facilitatorId,
+			);
+		}
+
+		// Throw error in case of invalid params
+		if (isInvalidParams) {
+			result.message = 'Invalid params';
+			result.data = null;
+			return response.status(400).json(result);
+		}
+
+		// Reassign beneficiary one by one
+		for (const benId of body.beneficiaryIds) {
+			const updatedResult =
+				await this.beneficiariesService.reassignBeneficiary(
+					benId,
+					body.facilitatorId,
+				);
+			if (!updatedResult.success)
+				result.data.unsuccessfulReassignmentIds.push(benId);
+			else {
+				// Add audit logs if reassignment is successful
+				await this.userService.addAuditLog(
+					benId,
+					request.mw_userid,
+					'program_beneficiaries.facilitator_id',
+					updatedResult.data.id,
+					{
+						facilitator_id:
+							allBenDetails[benId].program_beneficiaries[0]
+								.facilitator_id,
+						original_facilitator_id:
+							allBenDetails[benId].program_beneficiaries[0]
+								.original_facilitator_id,
+					},
+					{
+						facilitator_id: updatedResult.data.facilitator_id,
+						original_facilitator_id:
+							updatedResult.data.original_facilitator_id,
+					},
+					['facilitator_id', 'original_facilitator_id'],
+				);
+			}
+		}
+
+		if (result.data.unsuccessfulReassignmentIds.length) {
+			result.message = "Some beneficiaries couldn't be reassigned";
+		}
+
+		result.success = true;
+		return response.status(200).json(result);
 	}
 }

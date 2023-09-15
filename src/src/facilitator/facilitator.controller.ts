@@ -6,6 +6,7 @@ import {
 	Param,
 	Patch,
 	Post,
+	Query,
 	Req,
 	Res,
 	UseGuards,
@@ -87,6 +88,7 @@ export class FacilitatorController {
 
 	@Post('/')
 	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
 	async getFacilitators(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -142,9 +144,46 @@ export class FacilitatorController {
 	updatePrerakAadhar(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
-		@Req() req:any,
+		@Req() req: any,
 		@Res() response: any,
 	) {
-		return this.facilitatorService.updatePrerakAadhar(id,req,body, response);
+		return this.facilitatorService.updatePrerakAadhar(
+			id,
+			req,
+			body,
+			response,
+		);
+	}
+
+	@Post('/admin/learner-status-distribution')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	async getLearnerStatusDistribution(
+		@Req() req: any,
+		@Body() body: FilterFacilitatorDto,
+		@Res() response: any,
+	) {
+		return this.facilitatorService.getLearnerStatusDistribution(
+			req,
+			body,
+			response,
+		);
+	}
+
+	@Get('/admin/prerak-learner-list/:id')
+	@UsePipes(ValidationPipe)
+	async getLearnerListByPrerakId(
+		@Req() req: any,
+		@Body() body: FilterFacilitatorDto,
+		@Param('id') id: string,
+		@Query() query: any,
+		@Res() response: any,
+	) {
+		return this.facilitatorService.getLearnerListByPrerakId(
+			req,
+			id,
+			query,
+			response,
+		);
 	}
 }

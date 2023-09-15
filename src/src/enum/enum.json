@@ -610,5 +610,84 @@
 			"value": "intermediatory"
 		},
 		{ "title": "BENEFICIARY_LEARNING_LEVEL_EXPERT", "value": "expert" }
+	],
+	"CAMP_PROPERTY_TYPE": [
+		{
+			"title": "CAMP_PROPERTY_TYPE_ANGANVADI_KENDRA",
+			"value": "anganvadi_kendra"
+		},
+		{
+			"title": "CAMP_PROPERTY_TYPE_PRERAK_HOUSE",
+			"value": "prerak_house"
+		},
+		{
+			"title": "CAMP_PROPERTY_TYPE_LEARNER_HOUSE",
+			"value": "learner_house"
+		},
+		{
+			"title": "CAMP_PROPERTY_TYPE_ATAL_SEVA_KENDRA",
+			"value": "atal_seva_kendra"
+		},
+		{
+			"title": "CAMP_PROPERTY_TYPE_INACTIVE_GOVT_PRIVATE_SCHOOL",
+			"value": "inactive_govt_private_school"
+		},
+		{
+			"title": "CAMP_PROPERTY_TYPE_SAMUDAY_KENDRA",
+			"value": "samuday_kendra"
+		},
+		{
+			"title": "CAMP_PROPERTY_TYPE_INFLUENCERS_HOUSE",
+			"value": "influencers_house"
+		},
+		{
+			"title": "CAMP_PROPERTY_TYPE_OTHER_GOVERNMENT_BUILDING",
+			"value": "other_government_building"
+		},
+		{ "title": "CAMP_PROPERTY_TYPE_OTHER", "value": "other" }
+	],
+	"GROUPS_STATUS": [
+		{
+			"title": "GROUPS_STATUS_NOT_REGISTERED",
+			"value": "not_registered"
+		},
+		{
+			"title": "GROUPS_STATUS_REGISTERED",
+			"value": "registered"
+		},
+		{
+			"title": "GROUPS_STATUS_CAMP_VERIFIED",
+			"value": "camp_verified"
+		},
+		{
+			"title": "GROUPS_STATUS_INACTIVE",
+			"value": "inactive"
+		}
+	],
+	"CAMP_PROPERTY_FACILITIES": [
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_WASHROOM",
+			"value": "washroom"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_FAN",
+			"value": "fan"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_CLEAN_SEATING_AREA",
+			"value": "clean_seating_area"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_SHED",
+			"value": "shed"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_SAFE_SURROUNDING",
+			"value": "safe_surrounding"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_PROPER_LIGHTINGS",
+			"value": "proper_lightings"
+		}
 	]
 }

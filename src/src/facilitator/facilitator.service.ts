@@ -10,6 +10,7 @@ import {
 	HasuraService as HasuraServiceFromServices,
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -20,6 +21,7 @@ export class FacilitatorService {
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private userService: UserService,
 		private s3Service: S3Service,
+		private uploadFileService: UploadFileService,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -228,6 +230,7 @@ export class FacilitatorService {
 							status
 							comment
 							reminder
+							rsvp
 							location_type
 							location
 							created_at
@@ -902,6 +905,7 @@ export class FacilitatorService {
 
 	async update(id: number, body: any, response: any) {
 		const { data: facilitatorUser } = await this.userById(id);
+		const mobile_no = body.mobile;
 		switch (body.page_type) {
 			case 'add_basic_details': {
 				await this.updateAddBasicDetails(id, body);
@@ -916,20 +920,33 @@ export class FacilitatorService {
 				break;
 			}
 			case 'contact_details': {
-				let isMobileExist = await this.hasuraService.findAll('users', {
-					mobile: body?.mobile,
-				});
-				let userExist = isMobileExist?.data?.users;
-				const isDuplicateMobile = userExist.some(
-					(data) => data.id !== id,
-				);
-				if (userExist.length > 0 && isDuplicateMobile) {
+				let qury = `query MyQuery1 {
+					users(where: {id: {_neq: ${id}}, mobile: {_eq:${mobile_no}}, program_faciltators: {id: {_is_null: false}}}) {
+					  id
+					  mobile
+					  first_name
+					  last_name
+					  program_beneficiaries {
+						facilitator_id
+						status
+					  }
+					  program_faciltators {
+						status
+					  }
+					}
+				  }
+				  `;
+				const data = { query: qury };
+				const resp = await this.hasuraServiceFromServices.getData(data);
+				const newQdata = resp?.data;
+				if (newQdata.users.length > 0) {
 					return response.status(422).send({
 						success: false,
 						message: 'Mobile Number Already Exist',
 						data: {},
 					});
 				}
+
 				await this.updateContactDetails(id, body, facilitatorUser);
 				break;
 			}
@@ -998,6 +1015,21 @@ export class FacilitatorService {
 				break;
 			}
 			case 'aadhaar_details': {
+				let isAdharExist = await this.hasuraService.findAll('users', {
+					aadhar_no: body?.aadhar_no,
+				});
+				let userExist = isAdharExist?.data?.users;
+				const isDuplicateAdhar = userExist.some(
+					(data) => data.id !== id,
+				);
+				if (userExist.length > 0 && isDuplicateAdhar) {
+					return response.status(422).send({
+						success: false,
+						message: 'Aadhaar Number Already Exist',
+						data: {},
+					});
+				}
+
 				const result = await this.updateAadhaarDetails(id, body);
 				if (result && !result.success) {
 					return response.status(result.statusCode).json({
@@ -1720,6 +1752,7 @@ export class FacilitatorService {
 			status
 			comment
 			reminder
+			rsvp
 			location_type
 			location
 			created_at
@@ -1800,12 +1833,27 @@ export class FacilitatorService {
 
 		let responseWithPagination = mappedResponse.slice(skip, skip + limit);
 
-		responseWithPagination = responseWithPagination.map((obj) => {
-			obj.program_faciltators = obj.program_faciltators?.[0] || {};
-			obj.qualifications = obj.qualifications?.[0] || {};
-			obj.profile_photo_1 = obj.profile_photo_1?.[0] || {};
-			return obj;
-		});
+		responseWithPagination = await Promise.all(
+			responseWithPagination?.map(async (obj) => {
+				let mappedData = {
+					...obj,
+					['program_faciltators']:
+						obj?.['program_faciltators']?.[0] || {},
+					['qualifications']: obj?.['qualifications']?.[0] || {},
+					['profile_photo_1']: obj?.['profile_photo_1']?.[0] || {},
+				};
+				if (mappedData?.profile_photo_1?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							mappedData?.profile_photo_1?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						mappedData.profile_photo_1.fileUrl = fileData.fileUrl;
+					}
+				}
+				return mappedData;
+			}),
+		);
 
 		const count = mappedResponse.length;
 		const totalPages = Math.ceil(count / limit);
@@ -1832,20 +1880,301 @@ export class FacilitatorService {
 		};
 	}
 
+	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+
+		const sortType = body?.sortType ? body?.sortType : 'desc';
+
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let filterQueryArray = [];
+
+		filterQueryArray.push(
+			`{program_faciltators:{parent_ip:{_eq:"${user.data.program_users[0].organisation_id}"}}}`,
+		);
+
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`{_and: [
+				{first_name: { _ilike: "%${first_name}%" } } 
+				{ last_name: { _ilike: "%${last_name}%" } } 
+				 ]} `);
+			} else {
+				filterQueryArray.push(
+					`{ first_name: { _ilike: "%${first_name}%" } }`,
+				);
+			}
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+			);
+		}
+
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				` {id:{_in: ${JSON.stringify(body.facilitator)}}}`,
+			);
+		}
+
+		const status = this.enumService
+			.getEnumValue('BENEFICIARY_STATUS')
+			.data.map((item) => item.value);
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+		let variables = {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
+		users_aggregate(where: ${filterQuery}) {
+				aggregate {
+					count
+				  }
+			}
+		users(limit: $limit,
+			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
+		  
+			first_name
+			last_name
+			middle_name
+			id
+			program_faciltators{
+				status
+				learner_total_count:beneficiaries_aggregate {
+					aggregate {
+					  count
+					}
+				  },
+				  identified:beneficiaries_aggregate(
+					where: {
+						user: {id: {_is_null: false}},
+						_or: [
+							{status: {_nin: ${JSON.stringify(
+								status.filter((item) => item != 'identified'),
+							)}}},
+							{ status: { _is_null: true } }
+					 ]
+					}
+				)
+				{
+					aggregate {
+					  count
+					}
+				} ,
+				${status
+					.filter((item) => item != 'identified')
+					.map(
+						(item) => `${
+							!isNaN(Number(item[0])) ? '_' + item : item
+						}:beneficiaries_aggregate(where: {
+				_and: [
+				  {
+				  status: {_eq: "${item}"}
+				},
+					{ user:	{ id: { _is_null: false } } }
+				
+										 ]
+		    	}
+			) 
+			{
+				aggregate {
+				  count
+				}
+			} 
+			`,
+					)}
+			}
+		}
+	  }
+	  `;
+
+		const data = { query: qury, variables: variables };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data;
+
+		if (newQdata?.users.length > 0) {
+			const res = newQdata.users.map((facilitator) => {
+				const benefeciaryData = facilitator.program_faciltators.map(
+					(benefeciary) => {
+						const statusCount = status.map((statusKey) => ({
+							status: statusKey,
+							count:
+								benefeciary[statusKey]?.aggregate?.count || 0,
+						}));
+
+						return {
+							first_name: facilitator.first_name,
+							last_name: facilitator.last_name,
+							id: facilitator.id,
+							status: benefeciary.status,
+							learner_total_count:
+								benefeciary.learner_total_count.aggregate.count,
+							status_count: statusCount,
+						};
+					},
+				);
+
+				return benefeciaryData;
+			});
+
+			const count = newQdata.users_aggregate.aggregate.count;
+			const totalPages = Math.ceil(count / limit);
+			const flattenedRes = res.flat();
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: flattenedRes,
+					totalCount: count,
+					totalPages: totalPages,
+					currentPage: offset / limit + 1,
+					limit: limit,
+				},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+					currentPage: offset / limit + 1,
+					limit: limit,
+				},
+			});
+		}
+	}
+
+	public async getLearnerListByPrerakId(
+		req: any,
+		id: any,
+		query: any,
+		resp: any,
+	) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.id) {
+			return resp.status(401).json({
+				success: false,
+				message: 'Unauthenticated User!',
+			});
+		}
+
+		const program_id = query.program_id || 1;
+		const page = isNaN(query.page) ? 1 : parseInt(query.page);
+		const limit = isNaN(query.limit) ? 10 : parseInt(query.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let variables = {
+			limit: limit,
+			offset: offset,
+		};
+
+		let qury = `query MyQuery($limit:Int, $offset:Int) {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
+			  aggregate {
+				count
+			  }
+			}
+			users(limit: $limit,
+				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  mobile
+			  aadhar_no
+			  address
+              address_line_1
+              address_line_2
+			  district
+			  block
+			  program_beneficiaries{
+				id
+				program_id
+				status
+				enrollment_dob
+				enrollment_date
+				enrollment_first_name
+				enrollment_last_name
+			  }
+			}
+		  }`;
+
+		const data = { query: qury, variables: variables };
+
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const newQdata = response?.data;
+
+		if (newQdata.users.length > 0) {
+			const res = newQdata.users.map((item) => ({
+				...item,
+				program_beneficiaries: item.program_beneficiaries[0], // Remove the program_beneficiaries property
+			}));
+
+			const count = newQdata.users_aggregate.aggregate.count;
+
+			const totalPages = Math.ceil(count / limit);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: res,
+					totalCount: count,
+					totalPages: totalPages,
+					currentPage: offset / limit + 1,
+					limit: limit,
+				},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: {
+					data: [],
+					totalCount: 0,
+					totalPages: 0,
+					currentPage: offset / limit + 1,
+					limit: limit,
+				},
+			});
+		}
+	}
+
 	public async updatePrerakAadhar(
 		id: any,
 		req: any,
 		body: any,
 		response: any,
 	) {
-
-		//get ip information from token id
+		//get IP information from token id
 		const user = await this.userService.ipUserInfo(req);
-		
+
 		let facilitator_id = id;
 		let aadhaar_no = body?.aadhar_no;
 
-		if(!aadhaar_no || !facilitator_id){
+		if (!aadhaar_no || !facilitator_id) {
 			return response.json({
 				status: 400,
 				success: false,
@@ -1854,7 +2183,7 @@ export class FacilitatorService {
 			});
 		}
 
-		if(aadhaar_no.length < 12){
+		if (aadhaar_no.length < 12) {
 			return response.json({
 				status: 400,
 				success: false,
@@ -1940,9 +2269,7 @@ export class FacilitatorService {
 				success: true,
 				message: 'Data updated successfully!',
 				data: res,
-				
 			});
 		}
-		
 	}
 }
