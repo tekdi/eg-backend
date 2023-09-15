@@ -70,14 +70,15 @@ export class CampService {
 				});
 			}
 
+			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
+
 			let query = `query MyQuery {
-            users(where: {_and: {program_beneficiaries: {_and: {user_id: {_in: [${learner_ids}]}},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}}){
-              id
-              program_beneficiaries{
-                user_id
-              }
-            }
-          }`;
+				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}){
+				  id
+				}
+			  }`;
+
+			  console.log("query-->>>",query)
 
 			const data = { query: query };
 			const res = await this.hasuraServiceFromServices.getData(data);
@@ -107,9 +108,13 @@ export class CampService {
 			}
 
 			let create_group_object = {
-				name: "untitled",
-				type: "camp",
-				status: "Registered",
+				name:
+					'camp ' +
+					faciltator_camp_data?.data?.camps_aggregate?.aggregate
+						?.count +
+					1,
+				type: 'camp',
+				status: 'not_registered',
 				program_id: body?.program_id || 1,
 				academic_year_id: body?.academic_year_id || 1,
 				created_by: facilitator_id,
@@ -122,13 +127,7 @@ export class CampService {
 				},
 				[],
 				false,
-				[
-					...this.returnFieldsgroups,
-					'id',
-					'name',
-					'type',
-					'status',
-				],
+				[...this.returnFieldsgroups, 'id', 'name', 'type', 'status'],
 			);
 
 			let group_id = createresponse?.groups?.id;
@@ -149,21 +148,20 @@ export class CampService {
 					[...this.returnFieldscamps, 'group_id', 'id'],
 				);
 			}
-     
+
 			let camp_id = createcampResponse?.camps?.id;
 
 			if (!camp_id) {
-				if(group_id){
+				if (group_id) {
 					await this.hasuraService.delete('groups', {
 						id: group_id,
 					});
 				}
-			
+
 				return response.status(500).json({
 					success: false,
 					message: 'Camp registration failed.',
-					data: {}
-					
+					data: {},
 				});
 			}
 
@@ -200,28 +198,26 @@ export class CampService {
 				return response.status(500).json({
 					success: false,
 					message: 'error occured during creating group user.',
-					data: {}
-					
+					data: {},
 				});
 			}
 
 			let group_user_member = {
-	     			group_id: group_id,
- 	    			member_type: 'member',
-					status: 'active',
-					created_by: facilitator_id,
-					updated_by: facilitator_id,
-			}
+				group_id: group_id,
+				member_type: 'member',
+				status: 'active',
+				created_by: facilitator_id,
+				updated_by: facilitator_id,
+			};
 
 			//add learners to the group users
-			learner_ids.forEach(async (id) => {
-				
 
+			learner_ids.forEach(async (id) => {
 				await this.hasuraService.q(
 					'group_users',
 					{
 						...group_user_member,
-						user_id:id
+						user_id: id,
 					},
 					[],
 					false,
@@ -232,27 +228,27 @@ export class CampService {
 			const auditData = {
 				userId: facilitator_id,
 				mw_userid: facilitator_id,
-				context: 'camp.id',
+				context: 'camp',
 				context_id: camp_id,
 				oldData: {
 					group_id: group_id,
-				    status: "not_registered",
+					status: 'not_registered',
 					learner_id: [learner_ids],
 				},
 				newData: {
 					group_id: group_id,
-					status: "not_registered",
+					status: 'not_registered',
 					learner_id: [learner_ids],
 				},
 				tempArray: ['group_id', 'status', 'learner_id'],
 				action: 'create',
 			};
 
-			 await this.userService.addAuditLogAction(auditData);
+			await this.userService.addAuditLogAction(auditData);
 
 			return response.status(200).json({
 				success: true,
-        data:{camp:createcampResponse.camps},
+				data: { camp: createcampResponse.camps },
 				message: 'Camp registered successfully.',
 			});
 
@@ -267,7 +263,11 @@ export class CampService {
 		}
 	}
 
-	async checkCampInformation(id: any,program_id:any,academic_year_id:any) {
+	async checkCampInformation(
+		id: any,
+		program_id: any,
+		academic_year_id: any,
+	) {
 		let facilitator_id = id;
 		let facilitator_id_program_id = program_id;
 		let facilitator_id_academic_id = academic_year_id;
@@ -310,21 +310,12 @@ export class CampService {
 		return res;
 	}
 
-	
 	public async campList(body: any, req: any, resp) {
 		const facilitator_id = req.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
-		let member_type = "owner"
-		let status = "active"
-		
-
-		if (!facilitator_id) {
-			return resp.status(401).json({
-				success: false,
-				message: 'Unauthenticated User!',
-			});
-		}
+		let member_type = 'owner';
+		let status = 'active';
 
 		let qury = `query MyQuery {
 			camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
@@ -339,72 +330,35 @@ export class CampService {
 			  }
 			  
 			  group_users(where: {member_type: {_neq: "owner"}}) {
-				user {
-				  id
-				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
-					id
-					name
-					doument_type
-					document_sub_type
-					path
-				  }
-				  program_beneficiaries {
-					user_id
-					enrollment_first_name
-					enrollment_last_name
-					enrollment_middle_name
-				  }
-				}
+				user_id
+				status
+				member_type
+				
 			  }
 			}
-		  }
-		  
-		  
-		  `;
+		  }`;
+
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const newQdata = response?.data?.camps;
-	
-		await Promise.all(newQdata?.map(async (item) => {
-			await Promise.all(item.group_users.map(async (userObj) => {
-			  let profilePhoto = userObj.user.profile_photo_1;
-			  if (profilePhoto?.[0]?.id !== undefined) {
-				const { success, data: fileData } = await this.uploadFileService.getDocumentById(userObj.user.profile_photo_1[0].id);
-		    	if (success && fileData?.fileUrl) {
-				  userObj.user.profile_photo_1[0].fileUrl = fileData.fileUrl;
-				}
-			  }
-			}));
-		  }));
+		const newQdata = response?.data;
 
-		
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: {
-				data: newQdata,
-			},
+			data: newQdata,
 		});
 	}
 
-	public async campById(id:any,body: any, req: any, resp) {;
-		const camp_id = id
+	public async campById(id: any, body: any, req: any, resp) {
+		const camp_id = id;
 		const facilitator_id = req.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
-		let member_type = "owner"
-		let status = "active"
-		
-
-		if (!facilitator_id) {
-			return resp.status(401).json({
-				success: false,
-				message: 'Unauthenticated User!',
-			});
-		}
+		let member_type = 'owner';
+		let status = 'active';
 
 		let qury = `query MyQuery {
-			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
+			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
 			  id
 			  kit_ratings
 			  kit_feedback
@@ -427,6 +381,7 @@ export class CampService {
 				  }
 				  program_beneficiaries {
 					user_id
+					status
 					enrollment_first_name
 					enrollment_last_name
 					enrollment_middle_name
@@ -441,26 +396,55 @@ export class CampService {
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.camps;
-		
-		await Promise.all(newQdata?.map(async (item) => {
-			await Promise.all(item.group_users.map(async (userObj) => {
-			  let profilePhoto = userObj.user.profile_photo_1;
-			  if (profilePhoto?.[0]?.id !== undefined) {
-				const { success, data: fileData } = await this.uploadFileService.getDocumentById(userObj.user.profile_photo_1[0].id);
-		    	if (success && fileData?.fileUrl) {
-				  userObj.user.profile_photo_1[0].fileUrl = fileData.fileUrl;
-				}
-			  }
-			}));
-		  }));
 
-		
+		if (newQdata.length == 0) {
+			return resp.status(400).json({
+				success: false,
+				message: 'Camp data not found!',
+				data: {},
+			});
+		}
+
+		const userData = await Promise.all(
+			newQdata?.map(async (item) => {
+				const group_users = await Promise.all(
+					item.group_users.map(async (userObj) => {
+						userObj = userObj.user;
+						let profilePhoto = userObj.profile_photo_1;
+						if (profilePhoto?.[0]?.id !== undefined) {
+							const { success, data: fileData } =
+								await this.uploadFileService.getDocumentById(
+									userObj.profile_photo_1[0].id,
+								);
+							if (success && fileData?.fileUrl) {
+								userObj.profile_photo_1 = {
+									id: userObj.profile_photo_1[0]?.id,
+									name: userObj.profile_photo_1[0]?.name,
+									doument_type:
+										userObj.profile_photo_1[0]
+											?.doument_type,
+									document_sub_type:
+										userObj.profile_photo_1[0]
+											?.document_sub_type,
+									path: userObj.profile_photo_1[0]?.path,
+									fileUrl: fileData.fileUrl,
+								};
+							}
+						} else {
+							userObj.profile_photo_1 = {};
+						}
+
+						return userObj;
+					}),
+				);
+				return { ...item, group_users };
+			}),
+		);
+
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: {
-				data: newQdata,
-			},
+			data: userData || {},
 		});
 	}
 
