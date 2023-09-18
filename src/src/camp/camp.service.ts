@@ -15,7 +15,7 @@ export class CampService {
 		private uploadFileService: UploadFileService,
 	) {}
 
-	public returnFieldsgroups = ['id', 'name','type', 'status'];
+	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
 
 	public returnFieldscamps = [
 		'kit_received',
@@ -78,8 +78,6 @@ export class CampService {
 				}
 			  }`;
 
-			  console.log("query-->>>",query)
-
 			const data = { query: query };
 			const res = await this.hasuraServiceFromServices.getData(data);
 			let learner_data = res?.data?.users;
@@ -95,8 +93,6 @@ export class CampService {
 					message: 'No learner data found or an error occurred.',
 				});
 			}
-
-			
 
 			// Check if facilitator_id and learner_data have the same length
 			if (learner_ids.length !== learner_data.length) {
@@ -447,6 +443,4 @@ export class CampService {
 			data: userData || {},
 		});
 	}
-
-
 }
