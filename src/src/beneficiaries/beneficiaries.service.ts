@@ -3333,13 +3333,6 @@ export class BeneficiariesService {
 		let academic_year_id = body?.academic_year_id || 1;
 		let status = 'enrolled_ip_verified';
 
-		if (!facilitator_id) {
-			return resp.status(401).json({
-				success: false,
-				message: 'Unauthenticated User!',
-			});
-		}
-
 		let qury = `query MyQuery {
 			users(where: {program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}, program_id: {_eq:${program_id}}, status: {_eq:${status}}}, _not: {group_users: {group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}}) {
 			  id
