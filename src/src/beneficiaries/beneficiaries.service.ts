@@ -3378,15 +3378,21 @@ export class BeneficiariesService {
 					}
 				} else {
 					user.profile_photo_1 = {};
+
 				}
 				return user;
 			}),
 		);
 
+		const result = {
+			user: userPromises
+		  };
+		  
+
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: userPromises || {},
+			data: result || {},
 		});
 	}
 }

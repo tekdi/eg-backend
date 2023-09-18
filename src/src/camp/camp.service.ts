@@ -48,7 +48,7 @@ export class CampService {
 				return response.status(401).json({
 					success: false,
 					data: {},
-					message: 'Faciltator access denied ',
+					message: 'CAMP_VALIDATION_MESSAGE_FACILITATOR_DIDNT_SHORTLISTED_FOR_ORIENTATION,'
 				});
 			}
 
@@ -66,7 +66,7 @@ export class CampService {
 				return response.status(401).json({
 					success: false,
 					data: {},
-					message: 'Camp registeration limit exceeded',
+					message: "CAMP_VALIDATION_MESSAGE_REGISTRATION_LIMIT_EXCEED",
 				});
 			}
 
@@ -90,7 +90,7 @@ export class CampService {
 			) {
 				return response.status(400).json({
 					success: false,
-					message: 'No learner data found or an error occurred.',
+					message: "CAMP_VALIDATION_MESSAGE_LEARNER_ID_DOESNT_EXIST",
 				});
 			}
 
@@ -99,7 +99,7 @@ export class CampService {
 				return response.status(400).json({
 					success: false,
 					message:
-						'Learners do not belong to the corresponding facilitator.',
+					"CAMP_VALIDATION_MESSAGE_LEARNER_ALREADY_ADDED_WITH_ANOTHER_PRERAK",
 				});
 			}
 
@@ -156,7 +156,7 @@ export class CampService {
 
 				return response.status(500).json({
 					success: false,
-					message: 'Camp registration failed.',
+					message: "CAMP_VALIDATION_MESSAGE_CREATING_CAMP_DETAILS",
 					data: {},
 				});
 			}
@@ -193,7 +193,7 @@ export class CampService {
 
 				return response.status(500).json({
 					success: false,
-					message: 'error occured during creating group user.',
+					message: "CAMP_VALIDATION_MESSAGE_CREATING_USER_FOR_CAMP",
 					data: {},
 				});
 			}
