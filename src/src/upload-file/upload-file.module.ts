@@ -6,9 +6,9 @@ import { UploadFileController } from './upload-file.controller';
 import { UploadFileService } from './upload-file.service';
 
 @Module({
-	controllers: [UploadFileController],
-	providers: [UploadFileService],
-	imports: [S3Module, HasuraModule, HasuraModuleFromServices],
-	exports: [UploadFileService],
+  controllers: [UploadFileController],
+  providers: [UploadFileService],
+  imports: [S3Module, HasuraModule,HasuraModuleFromServices],
+  exports: [UploadFileService],
 })
 export class UploadFileModule {}

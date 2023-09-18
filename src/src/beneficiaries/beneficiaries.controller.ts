@@ -426,4 +426,12 @@ export class BeneficiariesController {
 		result.success = true;
 		return response.status(200).json(result);
 	}
+
+	@Post('/beneficiaries-for-camp')
+	@UseGuards(new AuthGuard())
+	notRegisteredBeneficiaries(@Req() request: any,
+	@Body() body: any,
+	@Res() response: any,) {
+		return this.beneficiariesService.notRegisteredBeneficiaries(body, request,response);
+	}
 }
