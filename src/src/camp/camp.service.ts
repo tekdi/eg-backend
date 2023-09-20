@@ -409,8 +409,6 @@ export class CampService {
 		  
 		  `;
 		const data = { query: qury };
-		console.log('query', data.query);
-
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.camps;
 
@@ -457,7 +455,7 @@ export class CampService {
 				return { ...item, group_users };
 			}),
 		);
-		console.log('useData', userData);
+
 		if (!userData?.[0]?.properties) {
 			userData[0].properties = {
 				lat: null,
