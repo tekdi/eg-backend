@@ -496,9 +496,22 @@ export class CampService {
 
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
-				location: [
+				properties: [
 					'street',
-					'landmark',
+					'grampanchayat',
+					'state',
+					'district',
+					'block',
+					'village',
+					'property_type',
+				],
+			},
+			create_location: {
+				properties: [
+					'lat',
+					'long',
+					'street',
+					'grampanchayat',
 					'state',
 					'district',
 					'block',
@@ -507,7 +520,7 @@ export class CampService {
 				],
 			},
 			edit_facilities: {
-				facilities: ['property_facilities'],
+				properties: ['property_facilities'],
 			},
 			edit_kit: {
 				kit_received: ['kit_received'],
@@ -557,20 +570,12 @@ export class CampService {
 			});
 		}
 
-		let property_id = newQdata?.property_id;
+		const property_id = newQdata?.property_id;
 
 		switch (update_body.edit_page_type) {
-			case 'camp_location': {
-				let location_body = {
-					property_type: update_body?.property_type,
-					lat: update_body?.lat,
-					long: update_body?.long,
-					street: update_body?.street,
-					landmark: update_body?.landmark,
-					state: update_body?.state,
-					district: update_body?.district,
-					block: update_body?.block,
-					village: update_body?.village,
+			case 'edit_camp_location': {
+				const location_body = {
+					...update_body,
 					created_by: facilitator_id,
 					updated_by: facilitator_id,
 				};
@@ -583,14 +588,20 @@ export class CampService {
 						});
 					}
 
+					const location_arr =
+						PAGE_WISE_UPDATE_TABLE_DETAILS.create_location
+							.properties;
+
 					await this.createPropertyDetails(
 						camp_id,
 						location_body,
+						location_arr,
 						response,
 					);
 				} else {
 					const location_arr =
-						PAGE_WISE_UPDATE_TABLE_DETAILS.edit_location.location;
+						PAGE_WISE_UPDATE_TABLE_DETAILS.edit_location.properties;
+
 					await this.updatepropertyDetails(
 						camp_id,
 						property_id,
@@ -603,12 +614,9 @@ export class CampService {
 				break;
 			}
 
-			case 'kit_details': {
+			case 'edit_kit_details': {
 				let camp_details = {
-					kit_received: update_body?.kit_received,
-					kit_was_sufficient: update_body?.kit_was_sufficient,
-					kit_ratings: update_body?.kit_ratings,
-					kit_feedback: update_body?.kit_feedback,
+					...update_body,
 				};
 
 				const kit_arr =
@@ -626,7 +634,7 @@ export class CampService {
 				break;
 			}
 
-			case 'facilities': {
+			case 'edit_property_facilities': {
 				let camp_facilities = {
 					property_facilities: update_body?.facilities
 						? JSON.stringify(update_body.facilities).replace(
@@ -635,17 +643,20 @@ export class CampService {
 						  )
 						: '',
 				};
+				const facilities_arr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities.properties;
 
 				if (property_id === null) {
 					await this.createPropertyDetails(
 						camp_id,
 						camp_facilities,
+						facilities_arr,
 						response,
 					);
 				} else {
 					const facilities_arr =
 						PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities
-							.facilities;
+							.properties;
 					await this.updatepropertyDetails(
 						camp_id,
 						property_id,
@@ -660,11 +671,16 @@ export class CampService {
 		}
 	}
 
-	async createPropertyDetails(camp_id: any, body: any, response: any) {
+	async createPropertyDetails(
+		camp_id: any,
+		body: any,
+		create_arr: any,
+		response: any,
+	) {
 		let create_response = await this.hasuraService.q(
 			'properties',
 			body,
-			[],
+			create_arr,
 			false,
 			[...this.returnFieldsProperties, 'id'],
 		);
@@ -707,6 +723,12 @@ export class CampService {
 				data: {},
 			});
 		}
+
+		return response.json({
+			status: 200,
+			message: 'Updated camp details successfully  ',
+			data: {},
+		});
 	}
 
 	async updatepropertyDetails(
