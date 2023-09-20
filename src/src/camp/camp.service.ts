@@ -382,6 +382,18 @@ export class CampService {
 				property_photo_building
 				property_photo_classroom
 				property_photo_other
+				photo_other {
+					id
+					name
+				  }
+				  photo_building {
+					id
+					name
+				  }
+				  photo_classroom {
+					id
+					name
+				  }
 			  }
 			  
 			  group_users(where: {member_type: {_neq: "owner"}}) {
@@ -452,7 +464,58 @@ export class CampService {
 						return userObj;
 					}),
 				);
-				return { ...item, group_users };
+				let properties = item?.properties;
+				const { photo_building, photo_classroom, photo_other } =
+					item?.properties || {};
+				if (photo_building?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							photo_building?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						properties = {
+							...properties,
+							photo_building: {
+								...photo_building,
+								fileUrl: fileData?.fileUrl,
+							},
+						};
+					}
+				}
+
+				if (photo_classroom?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							photo_classroom?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						properties = {
+							...properties,
+							photo_classroom: {
+								...photo_classroom,
+								fileUrl: fileData?.fileUrl,
+							},
+						};
+					}
+				}
+
+				if (photo_other?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							photo_other?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						properties = {
+							...properties,
+							photo_other: {
+								...photo_other,
+								fileUrl: fileData?.fileUrl,
+							},
+						};
+					}
+				}
+
+				return { ...item, properties, group_users };
 			}),
 		);
 		const userResult = userData?.[0];
