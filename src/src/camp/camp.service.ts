@@ -455,9 +455,9 @@ export class CampService {
 				return { ...item, group_users };
 			}),
 		);
-
-		if (!userData?.[0]?.properties) {
-			userData[0].properties = {
+		const userResult = userData?.[0];
+		if (!userResult?.properties) {
+			userResult.properties = {
 				lat: null,
 				long: null,
 				street: null,
@@ -476,7 +476,7 @@ export class CampService {
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: userData[0] || {},
+			data: userResult || {},
 		});
 	}
 }
