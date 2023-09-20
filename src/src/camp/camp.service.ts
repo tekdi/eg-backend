@@ -716,7 +716,7 @@ export class CampService {
 		update_array: any,
 		response: any,
 	) {
-		const update_response = await this.hasuraService.q(
+		await this.hasuraService.q(
 			'properties',
 			{
 				...body,
@@ -740,7 +740,7 @@ export class CampService {
 		update_arr: any,
 		response: any,
 	) {
-		const update_response = await this.hasuraService.q(
+		await this.hasuraService.q(
 			'camps',
 			{
 				...camp_body,
