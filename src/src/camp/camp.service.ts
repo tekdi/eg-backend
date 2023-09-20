@@ -368,6 +368,21 @@ export class CampService {
 				description
 				status
 			  }
+			  properties{
+				lat
+				long
+				street
+				state
+				district
+				block
+				village
+				grampanchayat
+				property_type
+				property_facilities
+				property_photo_building
+				property_photo_classroom
+				property_photo_other
+			  }
 			  
 			  group_users(where: {member_type: {_neq: "owner"}}) {
 				user {
@@ -394,6 +409,8 @@ export class CampService {
 		  
 		  `;
 		const data = { query: qury };
+		console.log('query', data.query);
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.camps;
 
@@ -440,7 +457,24 @@ export class CampService {
 				return { ...item, group_users };
 			}),
 		);
-
+		console.log('useData', userData);
+		if (!userData?.[0]?.properties) {
+			userData[0].properties = {
+				lat: null,
+				long: null,
+				street: null,
+				state: null,
+				district: null,
+				block: null,
+				village: null,
+				grampanchayat: null,
+				property_type: null,
+				property_facilities: null,
+				property_photo_building: null,
+				property_photo_classroom: null,
+				property_photo_other: null,
+			};
+		}
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
