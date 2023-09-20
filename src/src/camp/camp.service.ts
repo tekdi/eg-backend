@@ -48,7 +48,8 @@ export class CampService {
 				return response.status(401).json({
 					success: false,
 					data: {},
-					message: 'CAMP_VALIDATION_MESSAGE_FACILITATOR_DIDNT_SHORTLISTED_FOR_ORIENTATION,'
+					message:
+						'CAMP_VALIDATION_MESSAGE_FACILITATOR_DIDNT_SHORTLISTED_FOR_ORIENTATION,',
 				});
 			}
 
@@ -66,7 +67,8 @@ export class CampService {
 				return response.status(401).json({
 					success: false,
 					data: {},
-					message: "CAMP_VALIDATION_MESSAGE_REGISTRATION_LIMIT_EXCEED",
+					message:
+						'CAMP_VALIDATION_MESSAGE_REGISTRATION_LIMIT_EXCEED',
 				});
 			}
 
@@ -90,7 +92,7 @@ export class CampService {
 			) {
 				return response.status(400).json({
 					success: false,
-					message: "CAMP_VALIDATION_MESSAGE_LEARNER_ID_DOESNT_EXIST",
+					message: 'CAMP_VALIDATION_MESSAGE_LEARNER_ID_DOESNT_EXIST',
 				});
 			}
 
@@ -99,7 +101,7 @@ export class CampService {
 				return response.status(400).json({
 					success: false,
 					message:
-					"CAMP_VALIDATION_MESSAGE_LEARNER_ALREADY_ADDED_WITH_ANOTHER_PRERAK",
+						'CAMP_VALIDATION_MESSAGE_LEARNER_ALREADY_ADDED_WITH_ANOTHER_PRERAK',
 				});
 			}
 
@@ -156,7 +158,7 @@ export class CampService {
 
 				return response.status(500).json({
 					success: false,
-					message: "CAMP_VALIDATION_MESSAGE_CREATING_CAMP_DETAILS",
+					message: 'CAMP_VALIDATION_MESSAGE_CREATING_CAMP_DETAILS',
 					data: {},
 				});
 			}
@@ -193,7 +195,7 @@ export class CampService {
 
 				return response.status(500).json({
 					success: false,
-					message: "CAMP_VALIDATION_MESSAGE_CREATING_USER_FOR_CAMP",
+					message: 'CAMP_VALIDATION_MESSAGE_CREATING_USER_FOR_CAMP',
 					data: {},
 				});
 			}
@@ -323,6 +325,7 @@ export class CampService {
 			  group{
 				name
 				description
+				status
 			  }
 			  
 			  group_users(where: {member_type: {_neq: "owner"}}) {
@@ -363,6 +366,7 @@ export class CampService {
 			  group{
 				name
 				description
+				status
 			  }
 			  
 			  group_users(where: {member_type: {_neq: "owner"}}) {
@@ -440,7 +444,7 @@ export class CampService {
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: userData || {},
+			data: userData[0] || {},
 		});
 	}
 }
