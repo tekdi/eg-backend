@@ -497,17 +497,6 @@ export class CampService {
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
 				properties: [
-					'street',
-					'grampanchayat',
-					'state',
-					'district',
-					'block',
-					'village',
-					'property_type',
-				],
-			},
-			create_location: {
-				properties: [
 					'lat',
 					'long',
 					'street',
@@ -531,6 +520,13 @@ export class CampService {
 					'kit_feedback',
 				],
 			},
+			edit_photo_details: {
+				properties: [
+					'property_photo_building',
+					'property_photo_classroom',
+					'property_photo_other',
+				],
+			},
 		};
 
 		// check if the camp for camp_id exists
@@ -539,9 +535,14 @@ export class CampService {
 			camps_by_pk(id:${camp_id}) {
 			  id
 			  property_id
+			  properties {
+				lat
+				long
+			  }
 			  group_users(where: {user_id: {_eq:${facilitator_id}}, member_type: {_eq:${member_type}}, status: {_eq:${status}}}) {
 				id
 				user_id
+				
 			  }
 			}
 		  }
@@ -552,9 +553,9 @@ export class CampService {
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
-		const newQdata = hasura_response?.data.camps_by_pk;
+		const campData = hasura_response?.data.camps_by_pk;
 
-		if (!newQdata?.id) {
+		if (!campData?.id) {
 			return response.status(400).json({
 				success: false,
 				message: 'CAMP_NOT_EXISTS_ERROR',
@@ -562,7 +563,7 @@ export class CampService {
 			});
 		}
 
-		if (newQdata?.group_users[0]?.user_id != facilitator_id) {
+		if (campData?.group_users[0]?.user_id != facilitator_id) {
 			return response.status(401).json({
 				success: false,
 				message: 'CAMP_UPDATE_ACTION_DENIED',
@@ -570,46 +571,49 @@ export class CampService {
 			});
 		}
 
-		const property_id = newQdata?.property_id;
+		let property_id = campData?.property_id;
+
+		if (!property_id) {
+			const { data, status, message } = await this.createPropertyDetails(
+				camp_id,
+				{
+					created_by: facilitator_id,
+					updated_by: facilitator_id,
+				},
+				['created_by', 'updated_by'],
+			);
+			if (status === 500) {
+				return response.status(status).json({
+					success: false,
+					message,
+					data,
+				});
+			} else {
+				property_id = data?.property_id;
+			}
+		}
 
 		switch (update_body.edit_page_type) {
 			case 'edit_camp_location': {
-				const location_body = {
-					...update_body,
-					created_by: facilitator_id,
+				let bodyData = update_body;
+				if (campData?.properties.lat || campData?.properties.long) {
+					let { lat, long, ...otherData } = update_body;
+					bodyData = otherData;
+				}
+				let location_body = {
+					...bodyData,
 					updated_by: facilitator_id,
 				};
+				const location_arr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_location.properties;
 
-				if (property_id === null) {
-					if (!location_body?.lat || !location_body?.long) {
-						return response.json({
-							status: 400,
-							message: 'Latititude and Langitude is mandatory',
-						});
-					}
-
-					const location_arr =
-						PAGE_WISE_UPDATE_TABLE_DETAILS.create_location
-							.properties;
-
-					await this.createPropertyDetails(
-						camp_id,
-						location_body,
-						location_arr,
-						response,
-					);
-				} else {
-					const location_arr =
-						PAGE_WISE_UPDATE_TABLE_DETAILS.edit_location.properties;
-
-					await this.updatepropertyDetails(
-						camp_id,
-						property_id,
-						location_body,
-						location_arr,
-						response,
-					);
-				}
+				await this.updatepropertyDetails(
+					camp_id,
+					property_id,
+					location_body,
+					[...location_arr, 'updated_by'],
+					response,
+				);
 
 				break;
 			}
@@ -634,6 +638,24 @@ export class CampService {
 				break;
 			}
 
+			case 'edit_photo_details': {
+				const photo_details_arr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_photo_details
+						.properties;
+				let photo_details_body = {
+					...update_body,
+					updated_by: facilitator_id,
+				};
+				await this.updatepropertyDetails(
+					camp_id,
+					property_id,
+					photo_details_body,
+					[...photo_details_arr, 'updated_by'],
+					response,
+				);
+				break;
+			}
+
 			case 'edit_property_facilities': {
 				let camp_facilities = {
 					property_facilities: update_body?.facilities
@@ -646,37 +668,20 @@ export class CampService {
 				const facilities_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities.properties;
 
-				if (property_id === null) {
-					await this.createPropertyDetails(
-						camp_id,
-						camp_facilities,
-						facilities_arr,
-						response,
-					);
-				} else {
-					const facilities_arr =
-						PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities
-							.properties;
-					await this.updatepropertyDetails(
-						camp_id,
-						property_id,
-						camp_facilities,
-						facilities_arr,
-						response,
-					);
-				}
+				await this.updatepropertyDetails(
+					camp_id,
+					property_id,
+					{ ...camp_facilities, updated_by: facilitator_id },
+					[...facilities_arr, 'updated_by'],
+					response,
+				);
 
 				break;
 			}
 		}
 	}
 
-	async createPropertyDetails(
-		camp_id: any,
-		body: any,
-		create_arr: any,
-		response: any,
-	) {
+	async createPropertyDetails(camp_id: any, body: any, create_arr: any) {
 		let create_response = await this.hasuraService.q(
 			'properties',
 			body,
@@ -688,11 +693,11 @@ export class CampService {
 		let property_id = create_response?.properties?.id;
 
 		if (!property_id) {
-			return response.json({
+			return {
 				status: 500,
 				message: 'Error creating property details',
 				data: {},
-			});
+			};
 		}
 
 		const camp_update_body = {
@@ -707,28 +712,30 @@ export class CampService {
 			},
 			[],
 			true,
-			[...this.returnFieldscamps, 'id'],
+			[...this.returnFieldscamps, 'property_id', 'id'],
 		);
 
 		const update_camp_id = update_response?.camps?.id;
 
 		if (!update_camp_id) {
-			await this.hasuraService.delete('properties', {
-				id: property_id,
-			});
+			if (property_id) {
+				await this.hasuraService.delete('properties', {
+					id: property_id,
+				});
+			}
 
-			return response.json({
+			return {
 				status: 500,
 				message: 'Error updating camps property details',
 				data: {},
-			});
+			};
 		}
 
-		return response.json({
+		return {
 			status: 200,
 			message: 'Updated camp details successfully  ',
-			data: {},
-		});
+			data: update_response?.camps,
+		};
 	}
 
 	async updatepropertyDetails(
