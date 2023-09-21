@@ -27,6 +27,8 @@ export class CampService {
 
 	public returnFieldsgroupUsers = ['group_id', 'id'];
 
+	public returnFieldsProperties = ['id'];
+
 	async create(body: any, request: any, response: any) {
 		try {
 			let facilitator_id = request.mw_userid;
@@ -539,7 +541,319 @@ export class CampService {
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: userResult || {},
+			data: userData || {},
+		});
+	}
+
+	public async updateCampDetails(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let camp_id = id;
+		let facilitator_id = request.mw_userid;
+		let status = 'active';
+		let member_type = 'owner';
+		let update_body = body;
+
+		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
+			edit_location: {
+				properties: [
+					'lat',
+					'long',
+					'street',
+					'grampanchayat',
+					'state',
+					'district',
+					'block',
+					'village',
+					'property_type',
+				],
+			},
+			edit_facilities: {
+				properties: ['property_facilities'],
+			},
+			edit_kit: {
+				kit_received: ['kit_received'],
+				kit_details: [
+					'kit_received',
+					'kit_was_sufficient',
+					'kit_ratings',
+					'kit_feedback',
+				],
+			},
+			edit_photo_details: {
+				properties: [
+					'property_photo_building',
+					'property_photo_classroom',
+					'property_photo_other',
+				],
+			},
+		};
+
+		// check if the camp for camp_id exists
+
+		let query = `query MyQuery {
+			camps_by_pk(id:${camp_id}) {
+			  id
+			  property_id
+			  properties {
+				lat
+				long
+			  }
+			  group_users(where: {user_id: {_eq:${facilitator_id}}, member_type: {_eq:${member_type}}, status: {_eq:${status}}}) {
+				id
+				user_id
+				
+			  }
+			}
+		  }
+		  
+		  `;
+
+		const data = { query: query };
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+		const campData = hasura_response?.data.camps_by_pk;
+
+		if (!campData?.id) {
+			return response.status(400).json({
+				success: false,
+				message: 'CAMP_NOT_EXISTS_ERROR',
+				data: {},
+			});
+		}
+
+		if (campData?.group_users[0]?.user_id != facilitator_id) {
+			return response.status(401).json({
+				success: false,
+				message: 'CAMP_UPDATE_ACTION_DENIED',
+				data: {},
+			});
+		}
+
+		let property_id = campData?.property_id;
+
+		if (!property_id) {
+			const { data, status, message } = await this.createPropertyDetails(
+				camp_id,
+				{
+					created_by: facilitator_id,
+					updated_by: facilitator_id,
+				},
+				['created_by', 'updated_by'],
+			);
+			if (status === 500) {
+				return response.status(status).json({
+					success: false,
+					message,
+					data,
+				});
+			} else {
+				property_id = data?.property_id;
+			}
+		}
+
+		switch (update_body.edit_page_type) {
+			case 'edit_camp_location': {
+				let bodyData = update_body;
+				if (campData?.properties.lat || campData?.properties.long) {
+					let { lat, long, ...otherData } = update_body;
+					bodyData = otherData;
+				}
+				let location_body = {
+					...bodyData,
+					updated_by: facilitator_id,
+				};
+				const location_arr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_location.properties;
+
+				await this.updatepropertyDetails(
+					camp_id,
+					property_id,
+					location_body,
+					[...location_arr, 'updated_by'],
+					response,
+				);
+
+				break;
+			}
+
+			case 'edit_kit_details': {
+				let camp_body = {
+					...update_body,
+				};
+
+				let no_kit_body = {
+					...update_body,
+					kit_was_sufficient: null,
+					kit_ratings: null,
+					kit_feedback: null,
+				};
+				const kit_arr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_kit.kit_details;
+
+				let camp_details =
+					camp_body.kit_received === 'yes' ? camp_body : no_kit_body;
+
+				await this.updateCampData(
+					camp_id,
+					camp_details,
+					kit_arr,
+					response,
+				);
+
+				break;
+			}
+
+			case 'edit_photo_details': {
+				const photo_details_arr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_photo_details
+						.properties;
+				let photo_details_body = {
+					...update_body,
+					updated_by: facilitator_id,
+				};
+				await this.updatepropertyDetails(
+					camp_id,
+					property_id,
+					photo_details_body,
+					[...photo_details_arr, 'updated_by'],
+					response,
+				);
+				break;
+			}
+
+			case 'edit_property_facilities': {
+				let camp_facilities = {
+					property_facilities: update_body?.facilities
+						? JSON.stringify(update_body.facilities).replace(
+								/"/g,
+								'\\"',
+						  )
+						: '',
+				};
+				const facilities_arr =
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities.properties;
+
+				await this.updatepropertyDetails(
+					camp_id,
+					property_id,
+					{ ...camp_facilities, updated_by: facilitator_id },
+					[...facilities_arr, 'updated_by'],
+					response,
+				);
+
+				break;
+			}
+		}
+	}
+
+	async createPropertyDetails(camp_id: any, body: any, create_arr: any) {
+		let create_response = await this.hasuraService.q(
+			'properties',
+			body,
+			create_arr,
+			false,
+			[...this.returnFieldsProperties, 'id'],
+		);
+
+		let property_id = create_response?.properties?.id;
+
+		if (!property_id) {
+			return {
+				status: 500,
+				message: 'Error creating property details',
+				data: {},
+			};
+		}
+
+		const camp_update_body = {
+			property_id: property_id,
+		};
+
+		const update_response = await this.hasuraService.q(
+			'camps',
+			{
+				...camp_update_body,
+				id: camp_id,
+			},
+			[],
+			true,
+			[...this.returnFieldscamps, 'property_id', 'id'],
+		);
+
+		const update_camp_id = update_response?.camps?.id;
+
+		if (!update_camp_id) {
+			if (property_id) {
+				await this.hasuraService.delete('properties', {
+					id: property_id,
+				});
+			}
+
+			return {
+				status: 500,
+				message: 'Error updating camps property details',
+				data: {},
+			};
+		}
+
+		return {
+			status: 200,
+			message: 'Updated camp details successfully  ',
+			data: update_response?.camps,
+		};
+	}
+
+	async updatepropertyDetails(
+		camp_id: any,
+		property_id: any,
+		body: any,
+		update_array: any,
+		response: any,
+	) {
+		await this.hasuraService.q(
+			'properties',
+			{
+				...body,
+				id: property_id,
+			},
+			update_array,
+			true,
+			[...this.returnFieldsProperties, 'id'],
+		);
+
+		return response.json({
+			status: 200,
+			message: 'Successfully updated camp details',
+			data: camp_id,
+		});
+	}
+
+	async updateCampData(
+		camp_id: any,
+		camp_body: any,
+		update_arr: any,
+		response: any,
+	) {
+		await this.hasuraService.q(
+			'camps',
+			{
+				...camp_body,
+				id: camp_id,
+			},
+			update_arr,
+			true,
+			[...this.returnFieldscamps, 'id'],
+		);
+
+		return response.json({
+			status: 200,
+			message: 'Successfully updated camp details',
+			data: camp_id,
 		});
 	}
 }

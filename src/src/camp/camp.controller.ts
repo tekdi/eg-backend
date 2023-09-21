@@ -11,6 +11,7 @@ import {
 	Res,
 	Param,
 	Response,
+	Patch,
 } from '@nestjs/common';
 import { CampService } from './camp.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
@@ -45,5 +46,16 @@ export class CampController {
 		@Res() response: any,
 	) {
 		return this.campService.campById(id, body, request, response);
+	}
+
+	@Patch('/:id')
+	@UseGuards(new AuthGuard())
+	updateCampDetails(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.updateCampDetails(id, body, request, response);
 	}
 }
