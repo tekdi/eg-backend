@@ -304,12 +304,12 @@ export class BeneficiariesController {
 		const payload = {
 			user_id: body.user_id,
 			enrollment_verification_status: body.enrollment_verification_status,
-			enrollment_verification_reason:
-				body.enrollment_verification_reason 
-					? JSON.stringify(
-							body.enrollment_verification_reason,
-					  ).replace(/"/g, '\\"')
-					: '',
+			enrollment_verification_reason: body.enrollment_verification_reason
+				? JSON.stringify(body.enrollment_verification_reason).replace(
+						/"/g,
+						'\\"',
+				  )
+				: '',
 		};
 		result = await this.beneficiariesService.setEnrollmentStatus(
 			payload,
@@ -425,5 +425,35 @@ export class BeneficiariesController {
 
 		result.success = true;
 		return response.status(200).json(result);
+	}
+
+	@Post('/beneficiaries-for-camp')
+	@UseGuards(new AuthGuard())
+	notRegisteredBeneficiaries(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.notRegisteredBeneficiaries(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Patch('update-Beneficiaries-aadhar/:id')
+	@UseGuards(new AuthGuard())
+	updateBeneficiariesAadhar(
+		@Param('id') id: string,
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.updateBeneficiariesAadhar(
+			id,
+			req,
+			body,
+			response,
+		);
 	}
 }

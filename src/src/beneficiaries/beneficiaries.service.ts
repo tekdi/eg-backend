@@ -3324,4 +3324,180 @@ export class BeneficiariesService {
 
 		return response;
 	}
+
+	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
+		const facilitator_id = req.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+		let status = 'enrolled_ip_verified';
+
+		let qury = `query MyQuery {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}, program_id: {_eq:${program_id}}, status: {_eq:${status}}}, _not: {group_users: {group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}}) {
+			  id
+			  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+				id
+				name
+				doument_type
+				document_sub_type
+				path
+			  }
+			  program_beneficiaries {
+				status,
+				enrollment_first_name,
+				enrollment_middle_name,
+				enrollment_last_name
+			  }
+			}
+		  }
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const users = response?.data?.users ?? [];
+		const userPromises = await Promise.all(
+			users.map(async (user) => {
+				if (
+					user.profile_photo_1.length > 0 &&
+					user.profile_photo_1[0]?.id !== undefined
+				) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							user.profile_photo_1[0].id,
+						);
+					if (success && fileData?.fileUrl) {
+						user.profile_photo_1 = {
+							id: user.profile_photo_1[0]?.id,
+							name: user.profile_photo_1[0]?.name,
+							doument_type: user.profile_photo_1[0]?.doument_type,
+							document_sub_type:
+								user.profile_photo_1[0]?.document_sub_type,
+							path: user.profile_photo_1[0]?.path,
+							fileUrl: fileData.fileUrl,
+						};
+					}
+				} else {
+					user.profile_photo_1 = {};
+				}
+				return user;
+			}),
+		);
+
+		const result = {
+			user: userPromises,
+		};
+
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: result || {},
+		});
+	}
+
+	//Beneficiaries Aadhar Update
+	public async updateBeneficiariesAadhar(
+		beneficiaries_id: any,
+		req: any,
+		body: any,
+		response: any,
+	) {
+		//get IP information from token id
+		const user = await this.userService.ipUserInfo(req);
+		let aadhaar_no = body?.aadhar_no;
+
+		if (!aadhaar_no || !beneficiaries_id) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'Please provide required details',
+				data: {},
+			});
+		}
+
+		if (aadhaar_no.length < 12) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'Aadhar number should be equal to 12 digits',
+				data: {},
+			});
+		}
+
+		const Beneficiaries_validation_query = `query MyQuery {
+			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}}}) {
+				aggregate {
+				  count
+				}
+			  }
+		  }
+		  `;
+
+		const Beneficiaries_data = await this.hasuraServiceFromServices.getData(
+			{
+				query: Beneficiaries_validation_query,
+			},
+		);
+
+		if (Beneficiaries_data?.data?.users_aggregate?.aggregate.count < 1) {
+			return response.json({
+				status: 401,
+				success: false,
+				message: 'Beneficiaries doesnt belong to IP',
+				data: {},
+			});
+		}
+
+		const query = `query MyQuery {
+			users(where: {aadhar_no: {_eq:"${aadhaar_no}"}, _not: {id: {_eq:${beneficiaries_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  middle_name
+			  program_beneficiaries {
+				status
+				facilitator_user {
+				  first_name
+				  last_name
+				  middle_name
+				}
+			  }
+			  program_faciltators {
+				parent_ip
+				status
+			  }
+			}
+		  }`;
+
+		const data = { query: query };
+		const hashura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+		const newQdata = hashura_response.data;
+		if (newQdata?.users?.length > 0) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'You have already added this Aadhaar number!',
+				data: newQdata,
+			});
+		}
+
+		const userArr = ['aadhar_no'];
+		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+		if (keyExist.length) {
+			const tableName = 'users';
+			body.id = beneficiaries_id;
+			const res = await this.hasuraService.q(
+				tableName,
+				body,
+				userArr,
+				true,
+				['id', 'aadhar_no'],
+			);
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Data updated successfully!',
+				data: res,
+			});
+		}
+	}
 }
