@@ -3441,7 +3441,7 @@ export class BeneficiariesService {
 		let status = 'enrolled_ip_verified';
 
 		let qury = `query MyQuery {
-			users(where: {program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}, program_id: {_eq:${program_id}}, status: {_eq:${status}}}, _not: {group_users: {group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}}) {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}, program_id: {_eq:${program_id}},academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}}, _not: {group_users: {group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}}) {
 			  id
 			  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 				id
