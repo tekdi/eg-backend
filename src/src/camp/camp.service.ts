@@ -728,11 +728,10 @@ export class CampService {
 
 			case 'edit_property_facilities': {
 				let camp_facilities = {
-					property_facilities: update_body?.facilities
-						? JSON.stringify(update_body.facilities).replace(
-								/"/g,
-								'\\"',
-						  )
+					property_facilities: update_body?.property_facilities
+						? JSON.stringify(
+								update_body.property_facilities,
+						  ).replace(/"/g, '\\"')
 						: '',
 				};
 				const facilities_arr =
