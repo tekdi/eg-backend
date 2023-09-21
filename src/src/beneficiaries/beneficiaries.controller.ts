@@ -427,20 +427,6 @@ export class BeneficiariesController {
 		return response.status(200).json(result);
 	}
 
-	@Post('/beneficiaries-for-camp')
-	@UseGuards(new AuthGuard())
-	notRegisteredBeneficiaries(
-		@Req() request: any,
-		@Body() body: any,
-		@Res() response: any,
-	) {
-		return this.beneficiariesService.notRegisteredBeneficiaries(
-			body,
-			request,
-			response,
-		);
-	}
-
 	@Patch('update-Beneficiaries-aadhar/:id')
 	@UseGuards(new AuthGuard())
 	updateBeneficiariesAadhar(
