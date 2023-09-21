@@ -619,14 +619,21 @@ export class CampService {
 			}
 
 			case 'edit_kit_details': {
-				let camp_details = {
+				let camp_body = {
 					...update_body,
 				};
 
+				let no_kit_body = {
+					...update_body,
+					kit_was_sufficient: null,
+					kit_ratings: null,
+					kit_feedback: null,
+				};
 				const kit_arr =
-					camp_details.kit_received === 'yes'
-						? PAGE_WISE_UPDATE_TABLE_DETAILS.edit_kit.kit_details
-						: PAGE_WISE_UPDATE_TABLE_DETAILS.edit_kit.kit_received;
+					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_kit.kit_details;
+
+				let camp_details =
+					camp_body.kit_received === 'yes' ? camp_body : no_kit_body;
 
 				await this.updateCampData(
 					camp_id,
