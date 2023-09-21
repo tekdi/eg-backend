@@ -855,4 +855,56 @@ export class CampService {
 			data: camp_id,
 		});
 	}
+
+	async createConsentBenficiaries(
+		id: any,
+		body: any,
+		request: any,
+		resp: any,
+	) {
+		let user_id = id;
+		let facilitator_id = request.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+
+		const tableName = 'consents';
+		const response = await this.hasuraServiceFromServices.create(
+			tableName,
+			{
+				...body,
+
+				program_id,
+				academic_year_id,
+				user_id,
+				facilitator_id,
+				updated_by: facilitator_id,
+				created_by: facilitator_id,
+			},
+			[
+				'user_id',
+				'program_id',
+				'academic_year_id',
+				'document_id',
+				'facilitator_id',
+				'created_by',
+				'updated_by',
+			],
+			['id', 'user_id', 'document_id', 'facilitator_id'],
+		);
+		const consent = response?.consents;
+
+		if (!consent?.id) {
+			return resp.status(400).json({
+				success: false,
+				message: 'consents data not found!',
+				data: {},
+			});
+		} else {
+			return resp.json({
+				status: 200,
+				message: 'Successfully updated consents details',
+				data: { consent },
+			});
+		}
+	}
 }
