@@ -25,6 +25,12 @@ export class CampService {
 		'group_id',
 	];
 
+	public returnFieldsconsents = [
+		'id',
+		'user_id',
+		'document_id',
+		'facilitator_id',
+	];
 	public returnFieldsgroupUsers = ['group_id', 'id'];
 
 	public returnFieldsProperties = ['id'];
@@ -866,44 +872,80 @@ export class CampService {
 		let facilitator_id = request.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
+		let response;
 
-		const tableName = 'consents';
-		const response = await this.hasuraServiceFromServices.create(
-			tableName,
-			{
-				...body,
+		console.log('body-->>', body);
 
-				program_id,
-				academic_year_id,
-				user_id,
-				facilitator_id,
-				updated_by: facilitator_id,
-				created_by: facilitator_id,
-			},
-			[
-				'user_id',
-				'program_id',
-				'academic_year_id',
-				'document_id',
-				'facilitator_id',
-				'created_by',
-				'updated_by',
-			],
-			['id', 'user_id', 'document_id', 'facilitator_id'],
+		const tableName = 'consent';
+		let query = `query MyQuery {
+			consent(where: {user_id: {_eq:${user_id}}, facilitator_id: {_eq:${facilitator_id}}}) {
+			  id
+			}
+		  }
+		  `;
+		const data = { query: query };
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
 		);
-		const consent = response?.consents;
+		let consent_id = hasura_response?.data?.consent?.[0]?.id;
+		if (consent_id) {
+			response = await this.hasuraService.q(
+				tableName,
+				{
+					...body,
 
-		if (!consent?.id) {
+					id: consent_id,
+				},
+				['document_id'],
+				true,
+				[
+					...this.returnFieldsconsents,
+					'id',
+					'user_id',
+					'document_id',
+					'facilitator_id',
+				],
+			);
+		} else {
+			response = await this.hasuraServiceFromServices.create(
+				tableName,
+				{
+					...body,
+
+					program_id,
+					academic_year_id,
+					user_id,
+					facilitator_id,
+					updated_by: facilitator_id,
+					created_by: facilitator_id,
+				},
+				[
+					'user_id',
+					'program_id',
+					'academic_year_id',
+					'document_id',
+					'facilitator_id',
+					'created_by',
+					'updated_by',
+				],
+				['id', 'user_id', 'document_id', 'facilitator_id'],
+			);
+		}
+
+		console.log('response-->>', response);
+		const consent_response = response?.consent;
+
+		if (!consent_response?.id) {
 			return resp.status(400).json({
 				success: false,
 				message: 'consents data not found!',
-				data: {},
+				data: response,
 			});
 		} else {
 			return resp.json({
 				status: 200,
 				message: 'Successfully updated consents details',
-				data: { consent },
+				data: { consent_response },
 			});
 		}
 	}
