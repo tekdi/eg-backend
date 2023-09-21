@@ -3324,4 +3324,113 @@ export class BeneficiariesService {
 
 		return response;
 	}
+
+	//Beneficiaries Aadhar Update
+	public async updateBeneficiariesAadhar(
+		beneficiaries_id: any,
+		req: any,
+		body: any,
+		response: any,
+	) {
+		//get IP information from token id
+		const user = await this.userService.ipUserInfo(req);
+		let aadhaar_no = body?.aadhar_no;
+
+		if (!aadhaar_no || !beneficiaries_id) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'Please provide required details',
+				data: {},
+			});
+		}
+
+		if (aadhaar_no.length < 12) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'Aadhar number should be equal to 12 digits',
+				data: {},
+			});
+		}
+
+		const Beneficiaries_validation_query = `query MyQuery {
+			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}}}) {
+				aggregate {
+				  count
+				}
+			  }
+		  }
+		  `;
+
+		const Beneficiaries_data = await this.hasuraServiceFromServices.getData(
+			{
+				query: Beneficiaries_validation_query,
+			},
+		);
+
+		if (Beneficiaries_data?.data?.users_aggregate?.aggregate.count < 1) {
+			return response.json({
+				status: 401,
+				success: false,
+				message: 'Beneficiaries doesnt belong to IP',
+				data: {},
+			});
+		}
+
+		const query = `query MyQuery {
+			users(where: {aadhar_no: {_eq:"${aadhaar_no}"}, _not: {id: {_eq:${beneficiaries_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  middle_name
+			  program_beneficiaries {
+				status
+				facilitator_user {
+				  first_name
+				  last_name
+				  middle_name
+				}
+			  }
+			  program_faciltators {
+				parent_ip
+				status
+			  }
+			}
+		  }`;
+
+		const data = { query: query };
+		const hashura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+		const newQdata = hashura_response.data;
+		if (newQdata?.users?.length > 0) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'You have already added this Aadhaar number!',
+				data: newQdata,
+			});
+		}
+
+		const userArr = ['aadhar_no'];
+		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+		if (keyExist.length) {
+			const tableName = 'users';
+			body.id = beneficiaries_id;
+			const res = await this.hasuraService.q(
+				tableName,
+				body,
+				userArr,
+				true,
+				['id', 'aadhar_no'],
+			);
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Data updated successfully!',
+				data: res,
+			});
+		}
+	}
 }
