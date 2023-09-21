@@ -58,4 +58,20 @@ export class CampController {
 	) {
 		return this.campService.updateCampDetails(id, body, request, response);
 	}
+
+	@Post('/create-consent/:id')
+	@UseGuards(new AuthGuard())
+	createConsentBenficiaries(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param('id') id: number,
+	) {
+		return this.campService.createConsentBenficiaries(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }
