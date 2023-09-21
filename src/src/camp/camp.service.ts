@@ -541,7 +541,7 @@ export class CampService {
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: userData || {},
+			data: userResult || {},
 		});
 	}
 
