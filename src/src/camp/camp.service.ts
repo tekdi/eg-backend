@@ -874,8 +874,6 @@ export class CampService {
 		let academic_year_id = body?.academic_year_id || 1;
 		let response;
 
-		console.log('body-->>', body);
-
 		const tableName = 'consent';
 		let query = `query MyQuery {
 			consent(where: {user_id: {_eq:${user_id}}, facilitator_id: {_eq:${facilitator_id}}}) {
