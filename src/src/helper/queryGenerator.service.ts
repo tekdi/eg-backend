@@ -285,14 +285,11 @@ export class QueryGeneratorService {
 		};
 		console.log('returnkeys', returnkeys);
 		let coreQuery = `${tableName}(objects: ${getObjStr(items, 'obj')}) {
-			returning {${this.getParam(
-				fields
-					? fields
-					: onlyFields
-					? [...onlyFields, 'id']
-					: returnkeys,
-			)}}
+			returning {
+				${this.getParam(fields || (onlyFields ? [...onlyFields, 'id'] : returnkeys))}
+			};
 		}`;
+
 		if (props?.isCore === true) {
 			return coreQuery;
 		}
