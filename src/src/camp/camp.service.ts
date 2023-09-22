@@ -929,8 +929,6 @@ export class CampService {
 				['id', 'user_id', 'document_id', 'facilitator_id'],
 			);
 		}
-
-		console.log('response-->>', response);
 		const consent_response = response?.consent;
 
 		if (!consent_response?.id) {
