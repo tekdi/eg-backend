@@ -5,7 +5,6 @@ import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
-import { QueryGeneratorService } from 'src/helper/queryGenerator.service';
 
 @Injectable()
 export class CampService {
@@ -14,7 +13,6 @@ export class CampService {
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
-		public qgService: QueryGeneratorService,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -558,6 +556,9 @@ export class CampService {
 		let status = 'active';
 		let member_type = 'owner';
 		let update_body = body;
+		let resultCreate = [];
+		let resultActive = [];
+		let resultInactive = [];
 
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -750,7 +751,7 @@ export class CampService {
 				break;
 			}
 
-			case 'edit_learner': {
+			case 'edit_learners': {
 				let learner_ids = body.learner_ids;
 				let qury = `query MyQuery {
 					camps_by_pk(id:${camp_id})  {
@@ -791,12 +792,14 @@ export class CampService {
 						updated_by: facilitator_id,
 					}));
 
-				const resultCreate = await this.hasuraServiceFromServices.qM(
-					'insert_group_users',
-					createData,
-					[],
-					returnFields,
-				);
+				if (createData?.length > 0) {
+					resultCreate = await this.hasuraServiceFromServices.qM(
+						'insert_group_users',
+						createData,
+						[],
+						returnFields,
+					);
+				}
 
 				// update inactive to active user
 				const activeIds = group_users
@@ -807,8 +810,8 @@ export class CampService {
 					)
 					.map((item) => item.id);
 
-				const resultActive =
-					await this.hasuraServiceFromServices.update(
+				if (activeIds?.length > 0) {
+					resultActive = await this.hasuraServiceFromServices.update(
 						null,
 						'group_users',
 						{
@@ -819,6 +822,7 @@ export class CampService {
 						returnFields,
 						{ where: `{id:{_in:[${activeIds}]}}` },
 					);
+				}
 
 				// update active to inactive user
 				const deactivateIds = group_users
@@ -828,20 +832,23 @@ export class CampService {
 							!learner_ids.includes(item.user_id),
 					)
 					.map((item) => item.id);
-				const resultInactive =
-					await this.hasuraServiceFromServices.update(
-						null,
-						'group_users',
-						{
-							status: 'inactive',
-							updated_by: facilitator_id,
-						},
-						[],
-						returnFields,
-						{
-							where: `{id:{_in:[${deactivateIds}]}}`,
-						},
-					);
+
+				if (deactivateIds?.length > 0) {
+					resultInactive =
+						await this.hasuraServiceFromServices.update(
+							null,
+							'group_users',
+							{
+								status: 'inactive',
+								updated_by: facilitator_id,
+							},
+							[],
+							returnFields,
+							{
+								where: `{id:{_in:[${deactivateIds}]}}`,
+							},
+						);
+				}
 
 				return response.json({
 					status: 200,
