@@ -862,45 +862,41 @@ export class CampService {
 		});
 	}
 
-	async createConsentBenficiaries(
-		id: any,
-		body: any,
-		request: any,
-		resp: any,
-	) {
-		let user_id = id;
+	//Create Consents
+	async createConsentBenficiaries(body: any, request: any, resp: any) {
+		let user_id = body?.user_id;
+		let camp_id = body?.camp_id;
 		let facilitator_id = request.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 		let response;
 
-		const tableName = 'consent';
+		const tableName = 'consents';
 		let query = `query MyQuery {
-			consent(where: {user_id: {_eq:${user_id}}, facilitator_id: {_eq:${facilitator_id}}}) {
+			consents(where: {user_id: {_eq:${user_id}}, facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
 			  id
 			}
-		  }
-		  `;
+		  }`;
 		const data = { query: query };
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
-		let consent_id = hasura_response?.data?.consent?.[0]?.id;
+		let consent_id = hasura_response?.data?.consents?.[0]?.id;
 		if (consent_id) {
 			response = await this.hasuraService.q(
 				tableName,
 				{
 					...body,
-
 					id: consent_id,
 				},
-				['document_id'],
+				['document_id', 'camp_id'],
 				true,
 				[
 					...this.returnFieldsconsents,
 					'id',
 					'user_id',
 					'document_id',
+					'camp_id',
 					'facilitator_id',
 				],
 			);
@@ -909,7 +905,6 @@ export class CampService {
 				tableName,
 				{
 					...body,
-
 					program_id,
 					academic_year_id,
 					user_id,
@@ -922,14 +917,15 @@ export class CampService {
 					'program_id',
 					'academic_year_id',
 					'document_id',
+					'camp_id',
 					'facilitator_id',
 					'created_by',
 					'updated_by',
 				],
-				['id', 'user_id', 'document_id', 'facilitator_id'],
+				['id', 'user_id', 'document_id', 'camp_id', 'facilitator_id'],
 			);
 		}
-		const consent_response = response?.consent;
+		const consent_response = response?.consents;
 
 		if (!consent_response?.id) {
 			return resp.status(400).json({
@@ -942,6 +938,43 @@ export class CampService {
 				status: 200,
 				message: 'Successfully updated consents details',
 				data: { consent_response },
+			});
+		}
+	}
+
+	//Get consents List
+	async getConsentBenficiaries(body: any, request: any, resp: any) {
+		let camp_id = body?.camp_id;
+		let facilitator_id = request.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+
+		let query = `query MyQuery {
+			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
+			  id
+			  document_id
+			  user_id
+			}
+		  }`;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const consent_response = hasura_response?.data;
+
+		if (!consent_response?.consents?.length) {
+			return resp.status(400).json({
+				success: false,
+				message: 'consents data not found!',
+				data: {
+					consent: [],
+				},
+			});
+		} else {
+			return resp.json({
+				status: 200,
+				message: 'Successfully updated consents details',
+				data: consent_response,
 			});
 		}
 	}
