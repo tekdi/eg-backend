@@ -5,7 +5,7 @@ import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
-
+import { S3Service } from '../services/s3/s3.service';
 @Injectable()
 export class CampService {
 	constructor(
@@ -13,6 +13,7 @@ export class CampService {
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
+		private s3Service: S3Service,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -869,19 +870,37 @@ export class CampService {
 		let facilitator_id = request.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
+		let document_id = body?.document_id;
 		let response;
 
 		const tableName = 'consents';
 		let query = `query MyQuery {
 			consents(where: {user_id: {_eq:${user_id}}, facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
 			  id
+			  document_id
+			  document{
+				id
+				name
+			  }
 			}
 		  }`;
-		const data = { query: query };
-		const hasura_response = await this.hasuraServiceFromServices.getData(
-			data,
-		);
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
 		let consent_id = hasura_response?.data?.consents?.[0]?.id;
+		let consent_document_id =
+			hasura_response?.data.consents?.[0]?.document_id;
+
+		if (document_id != consent_document_id) {
+			let consent_document_name =
+				hasura_response?.data.consents?.[0]?.document?.name;
+			await this.s3Service.deletePhoto(consent_document_name);
+
+			await this.hasuraService.delete('documents', {
+				id: consent_document_id,
+			});
+		}
+
 		if (consent_id) {
 			response = await this.hasuraService.q(
 				tableName,
@@ -954,6 +973,10 @@ export class CampService {
 			  id
 			  document_id
 			  user_id
+			  document{
+				id
+				name
+			  }
 			}
 		  }`;
 
@@ -971,10 +994,20 @@ export class CampService {
 				},
 			});
 		} else {
+			const resultData = await Promise.all(
+				consent_response?.consents?.map(async (item) => {
+					if (item?.document?.name) {
+						item.document.fileUrl = await this.s3Service.getFileUrl(
+							item.document.name,
+						);
+					}
+					return item;
+				}),
+			);
 			return resp.json({
 				status: 200,
 				message: 'Successfully updated consents details',
-				data: consent_response,
+				data: resultData,
 			});
 		}
 	}
