@@ -277,6 +277,7 @@ export class HasuraService {
 		item: Object,
 		onlyFields: any = [],
 		fields: any = [],
+		props: any = {},
 	) {
 		return this.getResponce(
 			await lastValueFrom(
@@ -290,6 +291,7 @@ export class HasuraService {
 								item,
 								onlyFields,
 								fields,
+								props,
 							),
 						},
 						{

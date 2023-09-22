@@ -754,6 +754,115 @@ export class CampService {
 
 				break;
 			}
+
+			case 'edit_learners': {
+				let learner_ids = body.learner_ids;
+				let resultCreate = [];
+				let resultActive = [];
+				let resultInactive = [];
+				let qury = `query MyQuery {
+					camps_by_pk(id:${camp_id})  {
+					group_id
+					  group_users(where:{member_type:{_eq:"member"}}){
+						id
+						user_id
+						status
+					  }
+					}
+				  }
+				  `;
+				const qdata = { query: qury };
+
+				const res = await this.hasuraServiceFromServices.getData(qdata);
+				const group_id = res?.data?.camps_by_pk?.group_id;
+				const group_users = res?.data?.camps_by_pk?.group_users;
+				const returnFields = [
+					'status',
+					'member_type',
+					'user_id',
+					'created_by',
+					'updated_by',
+				];
+				// add new beneficiary Ids
+				const createData = learner_ids
+					.filter(
+						(id) =>
+							!group_users.filter((item) => item.user_id === id)
+								.length,
+					)
+					.map((user_id) => ({
+						status: 'active',
+						member_type: 'member',
+						user_id,
+						group_id,
+						created_by: facilitator_id,
+						updated_by: facilitator_id,
+					}));
+
+				if (createData?.length > 0) {
+					resultCreate = await this.hasuraServiceFromServices.qM(
+						'insert_group_users',
+						createData,
+						[],
+						returnFields,
+					);
+				}
+
+				// update inactive to active user
+				const activeIds = group_users
+					.filter(
+						(item) =>
+							learner_ids.includes(item.user_id) &&
+							item.status === 'inactive',
+					)
+					.map((item) => item.id);
+
+				if (activeIds?.length > 0) {
+					resultActive = await this.hasuraServiceFromServices.update(
+						null,
+						'group_users',
+						{
+							status: 'active',
+							updated_by: facilitator_id,
+						},
+						[],
+						returnFields,
+						{ where: `{id:{_in:[${activeIds}]}}` },
+					);
+				}
+
+				// update active to inactive user
+				const deactivateIds = group_users
+					.filter(
+						(item) =>
+							item.status === 'active' &&
+							!learner_ids.includes(item.user_id),
+					)
+					.map((item) => item.id);
+
+				if (deactivateIds?.length > 0) {
+					resultInactive =
+						await this.hasuraServiceFromServices.update(
+							null,
+							'group_users',
+							{
+								status: 'inactive',
+								updated_by: facilitator_id,
+							},
+							[],
+							returnFields,
+							{
+								where: `{id:{_in:[${deactivateIds}]}}`,
+							},
+						);
+				}
+
+				return response.json({
+					status: 200,
+					message: 'Successfully updated camp details',
+					data: { resultCreate, resultActive, resultInactive },
+				});
+			}
 		}
 	}
 
