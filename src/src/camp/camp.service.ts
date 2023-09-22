@@ -1093,7 +1093,6 @@ export class CampService {
 			query: query,
 		});
 		const consent_response = hasura_response?.data;
-
 		if (!consent_response?.consents?.length) {
 			return resp.status(400).json({
 				success: false,
