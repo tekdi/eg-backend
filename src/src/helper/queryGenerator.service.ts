@@ -256,7 +256,7 @@ export class QueryGeneratorService {
 		fields: any = [],
 		props: any = {},
 	) {
-		var returnkeys = [];
+		let returnkeys = [];
 		const getObjStr = (item: Object, type: String = '') => {
 			let str = '[';
 			items.forEach((item, pindex) => {
