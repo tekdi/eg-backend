@@ -1010,7 +1010,6 @@ export class CampService {
 					console.log('s3 file not found', e.message);
 				}
 			}
-
 			await this.hasuraService.delete('documents', {
 				id: consent_document_id,
 			});
