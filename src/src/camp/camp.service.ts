@@ -1003,7 +1003,13 @@ export class CampService {
 		if (document_id != consent_document_id) {
 			let consent_document_name =
 				hasura_response?.data.consents?.[0]?.document?.name;
-			await this.s3Service.deletePhoto(consent_document_name);
+			if (consent_document_name) {
+				try {
+					await this.s3Service.deletePhoto(consent_document_name);
+				} catch (e) {
+					console.log('s3 file not found', e.message);
+				}
+			}
 
 			await this.hasuraService.delete('documents', {
 				id: consent_document_id,
