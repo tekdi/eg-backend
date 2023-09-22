@@ -556,9 +556,6 @@ export class CampService {
 		let status = 'active';
 		let member_type = 'owner';
 		let update_body = body;
-		let resultCreate = [];
-		let resultActive = [];
-		let resultInactive = [];
 
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -753,6 +750,9 @@ export class CampService {
 
 			case 'edit_learners': {
 				let learner_ids = body.learner_ids;
+				let resultCreate = [];
+				let resultActive = [];
+				let resultInactive = [];
 				let qury = `query MyQuery {
 					camps_by_pk(id:${camp_id})  {
 					group_id
