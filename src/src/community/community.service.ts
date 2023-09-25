@@ -110,7 +110,6 @@ export class CommunityService {
 
 	public async communityById(id: any, body: any, req: any, resp: any) {
 		const facilitator_id = req.mw_userid;
-		let context = body?.context;
 
 		let query = `query MyQuery {
 			references(where: {id:{_eq:${id}},context_id: {_eq: ${facilitator_id}}}) {
