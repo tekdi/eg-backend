@@ -1,21 +1,16 @@
 import {
 	Controller,
-	Get,
 	Post,
 	Body,
 	Patch,
 	Param,
-	Delete,
 	Res,
 	Req,
-	Response,
 	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
 import { CommunityService } from './community.service';
-import { CreateCommunityDto } from './dto/create-community.dto';
-import { UpdateCommunityDto } from './dto/update-community.dto';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 
 @Controller('community')

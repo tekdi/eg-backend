@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateCommunityDto } from './dto/create-community.dto';
-import { UpdateCommunityDto } from './dto/update-community.dto';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
