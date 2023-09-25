@@ -1,4 +1,23 @@
-import * as AWS from 'aws-sdk';
+// import * as AWS from 'aws-sdk';
+// import { Rekognition } from '@aws-sdk/client-rekognition';
+//import * as AWS from '@aws-sdk/client-rekognition';
+// ES6 + example;
+import {
+	RekognitionClient,
+	ListCollectionsCommand,
+	CreateCollectionCommand,
+	ListFacesCommand,
+	IndexFacesCommand,
+	DeleteFacesCommand,
+	SearchFacesByImageCommand,
+	ListUsersCommand,
+	SearchUsersByImageCommand,
+	CreateUserCommand,
+	DeleteUserCommand,
+	DeleteCollectionCommand,
+	DisassociateFacesCommand,
+	AssociateFacesCommand,
+} from '@aws-sdk/client-rekognition';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -7,8 +26,9 @@ export class AwsRekognitionService {
 	private region: string;
 	private accessKeyId: string;
 	private secretAccessKey: string;
-	private rekognition: AWS.Rekognition;
+	private rekognition: RekognitionClient;
 	private bucketName: string;
+	private prefixed: string;
 
 	constructor(private configService: ConfigService) {
 		// Setup AWS credentials
@@ -20,27 +40,41 @@ export class AwsRekognitionService {
 			'AWS_REKOGNITION_SECRET_ACCESS_KEY',
 		);
 		this.bucketName = this.configService.get<string>('S3_BUCKET');
+		this.prefixed = this.configService.get<string>(
+			'AWS_PREFIXED_BEFOR_USER_ID',
+		);
 
-		AWS.config.update({
+		// AWS.config.update({
+		// 	region: this.region,
+		// 	accessKeyId: this.accessKeyId,
+		// 	secretAccessKey: this.secretAccessKey,
+		// });
+
+		// this.rekognition = new AWS.Rekognition();
+		// const client = new RekognitionClient({ region: "REGION" });
+		this.rekognition = new RekognitionClient({
 			region: this.region,
-			accessKeyId: this.accessKeyId,
-			secretAccessKey: this.secretAccessKey,
+			credentials: {
+				secretAccessKey: this.secretAccessKey,
+				accessKeyId: this.accessKeyId,
+			},
 		});
-
-		this.rekognition = new AWS.Rekognition();
 	}
 
 	async createCollectionIfNotExists(collectionId: string) {
 		const response = { new: false, data: null };
 		try {
-			const collections = await this.rekognition
-				.listCollections()
-				.promise();
+			const collections = await this.rekognition.send(
+				new ListCollectionsCommand({ MaxResults: 1000 }),
+			);
+			//.promise();
 			console.log('collections:', collections);
+
 			if (!collections.CollectionIds.includes(collectionId)) {
-				const createCollectionResponse = await this.rekognition
-					.createCollection({ CollectionId: collectionId })
-					.promise();
+				const createCollectionResponse = await this.rekognition.send(
+					new CreateCollectionCommand({ CollectionId: collectionId }),
+				);
+				//.promise();
 				console.log('Created a new collection:');
 				console.dir(createCollectionResponse, { depth: 99 });
 				response.new = true;
@@ -54,37 +88,44 @@ export class AwsRekognitionService {
 			return response;
 		} catch (error) {
 			console.log('createCollectionIfNotExists:', error);
-			throw error;
+			//throw error;
 		}
 	}
 
 	async getAllUsersOfCollection(collectionId: string) {
 		try {
 			const users = (
-				await this.rekognition
-					.listUsers({ CollectionId: collectionId })
-					.promise()
-			).Users.map((userObj) => userObj.UserId);
-			console.log('users:', users);
+				await this.rekognition.send(
+					new ListUsersCommand({ CollectionId: collectionId }),
+				)
+			).Users.map((userObj) => userObj.UserId.replace(this.prefixed, '')); //.promise()
+			console.log('users:', users.sort());
 			return users;
 		} catch (error) {
 			console.log('getAllUsersOfCollection:', error);
-			throw error;
+			//throw error;
 		}
 	}
 
 	async createUsersInCollection(collectionId: string, userIds: string[]) {
 		try {
-			for (const userId of userIds) {
+			const aws_users = ['111', '77', '104', '78', '81'];
+			for (const userId of aws_users) {
 				const createUserParams = {
 					CollectionId: collectionId,
-					UserId: userId,
+					UserId: this.prefixed + userId,
+					ClientRequestToken:
+						this.prefixed + new Date().getTime().toString(),
 				};
-				const createUserResponse = await this.rekognition
-					.createUser(createUserParams)
-					.promise();
+				console.log(
+					'Trying to create user with details as:',
+					createUserParams,
+				);
+
+				const createUserResponse = await this.rekognition.send(
+					new CreateUserCommand(createUserParams),
+				);
 				console.log('createUserResponse:', createUserResponse);
-				// Set delay between two requests
 				await new Promise((resolve) =>
 					setTimeout(
 						resolve,
@@ -98,24 +139,27 @@ export class AwsRekognitionService {
 			}
 		} catch (error) {
 			console.log('createUsersInCollection:', error);
-			throw error;
+			//throw error;
 		}
 	}
 
 	async getAllFacesOfUser(collectionId: string, userId: string) {
+		const aws_users = ['111', '77', '104', '78', '81'];
 		try {
 			const getFaceListParams = {
 				CollectionId: collectionId,
 				UserId: userId,
 			};
 			const faces = (
-				await this.rekognition.listFaces(getFaceListParams).promise()
+				await this.rekognition.send(
+					new ListFacesCommand(getFaceListParams),
+				)
 			).Faces.map((faceObj) => faceObj.FaceId);
 			console.log('faces:', faces);
 			return faces;
 		} catch (error) {
 			console.log('getAllFacesOfUser:', error);
-			throw error;
+			//throw error;
 		}
 	}
 
@@ -130,9 +174,10 @@ export class AwsRekognitionService {
 				UserId: userId,
 				FaceIds: [faceId],
 			};
-			const disassociateFaceResponse = await this.rekognition
-				.disassociateFaces(disassociateFaceParams)
-				.promise();
+			const disassociateFaceResponse = await this.rekognition.send(
+				new DisassociateFacesCommand(disassociateFaceParams),
+			);
+			//.promise();
 			console.log('disassociateFaceResponse:', disassociateFaceResponse);
 			const response = { success: false };
 			if (disassociateFaceResponse.DisassociatedFaces.length === 1)
@@ -140,7 +185,7 @@ export class AwsRekognitionService {
 			return response;
 		} catch (error) {
 			console.log('disassociatePhotoFromUser:', error);
-			throw error;
+			//throw error;
 		}
 	}
 
@@ -150,9 +195,10 @@ export class AwsRekognitionService {
 				CollectionId: collectionId,
 				FaceIds: [faceId],
 			};
-			const deleteFacesResponse = await this.rekognition
-				.deleteFaces(deleteFaceParams)
-				.promise();
+			const deleteFacesResponse = await this.rekognition.send(
+				new DeleteFacesCommand(deleteFaceParams),
+			);
+			//.promise();
 			console.log('deleteFacesResponse:', deleteFacesResponse);
 			const response = { success: false };
 			if (deleteFacesResponse.DeletedFaces.length === 1)
@@ -160,7 +206,7 @@ export class AwsRekognitionService {
 			return response;
 		} catch (error) {
 			console.log('deletePhotoFromCollection:', error);
-			throw error;
+			//throw error;
 		}
 	}
 
@@ -178,9 +224,13 @@ export class AwsRekognitionService {
 				ExternalImageId: imageName,
 				MaxFaces: 1,
 			};
-			const addFaceResponse = await this.rekognition
-				.indexFaces(addFaceParams)
-				.promise();
+			console.log('addFaceParams:', addFaceParams);
+
+			const addFaceResponse = await this.rekognition.send(
+				new IndexFacesCommand(addFaceParams),
+			);
+
+			//.promise();
 			console.log('addFaceResponse:');
 			console.dir(addFaceResponse, { depth: 99 });
 			if (addFaceResponse.FaceRecords.length === 1) {
@@ -208,9 +258,10 @@ export class AwsRekognitionService {
 				UserId: userId,
 				FaceIds: [faceId],
 			};
-			const associateFaceResponse = await this.rekognition
-				.associateFaces(associateFacesParams)
-				.promise();
+			const associateFaceResponse = await this.rekognition.send(
+				new AssociateFacesCommand(associateFacesParams),
+			);
+			//.promise();
 			console.log('associateFaceResponse:');
 			console.dir(associateFaceResponse);
 			const response = { success: false };
@@ -219,7 +270,7 @@ export class AwsRekognitionService {
 			return response;
 		} catch (error) {
 			console.log('associateFaceToUser:', error);
-			throw error;
+			//throw error;
 		}
 	}
 
@@ -241,15 +292,43 @@ export class AwsRekognitionService {
 				MaxUsers: 5,
 			};
 
-			const compareResponse = await this.rekognition
-				.searchUsersByImage(searchParams)
-				.promise();
+			const compareResponse = await this.rekognition.send(
+				new SearchUsersByImageCommand(searchParams),
+			);
+			//.promise();
 			console.log('Matching faces:');
 			console.dir(compareResponse, { depth: 99 });
-			return compareResponse.UserMatches;
+			return compareResponse.SearchedFace;
 		} catch (error) {
 			console.log('searchUsersByImage:', error);
-			throw error;
+			//throw error;
+		}
+	}
+
+	async deleteCollection(
+		collectionId: string,
+		userId: string,
+		faceId: string,
+	) {
+		try {
+			const deleteFaceParams = {
+				CollectionId: collectionId,
+				userId: userId,
+				FaceIds: [faceId],
+			};
+			console.log(
+				`Attempting to delete collection named - ${collectionId}`,
+			);
+			var response = await this.rekognition.send(
+				new DeleteCollectionCommand(deleteFaceParams),
+			);
+			var status_code = response.StatusCode;
+			if ((status_code = 200)) {
+				console.log('Collection successfully deleted.');
+			}
+			return response; // For unit tests.
+		} catch (err) {
+			console.log('Error', err.stack);
 		}
 	}
 }
