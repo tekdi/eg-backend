@@ -45,7 +45,7 @@ export class CommunityService {
 			this.table,
 			{
 				...body,
-				context: 'community.users',
+				context: 'community.user',
 				context_id: facilitator_id,
 			},
 			this.returnFields,
