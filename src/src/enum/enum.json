@@ -689,5 +689,63 @@
 			"title": "CAMP_PROPERTY_FACILITIES_PROPER_LIGHTINGS",
 			"value": "proper_lightings"
 		}
+	],
+	"COMMUNITY_MEMBER_DESIGNATIONS": [
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_SARPANCH",
+			"value": "Sarpanch"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_WARD_MEMBER",
+			"value": "ward_member"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ZILA_PARISAD_MEMBER",
+			"value": "zila_parisad_member"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_GRAM_PANCHAYAT_SEWAK",
+			"value": "gram_panchayat_sewak"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ANGANWADI_WORKER",
+			"value": "anganwadi_worker"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ANGANWADI_HELPER",
+			"value": "anganwadi_helper"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ANGANWADI_HELPER",
+			"value": "anganwadi_helper"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ANM",
+			"value": "anm"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ASHA_WORKER",
+			"value": "asha_worker"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_JEEVIKA_MEMBER",
+			"value": "jeevika_member"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_TEACHER",
+			"value": "teacher"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_VILLAGE_LEADER",
+			"value": "village_leader"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_EDUCATION_LEADER",
+			"value": "education_leader"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_OTHER_GOVERNMENT_OFFICER",
+			"value": "other_government_officer"
+		}
 	]
 }
