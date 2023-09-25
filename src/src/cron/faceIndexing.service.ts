@@ -41,8 +41,8 @@ export class FaceIndexingService {
 					users(
 						where: {
 							_or: [
-								{ fa_user_indexed: { _is_null: true } },
-								{ fa_user_indexed: { _eq: false } }
+								{ fa_user_indexed: { _is_null: false } },
+								{ fa_user_indexed: { _eq: true } }
 							]
 						},
 						order_by: {created_at: asc_nulls_first},
@@ -129,6 +129,7 @@ export class FaceIndexingService {
 		collectionId: string,
 		userId: string,
 		imageName: string,
+		faceId: string,
 	) {
 		// Add face in collection
 		const addFaceResponse =
@@ -183,8 +184,33 @@ export class FaceIndexingService {
 			throw error;
 		}
 	}
+	async deleteCollection(
+		collectionId: string,
+		userId: string,
+		faceId: string,
+	) {
+		// Disassociate image from user
+		const photoDisassociated =
+			await this.awsRekognitionService.deleteCollection(
+				collectionId,
+				userId,
+				faceId,
+			);
 
-	@Cron(CronExpression.EVERY_30_MINUTES)
+		let response = { success: false };
+		// Delete face from collection
+		if (photoDisassociated) {
+			const photoDeleted =
+				await this.awsRekognitionService.deleteCollection(
+					collectionId,
+					userId,
+					faceId,
+				);
+			if (photoDeleted) response.success = true;
+		}
+		return response;
+	}
+	@Cron(CronExpression.EVERY_MINUTE)
 	async indexRekognitionUsers() {
 		try {
 			/*----------------------- Create users in collection -----------------------*/
@@ -192,8 +218,13 @@ export class FaceIndexingService {
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
-
-			// Step-1: Create collection if not exists
+			//delete
+			await this.awsRekognitionService.deleteCollection(
+				collectionId,
+				'userId',
+				'faceId',
+			);
+			//Step-1: Create collection if not exists
 			await this.awsRekognitionService.createCollectionIfNotExists(
 				collectionId,
 			);
@@ -204,10 +235,17 @@ export class FaceIndexingService {
 					collectionId,
 				)
 			).map((id) => parseInt(id));
-
+			console.log(
+				'usersIdsExistsInCollection',
+				usersIdsExistsInCollection.sort(),
+			);
 			// Step-3: Fetch all users from database which are not present in collection
 			const nonExistingUsers = await this.fetchAllUsersExceptIds(
 				usersIdsExistsInCollection,
+				// .map((user) => {
+				// 	// Ensure that it is a valid integer, or use a default value if it's NaN
+				// 	return isNaN(user) ? 0 : user;
+				// }),
 			);
 
 			// Step-4: Create users in collection
@@ -226,11 +264,12 @@ export class FaceIndexingService {
 					),
 				),
 			);
-			console.dir(usersToIndexFaces, { depth: 99 });
+			//console.dir(usersToIndexFaces, { depth: 99 });
+			console.log('usersToINdexfaces-->>', usersToIndexFaces);
 
 			// Step-2: Iterate through them and index faces one by one
 			for (const user of usersToIndexFaces) {
-				console.log(user);
+				console.log('index-user-->>', user);
 				let userId = String(user.id);
 
 				// Step-A Perform indexing of all 3 profile photos if not indexed
@@ -307,6 +346,7 @@ export class FaceIndexingService {
 										collectionId,
 										userId,
 										user[photokeyName].name,
+										faFaceIds,
 									);
 
 								// Step-b3 Set faceid(i) to new created faceId

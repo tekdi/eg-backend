@@ -80,13 +80,12 @@ export class MarkAttendanceService {
 		}
 	}
 
-	@Cron(CronExpression.EVERY_30_MINUTES)
+	@Cron(CronExpression.EVERY_MINUTE)
 	async markAttendanceCron() {
 		try {
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
-
 			// Step-1 Fetch all users whose attendace is not marked
 			const usersForAttendance = await this.getAllUsersForAttendance(
 				parseInt(
@@ -96,7 +95,6 @@ export class MarkAttendanceService {
 				),
 			);
 			console.dir(usersForAttendance, { depth: 99 });
-
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
 				const userId = String(user.id);
@@ -116,12 +114,14 @@ export class MarkAttendanceService {
 							);
 						// Check if the user matched
 						let matchingPercentage = null;
-						const isMatchFound = matchedUser.some((obj) => {
-							if (obj.User.UserId === userId) {
-								matchingPercentage = obj.Similarity;
-								return true;
-							}
-						});
+						const isMatchFound = (matchedUser as any[]).some(
+							(obj) => {
+								if (obj?.User?.UserId === userId) {
+									matchingPercentage = obj.Similarity;
+									return true;
+								}
+							},
+						);
 						// Set attendance verified as true or false based on results
 						let isAttendanceVerified = false;
 						if (isMatchFound) isAttendanceVerified = true;
