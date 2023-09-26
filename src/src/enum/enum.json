@@ -747,5 +747,31 @@
 			"title": "COMMUNITY_MEMBER_DESIGNATIONS_OTHER_GOVERNMENT_OFFICER",
 			"value": "other_government_officer"
 		}
+	],
+	"PCR_SCORES_BASELINE_AND_ENDLINE": [
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_A+",
+			"value": "a+"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_A",
+			"value": "a"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_B",
+			"value": "b"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_C",
+			"value": "c"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_D",
+			"value": "d"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_E",
+			"value": "e"
+		}
 	]
 }
