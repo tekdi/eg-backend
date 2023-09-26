@@ -21,7 +21,7 @@ import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { CommentsModule } from './comments/comments.module';
 import { CampModule } from './camp/camp.module';
-import { CommunityModule } from './community/community.module';
+import { ReferencesModule } from './references/references.module';
 
 @Module({
 	imports: [
@@ -49,7 +49,7 @@ import { CommunityModule } from './community/community.module';
 		UserModule,
 		CommentsModule,
 		CampModule,
-		CommunityModule,
+		ReferencesModule,
 	],
 	controllers: [],
 	providers: [],

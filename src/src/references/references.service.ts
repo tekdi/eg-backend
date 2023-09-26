@@ -3,7 +3,7 @@ import { HasuraService } from 'src/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
 @Injectable()
-export class CommunityService {
+export class ReferencesService {
 	public table = 'references';
 	public fillable = [
 		'name',
