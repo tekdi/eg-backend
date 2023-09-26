@@ -269,7 +269,7 @@ export class QueryGeneratorService {
 
 					if (onlyFields.length < 1 || onlyFields.includes(e)) {
 						if (type === 'obj') {
-							str += `${e}:"${item[e]}"${
+							str += `${e}:${item[e]}${
 								keys.length > index + 1 ? ',' : ''
 							}`;
 						} else {
@@ -281,19 +281,22 @@ export class QueryGeneratorService {
 				});
 				str += `}${items.length > pindex + 1 ? ',' : ''}`;
 			});
+
 			return (str += ']');
 		};
-		console.log('returnkeys', returnkeys);
+
 		let coreQuery = `${tableName}(objects: ${getObjStr(items, 'obj')}) {
 			returning {
 				${this.getParam(fields || (onlyFields ? [...onlyFields, 'id'] : returnkeys))}
-			};
+			}
 		}`;
 
 		if (props?.isCore === true) {
 			return coreQuery;
 		}
+
 		return `mutation MyQuery {
+			
       		${coreQuery}
     	}`;
 	}

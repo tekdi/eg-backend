@@ -408,6 +408,10 @@ export class CampService {
 			  group_users(where: {member_type: {_neq: "owner"}}) {
 				user {
 				  id
+				  state
+				  district
+				  block
+				  village
 				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 					id
 					name

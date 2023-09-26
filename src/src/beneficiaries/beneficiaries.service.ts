@@ -3443,6 +3443,10 @@ export class BeneficiariesService {
 		let qury = `query MyQuery {
 			users(where: {program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}, program_id: {_eq:${program_id}},academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}}, _not: {group_users: {group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}}) {
 			  id
+			    state
+				district
+				block
+				village
 			  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 				id
 				name
@@ -3459,6 +3463,7 @@ export class BeneficiariesService {
 			}
 		  }
 		  `;
+
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const users = response?.data?.users ?? [];
