@@ -55,13 +55,13 @@ export class ReferencesService {
 		if (!community_response?.id) {
 			return resp.status(400).json({
 				success: false,
-				message: 'Community created successfully!',
+				message: 'Community Reference added successfully!',
 				data: response,
 			});
 		} else {
 			return resp.json({
 				status: 200,
-				message: 'Unable to create Community!',
+				message: 'Unable to add Community Reference!',
 				data: { community_response },
 			});
 		}
@@ -96,13 +96,13 @@ export class ReferencesService {
 		if (newQdata.length > 0) {
 			return resp.status(200).json({
 				success: true,
-				message: 'Data found successfully!',
+				message: 'Community References Data found successfully!',
 				data: newQdata,
 			});
 		} else {
 			return resp.json({
 				status: 400,
-				message: 'Community Data Not Found',
+				message: 'Community References Data Not Found',
 				data: {},
 			});
 		}
@@ -136,13 +136,13 @@ export class ReferencesService {
 		if (newQdata.length > 0) {
 			return resp.status(200).json({
 				success: true,
-				message: 'Data found successfully!',
+				message: 'Community Reference Data found successfully!',
 				data: newQdata,
 			});
 		} else {
 			return resp.json({
 				status: 400,
-				message: 'Community Data Not Found',
+				message: 'Community Reference Data Not Found',
 				data: {},
 			});
 		}
@@ -205,13 +205,13 @@ export class ReferencesService {
 			);
 			return resp.status(200).json({
 				success: false,
-				message: 'Community Updated successfully!',
+				message: 'Community Reference Updated successfully!',
 				data: response,
 			});
 		} else {
 			return resp.json({
 				status: 400,
-				message: 'Unable to Update Community!',
+				message: 'Unable to Update Community Reference!',
 				data: {},
 			});
 		}
