@@ -773,5 +773,51 @@
 			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_E",
 			"value": "e"
 		}
+	],
+	"PCR_SCORES_RAPID_QUESTION": [
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_0",
+			"value": "0"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_1",
+			"value": "1"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_2",
+			"value": "2"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_3",
+			"value": "3"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_4",
+			"value": "4"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_5",
+			"value": "5"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_6",
+			"value": "6"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_7",
+			"value": "7"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_8",
+			"value": "8"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_9",
+			"value": "9"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_10",
+			"value": "10"
+		}
 	]
 }
