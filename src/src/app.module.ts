@@ -21,6 +21,7 @@ import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { CommentsModule } from './comments/comments.module';
 import { CampModule } from './camp/camp.module';
+import { ReferencesModule } from './references/references.module';
 
 @Module({
 	imports: [
@@ -48,6 +49,7 @@ import { CampModule } from './camp/camp.module';
 		UserModule,
 		CommentsModule,
 		CampModule,
+		ReferencesModule,
 	],
 	controllers: [],
 	providers: [],
