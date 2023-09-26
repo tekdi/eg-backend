@@ -11,8 +11,6 @@ import {
 	ValidationPipe,
 } from '@nestjs/common';
 import { PcrscoresService } from './pcrscores.service';
-import { CreatePcrscoreDto } from './dto/create-pcrscore.dto';
-import { UpdatePcrscoreDto } from './dto/update-pcrscore.dto';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 
 @Controller('pcrscores')
