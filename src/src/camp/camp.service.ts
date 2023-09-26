@@ -405,7 +405,7 @@ export class CampService {
 				  }
 			  }
 			  
-			  group_users(where: {member_type: {_neq: "owner"}}) {
+			  group_users(where: {member_type: {_neq: "owner"}, status: {_eq: "active"}}) {
 				user {
 				  id
 				  state
