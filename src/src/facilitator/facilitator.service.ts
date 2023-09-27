@@ -1934,9 +1934,12 @@ export class FacilitatorService {
 			);
 		}
 
-		const status = this.enumService
-			.getEnumValue('BENEFICIARY_STATUS')
-			.data.map((item) => item.value);
+		const status = [
+			'identified',
+			'ready_to_enroll',
+			'enrolled',
+			'enrolled_ip_verified',
+		];
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
