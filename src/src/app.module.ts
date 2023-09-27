@@ -22,6 +22,7 @@ import { UserModule } from './user/user.module';
 import { CommentsModule } from './comments/comments.module';
 import { CampModule } from './camp/camp.module';
 import { ReferencesModule } from './references/references.module';
+import { PcrscoresModule } from './pcrscores/pcrscores.module';
 
 @Module({
 	imports: [
@@ -50,6 +51,7 @@ import { ReferencesModule } from './references/references.module';
 		CommentsModule,
 		CampModule,
 		ReferencesModule,
+		PcrscoresModule,
 	],
 	controllers: [],
 	providers: [],

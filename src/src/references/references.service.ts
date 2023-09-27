@@ -53,14 +53,14 @@ export class ReferencesService {
 
 		const community_response = response?.community;
 		if (!community_response?.id) {
-			return resp.status(400).json({
-				success: false,
+			return resp.status(200).json({
+				success: true,
 				message: 'Community Reference added successfully!',
 				data: response,
 			});
 		} else {
 			return resp.json({
-				status: 200,
+				status: 400,
 				message: 'Unable to add Community Reference!',
 				data: { community_response },
 			});
@@ -204,7 +204,7 @@ export class ReferencesService {
 				],
 			);
 			return resp.status(200).json({
-				success: false,
+				success: true,
 				message: 'Community Reference Updated successfully!',
 				data: response,
 			});
