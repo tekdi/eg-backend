@@ -3440,6 +3440,8 @@ export class BeneficiariesService {
 		let academic_year_id = body?.academic_year_id || 1;
 		let status = 'enrolled_ip_verified';
 
+		// Get users which are not present in the camps or whose status is inactive
+
 		let qury = `query MyQuery {
 			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}}, _not: {group_users: {status: {_eq: "active"}}}}) {
 			  id
