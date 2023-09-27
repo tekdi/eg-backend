@@ -68,7 +68,7 @@ export class AwsRekognitionService {
 				new ListCollectionsCommand({ MaxResults: 1000 }),
 			);
 			//.promise();
-			console.log('collections:', collections);
+			console.log('collections:------------>>>>>>', collections);
 
 			if (!collections.CollectionIds.includes(collectionId)) {
 				const createCollectionResponse = await this.rekognition.send(
@@ -99,7 +99,7 @@ export class AwsRekognitionService {
 					new ListUsersCommand({ CollectionId: collectionId }),
 				)
 			).Users.map((userObj) => userObj.UserId.replace(this.prefixed, '')); //.promise()
-			console.log('users:', users.sort());
+			console.log('users:---------->>>>>>>>>', users.sort());
 			return users;
 		} catch (error) {
 			console.log('getAllUsersOfCollection:', error);
@@ -125,7 +125,11 @@ export class AwsRekognitionService {
 				const createUserResponse = await this.rekognition.send(
 					new CreateUserCommand(createUserParams),
 				);
-				console.log('createUserResponse:', createUserResponse);
+
+				console.log(
+					'createUserResponse:------->>>>>>>>>>>>>>',
+					createUserResponse,
+				);
 				await new Promise((resolve) =>
 					setTimeout(
 						resolve,
@@ -155,7 +159,7 @@ export class AwsRekognitionService {
 					new ListFacesCommand(getFaceListParams),
 				)
 			).Faces.map((faceObj) => faceObj.FaceId);
-			console.log('faces:', faces);
+			console.log('faces:--------->>>>>>>>>>>>>>>>', faces);
 			return faces;
 		} catch (error) {
 			console.log('getAllFacesOfUser:', error);
@@ -171,7 +175,7 @@ export class AwsRekognitionService {
 		try {
 			const disassociateFaceParams = {
 				CollectionId: collectionId,
-				UserId: userId,
+				UserId: this.prefixed + userId,
 				FaceIds: [faceId],
 			};
 			const disassociateFaceResponse = await this.rekognition.send(
@@ -199,7 +203,10 @@ export class AwsRekognitionService {
 				new DeleteFacesCommand(deleteFaceParams),
 			);
 			//.promise();
-			console.log('deleteFacesResponse:', deleteFacesResponse);
+			console.log(
+				'deleteFacesResponse:--------->>>>>>>',
+				deleteFacesResponse,
+			);
 			const response = { success: false };
 			if (deleteFacesResponse.DeletedFaces.length === 1)
 				response.success = true;
@@ -224,7 +231,7 @@ export class AwsRekognitionService {
 				ExternalImageId: imageName,
 				MaxFaces: 1,
 			};
-			console.log('addFaceParams:', addFaceParams);
+			console.log('addFaceParams:------------->>>>', addFaceParams);
 
 			const addFaceResponse = await this.rekognition.send(
 				new IndexFacesCommand(addFaceParams),
@@ -255,9 +262,16 @@ export class AwsRekognitionService {
 		try {
 			const associateFacesParams = {
 				CollectionId: collectionId,
-				UserId: userId,
+				UserId: this.prefixed + userId,
 				FaceIds: [faceId],
+				ClientRequestToken:
+					this.prefixed + new Date().getTime().toString(),
 			};
+			console.log(
+				'associateFacesParams------->>>>>>>',
+				associateFacesParams,
+			);
+
 			const associateFaceResponse = await this.rekognition.send(
 				new AssociateFacesCommand(associateFacesParams),
 			);
@@ -291,7 +305,7 @@ export class AwsRekognitionService {
 				UserMatchThreshold: faceMatchingThreshold,
 				MaxUsers: 5,
 			};
-
+			console.log('searchParams:------------->>>>', searchParams);
 			const compareResponse = await this.rekognition.send(
 				new SearchUsersByImageCommand(searchParams),
 			);
@@ -313,7 +327,7 @@ export class AwsRekognitionService {
 		try {
 			const deleteFaceParams = {
 				CollectionId: collectionId,
-				userId: userId,
+				userId: this.prefixed + userId,
 				FaceIds: [faceId],
 			};
 			console.log(

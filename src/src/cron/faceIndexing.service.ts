@@ -28,6 +28,8 @@ export class FaceIndexingService {
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
+			console.log('fetchALluser------>>>>>', users);
+
 			return users;
 		} catch (error) {
 			console.log('fetchAllUsersExceptIds:', error);
@@ -78,6 +80,7 @@ export class FaceIndexingService {
 		try {
 			let users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
+			console.log('fetchindex------>>>>>', users);
 			users.forEach((user) => {
 				for (const key of [
 					'profile_photo_1',
@@ -91,6 +94,7 @@ export class FaceIndexingService {
 					}
 				}
 			});
+			console.log('fetchindex1------>>>>>', users);
 			return users;
 		} catch (error) {
 			console.log('fetchAllUsersExceptIds:', error);
@@ -111,7 +115,7 @@ export class FaceIndexingService {
 				faceId,
 			)
 		).success;
-
+		console.log('photoDisassociated------>>>>>', photoDisassociated);
 		let response = { success: false };
 		// Delete face from collection
 		if (photoDisassociated) {
@@ -137,7 +141,7 @@ export class FaceIndexingService {
 				collectionId,
 				imageName,
 			);
-
+		console.log('addFaceResponse111------>>>>>', addFaceResponse);
 		const response = { success: false, faceId: addFaceResponse.faceId };
 		// Associate face to user
 		if (addFaceResponse.success) {
@@ -196,7 +200,7 @@ export class FaceIndexingService {
 				userId,
 				faceId,
 			);
-
+		console.log('photoDisassociated111------>>>>>', photoDisassociated);
 		let response = { success: false };
 		// Delete face from collection
 		if (photoDisassociated) {
@@ -271,9 +275,11 @@ export class FaceIndexingService {
 			for (const user of usersToIndexFaces) {
 				console.log('index-user-->>', user);
 				let userId = String(user.id);
-
+				console.log('faPhotos---->>>>', userId);
 				// Step-A Perform indexing of all 3 profile photos if not indexed
 				const faPhotos = JSON.parse(user.fa_photos_indexed);
+				console.log('faPhotos---->>>>', faPhotos);
+
 				const faFaceIds = JSON.parse(user.fa_face_ids);
 				console.log('faPhotos1:', faPhotos);
 				console.log('faFaceIds1:', faFaceIds);
