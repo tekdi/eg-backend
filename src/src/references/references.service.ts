@@ -38,8 +38,48 @@ export class ReferencesService {
 	) {}
 	async create(body: any, request: any, resp: any) {
 		let facilitator_id = request.mw_userid;
+		let context = 'community.user';
+		let contact = body?.contact_number;
 
 		let response;
+		let reference_query = `query MyQuery {
+			references_aggregate(where: {context: {_eq: "${context}"}, context_id: {_eq: ${facilitator_id}}, contact_number: {_eq: ${contact}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		let user_query = `query MyQuery {
+			users_aggregate(where:{id:{_eq:${facilitator_id}},mobile:{_eq:${contact}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }
+		  `;
+
+		const reference_response = await this.hasuraServiceFromServices.getData(
+			{
+				query: reference_query,
+			},
+		);
+		const reference_mobile_count =
+			reference_response?.data?.references_aggregate?.aggregate?.count;
+
+		const user_response = await this.hasuraServiceFromServices.getData({
+			query: user_query,
+		});
+		const user_mobile_count =
+			user_response?.data?.users_aggregate?.aggregate?.count;
+
+		if (user_mobile_count > 0 || reference_mobile_count > 0) {
+			return resp.json({
+				status: 400,
+				message: 'Mobile number already exists',
+				data: {},
+			});
+		}
 
 		response = await this.hasuraService.create(
 			this.table,
@@ -72,7 +112,7 @@ export class ReferencesService {
 		let context = body?.context;
 
 		let query = `query MyQuery {
-			references(where: {context_id: {_eq: ${facilitator_id}},context:{_eq:"${context}"}}) {
+			references(where: {context_id: {_eq: ${facilitator_id}},context:{_eq:"${context}"}}, order_by: {id: desc}) {
 				id
 				name
 				contact_number
