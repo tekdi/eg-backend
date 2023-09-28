@@ -1103,8 +1103,8 @@ export class CampService {
 		});
 		const consent_response = hasura_response?.data;
 		if (!consent_response?.consents?.length) {
-			return resp.status(400).json({
-				success: false,
+			return resp.status(200).json({
+				success: true,
 				message: 'consents data not found!',
 				data: {
 					consent: [],
