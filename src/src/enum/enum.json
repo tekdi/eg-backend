@@ -689,5 +689,131 @@
 			"title": "CAMP_PROPERTY_FACILITIES_PROPER_LIGHTINGS",
 			"value": "proper_lightings"
 		}
+	],
+	"COMMUNITY_MEMBER_DESIGNATIONS": [
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_SARPANCH",
+			"value": "Sarpanch"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_WARD_MEMBER",
+			"value": "ward_member"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ZILA_PARISAD_MEMBER",
+			"value": "zila_parisad_member"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_GRAM_PANCHAYAT_SEWAK",
+			"value": "gram_panchayat_sewak"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ANGANWADI_WORKER",
+			"value": "anganwadi_worker"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ANGANWADI_HELPER",
+			"value": "anganwadi_helper"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ANM",
+			"value": "anm"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_ASHA_WORKER",
+			"value": "asha_worker"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_JEEVIKA_MEMBER",
+			"value": "jeevika_member"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_TEACHER",
+			"value": "teacher"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_VILLAGE_LEADER",
+			"value": "village_leader"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_EDUCATION_LEADER",
+			"value": "education_leader"
+		},
+		{
+			"title": "COMMUNITY_MEMBER_DESIGNATIONS_OTHER_GOVERNMENT_OFFICER",
+			"value": "other_government_officer"
+		}
+	],
+	"PCR_SCORES_BASELINE_AND_ENDLINE": [
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_A+",
+			"value": "a+"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_A",
+			"value": "a"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_B",
+			"value": "b"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_C",
+			"value": "c"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_D",
+			"value": "d"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_E",
+			"value": "e"
+		}
+	],
+	"PCR_SCORES_RAPID_QUESTION": [
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_0",
+			"value": "0"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_1",
+			"value": "1"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_2",
+			"value": "2"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_3",
+			"value": "3"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_4",
+			"value": "4"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_5",
+			"value": "5"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_6",
+			"value": "6"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_7",
+			"value": "7"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_8",
+			"value": "8"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_9",
+			"value": "9"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_10",
+			"value": "10"
+		}
 	]
 }
