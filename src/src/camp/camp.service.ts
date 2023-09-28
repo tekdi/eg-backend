@@ -1106,9 +1106,7 @@ export class CampService {
 			return resp.status(200).json({
 				success: true,
 				message: 'consents data not found!',
-				data: {
-					consent: [],
-				},
+				data: {},
 			});
 		} else {
 			const resultData = await Promise.all(
