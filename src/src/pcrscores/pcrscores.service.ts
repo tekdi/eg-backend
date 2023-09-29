@@ -69,7 +69,7 @@ export class PcrscoresService {
 		const query_result = await this.hasuraServiceFromServices.getData({
 			query: query_update,
 		});
-		console.log('update------', JSON.stringify(query_result));
+
 		let pcr_id = query_result?.data?.pcr_scores?.[0]?.id;
 
 		if (!pcr_id) {
