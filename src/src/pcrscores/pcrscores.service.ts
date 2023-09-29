@@ -51,9 +51,9 @@ export class PcrscoresService {
 			query: query,
 		});
 
-		let camp_id = result?.data?.group_users?.[0]?.camps?.id;
+		let camp_id = result?.data?.group_users?.[0]?.camps?.id || null;
 
-		response = await this.hasuraService.create(
+		response = await this.hasuraService.q(
 			this.table,
 			{
 				...body,
@@ -162,6 +162,7 @@ export class PcrscoresService {
 		let facilitator_id = request.mw_userid;
 		let user_id = body?.user_id;
 		let pcrscore_id = id;
+		body.camp_id = body?.camp_id || null;
 		let response;
 
 		let query = `query MyQuery {
