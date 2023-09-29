@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { json } from 'stream/consumers';
 
 @Injectable()
 export class PcrscoresService {
