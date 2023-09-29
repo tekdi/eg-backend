@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { json } from 'stream/consumers';
 
 @Injectable()
 export class PcrscoresService {
@@ -53,19 +54,68 @@ export class PcrscoresService {
 
 		let camp_id = result?.data?.group_users?.[0]?.camps?.id || null;
 
-		response = await this.hasuraService.q(
-			this.table,
-			{
-				...body,
-				updated_by: facilitator_id,
-				camp_id: camp_id,
-			},
-			this.returnFields,
-		);
+		let query_update = `query MyQuery {
+	pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, user_id: {_eq: ${user_id}}}) {
+	  id
+	  user_id
+	  camp_id
+	  baseline_learning_level
+	  rapid_assessment_first_learning_level
+	  rapid_assessment_second_learning_level
+	  endline_learning_level
+	  updated_by
+	}
+  }`;
+		const query_result = await this.hasuraServiceFromServices.getData({
+			query: query_update,
+		});
+		console.log('update------', JSON.stringify(query_result));
+		let pcr_id = query_result?.data?.pcr_scores?.[0]?.id;
 
-		const pcrscore_response = response?.pcr_scores;
+		if (!pcr_id) {
+			response = await this.hasuraService.q(
+				this.table,
+				{
+					...body,
+					updated_by: facilitator_id,
+					camp_id: camp_id,
+				},
+				this.returnFields,
+			);
+		} else {
+			response = await this.hasuraService.q(
+				this.table,
+				{
+					...body,
+					id: pcr_id,
+				},
+				[
+					'baseline_learning_level',
+					'rapid_assessment_first_learning_level',
+					'rapid_assessment_second_learning_level',
+					'endline_learning_level',
+					'camp_id',
+					'updated_by',
+					'updated_at',
+				],
+				true,
+				[
+					...this.returnFields,
+					'id',
+					'user_id',
+					'baseline_learning_level',
+					'rapid_assessment_first_learning_level',
+					'rapid_assessment_second_learning_level',
+					'endline_learning_level',
+					'camp_id',
+					'updated_by',
+					'created_at',
+					'updated_at',
+				],
+			);
+		}
 
-		if (pcrscore_response) {
+		if (response) {
 			return resp.status(200).json({
 				success: true,
 				message: 'PCR score added successfully!',
@@ -75,7 +125,7 @@ export class PcrscoresService {
 			return resp.json({
 				status: 400,
 				message: 'Unable to add PCR score!',
-				data: { pcrscore_response },
+				data: { response },
 			});
 		}
 	}
@@ -188,6 +238,7 @@ export class PcrscoresService {
 				this.table,
 				{
 					...body,
+
 					id: pcr_scores_id,
 				},
 				[
