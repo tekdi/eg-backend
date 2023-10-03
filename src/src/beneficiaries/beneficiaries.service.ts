@@ -1422,7 +1422,7 @@ export class BeneficiariesService {
 			} else {
 				return {
 					success: true,
-					data: result,
+					data: { result: mappedData },
 				};
 			}
 		}
@@ -3057,7 +3057,8 @@ export class BeneficiariesService {
 		limit?: number,
 		skip?: number,
 	) {
-		const user = (await this.findOne(id)).data;
+		const user = (await this.findOne(id)).data?.result;
+
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3108,10 +3109,10 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
-
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
+
 		if (duplicateListArr != undefined) {
 			const count = duplicateListArr?.[1]?.[2].length;
 			const totalPages = Math.ceil(count / limit);
