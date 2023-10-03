@@ -11,7 +11,6 @@ export class PcrscoresService {
 		'rapid_assessment_first_learning_level',
 		'rapid_assessment_second_learning_level',
 		'endline_learning_level',
-		'camp_id',
 		'updated_by',
 		'created_at',
 		'updated_at',
@@ -23,7 +22,6 @@ export class PcrscoresService {
 		'rapid_assessment_first_learning_level',
 		'rapid_assessment_second_learning_level',
 		'endline_learning_level',
-		'camp_id',
 		'updated_by',
 		'created_at',
 		'updated_at',
@@ -40,92 +38,88 @@ export class PcrscoresService {
 		let response;
 
 		let query = `query MyQuery {
-      group_users(where: {user_id: {_eq: ${user_id}}, group: {id: {_is_null: false}}}) {
-        camps {
-          id
-        }
-      }
-    }
-    `;
+	users(where: {id: {_eq: ${user_id}}, program_beneficiaries: {facilitator_id: {_eq: ${facilitator_id}}}}) {
+	  id
+	}
+  }`;
 		const result = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
 
-		let camp_id = result?.data?.group_users?.[0]?.camps?.id || null;
-
-		let query_update = `query MyQuery {
-	pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, user_id: {_eq: ${user_id}}}) {
-	  id
-	  user_id
-	  camp_id
-	  baseline_learning_level
-	  rapid_assessment_first_learning_level
-	  rapid_assessment_second_learning_level
-	  endline_learning_level
-	  updated_by
-	}
-  }`;
-		const query_result = await this.hasuraServiceFromServices.getData({
-			query: query_update,
-		});
-
-		let pcr_id = query_result?.data?.pcr_scores?.[0]?.id;
-
-		if (!pcr_id) {
-			response = await this.hasuraService.q(
-				this.table,
-				{
-					...body,
-					updated_by: facilitator_id,
-					camp_id: camp_id,
-				},
-				this.returnFields,
-			);
-		} else {
-			response = await this.hasuraService.q(
-				this.table,
-				{
-					...body,
-					id: pcr_id,
-				},
-				[
-					'baseline_learning_level',
-					'rapid_assessment_first_learning_level',
-					'rapid_assessment_second_learning_level',
-					'endline_learning_level',
-					'camp_id',
-					'updated_by',
-					'updated_at',
-				],
-				true,
-				[
-					...this.returnFields,
-					'id',
-					'user_id',
-					'baseline_learning_level',
-					'rapid_assessment_first_learning_level',
-					'rapid_assessment_second_learning_level',
-					'endline_learning_level',
-					'camp_id',
-					'updated_by',
-					'created_at',
-					'updated_at',
-				],
-			);
-		}
-
-		if (response) {
+		let users = result?.data?.users?.[0]?.id;
+		if (!users) {
 			return resp.status(200).json({
 				success: true,
-				message: 'PCR score added successfully!',
-				data: response,
+				message: 'Beneficaire is not under this facilitator!',
+				data: {},
 			});
 		} else {
-			return resp.json({
-				status: 400,
-				message: 'Unable to add PCR score!',
-				data: { response },
+			let query_update = `query MyQuery {
+				pcr_scores(where: {user_id: {_eq: ${user_id}}}) {
+				  id
+				  user_id
+				}
+			  }`;
+			const query_result = await this.hasuraServiceFromServices.getData({
+				query: query_update,
 			});
+
+			let pcr_id = query_result?.data?.pcr_scores?.[0]?.id;
+
+			if (!pcr_id) {
+				response = await this.hasuraService.q(
+					this.table,
+					{
+						...body,
+						updated_by: facilitator_id,
+					},
+					this.returnFields,
+				);
+			} else {
+				response = await this.hasuraService.q(
+					this.table,
+					{
+						...body,
+						id: pcr_id,
+						updated_by: facilitator_id,
+					},
+					[
+						'baseline_learning_level',
+						'rapid_assessment_first_learning_level',
+						'rapid_assessment_second_learning_level',
+						'endline_learning_level',
+						'updated_by',
+						'updated_at',
+					],
+					true,
+					[
+						...this.returnFields,
+						'id',
+						'user_id',
+						'baseline_learning_level',
+						'rapid_assessment_first_learning_level',
+						'rapid_assessment_second_learning_level',
+						'endline_learning_level',
+						'updated_by',
+						'created_at',
+						'updated_at',
+					],
+				);
+			}
+
+			if (response) {
+				return resp.status(200).json({
+					success: true,
+					message: 'PCR score added successfully!',
+					data: response,
+				});
+			} else {
+				return resp.json({
+					status: 400,
+					message: 'Unable to add PCR score!',
+					data: { response },
+				});
+			}
 		}
 	}
 
