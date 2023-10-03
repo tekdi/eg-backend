@@ -912,7 +912,10 @@ export class CampService {
 						data: {},
 					});
 				}
-				let { kit_received, properties } = res?.data?.camps?.[0];
+				let { kit_received, properties } = res?.data?.camps[0] ?? {
+					kit_received: null,
+					properties: null,
+				};
 
 				if (kit_received == 'no' || kit_received == null) {
 					return response.json({
