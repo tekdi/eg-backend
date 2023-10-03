@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class PcrscoresService {
@@ -30,6 +31,7 @@ export class PcrscoresService {
 	constructor(
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private userService: UserService,
 	) {}
 
 	async create(body: any, request: any, resp: any) {
@@ -48,8 +50,8 @@ export class PcrscoresService {
 
 		let users = result?.data?.users?.[0]?.id;
 		if (!users) {
-			return resp.status(200).json({
-				success: true,
+			return resp.status(400).json({
+				success: false,
 				message: 'Beneficaire is not under this facilitator!',
 				data: {},
 			});
@@ -58,15 +60,19 @@ export class PcrscoresService {
 				pcr_scores(where: {user_id: {_eq: ${user_id}}}) {
 				  id
 				  user_id
+				  baseline_learning_level
+				  rapid_assessment_first_learning_level
+				  rapid_assessment_second_learning_level
+				  endline_learning_level
 				}
 			  }`;
 			const query_result = await this.hasuraServiceFromServices.getData({
 				query: query_update,
 			});
 
-			let pcr_id = query_result?.data?.pcr_scores?.[0]?.id;
+			let pcr = query_result?.data?.pcr_scores?.[0];
 
-			if (!pcr_id) {
+			if (!pcr?.id) {
 				response = await this.hasuraService.q(
 					this.table,
 					{
@@ -75,12 +81,65 @@ export class PcrscoresService {
 					},
 					this.returnFields,
 				);
-			} else {
+
+				// first audit log
+				const { id, user_id, created_at, updated_at, ...newData } =
+					response?.pcr_scores || {};
+				let auditData = {
+					userId: user_id,
+					mw_userid: facilitator_id,
+					context: 'pcrscore.user',
+					context_id: facilitator_id,
+					oldData: newData,
+					newData: newData,
+					tempArray: [
+						'user_id',
+						'baseline_learning_level',
+						'rapid_assessment_first_learning_level',
+						'rapid_assessment_second_learning_level',
+						'endline_learning_level',
+					],
+					action: 'create',
+				};
+				await this.userService.addAuditLogAction(auditData);
+			} else if (!pcr?.endline_learning_level) {
+				let data = body;
+				let auditData = {
+					userId: user_id,
+					mw_userid: facilitator_id,
+					context: 'pcrscore.user',
+					context_id: facilitator_id,
+					tempArray: [
+						'user_id',
+						'baseline_learning_level',
+						'rapid_assessment_first_learning_level',
+						'rapid_assessment_second_learning_level',
+						'endline_learning_level',
+					],
+					oldData: {},
+					newData: {},
+					action: 'update',
+				};
+				if (pcr?.rapid_assessment_second_learning_level) {
+					let {
+						baseline_learning_level,
+						rapid_assessment_first_learning_level,
+						...remaining
+					} = body;
+					data = remaining;
+					// forth audit log
+				} else if (pcr?.rapid_assessment_first_learning_level) {
+					// thard audit log
+					let { baseline_learning_level, ...remaining } = body;
+					data = remaining;
+				} else {
+					// secound audit log
+				}
 				response = await this.hasuraService.q(
 					this.table,
 					{
-						...body,
-						id: pcr_id,
+						...data,
+						id: pcr?.id,
 						updated_by: facilitator_id,
 					},
 					[
@@ -105,6 +164,13 @@ export class PcrscoresService {
 						'updated_at',
 					],
 				);
+				await this.userService.addAuditLogAction({
+					...auditData,
+					oldData: pcr,
+					newData: response?.pcr_scores || {},
+				});
+			} else {
+				response = pcr;
 			}
 
 			if (response) {
@@ -114,8 +180,8 @@ export class PcrscoresService {
 					data: response,
 				});
 			} else {
-				return resp.json({
-					status: 400,
+				return resp.status(400).json({
+					success: false,
 					message: 'Unable to add PCR score!',
 					data: { response },
 				});
@@ -167,6 +233,50 @@ export class PcrscoresService {
 
 		let query = `query MyQuery {
       pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, id: {_eq: ${id}}}) {
+        id
+        user_id
+        camp_id
+        baseline_learning_level
+        rapid_assessment_first_learning_level
+        rapid_assessment_second_learning_level
+        endline_learning_level
+        updated_by
+        created_at
+        updated_at
+      }
+    }
+    `;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const newQdata = response?.data?.pcr_scores;
+
+		if (newQdata.length > 0) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
+	public async pcrscoreByUser_id(
+		user_id: any,
+		body: any,
+		req: any,
+		resp: any,
+	) {
+		const facilitator_id = req.mw_userid;
+
+		let query = `query MyQuery {
+      pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, user_id: {_eq: ${user_id}}}) {
         id
         user_id
         camp_id
