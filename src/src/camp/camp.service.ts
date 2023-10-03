@@ -912,7 +912,7 @@ export class CampService {
 						data: {},
 					});
 				}
-				let { kit_received, properties } = res?.data?.camps[0];
+				let { kit_received, properties } = res?.data?.camps?.[0];
 
 				if (kit_received == 'no' || kit_received == null) {
 					return response.json({
@@ -948,7 +948,7 @@ export class CampService {
 					};
 					const group_update_array =
 						PAGE_WISE_UPDATE_TABLE_DETAILS.edit_camp_status.groups;
-					let result = await this.hasuraService.q(
+					await this.hasuraService.q(
 						'groups',
 						{
 							...group_update_body,

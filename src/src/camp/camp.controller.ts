@@ -104,7 +104,7 @@ export class CampController {
 	@Get('admin/camp-details/:id')
 	@UseGuards(new AuthGuard())
 	getCampDetailsForAdmin(
-		@Param('id') id: Number,
+		@Param('id') id: number,
 		@Req() req: any,
 		@Res() response: any,
 	) {
