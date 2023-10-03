@@ -1,6 +1,7 @@
 import {
 	Controller,
 	Post,
+	Get,
 	Body,
 	Patch,
 	Param,
@@ -40,6 +41,22 @@ export class PcrscoresController {
 		@Res() response: any,
 	) {
 		return this.pcrscoresService.pcrscoreById(id, body, request, response);
+	}
+
+	@Get('/:user_id')
+	@UseGuards(new AuthGuard())
+	pcrscoreByUser_id(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('user_id') user_id: number,
+		@Res() response: any,
+	) {
+		return this.pcrscoresService.pcrscoreByUser_id(
+			user_id,
+			body,
+			request,
+			response,
+		);
 	}
 
 	@Patch('/:id')
