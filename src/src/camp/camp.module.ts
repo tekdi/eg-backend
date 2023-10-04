@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { CampService } from './camp.service';
 import { CampController } from './camp.controller';
 import { UserModule } from 'src/user/user.module';
@@ -10,7 +10,6 @@ import { EnumModule } from '../enum/enum.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
-import { AuthMiddleware } from 'src/common/middlewares/authmiddleware';
 
 @Module({
 	imports: [
@@ -27,8 +26,4 @@ import { AuthMiddleware } from 'src/common/middlewares/authmiddleware';
 	providers: [CampService],
 	controllers: [CampController],
 })
-export class CampModule implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes('*');
-	}
-}
+export class CampModule {}
