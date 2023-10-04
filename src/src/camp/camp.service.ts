@@ -303,10 +303,10 @@ export class CampService {
 		let facilitator_id = id;
 		let facilitator_id_program_id = program_id;
 		let facilitator_id_academic_id = academic_year_id;
-		let status = 'shortlisted_for_orientation';
+		let status = ['selected_prerak', 'selected_for_onboarding'];
 
 		let query = `query MyQuery {
-      users_aggregate(where: {id: {_eq: ${facilitator_id}}, program_faciltators: {status: {_eq:${status}}, program_id: {_eq:${facilitator_id_program_id}}, academic_year_id: {_eq:${facilitator_id_academic_id}}}}) {
+      users_aggregate(where: {id: {_eq: ${facilitator_id}}, program_faciltators: {status: {_in:${status}}, program_id: {_eq:${facilitator_id_program_id}}, academic_year_id: {_eq:${facilitator_id_academic_id}}}}) {
         aggregate {
           count
         }
@@ -314,6 +314,7 @@ export class CampService {
     }
     
       `;
+
 		const data = { query: query };
 		const res = await this.hasuraServiceFromServices.getData(data);
 		return res;
