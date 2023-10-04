@@ -731,7 +731,22 @@ export class CampService {
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_photo_details
 						.properties;
 				let photo_details_body = {
-					...update_body,
+					property_photo_building: !Number(
+						update_body?.property_photo_building,
+					)
+						? null
+						: update_body?.property_photo_building,
+					property_photo_classroom: !Number(
+						update_body?.property_photo_classroom,
+					)
+						? null
+						: update_body?.property_photo_classroom,
+					property_photo_other: !Number(
+						update_body?.property_photo_other,
+					)
+						? null
+						: update_body?.property_photo_other,
+
 					updated_by: facilitator_id,
 				};
 				await this.updatepropertyDetails(
