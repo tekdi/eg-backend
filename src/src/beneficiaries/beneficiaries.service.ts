@@ -194,14 +194,15 @@ export class BeneficiariesService {
 	}
 
 	async isEnrollmentNumberExists(beneficiaryId: string, body: any) {
+		let is_deactivated = false;
 		const query = `
-				query MyQuery {
-					program_beneficiaries_aggregate(where: {enrollment_number: {_eq: "${body.enrollment_number}"}, user_id: {_neq: ${beneficiaryId}}}) {
-						aggregate {
-							count
-						}
-					}
-				}
+		query MyQuery {
+			program_beneficiaries_aggregate(where: {enrollment_number: {_eq: "${body.enrollment_number}"}, user_id:{_neq: ${beneficiaryId}} , _not: {user: {is_deactivated: {_eq: ${is_deactivated}}}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }
 			`;
 
 		const data_exist = (
