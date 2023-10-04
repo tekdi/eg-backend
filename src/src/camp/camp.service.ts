@@ -440,7 +440,7 @@ export class CampService {
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.camps;
 
-		if (newQdata.length == 0) {
+		if (newQdata?.length == 0) {
 			return resp.status(400).json({
 				success: false,
 				message: 'Camp data not found!',
