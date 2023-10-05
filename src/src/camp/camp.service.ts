@@ -59,8 +59,7 @@ export class CampService {
 				return response.status(401).json({
 					success: false,
 					data: {},
-					message:
-						'CAMP_VALIDATION_MESSAGE_FACILITATOR_DIDNT_SHORTLISTED_FOR_ORIENTATION,',
+					message: 'CAMP_ACCESS_ERROR',
 				});
 			}
 
@@ -116,12 +115,14 @@ export class CampService {
 				});
 			}
 
+			const count =
+				faciltator_camp_data?.data?.camps_aggregate?.aggregate?.count +
+				1;
+			const formattedCount = count?.toString().padStart(2, '0');
+			const campName = `camp${formattedCount}`;
+
 			let create_group_object = {
-				name:
-					'camp ' +
-					faciltator_camp_data?.data?.camps_aggregate?.aggregate
-						?.count +
-					1,
+				name: campName,
 				type: 'camp',
 				status: 'not_registered',
 				program_id: body?.program_id || 1,
