@@ -1975,9 +1975,7 @@ export class FacilitatorService {
                     where: {
                         user: {id: {_is_null: false}},
                         _or: [
-							{status: {_nin: ${JSON.stringify(
-								status.filter((item) => item != 'identified' && item != 'ready_to_enroll'),
-							)}}},
+							{ status: { _in: ["identified", "ready_to_enroll"] } },
                             { status: { _is_null: true } }
                      ]
                     }
@@ -1990,7 +1988,7 @@ export class FacilitatorService {
 				${status
 					.filter(
 						(item) =>
-							item != 'identified' && item != 'ready_to_enroll',
+							item != 'identified' && item !== 'ready_to_enroll',
 					)
 					.map(
 						(item) => `${
