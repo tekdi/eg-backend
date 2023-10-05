@@ -1941,7 +1941,10 @@ export class FacilitatorService {
 			'enrolled_ip_verified',
 		];
 
-		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		let filterQuery =
+			'{ _and: [' +
+			filterQueryArray.join(',') +
+			'],_or: [{is_deactivated: {_eq: false}}{is_deactivated:{_is_null:true}}] }';
 
 		let variables = {
 			limit: limit,
@@ -2094,13 +2097,13 @@ export class FacilitatorService {
 		};
 
 		let qury = `query MyQuery($limit:Int, $offset:Int) {
-			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}, _not: {group_users: {status: {_eq: "active"}}}}}) {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq: ${id}}, program_id: {_eq: ${program_id}}}, _not: {group_users: {status: {_eq: "active"}}}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
 			  aggregate {
 				count
 			  }
 			}
 			users(limit: $limit,
-				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq:${id}}, program_id:{_eq:${program_id}}, _not: {group_users: {status: {_eq: "active"}}}}}) {
+				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq: ${id}}, program_id: {_eq: ${program_id}}}, _not: {group_users: {status: {_eq: "active"}}}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
 			  id
 			  first_name
 			  last_name
