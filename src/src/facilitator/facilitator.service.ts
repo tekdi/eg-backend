@@ -1212,7 +1212,7 @@ export class FacilitatorService {
 				filterQueryArray.push('{block: { _in: $block }}');
 				variables.block = body.block;
 			}
-
+			
 			filterQueryArray.unshift(
 				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
 			);
@@ -1897,7 +1897,7 @@ export class FacilitatorService {
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`{program_faciltators:{parent_ip:{_eq:"${user.data.program_users[0].organisation_id}"}}}`,
+			`{program_faciltators:{parent_ip:{_eq:"${user?.data?.program_users[0]?.organisation_id}"}}}`,
 		);
 
 		if (body.search && body.search !== '') {
@@ -1971,24 +1971,25 @@ export class FacilitatorService {
 					  count
 					}
 				  },
-				  identified:beneficiaries_aggregate(
-					where: {
-						user: {id: {_is_null: false}},
-						_or: [
-							{status: {_nin: ${JSON.stringify(
-								status.filter((item) => item != 'identified'),
-							)}}},
-							{ status: { _is_null: true } }
-					 ]
-					}
-				)
+				  identified_and_ready_to_enroll:beneficiaries_aggregate(
+                    where: {
+                        user: {id: {_is_null: false}},
+                        _or: [
+							{ status: { _in: ["identified", "ready_to_enroll"] } },
+                            { status: { _is_null: true } }
+                     ]
+                    }
+                )
 				{
 					aggregate {
 					  count
 					}
 				} ,
 				${status
-					.filter((item) => item != 'identified')
+					.filter(
+						(item) =>
+							item != 'identified' && item !== 'ready_to_enroll',
+					)
 					.map(
 						(item) => `${
 							!isNaN(Number(item[0])) ? '_' + item : item
@@ -2022,11 +2023,24 @@ export class FacilitatorService {
 			const res = newQdata.users.map((facilitator) => {
 				const benefeciaryData = facilitator.program_faciltators.map(
 					(benefeciary) => {
-						const statusCount = status.map((statusKey) => ({
-							status: statusKey,
-							count:
-								benefeciary[statusKey]?.aggregate?.count || 0,
-						}));
+						const aggregateCount =
+							benefeciary.identified_and_ready_to_enroll.aggregate
+								.count;
+						const statusCount = status
+							.filter(
+								(statusKey) => statusKey !== 'ready_to_enroll',
+							) // Exclude 'ready_to_enroll'
+							.map((statusKey) => ({
+								status:
+									statusKey === 'identified'
+										? 'identified_ready_to_enroll'
+										: statusKey,
+								count:
+									statusKey === 'identified'
+										? aggregateCount
+										: benefeciary[statusKey]?.aggregateCount
+												?.count || 0,
+							}));
 
 						return {
 							first_name: facilitator.first_name,
