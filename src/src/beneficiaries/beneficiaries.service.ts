@@ -641,6 +641,7 @@ export class BeneficiariesService {
 			} else {
 				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
 			}
 		}
