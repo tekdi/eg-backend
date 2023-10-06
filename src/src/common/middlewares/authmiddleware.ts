@@ -1,8 +1,4 @@
-import {
-	Injectable,
-	NestMiddleware,
-	UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Response } from 'express';
 import { UserService } from 'src/user/user.service';
 import jwt_decode from 'jwt-decode';
@@ -13,9 +9,7 @@ export class AuthMiddleware implements NestMiddleware {
 	async use(req: any, res: Response, next: NextFunction) {
 		if (req.headers.authorization) {
 			const user = await this.userService.ipUserInfo(req);
-			if (!user?.data?.id) {
-				next(new UnauthorizedException('Token invalid!'));
-			}
+
 			req.mw_userid = user?.data?.id;
 			req.mw_roles = [];
 			if (user) {
