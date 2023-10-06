@@ -905,7 +905,6 @@ export class BeneficiariesService {
 				{ first_name: { _ilike: "%${first_name}%" } }
 				{ last_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
-				 
 			}
 		}
 
@@ -3513,11 +3512,9 @@ export class BeneficiariesService {
 				true,
 				['id', 'is_duplicate'],
 			);
-
-			return;
 		} else if (users_data?.length == 2) {
-			idArray.forEach(async (id) => {
-				const res = await this.hasuraService.q(
+			for (const id of idArray) {
+				await this.hasuraService.q(
 					'users',
 					{
 						...update_body,
@@ -3527,10 +3524,9 @@ export class BeneficiariesService {
 					true,
 					['id', 'is_duplicate'],
 				);
-			});
-
-			return;
+			}
 		}
+		return;
 	}
 	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
 		const facilitator_id = req.mw_userid;
