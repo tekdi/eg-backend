@@ -127,20 +127,21 @@ export class ReferencesService {
 				type_of_document
 			}
 		  }`;
-
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
 		const community_response = response?.data?.references;
 
-		if (community_response.length > 0) {
+		if (community_response?.length > 0) {
 			return resp.status(200).json({
 				success: true,
 				message: 'Community References Data found successfully!',
-				data: community_response,
+				data: {
+					community_response,
+				},
 			});
 		} else {
-			return resp.json(404).json({
+			return resp.status(404).json({
 				success: false,
 				status: 404,
 				message: 'Community References Data Not Found',
@@ -178,10 +179,10 @@ export class ReferencesService {
 			return resp.status(200).json({
 				success: true,
 				message: 'Community Reference Data found successfully!',
-				data: community_response,
+				data: { community_response },
 			});
 		} else {
-			return resp.json(404).json({
+			return resp.status(404).json({
 				success: false,
 				status: 404,
 				message: 'Community References Data Not Found',
