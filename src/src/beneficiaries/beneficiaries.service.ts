@@ -3431,6 +3431,8 @@ export class BeneficiariesService {
 			});
 		}
 
+		await this.checkDuplicateStatus(beneficiaries_id);
+
 		const userArr = ['aadhar_no'];
 		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
 		if (keyExist.length) {
@@ -3452,6 +3454,84 @@ export class BeneficiariesService {
 		}
 	}
 
+	async checkDuplicateStatus(id: any) {
+		const facilitator_id = id;
+		const update_body = {
+			is_duplicate: 'no',
+		};
+		const userArr = ['is_duplicate'];
+
+		//get old aadhar number of the beneficiary
+
+		let query = `
+		query MyQuery {
+			users_by_pk(id:${facilitator_id}) {
+			  aadhar_no
+			}
+		  }
+		`;
+		const data = { query: query };
+		const hashura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		let aadhar_no = hashura_response?.data?.users_by_pk?.aadhar_no;
+
+		//check if the old aadhar belong to other users than beneficiary
+
+		let query_aadhar_check = `
+		query MyQuery {
+			users(where: {aadhar_no: {_eq: "${aadhar_no}"}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
+			  id
+			  aadhar_no
+			}
+		  }
+		  
+		`;
+
+		const aadhar_check_data = { query: query_aadhar_check };
+
+		const aadhar_check_response =
+			await this.hasuraServiceFromServices.getData(aadhar_check_data);
+
+		const users_data = aadhar_check_response?.data?.users;
+
+		let idArray = [];
+
+		users_data.map((element) => {
+			idArray.push(element.id);
+		});
+
+		if (users_data?.length > 2) {
+			await this.hasuraService.q(
+				'users',
+				{
+					...update_body,
+					id: facilitator_id,
+				},
+				userArr,
+				true,
+				['id', 'is_duplicate'],
+			);
+
+			return;
+		} else if (users_data?.length == 2) {
+			idArray.forEach(async (id) => {
+				const res = await this.hasuraService.q(
+					'users',
+					{
+						...update_body,
+						id: id,
+					},
+					userArr,
+					true,
+					['id', 'is_duplicate'],
+				);
+			});
+
+			return;
+		}
+	}
 	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
 		const facilitator_id = req.mw_userid;
 		let program_id = body?.program_id || 1;
