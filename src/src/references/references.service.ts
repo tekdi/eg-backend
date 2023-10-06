@@ -100,7 +100,7 @@ export class ReferencesService {
 			});
 		} else {
 			return resp.json({
-				status: 400,
+				status: 404,
 				message: 'Unable to add Community Reference!',
 				data: { community_response },
 			});
@@ -131,19 +131,20 @@ export class ReferencesService {
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
-		const newQdata = response?.data?.references;
+		const community_response = response?.data?.references;
 
-		if (newQdata.length > 0) {
+		if (community_response.length > 0) {
 			return resp.status(200).json({
 				success: true,
 				message: 'Community References Data found successfully!',
-				data: newQdata,
+				data: community_response,
 			});
 		} else {
-			return resp.json({
-				status: 400,
+			return resp.json(404).json({
+				success: false,
+				status: 404,
 				message: 'Community References Data Not Found',
-				data: {},
+				data: { community_response },
 			});
 		}
 	}
@@ -171,19 +172,20 @@ export class ReferencesService {
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
-		const newQdata = response?.data?.references;
+		const community_response = response?.data?.references;
 
-		if (newQdata.length > 0) {
+		if (community_response.length > 0) {
 			return resp.status(200).json({
 				success: true,
 				message: 'Community Reference Data found successfully!',
-				data: newQdata,
+				data: community_response,
 			});
 		} else {
-			return resp.json({
-				status: 400,
-				message: 'Community Reference Data Not Found',
-				data: {},
+			return resp.json(404).json({
+				success: false,
+				status: 404,
+				message: 'Community References Data Not Found',
+				data: { community_response },
 			});
 		}
 	}
