@@ -3521,7 +3521,7 @@ export class BeneficiariesService {
 			data: result || {},
 		});
 	}
-	private isValidString(str: String) {
+	private isValidString(str: string) {
 		return typeof str === 'string' && str.trim();
 	}
 }
