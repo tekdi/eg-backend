@@ -3526,7 +3526,6 @@ export class BeneficiariesService {
 				);
 			}
 		}
-		return;
 	}
 	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
 		const facilitator_id = req.mw_userid;
