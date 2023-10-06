@@ -3469,38 +3469,28 @@ export class BeneficiariesService {
 			}
 		  }
 		`;
-		const data = { query: query };
-		const hashura_response = await this.hasuraServiceFromServices.getData(
-			data,
-		);
-
-		let aadhar_no = hashura_response?.data?.users_by_pk?.aadhar_no;
+		const {
+			data: {
+				users_by_pk: { aadhar_no },
+			},
+		} = await this.hasuraServiceFromServices.getData({ query });
 
 		//check if the old aadhar belong to other users than beneficiary
-
-		let query_aadhar_check = `
-		query MyQuery {
-			users(where: {aadhar_no: {_eq: "${aadhar_no}"}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
-			  id
-			  aadhar_no
-			}
-		  }
-		  
-		`;
-
-		const aadhar_check_data = { query: query_aadhar_check };
-
 		const aadhar_check_response =
-			await this.hasuraServiceFromServices.getData(aadhar_check_data);
+			await this.hasuraServiceFromServices.getData({
+				query: `
+					query MyQuery {
+						users(where: {aadhar_no: {_eq: "${aadhar_no}"}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
+						id
+						aadhar_no
+						}
+					}`,
+			});
 
 		const users_data = aadhar_check_response?.data?.users;
-
-		let idArray = [];
-
-		users_data.map((element) => {
-			idArray.push(element.id);
-		});
-
+		const idArray = users_data
+			.map((element: any) => element.id)
+			.filter((e: any) => e);
 		if (users_data?.length > 2) {
 			await this.hasuraService.q(
 				'users',
