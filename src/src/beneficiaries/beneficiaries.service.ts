@@ -32,7 +32,7 @@ export class BeneficiariesService {
 		private uploadFileService: UploadFileService,
 	) {}
 
-	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
+	allStatus = this.enumService.getEnumValue('BENEFICIARY_STATUS').data;
 
 	public returnFields = [
 		'status',
@@ -252,6 +252,18 @@ export class BeneficiariesService {
 				{ first_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
 				}
+			}
+			if (
+				body.hasOwnProperty('status') &&
+				this.isValidString(body.status) &&
+				this.allStatus.map((obj) => obj.value).includes(body.status)
+			) {
+				paramsQueryArray.push('$status: String');
+
+				filterQueryArray.push(
+					`{program_beneficiaries: {status: {_eq: $status}}}`,
+				);
+				variables.status = body.status;
 			}
 
 			if (body.hasOwnProperty('district') && body.district.length) {
@@ -3508,5 +3520,8 @@ export class BeneficiariesService {
 			message: 'Data found successfully!',
 			data: result || {},
 		});
+	}
+	private isValidString(str: String) {
+		return typeof str === 'string' && str.trim();
 	}
 }
