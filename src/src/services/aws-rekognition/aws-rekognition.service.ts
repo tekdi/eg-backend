@@ -307,7 +307,7 @@ export class AwsRekognitionService {
 			//.promise();
 			console.log('Matching faces:');
 			console.dir(compareResponse, { depth: 99 });
-			return compareResponse.SearchedFace;
+			return compareResponse.UserMatches;
 		} catch (error) {
 			console.log('searchUsersByImage:', error);
 			//throw error;

@@ -18,7 +18,8 @@ export class FaceIndexingService {
 		);
 	}
 
-	@Cron(CronExpression.EVERY_30_SECONDS)
+	//@Cron(CronExpression.EVERY_MINUTE)
+	//@Cron(CronExpression.EVERY_30_SECONDS)
 	async indexRekognitionUsers() {
 		try {
 			/*----------------------- Create users in collection -----------------------*/
@@ -27,11 +28,11 @@ export class FaceIndexingService {
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
 			//delete
-			await this.awsRekognitionService.deleteCollection(
+			/*await this.awsRekognitionService.deleteCollection(
 				collectionId,
 				'userId',
 				'faceId',
-			);
+			);*/
 			//Step-1: Create collection if not exists
 			await this.awsRekognitionService.createCollectionIfNotExists(
 				collectionId,
@@ -210,7 +211,9 @@ export class FaceIndexingService {
 				}
 			}
 		} catch (error) {
-			console.log('Error occurred in indexRekognitionUsers.');
+			console.log(
+				'Errortill 21 Points occurred in indexRekognitionUsers.',
+			);
 		}
 	}
 
