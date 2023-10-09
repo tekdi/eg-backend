@@ -1326,9 +1326,9 @@ export class CampService {
 		}
 	}
 
-	async getCampList(req: any, resp: any) {
+	async getCampList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-
+		let filterQueryArray = [];
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
 				success: false,
@@ -1336,35 +1336,99 @@ export class CampService {
 				data: {},
 			});
 		}
+		const sortType = body?.sortType ? body?.sortType : 'desc';
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 
-		let query = `query MyQuery {
-			groups {
-			  name
-			  status
-			  camp {
-			  group_users(where:{member_type:{_eq:"owner"}}){
-				user{
-				  faciltator_id:id
-				  first_name
-				  middle_name
-				  last_name
+		let status = body?.status;
+
+		if (body?.search && body?.search !== '') {
+			filterQueryArray.push(`{group:{name:{_eq:"${body?.search}"}}}`);
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{properties:{district:{_in: ${JSON.stringify(
+					body?.district,
+				)}}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
+			);
+		}
+
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				`{group_users: {user:{id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}}}`,
+			);
+		}
+
+		if (body?.status && body?.status !== '') {
+			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+		}
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		let data = {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				camps_aggregate(where:${filterQuery}) {
+				  aggregate {
+					count
+				  }
+				}
+				camps(limit: $limit, offset: $offset, where: ${filterQuery}) {
+				  id
+				  properties {
+					district
+					block
+					state
+					village
+					landmark
+					grampanchayat
+					street
+				  }
+				  group {
+					name
+					status
+				  }
+				  group_users(where: {member_type: {_eq: "owner"}}) {
+					user {
+					  faciltator_id: id
+					  first_name
+					  middle_name
+					  last_name
+					}
+				  }
 				}
 			  }
-				
-			  }
-			}
-		  }
-		  `;
+			  `,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
 		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
+			query: data.query,
 		});
 
-		const camp_data = hasura_response?.data?.groups;
+		const camp_data = hasura_response?.data?.camps;
+		const count = hasura_response?.data?.camps_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
 		if (camp_data) {
 			return resp.json({
 				status: 200,
 				message: 'Camp Data Found Successfully',
 				data: camp_data,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
 			});
 		} else {
 			return resp.json({
