@@ -1280,7 +1280,7 @@ export class CampService {
 
 		let query = `query MyQuery {
 			camps_by_pk(id:${camp_id}) {
-			   group_users(where: {member_type: {_eq: "owner"}, user_id: {_eq: 795}}) {
+			   group_users(where: {member_type: {_eq: "owner"}, user_id: {_eq: ${facilitator_id}}}) {
 				group {
 				  id
 				}
@@ -1376,56 +1376,102 @@ export class CampService {
 
 	async getCampDetailsForAdmin(id: any, req: any, resp: any) {
 		let camp_id = id;
-		if (!camp_id) {
-			return resp.json({
-				status: 400,
-				message: 'INVALID_CAMP_DETAILS_INPUT_ERROR',
-				data: [],
-			});
-		}
-		const user = await this.userService.ipUserInfo(req);
+		try {
+			if (!camp_id) {
+				return resp.json({
+					status: 400,
+					message: 'INVALID_CAMP_DETAILS_INPUT_ERROR',
+					data: [],
+				});
+			}
+			const user = await this.userService.ipUserInfo(req);
 
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
-			return resp.status(404).send({
-				success: false,
-				message: 'Invalid Ip',
-				data: {},
-			});
-		}
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return resp.status(404).send({
+					success: false,
+					message: 'Invalid Ip',
+					data: {},
+				});
+			}
 
-		let query = `query MyQuery {
-			groups(where: {camp: {id: {_eq:${camp_id}}}}) {
-			  name
-			  camp {
-				id
-				group_users(where: {member_type: {_eq: "member"}}) {
-				  user {
-					learner_id: id
-					first_name
-					middle_name
-					last_name
+			let query = `query MyQuery {
+				camps_by_pk(id:${camp_id}) {
+				  camp_id: id
+				  group {
+					name
+					status
+				  }
+				  faciltator_details: group_users(where: {member_type: {_eq: "owner"}}) {
+					user {
+					  first_name
+					  middle_name
+					  last_name
+					  mobile
+					  state
+					  district
+					  village
+					  block
+					}
+				  }
+				  learner_details: group_users(where: {member_type: {_eq: "member"}}) {
+					user {
+					  id
+					  first_name
+					  middle_name
+					  last_name
+					  mobile
+					  state
+					  district
+					  block
+					  village
+					}
+				  }
+				  properties {
+					lat
+					long
+					state
+					district
+					village
+					block
+					street
+					landmark
+					grampanchayat
+					property_facilities
+					property_photo_building
+					property_photo_classroom
+					property_photo_other
+				  }
+				  consents {
+					document_id
 				  }
 				}
 			  }
-			}
-		  }
-		  
-		  `;
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
+			  
+			  `;
+			const hasura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
 
-		const camp_data = hasura_response?.data?.groups;
-		if (camp_data) {
-			return resp.json({
-				status: 200,
-				message: 'Camp Data Found Successfully',
-				data: camp_data,
-			});
-		} else {
+			const camp_data = hasura_response?.data?.camps_by_pk;
+			if (camp_data) {
+				return resp.json({
+					status: 200,
+					message: 'Camp Data Found Successfully',
+					data: camp_data,
+				});
+			} else {
+				return resp.json({
+					status: 404,
+					message: 'IP_CAMP_NOT_FOUND_ERROR',
+					data: {},
+				});
+			}
+		} catch (error) {
 			return resp.json({
 				status: 500,
 				message: 'IP_CAMP_DETAILS_ERROR',
+				data: {},
 			});
 		}
 	}
