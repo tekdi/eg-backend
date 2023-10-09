@@ -1396,7 +1396,7 @@ export class CampService {
 					name
 					status
 				  }
-				  group_users(where: {member_type: {_eq: "owner"}}) {
+				 faciltator:group_users(where: {member_type: {_eq: "owner"}}) {
 					user {
 					  faciltator_id: id
 					  first_name
@@ -1424,16 +1424,19 @@ export class CampService {
 			return resp.json({
 				status: 200,
 				message: 'Camp Data Found Successfully',
-				data: camp_data,
-				totalCount: count,
-				limit,
-				currentPage: page,
-				totalPages: `${totalPages}`,
+				data: {
+					camp_data,
+					totalCount: count,
+					limit,
+					currentPage: page,
+					totalPages: `${totalPages}`,
+				},
 			});
 		} else {
 			return resp.json({
 				status: 500,
 				message: 'IP_CAMP_LIST_ERROR',
+				data: {},
 			});
 		}
 	}
