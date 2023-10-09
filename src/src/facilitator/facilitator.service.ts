@@ -1454,7 +1454,7 @@ export class FacilitatorService {
 			}
 
 			if (body.hasOwnProperty('block') && body?.block.length) {
-				filterQueryArray.push(`{block: { _in: ${body?.block} }}`);
+				filterQueryArray.push(`{block: { _in: [${body?.block}] }}`);
 				variables.block = body?.block;
 			}
 
