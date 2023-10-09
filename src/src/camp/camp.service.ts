@@ -1468,7 +1468,7 @@ export class CampService {
 					name
 					status
 				  }
-				  faciltator_details: group_users(where: {member_type: {_eq: "owner"}}) {
+				  faciltator: group_users(where: {member_type: {_eq: "owner"}}) {
 					user {
 					  first_name
 					  middle_name
@@ -1480,7 +1480,7 @@ export class CampService {
 					  block
 					}
 				  }
-				  learner_details: group_users(where: {member_type: {_eq: "member"}}) {
+				  beneficiaries: group_users(where: {member_type: {_eq: "member"}}) {
 					user {
 					  id
 					  first_name
