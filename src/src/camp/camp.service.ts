@@ -1336,7 +1336,7 @@ export class CampService {
 				data: {},
 			});
 		}
-		const sortType = body?.sortType ? body?.sortType : 'desc';
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
