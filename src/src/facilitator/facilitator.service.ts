@@ -1409,7 +1409,7 @@ export class FacilitatorService {
 
 			const user: any = await this.userService.ipUserInfo(req);
 			if (!user?.data?.program_users?.[0]?.organisation_id) {
-				return resp.status(400).send({
+				return resp.status(404).send({
 					success: false,
 					message: 'Invalid User',
 					data: {},
@@ -1419,8 +1419,7 @@ export class FacilitatorService {
 			let filterQueryArray = [];
 
 			if (body?.search && body?.search !== '') {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
+				const [first_name, last_name] = body.search.split(' ');
 
 				if (last_name?.length > 0) {
 					filterQueryArray.push(`{_or: [
@@ -1481,32 +1480,32 @@ export class FacilitatorService {
 				variables: variables,
 			};
 
-			let users = await this.hasuraService.getData({ query: data.query });
+			const result = await this.hasuraService.getData({
+				query: data.query,
+			});
 
-			let count = users?.data?.users_aggregate?.aggregate?.count;
+			let count = result?.data?.users_aggregate?.aggregate?.count;
 
-			let user_response = users?.data?.users;
+			const users = result?.data?.users;
 
-			if (user_response?.length == 0) {
-				resp.json({
-					status: 404,
+			if (users?.length == 0) {
+				resp.status(404).json({
 					message: 'BENEFICIARY_DATA_NOT_FOUND_ERROR',
-					data: { user_response: [{}] },
+					data: { users: [] },
 				});
 			} else {
-				resp.json({
-					status: 200,
+				resp.status(200).json({
 					message: 'Data found successfully',
-					data: { user_response },
-					count,
-					offset,
-					limit,
-					page,
+					data: {
+						totalCount: count,
+						data: users || [],
+						limit,
+						currentPage: page,
+					},
 				});
 			}
 		} catch (error) {
-			return resp.json({
-				status: 500,
+			return resp.status(500).json({
 				message: 'BENEFICIARIES_LIST_ERROR',
 				data: {},
 			});
