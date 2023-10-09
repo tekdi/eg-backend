@@ -1417,15 +1417,21 @@ export class CampService {
 			query: data.query,
 		});
 
-		const camp_data = hasura_response?.data?.camps;
+		const camps_data = hasura_response?.data?.camps;
+
+		let camps = camps_data?.map((camp) => {
+			camp.faciltator = camp?.faciltator?.[0];
+			return camp;
+		});
+
 		const count = hasura_response?.data?.camps_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
-		if (camp_data) {
+		if (camps) {
 			return resp.json({
 				status: 200,
 				message: 'Camp Data Found Successfully',
 				data: {
-					camp_data,
+					camps,
 					totalCount: count,
 					limit,
 					currentPage: page,
@@ -1520,12 +1526,12 @@ export class CampService {
 					query: query,
 				});
 
-			const camp_data = hasura_response?.data?.camps_by_pk;
-			if (camp_data) {
+			const camp = hasura_response?.data?.camps_by_pk;
+			if (camp) {
 				return resp.json({
 					status: 200,
 					message: 'Camp Data Found Successfully',
-					data: camp_data,
+					data: { camp },
 				});
 			} else {
 				return resp.json({
