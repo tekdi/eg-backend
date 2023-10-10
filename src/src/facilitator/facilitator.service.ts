@@ -1445,16 +1445,16 @@ export class FacilitatorService {
 				variables.status = body?.status;
 			}
 
-			if (body?.district && body?.district?.length > 0) {
+			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
-					`{district: { _in: [${body?.district}] }}`,
+					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
 				);
-				variables.district = body?.district;
 			}
 
-			if (body.hasOwnProperty('block') && body?.block.length) {
-				filterQueryArray.push(`{block: { _in: [${body?.block}] }}`);
-				variables.block = body?.block;
+			if (body?.block && body?.block.length > 0) {
+				filterQueryArray.push(
+					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+				);
 			}
 
 			filterQueryArray.unshift(
