@@ -19,7 +19,7 @@ export class FaceIndexingService {
 	}
 
 	//@Cron(CronExpression.EVERY_MINUTE)
-	//@Cron(CronExpression.EVERY_30_SECONDS)
+	@Cron(CronExpression.EVERY_30_SECONDS)
 	async indexRekognitionUsers() {
 		try {
 			/*----------------------- Create users in collection -----------------------*/

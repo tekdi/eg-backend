@@ -18,8 +18,8 @@ export class MarkAttendanceService {
 		);
 	}
 
-	//@Cron(CronExpression.EVERY_MINUTE)
-	@Cron(CronExpression.EVERY_30_SECONDS)
+	@Cron(CronExpression.EVERY_MINUTE)
+	//@Cron(CronExpression.EVERY_30_SECONDS)
 	async markAttendanceCron() {
 		try {
 			const collectionId = this.configService.get<string>(
