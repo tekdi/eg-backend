@@ -61,11 +61,14 @@ export class QueryGeneratorService {
 		item: any,
 		onlyFields: any = [],
 		fields: any = [],
+		props: any = {},
 	) {
 		let tableName = `update_${tName}`;
 		const keys = Object.keys(item);
 		const getObjStr = (item: any, type: String = '') => {
-			let str = `where: {id: {_eq: ${id}}}, _set: {`;
+			let str = `where: ${
+				props?.where ? props?.where : `{id: {_eq: ${id}}}`
+			}, _set: {`;
 			let strArr = [];
 			keys.forEach((e, index) => {
 				if (
@@ -80,21 +83,24 @@ export class QueryGeneratorService {
 			return str;
 		};
 
+		let coreQuery = `${tableName}(${getObjStr(item)}) {
+			affected_rows
+			returning {
+				${this.getParam(
+					fields && fields.length > 0
+						? fields
+						: onlyFields
+						? onlyFields
+						: keys,
+				)}
+			}
+		  }`;
+		if (props?.isCore === true) {
+			return coreQuery;
+		}
 		return `mutation MyQuery {
-      ${tableName}(${getObjStr(item)}) {
-        affected_rows
-        returning {
-            ${this.getParam(
-				fields && fields.length > 0
-					? fields
-					: onlyFields
-					? onlyFields
-					: keys,
-			)}
-        }
-      }
-    }
-    `;
+      		${coreQuery}
+    	}`;
 	}
 
 	//mutation
@@ -248,6 +254,7 @@ export class QueryGeneratorService {
 		items: any,
 		onlyFields: any,
 		fields: any = [],
+		props: any = {},
 	) {
 		let returnkeys = [];
 		const getObjStr = (item: Object, type: String = '') => {
@@ -259,9 +266,10 @@ export class QueryGeneratorService {
 					if (!returnkeys.includes(e)) {
 						returnkeys = [...returnkeys, e];
 					}
+
 					if (onlyFields.length < 1 || onlyFields.includes(e)) {
 						if (type === 'obj') {
-							str += `${e}:"${item[e]}"${
+							str += `${e}:${item[e]}${
 								keys.length > index + 1 ? ',' : ''
 							}`;
 						} else {
@@ -273,17 +281,24 @@ export class QueryGeneratorService {
 				});
 				str += `}${items.length > pindex + 1 ? ',' : ''}`;
 			});
+
 			return (str += ']');
 		};
 
+		let coreQuery = `${tableName}(objects: ${getObjStr(items, 'obj')}) {
+			returning {
+				${this.getParam(fields || (onlyFields ? [...onlyFields, 'id'] : returnkeys))}
+			}
+		}`;
+
+		if (props?.isCore === true) {
+			return coreQuery;
+		}
+
 		return `mutation MyQuery {
-      ${tableName}(objects: ${getObjStr(items, 'obj')}) {
-        returning {${this.getParam(
-			fields ? fields : onlyFields ? [...onlyFields, 'id'] : returnkeys,
-		)}}
-      }
-    }
-    `;
+			
+      		${coreQuery}
+    	}`;
 	}
 
 	deleteQuery(
@@ -319,14 +334,6 @@ export class QueryGeneratorService {
         ${returnFields.join(',')}
       }`;
 		}
-
-		console.log(`mutation DeleteQuery {
-      ${tableName}(where: {${getObjStr(item, 'obj')}}) {
-         affected_rows
-         ${returnFieldsQuery}
-      }
-    }
-    `);
 
 		return `mutation DeleteQuery {
       ${tableName}(where: {${getObjStr(item, 'obj')}}) {

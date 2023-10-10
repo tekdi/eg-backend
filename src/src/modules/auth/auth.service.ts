@@ -379,33 +379,33 @@ export class AuthService {
 		// Calling hasura common method find all
 		const data_exist = await this.hasuraService.findAll(tableName, body);
 		let userExist = data_exist.data.users;
-		let userRoles = req.mw_roles;
 		let tokenUserId = req.mw_userid;
-		const underSameFacilitatorCond =
-			userExist.length > 0 &&
-			userRoles.includes('facilitator') &&
-			userExist.some(
-				(user) => user.program_beneficiaries[0]?.facilitator_id,
-			) &&
-			userExist.some(
-				(user) =>
-					user.program_beneficiaries[0]?.facilitator_id ==
-					tokenUserId,
-			);
-
-		const aadhaarRegisteredForFacilitator =
-			userExist.length > 0 &&
-			userExist.some((user) => user.program_faciltators[0]?.id);
 
 		// Check wheather user is exist or not based on response
 		if (userExist.length > 0) {
+			const underSameFacilitatorCond = userExist.some((user) =>
+				user?.program_beneficiaries.some(
+					(item) => item?.facilitator_id == tokenUserId,
+				),
+			);
+
+			const registeredAsFacilitator = userExist.some((user) =>
+				user?.program_faciltators?.some((item) => item?.id),
+			);
+
+			const registeredAsBeneficiaries = userExist.some((user) =>
+				user?.program_beneficiaries?.some(
+					(item) => item?.facilitator_id,
+				),
+			);
 			return response.status(200).send({
 				success: true,
 				message: 'User exist',
 				data: {},
+				userExist,
 				underSameFacilitator: underSameFacilitatorCond || false,
-				aadhaarRegisteredForFacilitator:
-					aadhaarRegisteredForFacilitator || false,
+				registeredAsFacilitator: registeredAsFacilitator || false,
+				registeredAsBeneficiaries: registeredAsBeneficiaries || false,
 			});
 		} else {
 			return response.status(200).send({
@@ -948,6 +948,7 @@ export class AuthService {
 				status
 				comment
 				reminder
+				rsvp
 				location_type
 				location
 				created_at

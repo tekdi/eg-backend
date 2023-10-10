@@ -14,6 +14,7 @@ import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 @Injectable()
 export class BeneficiariesService {
 	public url = process.env.HASURA_BASE_URL;
@@ -28,9 +29,10 @@ export class BeneficiariesService {
 		private keycloakService: KeycloakService,
 		private configService: ConfigService,
 		private enumService: EnumService,
+		private uploadFileService: UploadFileService,
 	) {}
 
-	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
+	allStatus = this.enumService.getEnumValue('BENEFICIARY_STATUS').data;
 
 	public returnFields = [
 		'status',
@@ -59,6 +61,7 @@ export class BeneficiariesService {
 		'enrollment_verification_status',
 		'subjects',
 		'is_eligible',
+		'original_facilitator_id',
 	];
 
 	async getBeneficiariesDuplicatesByAadhaar(
@@ -191,14 +194,15 @@ export class BeneficiariesService {
 	}
 
 	async isEnrollmentNumberExists(beneficiaryId: string, body: any) {
+		let is_deactivated = true;
 		const query = `
-				query MyQuery {
-					program_beneficiaries_aggregate(where: {enrollment_number: {_eq: "${body.enrollment_number}"}, user_id: {_neq: ${beneficiaryId}}}) {
-						aggregate {
-							count
-						}
-					}
-				}
+		query MyQuery {
+			program_beneficiaries_aggregate(where: {enrollment_number: {_eq: "${body.enrollment_number}"}, user_id:{_neq: ${beneficiaryId}} , _not: {user: {is_deactivated: {_eq: ${is_deactivated}}}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }
 			`;
 
 		const data_exist = (
@@ -246,8 +250,21 @@ export class BeneficiariesService {
 				} else {
 					filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
 				}
+			}
+			if (
+				body.hasOwnProperty('status') &&
+				this.isValidString(body.status) &&
+				this.allStatus.map((obj) => obj.value).includes(body.status)
+			) {
+				paramsQueryArray.push('$status: String');
+
+				filterQueryArray.push(
+					`{program_beneficiaries: {status: {_eq: $status}}}`,
+				);
+				variables.status = body.status;
 			}
 
 			if (body.hasOwnProperty('district') && body.district.length) {
@@ -637,6 +654,7 @@ export class BeneficiariesService {
 			} else {
 				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
 			}
 		}
@@ -799,18 +817,34 @@ export class BeneficiariesService {
 				data: {},
 			});
 		} else {
-			return resp.status(200).json({
-				success: true,
-				message: 'Benificiaries found success!',
-				data: {
-					totalCount: count,
-					data: mappedResponse?.map((e) => ({
+			mappedResponse = await Promise.all(
+				mappedResponse?.map(async (e) => {
+					let mappedData = {
 						...e,
 						['program_beneficiaries']:
 							e?.['program_beneficiaries']?.[0],
 						['profile_photo_1']:
 							e?.['profile_photo_1']?.[0] || null,
-					})),
+					};
+					if (mappedData?.profile_photo_1?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_1?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_1.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					return mappedData;
+				}),
+			);
+			return resp.status(200).json({
+				success: true,
+				message: 'Benificiaries found success!',
+				data: {
+					totalCount: count,
+					data: mappedResponse,
 					facilitatorList: facilitatorListResponse,
 					limit,
 					currentPage: page,
@@ -869,6 +903,7 @@ export class BeneficiariesService {
 			} else {
 				filterQueryArray.push(`{_or: [
 				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
 			}
 		}
@@ -1079,12 +1114,9 @@ export class BeneficiariesService {
 				data: {},
 			});
 		} else {
-			return resp.status(200).json({
-				success: true,
-				message: 'Benificiaries found success!',
-				data: {
-					totalCount: count,
-					data: mappedResponse?.map((e) => ({
+			mappedResponse = await Promise.all(
+				mappedResponse?.map(async (e) => {
+					let mappedData = {
 						...e,
 						['program_faciltators']:
 							e?.['program_faciltators']?.[0],
@@ -1093,7 +1125,46 @@ export class BeneficiariesService {
 						['profile_photo_1']: e?.['profile_photo_1']?.[0] || {},
 						['profile_photo_2']: e?.['profile_photo_2']?.[0] || {},
 						['profile_photo_3']: e?.['profile_photo_3']?.[0] || {},
-					})),
+					};
+					if (mappedData?.profile_photo_1?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_1?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_1.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					if (mappedData?.profile_photo_2?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_2?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_2.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					if (mappedData?.profile_photo_3?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								mappedData?.profile_photo_3?.id,
+							);
+						if (success && fileData?.fileUrl) {
+							mappedData.profile_photo_3.fileUrl =
+								fileData.fileUrl;
+						}
+					}
+					return mappedData;
+				}),
+			);
+			return resp.status(200).json({
+				success: true,
+				message: 'Benificiaries found success!',
+				data: {
+					totalCount: count,
+					data: mappedResponse,
 					limit,
 					currentPage: page,
 					totalPages: `${totalPages}`,
@@ -1319,33 +1390,55 @@ export class BeneficiariesService {
 				return { success: false };
 			}
 		} else {
-			result.program_beneficiaries =
-				result?.program_beneficiaries?.[0] ?? {};
-			//response mapping convert array to object
-			for (const key of [
-				'profile_photo_1',
-				'profile_photo_2',
-				'profile_photo_3',
-				'aadhaar_front',
-				'aadhaar_back',
-				'program_users',
-			]) {
-				if (result?.[key] && result?.[key][0]) {
-					result[key] = result[key][0];
-				} else {
-					result = { ...result, [key]: {} };
+			let mappedData = {
+				...result,
+				['program_beneficiaries']:
+					result?.['program_beneficiaries']?.[0] || {},
+				['profile_photo_1']: result?.['profile_photo_1']?.[0] || {},
+				['profile_photo_2']: result?.['profile_photo_2']?.[0] || {},
+				['profile_photo_3']: result?.['profile_photo_3']?.[0] || {},
+				['aadhaar_front']: result?.['aadhaar_front']?.[0] || {},
+				['aadhaar_back']: result?.['aadhaar_back']?.[0] || {},
+				['program_users']: result?.['program_users']?.[0] || {},
+			};
+
+			if (mappedData?.profile_photo_1?.id) {
+				const { success, data: fileData } =
+					await this.uploadFileService.getDocumentById(
+						mappedData?.profile_photo_1?.id,
+					);
+				if (success && fileData?.fileUrl) {
+					mappedData.profile_photo_1.fileUrl = fileData.fileUrl;
+				}
+			}
+			if (mappedData?.profile_photo_2?.id) {
+				const { success, data: fileData } =
+					await this.uploadFileService.getDocumentById(
+						mappedData?.profile_photo_2?.id,
+					);
+				if (success && fileData?.fileUrl) {
+					mappedData.profile_photo_2.fileUrl = fileData.fileUrl;
+				}
+			}
+			if (mappedData?.profile_photo_3?.id) {
+				const { success, data: fileData } =
+					await this.uploadFileService.getDocumentById(
+						mappedData?.profile_photo_3?.id,
+					);
+				if (success && fileData?.fileUrl) {
+					mappedData.profile_photo_3.fileUrl = fileData.fileUrl;
 				}
 			}
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
 					message: 'Benificiaries found successfully!',
-					data: { result: result },
+					data: { result: mappedData },
 				});
 			} else {
 				return {
 					success: true,
-					data: result,
+					data: { result: mappedData },
 				};
 			}
 		}
@@ -2368,39 +2461,7 @@ export class BeneficiariesService {
 				break;
 			}
 
-			case 'add_other_details': {
-				// Update other details in program_beneficiaries table
-				let userArr =
-					PAGE_WISE_UPDATE_TABLE_DETAILS.add_other_details
-						.program_beneficiaries;
-				const programDetails = beneficiaryUser.program_beneficiaries;
-				let tableName = 'program_beneficiaries';
-
-				req.learning_motivation = req.learning_motivation.length
-					? JSON.stringify(req.learning_motivation).replace(
-							/"/g,
-							'\\"',
-					  )
-					: null;
-				req.type_of_support_needed = req.type_of_support_needed.length
-					? JSON.stringify(req.type_of_support_needed).replace(
-							/"/g,
-							'\\"',
-					  )
-					: null;
-
-				await this.hasuraService.q(
-					tableName,
-					{
-						...req,
-						id: programDetails?.id ? programDetails.id : null,
-					},
-					userArr,
-					update,
-				);
-				break;
-			}
-
+			case 'add_other_details':
 			case 'edit_other_details': {
 				// Update other details in program_beneficiaries table
 				let userArr =
@@ -2897,6 +2958,7 @@ export class BeneficiariesService {
             beneficiaries_found_at
             created_by
             facilitator_id
+			original_facilitator_id
             id
             status
             reason_for_status_update
@@ -3011,7 +3073,8 @@ export class BeneficiariesService {
 		limit?: number,
 		skip?: number,
 	) {
-		const user = (await this.findOne(id)).data;
+		const user = (await this.findOne(id)).data?.result;
+
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3062,10 +3125,10 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
-
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
+
 		if (duplicateListArr != undefined) {
 			const count = duplicateListArr?.[1]?.[2].length;
 			const totalPages = Math.ceil(count / limit);
@@ -3156,5 +3219,378 @@ export class BeneficiariesService {
 				data: [],
 			};
 		}
+	}
+
+	public async verifyEntity(
+		entityId: number,
+		role: string,
+		ipId: number,
+		programId?: number,
+	) {
+		if (!programId) programId = 1;
+
+		const ipUser = (await this.userService.userById(ipId)).data;
+
+		let dynamicRoleBasedQuery;
+		if (role === 'beneficiary') {
+			dynamicRoleBasedQuery = `
+				{
+					program_beneficiaries: {
+						program_id: {_eq: "${programId}"},
+						facilitator_user: {
+							program_faciltators: { parent_ip: { _eq: "${ipUser.program_users[0].organisation_id}" } }
+						}
+					}
+				}
+			`;
+		} else if (role === 'facilitator') {
+			dynamicRoleBasedQuery = `
+				{
+					program_faciltators: {
+						program_id: { _eq: "${programId}" },
+						parent_ip: { _eq: "${ipUser.program_users[0].organisation_id}" }
+					}
+				}
+			`;
+		}
+
+		const data = {
+			query: `query MyQuery {
+				users (
+					where: {
+						_and: [
+							{ id: { _eq: ${entityId} } },
+							${dynamicRoleBasedQuery}
+						]
+					}
+				) {
+					id
+					program_beneficiaries {
+						id
+						facilitator_id
+						original_facilitator_id
+					}
+					program_faciltators {
+						id
+					}
+				}
+			}`,
+		};
+
+		const hasuraResult = (
+			await this.hasuraServiceFromServices.getData(data)
+		)?.data.users;
+
+		const result = {
+			success: false,
+			message: '',
+			isVerified: false,
+			data: null,
+		};
+
+		if (!hasuraResult) {
+			result.success = false;
+			result.message = 'Hasura error';
+			return result;
+		}
+
+		if (hasuraResult.length) {
+			result.success = true;
+			result.isVerified = true;
+			result.data = hasuraResult[0];
+		}
+
+		return result;
+	}
+
+	public async reassignBeneficiary(
+		beneficiaryId: number,
+		newFacilitatorId: number,
+	) {
+		const beneficiaryDetails = (await this.userById(beneficiaryId)).data;
+
+		const updatePayload: any = {
+			facilitator_id: newFacilitatorId,
+		};
+
+		if (!beneficiaryDetails.program_beneficiaries.original_facilitator_id) {
+			updatePayload.original_facilitator_id =
+				beneficiaryDetails.program_beneficiaries.facilitator_id;
+		}
+
+		const updateResult = (
+			await this.hasuraService.update(
+				beneficiaryDetails.program_beneficiaries.id,
+				'program_beneficiaries',
+				updatePayload,
+				this.returnFields,
+				[...this.returnFields, 'id'],
+			)
+		).program_beneficiaries;
+
+		const response = {
+			success: false,
+			data: null,
+			message: '',
+		};
+
+		if (updateResult) {
+			response.success = true;
+			response.data = updateResult;
+		}
+
+		return response;
+	}
+
+	//Beneficiaries Aadhar Update
+	public async updateBeneficiariesAadhar(
+		beneficiaries_id: any,
+		req: any,
+		body: any,
+		response: any,
+	) {
+		//get IP information from token id
+		const user = await this.userService.ipUserInfo(req);
+		let aadhaar_no = body?.aadhar_no;
+
+		if (!aadhaar_no || !beneficiaries_id) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'Please provide required details',
+				data: {},
+			});
+		}
+
+		if (aadhaar_no.length < 12) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'Aadhar number should be equal to 12 digits',
+				data: {},
+			});
+		}
+
+		const Beneficiaries_validation_query = `query MyQuery {
+			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}}}) {
+				aggregate {
+				  count
+				}
+			  }
+		  }
+		  `;
+
+		const Beneficiaries_data = await this.hasuraServiceFromServices.getData(
+			{
+				query: Beneficiaries_validation_query,
+			},
+		);
+
+		if (Beneficiaries_data?.data?.users_aggregate?.aggregate.count < 1) {
+			return response.json({
+				status: 401,
+				success: false,
+				message: 'Beneficiaries doesnt belong to IP',
+				data: {},
+			});
+		}
+
+		const query = `query MyQuery {
+			users(where: {aadhar_no: {_eq:"${aadhaar_no}"}, _not: {id: {_eq:${beneficiaries_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  middle_name
+			  program_beneficiaries {
+				status
+				facilitator_user {
+				  first_name
+				  last_name
+				  middle_name
+				}
+			  }
+			  program_faciltators {
+				parent_ip
+				status
+			  }
+			}
+		  }`;
+
+		const data = { query: query };
+		const hashura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+		const newQdata = hashura_response.data;
+		if (newQdata?.users?.length > 0) {
+			return response.json({
+				status: 400,
+				success: false,
+				message: 'You have already added this Aadhaar number!',
+				data: newQdata,
+			});
+		}
+
+		await this.checkDuplicateStatus(beneficiaries_id);
+
+		const userArr = ['aadhar_no'];
+		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
+		if (keyExist.length) {
+			const tableName = 'users';
+			body.id = beneficiaries_id;
+			const res = await this.hasuraService.q(
+				tableName,
+				body,
+				userArr,
+				true,
+				['id', 'aadhar_no'],
+			);
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Data updated successfully!',
+				data: res,
+			});
+		}
+	}
+
+	async checkDuplicateStatus(id: any) {
+		const facilitator_id = id;
+		const update_body = {
+			is_duplicate: 'no',
+		};
+		const userArr = ['is_duplicate'];
+
+		//get old aadhar number of the beneficiary
+
+		let query = `
+		query MyQuery {
+			users_by_pk(id:${facilitator_id}) {
+			  aadhar_no
+			}
+		  }
+		`;
+		const {
+			data: {
+				users_by_pk: { aadhar_no },
+			},
+		} = await this.hasuraServiceFromServices.getData({ query });
+
+		//check if the old aadhar belong to other users than beneficiary
+		const aadhar_check_response =
+			await this.hasuraServiceFromServices.getData({
+				query: `
+					query MyQuery {
+						users(where: {aadhar_no: {_eq: "${aadhar_no}"}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
+						id
+						aadhar_no
+						}
+					}`,
+			});
+
+		const users_data = aadhar_check_response?.data?.users;
+		const idArray = users_data
+			.map((element: any) => element.id)
+			.filter((e: any) => e);
+		if (users_data?.length > 2) {
+			await this.hasuraService.q(
+				'users',
+				{
+					...update_body,
+					id: facilitator_id,
+				},
+				userArr,
+				true,
+				['id', 'is_duplicate'],
+			);
+		} else if (users_data?.length == 2) {
+			for (const id of idArray) {
+				await this.hasuraService.q(
+					'users',
+					{
+						...update_body,
+						id: id,
+					},
+					userArr,
+					true,
+					['id', 'is_duplicate'],
+				);
+			}
+		}
+	}
+	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
+		const facilitator_id = req.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+		let status = 'enrolled_ip_verified';
+
+		// Get users which are not present in the camps or whose status is inactive
+
+		let qury = `query MyQuery {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}}, _not: {group_users: {status: {_eq: "active"}}}}) {
+			  id
+			    state
+				district
+				block
+				village
+			  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+				id
+				name
+				doument_type
+				document_sub_type
+				path
+			  }
+			  program_beneficiaries {
+				status,
+				enrollment_first_name,
+				enrollment_middle_name,
+				enrollment_last_name
+			  }
+			}
+		  }
+		  `;
+
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const users = response?.data?.users ?? [];
+		const userPromises = await Promise.all(
+			users.map(async (user) => {
+				if (
+					user.profile_photo_1.length > 0 &&
+					user.profile_photo_1[0]?.id !== undefined
+				) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							user.profile_photo_1[0].id,
+						);
+					if (success && fileData?.fileUrl) {
+						user.profile_photo_1 = {
+							id: user.profile_photo_1[0]?.id,
+							name: user.profile_photo_1[0]?.name,
+							doument_type: user.profile_photo_1[0]?.doument_type,
+							document_sub_type:
+								user.profile_photo_1[0]?.document_sub_type,
+							path: user.profile_photo_1[0]?.path,
+							fileUrl: fileData.fileUrl,
+						};
+					}
+				} else {
+					user.profile_photo_1 = {};
+				}
+				return user;
+			}),
+		);
+
+		const result = {
+			user: userPromises,
+		};
+
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: result || {},
+		});
+	}
+	private isValidString(str: string) {
+		return typeof str === 'string' && str.trim();
 	}
 }

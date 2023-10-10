@@ -766,6 +766,7 @@ export class UserService {
 			status
 			comment
 			reminder
+			rsvp
 			location_type
 			location
 			created_at
@@ -1026,6 +1027,7 @@ export class UserService {
 			status
 			comment
 			reminder
+			rsvp
 			location_type
 			location
 			created_at
@@ -1128,18 +1130,73 @@ export class UserService {
 		mw_userid,
 		context,
 		context_id,
-		oldData,
+	    oldData,
 		newData,
-		tempArray,
+		tempArray
+		
+		
 	) {
 		let storeOld = {};
 		let storeNew = {};
+		
 		for (let data of tempArray) {
 			if (oldData[data] !== newData[data]) {
 				storeOld[data] = oldData[data];
 				storeNew[data] = newData[data];
 			}
 		}
+	
+		
+
+		if (
+			Object.keys(storeOld).length !== 0 &&
+			Object.keys(storeNew).length !== 0
+		) {
+			const res = await this.hasuraService.create(
+				'audit_logs',
+				{
+					new_data: JSON.stringify(storeNew).replace(/"/g, '\\"'),
+					old_data: JSON.stringify(storeOld).replace(/"/g, '\\"'),
+					user_id: userId,
+					context: context,
+					context_id: context_id,
+					updated_by_user: mw_userid
+					
+				},
+				[
+					'id',
+					'user_id',
+					'new_data',
+					'old_data',
+					'context',
+					'context_id',
+					'updated_at',
+					'created_at',
+					'updated_by_user',
+					 'action'
+				],
+			);
+			return res;
+		}
+	}
+
+	async addAuditLogAction(auditLogsObject){
+		const {userId,mw_userid,context,context_id,oldData,newData,tempArray,action} = auditLogsObject
+		let storeOld = {};
+		let storeNew = {};
+		if(!action || action !="create"){
+		for (let data of tempArray) {
+			if (oldData[data] !== newData[data]) {
+				storeOld[data] = oldData[data];
+				storeNew[data] = newData[data];
+			}
+		}
+	}else{
+		storeOld = oldData;
+		storeNew = newData;
+	}
+		
+
 		if (
 			Object.keys(storeOld).length !== 0 &&
 			Object.keys(storeNew).length !== 0
@@ -1153,6 +1210,7 @@ export class UserService {
 					context: context,
 					context_id: context_id,
 					updated_by_user: mw_userid,
+					action:action
 				},
 				[
 					'id',
@@ -1164,6 +1222,7 @@ export class UserService {
 					'updated_at',
 					'created_at',
 					'updated_by_user',
+					 'action'
 				],
 			);
 			return res;
