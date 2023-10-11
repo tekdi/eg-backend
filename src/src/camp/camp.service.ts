@@ -404,7 +404,13 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id
+					id profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					  }
 					name
 				  }
 			  }
@@ -1469,64 +1475,137 @@ export class CampService {
 
 			let query = `query MyQuery {
 				camps_by_pk(id:${camp_id}) {
-				  camp_id: id
+					id
 				  group {
-					name
-					status
-				  }
-				  faciltator: group_users(where: {member_type: {_eq: "owner"}}) {
-					user {
-					  first_name
-					  middle_name
-					  last_name
-					  mobile
-					  state
-					  district
-					  village
-					  block
+						name
+						status
 					}
-				  }
-				  beneficiaries: group_users(where: {member_type: {_eq: "member"}}) {
-					user {
-					  id
-					  first_name
-					  middle_name
-					  last_name
-					  mobile
-					  state
-					  district
-					  block
-					  village
+					faciltator: group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
+						user {
+							id
+							first_name
+							middle_name
+							last_name
+							mobile
+							state
+							district
+							village
+							block
+							profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+								id
+								name
+								doument_type
+								document_sub_type
+								path
+							}
+						}
 					}
-				  }
-				  properties {
-					lat
-					long
-					state
-					district
-					village
-					block
-					street
-					landmark
-					grampanchayat
-					property_facilities
-					property_photo_building
-					property_photo_classroom
-					property_photo_other
-				  }
-				  consents {
-					document_id
-				  }
-				}
+					beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+						user {
+							id
+							first_name
+							middle_name
+							last_name
+							mobile
+							state
+							district
+							block
+							village
+						}
+					}
+					properties {
+						lat
+						long
+						state
+						district
+						village
+						block
+						street
+						landmark
+						grampanchayat
+						property_facilities
+						property_photo_building
+						property_photo_classroom
+						property_photo_other
+						photo_other {
+							id
+							name
+						}
+						photo_building {
+							id
+							name
+						}
+						photo_classroom {
+							id
+							name
+						}
+					}
 			  }
-			  
-			  `;
+			}`;
+
 			const hasura_response =
 				await this.hasuraServiceFromServices.getData({
 					query: query,
 				});
+			// const newQdata = hasura_response?.data?.camps_by_pk;
+			const {
+				data: { camps_by_pk: newQdata },
+			} = hasura_response || {};
 
-			const camp = hasura_response?.data?.camps_by_pk;
+			newQdata.faciltator = await Promise.all(
+				newQdata?.faciltator?.map(async (item, key) => {
+					const userObj = item.user;
+					let profilePhoto = userObj.profile_photo_1?.[0] || {};
+					if (profilePhoto?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								profilePhoto.id,
+							);
+						if (success && fileData?.fileUrl) {
+							userObj.profile_photo_1 = {
+								...profilePhoto,
+								fileUrl: fileData.fileUrl,
+							};
+						}
+					}
+					return userObj;
+				}),
+			);
+
+			newQdata.beneficiaries = newQdata?.beneficiaries?.map(
+				(item: any) => item.user,
+			);
+
+			let properties = newQdata?.properties || {};
+
+			if (properties) {
+				await Promise.all(
+					['photo_building', 'photo_classroom', 'photo_other'].map(
+						async (item) => {
+							const photo = properties?.[item] || {};
+							if (photo?.id) {
+								const { success, data: fileData } =
+									await this.uploadFileService.getDocumentById(
+										photo?.id,
+									);
+								if (success && fileData?.fileUrl) {
+									newQdata.properties[item] = {
+										...photo,
+										fileUrl: fileData?.fileUrl,
+									};
+								} else {
+									newQdata.properties[item] = {};
+								}
+							}
+						},
+					),
+				);
+			}
+
+			const userResult = newQdata.properties;
+
+			const camp = newQdata;
+
 			if (camp) {
 				return resp.json({
 					status: 200,
@@ -1543,7 +1622,7 @@ export class CampService {
 		} catch (error) {
 			return resp.json({
 				status: 500,
-				message: 'IP_CAMP_DETAILS_ERROR',
+				message: 'IP_CAMP_DETAILS_ERROR' + error?.message,
 				data: {},
 			});
 		}

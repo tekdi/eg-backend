@@ -569,7 +569,7 @@ export class BeneficiariesService {
 	}
 
 	//status count
-	public async getStatuswiseCount(req: any, resp: any) {
+	public async getStatuswiseCount(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
 
 		if (!user?.data?.id) {
@@ -583,11 +583,11 @@ export class BeneficiariesService {
 			await this.enumService.getEnumValue('BENEFICIARY_STATUS')
 		).data.map((item) => item.value);
 
-		let qury = `query MyQuery {
+		let qury = `query MyQuery {                              
         ${status.map(
 			(item) => `${
 				!isNaN(Number(item[0])) ? '_' + item : item
-			}:program_beneficiaries_aggregate(where: {
+			}:program_beneficiaries_aggregate(where:{
             _and: [
               {
 				facilitator_id: { _eq: ${user?.data?.id} }
@@ -603,8 +603,11 @@ export class BeneficiariesService {
         }
       }`,
 		)}
-    }`;
+	
+     }`;
+
 		const data = { query: qury };
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data;
 		const res = status.map((item) => {
@@ -839,6 +842,7 @@ export class BeneficiariesService {
 					return mappedData;
 				}),
 			);
+
 			return resp.status(200).json({
 				success: true,
 				message: 'Benificiaries found success!',
@@ -855,6 +859,7 @@ export class BeneficiariesService {
 	}
 	public async findAll(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+
 		if (!user?.data?.id) {
 			return resp.status(404).send({
 				success: false,
@@ -906,6 +911,9 @@ export class BeneficiariesService {
 				{ last_name: { _ilike: "%${first_name}%" } }
 				 ]} `);
 			}
+		}
+		if (body?.is_duplicate && body?.is_duplicate !== '') {
+			filterQueryArray.push(`{is_duplicate:{_eq:${body?.is_duplicate}}}`);
 		}
 
 		if (
@@ -1099,6 +1107,7 @@ export class BeneficiariesService {
 				offset: offset,
 			},
 		};
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
 
@@ -1173,10 +1182,20 @@ export class BeneficiariesService {
 		}
 	}
 
-	public async findOne(id: number, resp?: any) {
+	public async findOne(id: number, req: any, resp?: any) {
+		let filterQueryArray = [`{id: {_eq:${id}}`];
+		// only facilitator_id learners lits
+		const user = await this.userService.ipUserInfo(req);
+
+		filterQueryArray.push(
+			`{program_beneficiaries: {facilitator_id: {_eq: ${user?.data?.id}}}}`,
+		);
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
 		var data = {
-			query: `query searchById {
-            users_by_pk(id: ${id}) {
+			query: `query MyQuery {
+            users(where:${filterQuery}) {
 				aadhaar_verification_mode
 				aadhar_no
 				aadhar_token
@@ -1377,7 +1396,7 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
-		let result: any = response?.data?.users_by_pk;
+		let result: any = response?.data?.users?.[0] || {};
 		if (!result) {
 			if (resp) {
 				return resp.status(404).send({
@@ -3072,8 +3091,10 @@ export class BeneficiariesService {
 		id: number,
 		limit?: number,
 		skip?: number,
+		req?: any,
+		res?: any,
 	) {
-		const user = (await this.findOne(id)).data?.result;
+		const user = (await this.findOne(id, req, res)).data?.result;
 
 		const sql = `
 			SELECT
