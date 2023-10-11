@@ -19,6 +19,7 @@ export class MarkAttendanceService {
 	}
 
 	@Cron(CronExpression.EVERY_MINUTE)
+	//for testing in local 30 seconds
 	//@Cron(CronExpression.EVERY_30_SECONDS)
 	async markAttendanceCron() {
 		try {
@@ -98,6 +99,9 @@ export class MarkAttendanceService {
 								),
 							),
 						);
+					} else {
+						// Update in attendance data in database
+						await this.markProcessed(attendanceObj.id);
 					}
 				}
 			}
@@ -122,6 +126,34 @@ export class MarkAttendanceService {
 						_set: {
 							fa_is_processed: ${attendaceData.isAttendanceVerified},
 							fa_similarity_percentage: ${attendaceData.matchingPercentage}
+						}
+					) {
+						id
+						fa_is_processed
+					}
+				}
+			`;
+		try {
+			return (
+				(await this.hasuraService.getData({ query: updateQuery })).data
+					.update_attendance_by_pk.id === attendaceId
+			);
+		} catch (error) {
+			console.log('markAttendance:', error);
+			throw error;
+		}
+	}
+
+	async markProcessed(attendaceId: number) {
+		let updateQuery = `
+				mutation MyMutation {
+					update_attendance_by_pk (
+						pk_columns: {
+							id: ${attendaceId}
+						},
+						_set: {
+							fa_is_processed: false,
+							fa_similarity_percentage: null
 						}
 					) {
 						id

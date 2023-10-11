@@ -20,6 +20,7 @@ import {
 } from '@aws-sdk/client-rekognition';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { HasuraService } from '../../services/hasura/hasura.service';
 
 @Injectable()
 export class AwsRekognitionService {
@@ -30,7 +31,10 @@ export class AwsRekognitionService {
 	private bucketName: string;
 	private prefixed: string;
 
-	constructor(private configService: ConfigService) {
+	constructor(
+		private configService: ConfigService,
+		private hasuraService: HasuraService,
+	) {
 		// Setup AWS credentials
 		this.region = this.configService.get<string>('AWS_REKOGNITION_REGION');
 		this.accessKeyId = this.configService.get<string>(
@@ -114,15 +118,20 @@ export class AwsRekognitionService {
 					'Trying to create user with details as:',
 					createUserParams,
 				);
-
 				const createUserResponse = await this.rekognition.send(
 					new CreateUserCommand(createUserParams),
 				);
-
-				console.log(
+				/*console.log(
 					'createUserResponse:------->>>>>>>>>>>>>>',
 					createUserResponse,
+				);*/
+				//update in hasura
+				let userCreatedUpdate = await this.markUserAsCreated(userId);
+				console.log(
+					'userCreatedUpdate:------->>>>>>>>>>>>>>',
+					userCreatedUpdate,
 				);
+				//wait some time to match aws rate limit 5 request per seconds
 				await new Promise((resolve) =>
 					setTimeout(
 						resolve,
@@ -137,6 +146,30 @@ export class AwsRekognitionService {
 		} catch (error) {
 			console.log('createUsersInCollection:', error);
 			//throw error;
+		}
+	}
+
+	async markUserAsCreated(userId: number) {
+		let updateQuery = `
+				mutation MyMutation {
+					update_users_by_pk(
+						pk_columns: {
+							id: ${userId}
+						},
+						_set: {
+							fa_user_created: true,
+						}
+					) {
+						id
+					}
+				}
+			`;
+		try {
+			return (await this.hasuraService.getData({ query: updateQuery }))
+				.data.update_users_by_pk;
+		} catch (error) {
+			console.log('markUserAsIndexed:', error);
+			throw error;
 		}
 	}
 
@@ -211,6 +244,11 @@ export class AwsRekognitionService {
 	}
 
 	async addFaceInCollection(collectionId: string, imageName: string) {
+		console.log(
+			'\nSTART - Add face into a collection with details as: collectionId, imageName',
+			collectionId,
+			imageName,
+		);
 		const response = { success: false, faceId: null };
 		try {
 			const addFaceParams = {
@@ -224,14 +262,16 @@ export class AwsRekognitionService {
 				ExternalImageId: imageName,
 				MaxFaces: 1,
 			};
-			console.log('addFaceParams:------------->>>>', addFaceParams);
+			console.log(
+				`\nSTART - Add face into a collection with params:\n`,
+				addFaceParams,
+			);
 
 			const addFaceResponse = await this.rekognition.send(
 				new IndexFacesCommand(addFaceParams),
 			);
 
-			//.promise();
-			console.log('addFaceResponse:');
+			console.log(`\nSTART - Add face into a collection. Success!\n`);
 			console.dir(addFaceResponse, { depth: 99 });
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
@@ -239,11 +279,21 @@ export class AwsRekognitionService {
 			}
 			return response;
 		} catch (error) {
-			console.log('addFaceInCollection:', error);
-			if (error.statusCode === 400) {
+			console.log('error.statusCode', error.statusCode);
+			console.log(
+				`\n  END - Add face into a collection. Error!\n`,
+				error,
+				error.stack,
+			);
+			response.success = false;
+			return response;
+			//below code throw error not capture error.statusCode
+			/*if (error.statusCode === 400) {
 				response.success = false;
 				return response;
-			} else throw error;
+			} else {
+				throw error;
+			}*/
 		}
 	}
 
