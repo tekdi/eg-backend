@@ -63,7 +63,7 @@ export class BeneficiariesService {
 		'is_eligible',
 		'original_facilitator_id',
 	];
-
+	public returnFieldsgroupUsers = ['status', 'id'];
 	async getBeneficiariesDuplicatesByAadhaar(
 		aadhaarNo: string,
 		limit: number,
@@ -639,7 +639,7 @@ export class BeneficiariesService {
 		let status = body?.status;
 		let filterQueryArray = [];
 		filterQueryArray.push(
-			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "approved", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 		);
 
 		if (body.search && body.search !== '') {
@@ -797,6 +797,7 @@ export class BeneficiariesService {
 				}
 			}
 		`;
+
 		delete data.variables;
 
 		const facilitatorListResponse = (
@@ -1438,7 +1439,7 @@ export class BeneficiariesService {
 			} else {
 				return {
 					success: true,
-					data: { result: mappedData },
+					data: mappedData,
 				};
 			}
 		}
@@ -1570,7 +1571,8 @@ export class BeneficiariesService {
 						updatedUserObj.id,
 						{
 							status: preUpdateDataObj[updatedUserObj.id]
-								.program_beneficiaries[0].status,
+								.program_beneficiaries[0]?.status,
+
 							is_duplicate:
 								preUpdateDataObj[updatedUserObj.id]
 									.is_duplicate,
@@ -1583,7 +1585,7 @@ export class BeneficiariesService {
 						},
 						{
 							status: updatedUserObj.program_beneficiaries[0]
-								.status,
+								?.status,
 							is_duplicate: updatedUserObj.is_duplicate,
 							duplicate_reason: updatedUserObj.duplicate_reason,
 							is_deactivated: updatedUserObj.is_deactivated,
@@ -3073,7 +3075,7 @@ export class BeneficiariesService {
 		limit?: number,
 		skip?: number,
 	) {
-		const user = (await this.findOne(id)).data?.result;
+		const user = (await this.findOne(id)).data;
 
 		const sql = `
 			SELECT
@@ -3125,6 +3127,7 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
+
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
@@ -3307,6 +3310,54 @@ export class BeneficiariesService {
 		beneficiaryId: number,
 		newFacilitatorId: number,
 	) {
+		const response = {
+			success: false,
+			data: null,
+			message: '',
+		};
+
+		let status = 'active';
+
+		let query = `query MyQuery {
+			users(where: {id: {_eq:${beneficiaryId}}, group_users: {status: {_eq:"${status}"}}}){
+			  id
+			  group_users{
+				id
+				group{
+					status
+				}
+			  }
+			}
+		  }
+		  `;
+
+		const hashura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		let users = hashura_response?.data?.users;
+
+		if (users?.length > 0) {
+			if (users[0]?.group_users[0]?.group?.status == 'not_registered') {
+				const update_body = {
+					status: 'inactive',
+				};
+				let update_array = ['status'];
+
+				await this.hasuraService.q(
+					'group_users',
+					{
+						...update_body,
+						id: users[0]?.group_users[0]?.id,
+					},
+					update_array,
+					true,
+					[...this.returnFieldsgroupUsers, 'id'],
+				);
+			} else {
+				return response;
+			}
+		}
+
 		const beneficiaryDetails = (await this.userById(beneficiaryId)).data;
 
 		const updatePayload: any = {
@@ -3327,12 +3378,6 @@ export class BeneficiariesService {
 				[...this.returnFields, 'id'],
 			)
 		).program_beneficiaries;
-
-		const response = {
-			success: false,
-			data: null,
-			message: '',
-		};
 
 		if (updateResult) {
 			response.success = true;
