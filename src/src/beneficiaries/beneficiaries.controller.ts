@@ -225,7 +225,7 @@ export class BeneficiariesController {
 		@Req() req: any,
 		@Res() response: Response,
 	) {
-		return this.beneficiariesService.findOne(+id, req, response);
+		return this.beneficiariesService.findOne(+id, response);
 	}
 
 	@Delete(':id')

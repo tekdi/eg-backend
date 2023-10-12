@@ -1547,13 +1547,12 @@ export class CampService {
 				await this.hasuraServiceFromServices.getData({
 					query: query,
 				});
-			// const newQdata = hasura_response?.data?.camps_by_pk;
 			const {
-				data: { camps_by_pk: newQdata },
+				data: { camps_by_pk: camp },
 			} = hasura_response || {};
 
-			newQdata.faciltator = await Promise.all(
-				newQdata?.faciltator?.map(async (item, key) => {
+			camp.faciltator = await Promise.all(
+				camp?.faciltator?.map(async (item, key) => {
 					const userObj = item.user;
 					let profilePhoto = userObj.profile_photo_1?.[0] || {};
 					if (profilePhoto?.id) {
@@ -1572,11 +1571,11 @@ export class CampService {
 				}),
 			);
 
-			newQdata.beneficiaries = newQdata?.beneficiaries?.map(
+			camp.beneficiaries = camp?.beneficiaries?.map(
 				(item: any) => item.user,
 			);
 
-			let properties = newQdata?.properties || {};
+			let properties = camp?.properties || {};
 
 			if (properties) {
 				await Promise.all(
@@ -1589,12 +1588,12 @@ export class CampService {
 										photo?.id,
 									);
 								if (success && fileData?.fileUrl) {
-									newQdata.properties[item] = {
+									camp.properties[item] = {
 										...photo,
 										fileUrl: fileData?.fileUrl,
 									};
 								} else {
-									newQdata.properties[item] = {};
+									camp.properties[item] = {};
 								}
 							}
 						},
@@ -1602,9 +1601,25 @@ export class CampService {
 				);
 			}
 
-			const userResult = newQdata.properties;
-
-			const camp = newQdata;
+			properties = {
+				lat: null,
+				long: null,
+				street: null,
+				state: null,
+				district: null,
+				block: null,
+				village: null,
+				grampanchayat: null,
+				property_type: null,
+				property_facilities: null,
+				property_photo_building: null,
+				property_photo_classroom: null,
+				property_photo_other: null,
+			};
+			camp.properties = {
+				...properties,
+				...(camp?.properties || {}),
+			};
 
 			if (camp) {
 				return resp.json({
@@ -1616,7 +1631,7 @@ export class CampService {
 				return resp.json({
 					status: 404,
 					message: 'IP_CAMP_NOT_FOUND_ERROR',
-					data: {},
+					data: { camp: {} },
 				});
 			}
 		} catch (error) {

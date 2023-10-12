@@ -858,6 +858,8 @@ export class BeneficiariesService {
 		}
 	}
 	public async findAll(body: any, req: any, resp: any) {
+		
+		
 		const user = await this.userService.ipUserInfo(req);
 
 		if (!user?.data?.id) {
@@ -912,10 +914,15 @@ export class BeneficiariesService {
 				 ]} `);
 			}
 		}
-		if (body?.is_duplicate && body?.is_duplicate !== '') {
-			filterQueryArray.push(`{is_duplicate:{_eq:${body?.is_duplicate}}}`);
+		if (body?.is_deactivated && body?.is_deactivated !== '') {
+			filterQueryArray.push(
+				`{is_deactivated:{_eq:"${body?.is_deactivated}"}}`,
+			);
 		}
 
+		if (body?.is_duplicate && body?.is_duplicate !== '') {
+			filterQueryArray.push(`{is_duplicate:{_eq:"${body?.is_duplicate}"}}`);
+		}
 		if (
 			body?.enrollment_verification_status &&
 			body?.enrollment_verification_status !== ''
@@ -1107,10 +1114,10 @@ export class BeneficiariesService {
 				offset: offset,
 			},
 		};
-
+		
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
-
+		
 		let mappedResponse = result;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
@@ -1182,20 +1189,11 @@ export class BeneficiariesService {
 		}
 	}
 
-	public async findOne(id: number, req: any, resp?: any) {
-		let filterQueryArray = [`{id: {_eq:${id}}`];
-		// only facilitator_id learners lits
-		const user = await this.userService.ipUserInfo(req);
-
-		filterQueryArray.push(
-			`{program_beneficiaries: {facilitator_id: {_eq: ${user?.data?.id}}}}`,
-		);
-
-		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+	public async findOne(id: number, resp?:any) {
 
 		var data = {
-			query: `query MyQuery {
-            users(where:${filterQuery}) {
+			query: `query searchById {
+				users_by_pk(id: ${id}) {
 				aadhaar_verification_mode
 				aadhar_no
 				aadhar_token
@@ -1396,7 +1394,7 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
-		let result: any = response?.data?.users?.[0] || {};
+		let result: any =  response?.data?.users_by_pk;
 		if (!result) {
 			if (resp) {
 				return resp.status(404).send({
@@ -1457,7 +1455,7 @@ export class BeneficiariesService {
 			} else {
 				return {
 					success: true,
-					data: { result: mappedData },
+					data: mappedData,
 				};
 			}
 		}
@@ -1589,7 +1587,8 @@ export class BeneficiariesService {
 						updatedUserObj.id,
 						{
 							status: preUpdateDataObj[updatedUserObj.id]
-								.program_beneficiaries[0].status,
+								.program_beneficiaries[0]?.status,
+
 							is_duplicate:
 								preUpdateDataObj[updatedUserObj.id]
 									.is_duplicate,
@@ -1602,7 +1601,7 @@ export class BeneficiariesService {
 						},
 						{
 							status: updatedUserObj.program_beneficiaries[0]
-								.status,
+								?.status,
 							is_duplicate: updatedUserObj.is_duplicate,
 							duplicate_reason: updatedUserObj.duplicate_reason,
 							is_deactivated: updatedUserObj.is_deactivated,
@@ -3094,7 +3093,7 @@ export class BeneficiariesService {
 		req?: any,
 		res?: any,
 	) {
-		const user = (await this.findOne(id, req, res)).data?.result;
+		const user = (await this.findOne(id,)).data;
 
 		const sql = `
 			SELECT
@@ -3146,6 +3145,7 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
+
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
