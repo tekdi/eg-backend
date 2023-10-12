@@ -1438,7 +1438,7 @@ export class BeneficiariesService {
 			} else {
 				return {
 					success: true,
-					data: { result: mappedData },
+					data: mappedData,
 				};
 			}
 		}
@@ -1570,7 +1570,8 @@ export class BeneficiariesService {
 						updatedUserObj.id,
 						{
 							status: preUpdateDataObj[updatedUserObj.id]
-								.program_beneficiaries[0].status,
+								.program_beneficiaries[0]?.status,
+
 							is_duplicate:
 								preUpdateDataObj[updatedUserObj.id]
 									.is_duplicate,
@@ -1583,7 +1584,7 @@ export class BeneficiariesService {
 						},
 						{
 							status: updatedUserObj.program_beneficiaries[0]
-								.status,
+								?.status,
 							is_duplicate: updatedUserObj.is_duplicate,
 							duplicate_reason: updatedUserObj.duplicate_reason,
 							is_deactivated: updatedUserObj.is_deactivated,
@@ -3073,7 +3074,7 @@ export class BeneficiariesService {
 		limit?: number,
 		skip?: number,
 	) {
-		const user = (await this.findOne(id)).data?.result;
+		const user = (await this.findOne(id)).data;
 
 		const sql = `
 			SELECT
@@ -3125,6 +3126,7 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
+
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
