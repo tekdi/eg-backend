@@ -84,6 +84,20 @@ export class CampController {
 		return this.campService.getConsentBenficiaries(body, request, response);
 	}
 
+	@Post('/admin/consent/get')
+	@UseGuards(new AuthGuard())
+	getAdminConsentBenficiaries(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.getAdminConsentBenficiaries(
+			body,
+			request,
+			response,
+		);
+	}
+
 	@Patch('admin/:id')
 	@UseGuards(new AuthGuard())
 	updateCampStatus(
