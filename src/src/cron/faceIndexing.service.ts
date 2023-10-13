@@ -198,7 +198,6 @@ export class FaceIndexingService {
 		);*/
 
 		// We need to skip processing records wch were processed in past X hours
-		// TODO - add config for hours here
 		let dt = new Date();
 		let filterTimestamp = new Date(
 			dt.setHours(dt.getHours() - 4),

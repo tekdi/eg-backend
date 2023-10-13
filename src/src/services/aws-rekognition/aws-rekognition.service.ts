@@ -116,13 +116,9 @@ export class AwsRekognitionService {
 					'Trying to create user with details as:',
 					createUserParams,
 				);*/
-				const createUserResponse = await this.rekognition.send(
+				await this.rekognition.send(
 					new CreateUserCommand(createUserParams),
 				);
-				/*console.log(
-					'createUserResponse:------->>>>>>>>>>>>>>',
-					createUserResponse,
-				);*/
 				//update in hasura
 				await this.markUserAsCreated(userId);
 				//wait some time to match aws rate limit 5 request per seconds
