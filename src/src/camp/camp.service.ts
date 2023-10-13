@@ -404,7 +404,13 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id
+					id profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					  }
 					name
 				  }
 			  }
@@ -1280,7 +1286,7 @@ export class CampService {
 
 		let query = `query MyQuery {
 			camps_by_pk(id:${camp_id}) {
-			   group_users(where: {member_type: {_eq: "owner"}, user_id: {_eq: 795}}) {
+			   group_users(where: {member_type: {_eq: "owner"}, user_id: {_eq: ${facilitator_id}}}) {
 				group {
 				  id
 				}
@@ -1326,9 +1332,9 @@ export class CampService {
 		}
 	}
 
-	async getCampList(req: any, resp: any) {
+	async getCampList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-
+		let filterQueryArray = [];
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
 				success: false,
@@ -1337,95 +1343,330 @@ export class CampService {
 			});
 		}
 
-		let query = `query MyQuery {
-			groups {
-			  name
-			  status
-			  camp {
-			  group_users(where:{member_type:{_eq:"owner"}}){
-				user{
-				  faciltator_id:id
-				  first_name
-				  middle_name
-				  last_name
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
+		let status = body?.status;
+
+		if (body?.search && body?.search !== '') {
+			filterQueryArray.push(`{group:{name:{_eq:"${body?.search}"}}}`);
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{properties:{district:{_in: ${JSON.stringify(
+					body?.district,
+				)}}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
+			);
+		}
+
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				`{group_users: {user:{id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}}}`,
+			);
+		}
+
+		if (body?.status && body?.status !== '') {
+			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+		}
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		let data = {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				camps_aggregate(where:${filterQuery}) {
+				  aggregate {
+					count
+				  }
+				}
+				camps(limit: $limit, offset: $offset, where: ${filterQuery}) {
+				  id
+				  properties {
+					district
+					block
+					state
+					village
+					landmark
+					grampanchayat
+					street
+				  }
+				  group {
+					name
+					status
+				  }
+				 faciltator:group_users(where: {member_type: {_eq: "owner"}}) {
+					user {
+					  faciltator_id: id
+					  first_name
+					  middle_name
+					  last_name
+					}
+				  }
 				}
 			  }
-				
-			  }
-			}
-		  }
-		  `;
+			  `,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
 		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
+			query: data.query,
 		});
 
-		const camp_data = hasura_response?.data?.groups;
-		if (camp_data) {
+		const camps_data = hasura_response?.data?.camps;
+
+		let camps = camps_data?.map((camp) => {
+			camp.faciltator = camp?.faciltator?.[0];
+			return camp;
+		});
+
+		const count = hasura_response?.data?.camps_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
+		if (camps) {
 			return resp.json({
 				status: 200,
 				message: 'Camp Data Found Successfully',
-				data: camp_data,
+				data: {
+					camps,
+					totalCount: count,
+					limit,
+					currentPage: page,
+					totalPages: `${totalPages}`,
+				},
 			});
 		} else {
 			return resp.json({
 				status: 500,
 				message: 'IP_CAMP_LIST_ERROR',
+				data: {},
 			});
 		}
 	}
 
 	async getCampDetailsForAdmin(id: any, req: any, resp: any) {
 		let camp_id = id;
-		if (!camp_id) {
-			return resp.json({
-				status: 400,
-				message: 'INVALID_CAMP_DETAILS_INPUT_ERROR',
-				data: [],
-			});
-		}
-		const user = await this.userService.ipUserInfo(req);
-
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
-			return resp.status(404).send({
-				success: false,
-				message: 'Invalid Ip',
-				data: {},
-			});
-		}
-
-		let query = `query MyQuery {
-			groups(where: {camp: {id: {_eq:${camp_id}}}}) {
-			  name
-			  camp {
-				id
-				group_users(where: {member_type: {_eq: "member"}}) {
-				  user {
-					learner_id: id
-					first_name
-					middle_name
-					last_name
-				  }
-				}
-			  }
+		try {
+			if (!camp_id) {
+				return resp.json({
+					status: 400,
+					message: 'INVALID_CAMP_DETAILS_INPUT_ERROR',
+					data: [],
+				});
 			}
-		  }
-		  
-		  `;
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
+			const user = await this.userService.ipUserInfo(req);
 
-		const camp_data = hasura_response?.data?.groups;
-		if (camp_data) {
-			return resp.json({
-				status: 200,
-				message: 'Camp Data Found Successfully',
-				data: camp_data,
-			});
-		} else {
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return resp.status(404).send({
+					success: false,
+					message: 'Invalid Ip',
+					data: {},
+				});
+			}
+
+			let query = `query MyQuery {
+				camps_by_pk(id:${camp_id}) {
+					id
+				  group {
+						name
+						status
+					}
+					faciltator: group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
+						user {
+							id
+							first_name
+							middle_name
+							last_name
+							mobile
+							state
+							district
+							village
+							block
+							profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+								id
+								name
+								doument_type
+								document_sub_type
+								path
+							}
+						}
+					}
+					beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+						user {
+							id
+							first_name
+							middle_name
+							last_name
+							mobile
+							state
+							district
+							block
+							village
+							profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+								id
+								name
+								doument_type
+								document_sub_type
+								path
+							}
+						}
+					}
+					properties {
+						lat
+						long
+						state
+						district
+						village
+						block
+						street
+						landmark
+						grampanchayat
+						property_facilities
+						property_photo_building
+						property_photo_classroom
+						property_photo_other
+						photo_other {
+							id
+							name
+						}
+						photo_building {
+							id
+							name
+						}
+						photo_classroom {
+							id
+							name
+						}
+					}
+			  }
+			}`;
+
+			const hasura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+			const {
+				data: { camps_by_pk: camp },
+			} = hasura_response || {};
+
+			camp.faciltator = await Promise.all(
+				camp?.faciltator?.map(async (item, key) => {
+					const userObj = item.user;
+					let profilePhoto = userObj.profile_photo_1?.[0] || {};
+
+					if (profilePhoto?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								profilePhoto.id,
+							);
+						if (success && fileData?.fileUrl) {
+							userObj.profile_photo_1 = {
+								...profilePhoto,
+								fileUrl: fileData.fileUrl,
+							};
+						}
+					} else {
+						userObj.profile_photo_1 = profilePhoto;
+					}
+					return userObj;
+				}),
+			);
+
+			camp.beneficiaries = await Promise.all(
+				camp?.beneficiaries?.map(async (item, key) => {
+					const userObj = item.user;
+					let profilePhoto = userObj.profile_photo_1?.[0] || {};
+
+					if (profilePhoto?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								profilePhoto.id,
+							);
+						if (success && fileData?.fileUrl) {
+							userObj.profile_photo_1 = {
+								...profilePhoto,
+								fileUrl: fileData.fileUrl,
+							};
+						}
+					} else {
+						userObj.profile_photo_1 = profilePhoto;
+					}
+					return userObj;
+				}),
+			);
+			let properties = camp?.properties || {};
+
+			if (properties) {
+				await Promise.all(
+					['photo_building', 'photo_classroom', 'photo_other'].map(
+						async (item) => {
+							const photo = properties?.[item] || {};
+							if (photo?.id) {
+								const { success, data: fileData } =
+									await this.uploadFileService.getDocumentById(
+										photo?.id,
+									);
+								if (success && fileData?.fileUrl) {
+									camp.properties[item] = {
+										...photo,
+										fileUrl: fileData?.fileUrl,
+									};
+								} else {
+									camp.properties[item] = {};
+								}
+							}
+						},
+					),
+				);
+			}
+
+			properties = {
+				lat: null,
+				long: null,
+				street: null,
+				state: null,
+				district: null,
+				block: null,
+				village: null,
+				grampanchayat: null,
+				property_type: null,
+				property_facilities: null,
+				property_photo_building: null,
+				property_photo_classroom: null,
+				property_photo_other: null,
+			};
+			camp.properties = {
+				...properties,
+				...(camp?.properties || {}),
+			};
+
+			if (camp) {
+				return resp.json({
+					status: 200,
+					message: 'Camp Data Found Successfully',
+					data: { camp },
+				});
+			} else {
+				return resp.json({
+					status: 404,
+					message: 'IP_CAMP_NOT_FOUND_ERROR',
+					data: { camp: {} },
+				});
+			}
+		} catch (error) {
 			return resp.json({
 				status: 500,
-				message: 'IP_CAMP_DETAILS_ERROR',
+				message: 'IP_CAMP_DETAILS_ERROR' + error?.message,
+				data: {},
 			});
 		}
 	}
