@@ -87,18 +87,15 @@ export class FaUserIndexingCron {
 			return [];
 		}
 	}
-	
+
 	async deleteCollection(collectionId: string) {
-		// Disassociate image from user
-		const photoDisassociated =
+		//delete collection
+		const collectionDeleted =
 			await this.awsRekognitionService.deleteCollection(collectionId);
-		//console.log('photoDisassociated111------>>>>>', photoDisassociated);
+		//console.log('collectionDeleted------>>>>>', collectionDeleted);
 		let response = { success: false };
-		// Delete face from collection
-		if (photoDisassociated) {
-			const photoDeleted =
-				await this.awsRekognitionService.deleteCollection(collectionId);
-			if (photoDeleted) response.success = true;
+		if (collectionDeleted) {
+			response.success = true;
 		}
 		return response;
 	}
