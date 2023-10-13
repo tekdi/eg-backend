@@ -19,7 +19,6 @@ import {
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HasuraService } from '../../services/hasura/hasura.service';
-import e from 'express';
 
 @Injectable()
 export class AwsRekognitionService {
@@ -125,11 +124,7 @@ export class AwsRekognitionService {
 					createUserResponse,
 				);*/
 				//update in hasura
-				let userCreatedUpdate = await this.markUserAsCreated(userId);
-				/*console.log(
-					'userCreatedUpdate:------->>>>>>>>>>>>>>',
-					userCreatedUpdate,
-				);*/
+				await this.markUserAsCreated(userId);
 				//wait some time to match aws rate limit 5 request per seconds
 				await new Promise((resolve) =>
 					setTimeout(
@@ -370,9 +365,6 @@ export class AwsRekognitionService {
 			let response = await this.rekognition.send(
 				new DeleteCollectionCommand(deleteFaceParams),
 			);
-			if ((response.StatusCode = 200)) {
-				//console.log('Collection successfully deleted.');
-			}
 			return response; // For unit tests.
 		} catch (err) {
 			console.log('Error', err, err.stack);

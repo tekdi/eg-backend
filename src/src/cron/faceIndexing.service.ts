@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
@@ -198,7 +198,7 @@ export class FaceIndexingService {
 		);*/
 
 		// We need to skip processing records wch were processed in past X hours
-		// @TODO - add config for hours here
+		// TODO - add config for hours here
 		let dt = new Date();
 		let filterTimestamp = new Date(
 			dt.setHours(dt.getHours() - 4),
