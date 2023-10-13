@@ -1511,6 +1511,13 @@ export class CampService {
 							district
 							block
 							village
+							profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+								id
+								name
+								doument_type
+								document_sub_type
+								path
+							}
 						}
 					}
 					properties {
@@ -1555,6 +1562,7 @@ export class CampService {
 				camp?.faciltator?.map(async (item, key) => {
 					const userObj = item.user;
 					let profilePhoto = userObj.profile_photo_1?.[0] || {};
+
 					if (profilePhoto?.id) {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
@@ -1566,15 +1574,35 @@ export class CampService {
 								fileUrl: fileData.fileUrl,
 							};
 						}
+					} else {
+						userObj.profile_photo_1 = profilePhoto;
 					}
 					return userObj;
 				}),
 			);
 
-			camp.beneficiaries = camp?.beneficiaries?.map(
-				(item: any) => item.user,
-			);
+			camp.beneficiaries = await Promise.all(
+				camp?.beneficiaries?.map(async (item, key) => {
+					const userObj = item.user;
+					let profilePhoto = userObj.profile_photo_1?.[0] || {};
 
+					if (profilePhoto?.id) {
+						const { success, data: fileData } =
+							await this.uploadFileService.getDocumentById(
+								profilePhoto.id,
+							);
+						if (success && fileData?.fileUrl) {
+							userObj.profile_photo_1 = {
+								...profilePhoto,
+								fileUrl: fileData.fileUrl,
+							};
+						}
+					} else {
+						userObj.profile_photo_1 = profilePhoto;
+					}
+					return userObj;
+				}),
+			);
 			let properties = camp?.properties || {};
 
 			if (properties) {
