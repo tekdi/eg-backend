@@ -1,7 +1,3 @@
-// import * as AWS from 'aws-sdk';
-// import { Rekognition } from '@aws-sdk/client-rekognition';
-//import * as AWS from '@aws-sdk/client-rekognition';
-// ES6 + example;
 import {
 	RekognitionClient,
 	ListCollectionsCommand,
@@ -103,7 +99,6 @@ export class AwsRekognitionService {
 
 	async createUsersInCollection(collectionId: string, userIds: any) {
 		try {
-			//only create first 10 users in aws collection
 			const aws_users = userIds;
 			for (const userId of aws_users) {
 				const createUserParams = {
@@ -208,7 +203,7 @@ export class AwsRekognitionService {
 		}
 	}
 
-	async deletePhotoFromCollection(collectionId: string, faceId: string) {
+	async deleteFaceFromCollection(collectionId: string, faceId: string) {
 		const response = { success: false };
 		try {
 			const deleteFaceParams = {
@@ -227,7 +222,7 @@ export class AwsRekognitionService {
 				response.success = true;
 			return response;
 		} catch (error) {
-			console.log('deletePhotoFromCollection:', error, error.stack);
+			console.log('deleteFaceFromCollection:', error, error.stack);
 			return response;
 		}
 	}
@@ -344,22 +339,16 @@ export class AwsRekognitionService {
 		}
 	}
 
-	async deleteCollection(
-		collectionId: string,
-		userId: string,
-		faceId: string,
-	) {
+	async deleteCollection(collectionId: string) {
 		try {
-			const deleteFaceParams = {
+			const deleteCollectionParams = {
 				CollectionId: collectionId,
-				userId: this.prefixed + userId,
-				FaceIds: [faceId],
 			};
 			/*console.log(
 				`Attempting to delete collection named - ${collectionId}`,
 			);*/
 			let response = await this.rekognition.send(
-				new DeleteCollectionCommand(deleteFaceParams),
+				new DeleteCollectionCommand(deleteCollectionParams),
 			);
 			return response; // For unit tests.
 		} catch (err) {

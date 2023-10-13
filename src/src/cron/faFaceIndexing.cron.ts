@@ -5,7 +5,7 @@ import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekogniti
 import { HasuraService } from '../services/hasura/hasura.service';
 
 @Injectable()
-export class FaceIndexingService {
+export class FaFaceIndexingCron {
 	private prefixed: string;
 
 	constructor(
@@ -204,50 +204,50 @@ export class FaceIndexingService {
 		).toISOString();
 
 		const query = `
-				query MyQuery {
-					users(
-						where: {
+			query MyQuery {
+				users(
+					where: {
+						_or: [
+							{ fa_user_indexed: { _is_null: true } },
+							{ fa_user_indexed: { _eq: false } }
+						],
+						_and: {
 							_or: [
-								{ fa_user_indexed: { _is_null: true } },
-								{ fa_user_indexed: { _eq: false } }
-							],
-							_and: {
-								_or: [
-									{ fa_photos_last_processed_at: { _is_null: true }},
-									{ fa_photos_last_processed_at: { _lte: "${filterTimestamp}}" } }
-								]
-							}
-						},
-						order_by: {id: asc},
-						limit: ${limit}
-					) {
+								{ fa_photos_last_processed_at: { _is_null: true }},
+								{ fa_photos_last_processed_at: { _lte: "${filterTimestamp}}" } }
+							]
+						}
+					},
+					order_by: {id: asc},
+					limit: ${limit}
+				) {
+					id
+					fa_photos_indexed
+					fa_face_ids
+					profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 						id
-						fa_photos_indexed
-						fa_face_ids
-						profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
-							id
-							name
-							doument_type
-							document_sub_type
-							path
-						}
-						profile_photo_2: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
-							id
-							name
-							doument_type
-							document_sub_type
-							path
-						}
-						profile_photo_3: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
-							id
-							name
-							doument_type
-							document_sub_type
-							path
-						}
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+					profile_photo_2: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+					profile_photo_3: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
 					}
 				}
-			`;
+			}
+		`;
 		try {
 			let users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
@@ -299,7 +299,7 @@ export class FaceIndexingService {
 		// Delete face from collection
 		if (photoDisassociated) {
 			const photoDeleted =
-				await this.awsRekognitionService.deletePhotoFromCollection(
+				await this.awsRekognitionService.deleteFaceFromCollection(
 					collectionId,
 					faceId,
 				);

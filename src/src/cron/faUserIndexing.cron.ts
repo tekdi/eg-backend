@@ -5,7 +5,7 @@ import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekogniti
 import { HasuraService } from '../services/hasura/hasura.service';
 
 @Injectable()
-export class UserCreationService {
+export class FaUserIndexingCron {
 	private data_limit: string;
 
 	constructor(
@@ -32,9 +32,7 @@ export class UserCreationService {
 			);
 			//delete collection if required
 			/*await this.awsRekognitionService.deleteCollection(
-				collectionId,
-				'userId',
-				'faceId',
+				collectionId
 			);*/
 			//Step-1: Create collection if not exists
 			await this.awsRekognitionService.createCollectionIfNotExists(
@@ -62,6 +60,7 @@ export class UserCreationService {
 			);
 		}
 	}
+
 	async fetchAllUsersExceptCreated(limit) {
 		const query = `
 				query MyQuery {
@@ -88,28 +87,17 @@ export class UserCreationService {
 			return [];
 		}
 	}
-	async deleteCollection(
-		collectionId: string,
-		userId: string,
-		faceId: string,
-	) {
+	
+	async deleteCollection(collectionId: string) {
 		// Disassociate image from user
 		const photoDisassociated =
-			await this.awsRekognitionService.deleteCollection(
-				collectionId,
-				userId,
-				faceId,
-			);
+			await this.awsRekognitionService.deleteCollection(collectionId);
 		//console.log('photoDisassociated111------>>>>>', photoDisassociated);
 		let response = { success: false };
 		// Delete face from collection
 		if (photoDisassociated) {
 			const photoDeleted =
-				await this.awsRekognitionService.deleteCollection(
-					collectionId,
-					userId,
-					faceId,
-				);
+				await this.awsRekognitionService.deleteCollection(collectionId);
 			if (photoDeleted) response.success = true;
 		}
 		return response;

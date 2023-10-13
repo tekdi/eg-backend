@@ -5,7 +5,7 @@ import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekogniti
 import { HasuraService } from '../services/hasura/hasura.service';
 
 @Injectable()
-export class MarkAttendanceService {
+export class FaAttendanceProcessingCron {
 	private prefixed: string;
 
 	constructor(
@@ -118,7 +118,7 @@ export class MarkAttendanceService {
 	}
 
 	async markAttendance(
-		attendaceId: number,
+		attendanceId: number,
 		attendaceData: {
 			isAttendanceVerified: boolean;
 			matchingPercentage: number;
@@ -128,7 +128,7 @@ export class MarkAttendanceService {
 				mutation MyMutation {
 					update_attendance_by_pk (
 						pk_columns: {
-							id: ${attendaceId}
+							id: ${attendanceId}
 						},
 						_set: {
 							fa_is_processed: ${attendaceData.isAttendanceVerified},
@@ -143,7 +143,7 @@ export class MarkAttendanceService {
 		try {
 			return (
 				(await this.hasuraService.getData({ query: updateQuery })).data
-					.update_attendance_by_pk.id === attendaceId
+					.update_attendance_by_pk.id === attendanceId
 			);
 		} catch (error) {
 			console.log('markAttendance:', error, error.stack);
@@ -151,27 +151,27 @@ export class MarkAttendanceService {
 		}
 	}
 
-	async markProcessed(attendaceId: number) {
+	async markProcessed(attendanceId: number) {
 		let updateQuery = `
-				mutation MyMutation {
-					update_attendance_by_pk (
-						pk_columns: {
-							id: ${attendaceId}
-						},
-						_set: {
-							fa_is_processed: false,
-							fa_similarity_percentage: null
-						}
-					) {
-						id
-						fa_is_processed
+			mutation MyMutation {
+				update_attendance_by_pk (
+					pk_columns: {
+						id: ${attendanceId}
+					},
+					_set: {
+						fa_is_processed: false,
+						fa_similarity_percentage: null
 					}
+				) {
+					id
+					fa_is_processed
 				}
-			`;
+			}
+		`;
 		try {
 			return (
 				(await this.hasuraService.getData({ query: updateQuery })).data
-					.update_attendance_by_pk.id === attendaceId
+					.update_attendance_by_pk.id === attendanceId
 			);
 		} catch (error) {
 			console.log('markAttendance:', error, error.stack);
