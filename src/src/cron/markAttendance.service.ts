@@ -14,15 +14,18 @@ export class MarkAttendanceService {
 		private hasuraService: HasuraService,
 	) {
 		this.prefixed = this.configService.get<string>(
-			'AWS_PREFIXED_BEFOR_USER_ID',
+			'AWS_REKOGNITION_CUSTOM_PREFIX',
 		);
 	}
 
-	@Cron(CronExpression.EVERY_MINUTE)
-	//for testing in local 30 seconds
-	//@Cron(CronExpression.EVERY_30_SECONDS)
+	//3rd cron runs for each hour's 25th minute eg: 10:25am, 11::25am
+	@Cron('25 * * * *')
 	async markAttendanceCron() {
 		try {
+			/*----------------------- Mark attendance of from face index of users in collection -----------------------*/
+			console.log(
+				'cron job 3: markAttendanceCron started at time ' + new Date(),
+			);
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
@@ -34,8 +37,8 @@ export class MarkAttendanceService {
 					),
 				),
 			);
-			console.log('attendance users');
-			console.dir(usersForAttendance, { depth: 99 });
+			//console.log('attendance users');
+			//console.dir(usersForAttendance, { depth: 99 });
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
 				const userId = String(user.id);
@@ -53,12 +56,12 @@ export class MarkAttendanceService {
 									),
 								),
 							);
-						console.log('matchedUser', matchedUser);
+						//console.log('matchedUser', matchedUser);
 						// Check if the user matched
 						let matchingPercentage = null;
 						const isMatchFound = (matchedUser as any[]).some(
 							(obj) => {
-								console.log('obj', obj);
+								//console.log('obj', obj);
 								if (
 									obj?.User?.UserId.replace(
 										this.prefixed,
@@ -70,11 +73,11 @@ export class MarkAttendanceService {
 								}
 							},
 						);
-						console.log('matchingPercentage', matchingPercentage);
+						//console.log('matchingPercentage', matchingPercentage);
 						// Set attendance verified as true or false based on results
 						let isAttendanceVerified = false;
 						if (isMatchFound) isAttendanceVerified = true;
-						console.log(
+						/*console.log(
 							'-------------------------------------------------------------------------',
 						);
 						console.log(
@@ -82,7 +85,7 @@ export class MarkAttendanceService {
 						);
 						console.log(
 							'-------------------------------------------------------------------------',
-						);
+						);*/
 						// Update in attendance data in database
 						await this.markAttendance(attendanceObj.id, {
 							isAttendanceVerified,
@@ -106,7 +109,11 @@ export class MarkAttendanceService {
 				}
 			}
 		} catch (error) {
-			console.log('Error occurred in markAttendanceCron.');
+			console.log(
+				'Error occurred in markAttendanceCron.',
+				error,
+				error.stack,
+			);
 		}
 	}
 
@@ -139,8 +146,8 @@ export class MarkAttendanceService {
 					.update_attendance_by_pk.id === attendaceId
 			);
 		} catch (error) {
-			console.log('markAttendance:', error);
-			throw error;
+			console.log('markAttendance:', error, error.stack);
+			return [];
 		}
 	}
 
@@ -167,8 +174,8 @@ export class MarkAttendanceService {
 					.update_attendance_by_pk.id === attendaceId
 			);
 		} catch (error) {
-			console.log('markAttendance:', error);
-			throw error;
+			console.log('markAttendance:', error, error.stack);
+			return [];
 		}
 	}
 
@@ -201,8 +208,8 @@ export class MarkAttendanceService {
 				?.users;
 			return users;
 		} catch (error) {
-			console.log('getAllUsersForAttendance:', error);
-			throw error;
+			console.log('getAllUsersForAttendance:', error, error.stack);
+			return [];
 		}
 	}
 }

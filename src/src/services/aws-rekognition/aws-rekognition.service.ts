@@ -9,11 +9,9 @@ import {
 	ListFacesCommand,
 	IndexFacesCommand,
 	DeleteFacesCommand,
-	SearchFacesByImageCommand,
 	ListUsersCommand,
 	SearchUsersByImageCommand,
 	CreateUserCommand,
-	DeleteUserCommand,
 	DeleteCollectionCommand,
 	DisassociateFacesCommand,
 	AssociateFacesCommand,
@@ -21,6 +19,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HasuraService } from '../../services/hasura/hasura.service';
+import e from 'express';
 
 @Injectable()
 export class AwsRekognitionService {
@@ -45,7 +44,7 @@ export class AwsRekognitionService {
 		);
 		this.bucketName = this.configService.get<string>('S3_BUCKET');
 		this.prefixed = this.configService.get<string>(
-			'AWS_PREFIXED_BEFOR_USER_ID',
+			'AWS_REKOGNITION_CUSTOM_PREFIX',
 		);
 
 		this.rekognition = new RekognitionClient({
@@ -64,27 +63,27 @@ export class AwsRekognitionService {
 				new ListCollectionsCommand({ MaxResults: 1000 }),
 			);
 			//.promise();
-			console.log('collections:------------>>>>>>', collections);
+			//console.log('collections:------------>>>>>>', collections);
 
 			if (!collections.CollectionIds.includes(collectionId)) {
 				const createCollectionResponse = await this.rekognition.send(
 					new CreateCollectionCommand({ CollectionId: collectionId }),
 				);
 				//.promise();
-				console.log('Created a new collection:');
-				console.dir(createCollectionResponse, { depth: 99 });
+				//console.log('Created a new collection:');
+				//console.dir(createCollectionResponse, { depth: 99 });
 				response.new = true;
 				response.data = createCollectionResponse;
 			} else {
 				response.new = false;
-				console.log(
+				/*console.log(
 					`Using existing collection with ID: ${collectionId}`,
-				);
+				);*/
 			}
 			return response;
 		} catch (error) {
-			console.log('createCollectionIfNotExists:', error);
-			//throw error;
+			console.log('createCollectionIfNotExists:', error, error.stack);
+			return response;
 		}
 	}
 
@@ -95,11 +94,11 @@ export class AwsRekognitionService {
 					new ListUsersCommand({ CollectionId: collectionId }),
 				)
 			).Users.map((userObj) => userObj.UserId.replace(this.prefixed, '')); //.promise()
-			console.log('users:---------->>>>>>>>>', users.sort());
+			//console.log('users:---------->>>>>>>>>', users.sort());
 			return users;
 		} catch (error) {
-			console.log('getAllUsersOfCollection:', error);
-			//throw error;
+			console.log('getAllUsersOfCollection:', error, error.stack);
+			return [];
 		}
 	}
 
@@ -114,10 +113,10 @@ export class AwsRekognitionService {
 					ClientRequestToken:
 						this.prefixed + new Date().getTime().toString(),
 				};
-				console.log(
+				/*console.log(
 					'Trying to create user with details as:',
 					createUserParams,
-				);
+				);*/
 				const createUserResponse = await this.rekognition.send(
 					new CreateUserCommand(createUserParams),
 				);
@@ -127,10 +126,10 @@ export class AwsRekognitionService {
 				);*/
 				//update in hasura
 				let userCreatedUpdate = await this.markUserAsCreated(userId);
-				console.log(
+				/*console.log(
 					'userCreatedUpdate:------->>>>>>>>>>>>>>',
 					userCreatedUpdate,
-				);
+				);*/
 				//wait some time to match aws rate limit 5 request per seconds
 				await new Promise((resolve) =>
 					setTimeout(
@@ -144,8 +143,8 @@ export class AwsRekognitionService {
 				);
 			}
 		} catch (error) {
-			console.log('createUsersInCollection:', error);
-			//throw error;
+			console.log('createUsersInCollection:', error, error.stack);
+			return [];
 		}
 	}
 
@@ -168,13 +167,12 @@ export class AwsRekognitionService {
 			return (await this.hasuraService.getData({ query: updateQuery }))
 				.data.update_users_by_pk;
 		} catch (error) {
-			console.log('markUserAsIndexed:', error);
-			throw error;
+			console.log('markUserAsIndexed:', error, error.stack);
+			return [];
 		}
 	}
 
 	async getAllFacesOfUser(collectionId: string, userId: string) {
-		const aws_users = ['111', '77', '104', '78', '81'];
 		try {
 			const getFaceListParams = {
 				CollectionId: collectionId,
@@ -185,11 +183,11 @@ export class AwsRekognitionService {
 					new ListFacesCommand(getFaceListParams),
 				)
 			).Faces.map((faceObj) => faceObj.FaceId);
-			console.log('faces:--------->>>>>>>>>>>>>>>>', faces);
+			//console.log('faces:--------->>>>>>>>>>>>>>>>', faces);
 			return faces;
 		} catch (error) {
-			console.log('getAllFacesOfUser:', error);
-			//throw error;
+			console.log('getAllFacesOfUser:', error, error.stack);
+			return [];
 		}
 	}
 
@@ -198,6 +196,7 @@ export class AwsRekognitionService {
 		userId: string,
 		faceId: string,
 	) {
+		const response = { success: false };
 		try {
 			const disassociateFaceParams = {
 				CollectionId: collectionId,
@@ -208,18 +207,18 @@ export class AwsRekognitionService {
 				new DisassociateFacesCommand(disassociateFaceParams),
 			);
 			//.promise();
-			console.log('disassociateFaceResponse:', disassociateFaceResponse);
-			const response = { success: false };
+			//console.log('disassociateFaceResponse:', disassociateFaceResponse);
 			if (disassociateFaceResponse.DisassociatedFaces.length === 1)
 				response.success = true;
 			return response;
 		} catch (error) {
-			console.log('disassociatePhotoFromUser:', error);
-			//throw error;
+			console.log('disassociatePhotoFromUser:', error, error.stack);
+			return response;
 		}
 	}
 
 	async deletePhotoFromCollection(collectionId: string, faceId: string) {
+		const response = { success: false };
 		try {
 			const deleteFaceParams = {
 				CollectionId: collectionId,
@@ -229,26 +228,25 @@ export class AwsRekognitionService {
 				new DeleteFacesCommand(deleteFaceParams),
 			);
 			//.promise();
-			console.log(
+			/*console.log(
 				'deleteFacesResponse:--------->>>>>>>',
 				deleteFacesResponse,
-			);
-			const response = { success: false };
+			);*/
 			if (deleteFacesResponse.DeletedFaces.length === 1)
 				response.success = true;
 			return response;
 		} catch (error) {
-			console.log('deletePhotoFromCollection:', error);
-			//throw error;
+			console.log('deletePhotoFromCollection:', error, error.stack);
+			return response;
 		}
 	}
 
 	async addFaceInCollection(collectionId: string, imageName: string) {
-		console.log(
+		/*console.log(
 			'\nSTART - Add face into a collection with details as: collectionId, imageName',
 			collectionId,
 			imageName,
-		);
+		);*/
 		const response = { success: false, faceId: null };
 		try {
 			const addFaceParams = {
@@ -262,38 +260,29 @@ export class AwsRekognitionService {
 				ExternalImageId: imageName,
 				MaxFaces: 1,
 			};
-			console.log(
+			/*console.log(
 				`\nSTART - Add face into a collection with params:\n`,
 				addFaceParams,
-			);
+			);*/
 
 			const addFaceResponse = await this.rekognition.send(
 				new IndexFacesCommand(addFaceParams),
 			);
 
-			console.log(`\nSTART - Add face into a collection. Success!\n`);
-			console.dir(addFaceResponse, { depth: 99 });
+			//console.log(`\nSTART - Add face into a collection. Success!\n`);
+			//console.dir(addFaceResponse, { depth: 99 });
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
 				response.faceId = addFaceResponse.FaceRecords[0].Face.FaceId;
 			}
 			return response;
 		} catch (error) {
-			console.log('error.statusCode', error.statusCode);
 			console.log(
 				`\n  END - Add face into a collection. Error!\n`,
 				error,
 				error.stack,
 			);
-			response.success = false;
 			return response;
-			//below code throw error not capture error.statusCode
-			/*if (error.statusCode === 400) {
-				response.success = false;
-				return response;
-			} else {
-				throw error;
-			}*/
 		}
 	}
 
@@ -302,6 +291,7 @@ export class AwsRekognitionService {
 		userId: string,
 		faceId: string,
 	) {
+		const response = { success: false };
 		try {
 			const associateFacesParams = {
 				CollectionId: collectionId.toString(),
@@ -312,24 +302,23 @@ export class AwsRekognitionService {
 					this.prefixed + new Date().getTime()
 				).toString(),
 			};
-			console.log(
+			/*console.log(
 				'associateFacesParams------->>>>>>>',
 				associateFacesParams,
-			);
+			);*/
 
 			const associateFaceResponse = await this.rekognition.send(
 				new AssociateFacesCommand(associateFacesParams),
 			);
 			//.promise();
-			console.log('associateFaceResponse:');
-			console.dir(associateFaceResponse);
-			const response = { success: false };
+			//console.log('associateFaceResponse:');
+			//console.dir(associateFaceResponse);
 			if (associateFaceResponse.AssociatedFaces.length === 1)
 				response.success = true;
 			return response;
 		} catch (error) {
-			console.log('associateFaceToUser:', error);
-			//throw error;
+			console.log('associateFaceToUser:', error, error.stack);
+			return response;
 		}
 	}
 
@@ -350,17 +339,17 @@ export class AwsRekognitionService {
 				UserMatchThreshold: faceMatchingThreshold,
 				MaxUsers: 5,
 			};
-			console.log('searchParams:------------->>>>', searchParams);
+			//console.log('searchParams:------------->>>>', searchParams);
 			const compareResponse = await this.rekognition.send(
 				new SearchUsersByImageCommand(searchParams),
 			);
 			//.promise();
-			console.log('Matching faces:');
-			console.dir(compareResponse, { depth: 99 });
+			//console.log('Matching faces:');
+			//console.dir(compareResponse, { depth: 99 });
 			return compareResponse.UserMatches;
 		} catch (error) {
-			console.log('searchUsersByImage:', error);
-			//throw error;
+			console.log('searchUsersByImage:', error, error.stack);
+			return [];
 		}
 	}
 
@@ -375,19 +364,19 @@ export class AwsRekognitionService {
 				userId: this.prefixed + userId,
 				FaceIds: [faceId],
 			};
-			console.log(
+			/*console.log(
 				`Attempting to delete collection named - ${collectionId}`,
-			);
-			var response = await this.rekognition.send(
+			);*/
+			let response = await this.rekognition.send(
 				new DeleteCollectionCommand(deleteFaceParams),
 			);
-			var status_code = response.StatusCode;
-			if ((status_code = 200)) {
-				console.log('Collection successfully deleted.');
+			if ((response.StatusCode = 200)) {
+				//console.log('Collection successfully deleted.');
 			}
 			return response; // For unit tests.
 		} catch (err) {
-			console.log('Error', err.stack);
+			console.log('Error', err, err.stack);
+			return null;
 		}
 	}
 }

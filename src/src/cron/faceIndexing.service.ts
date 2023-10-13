@@ -14,15 +14,19 @@ export class FaceIndexingService {
 		private hasuraService: HasuraService,
 	) {
 		this.prefixed = this.configService.get<string>(
-			'AWS_PREFIXED_BEFOR_USER_ID',
+			'AWS_REKOGNITION_CUSTOM_PREFIX',
 		);
 	}
 
-	@Cron(CronExpression.EVERY_5_MINUTES)
-	//for testing in local 30 seconds
-	//@Cron(CronExpression.EVERY_30_SECONDS)
+	//2nd cron runs for each hour's 15th minute eg: 10:15am, 11::15am
+	@Cron('15 * * * *')
 	async indexRekognitionUsers() {
 		try {
+			/*----------------------- Create face index of users in collection -----------------------*/
+			console.log(
+				'cron job 2: indexRekognitionUsers started at time ' +
+					new Date(),
+			);
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
@@ -41,19 +45,19 @@ export class FaceIndexingService {
 
 			// Step-2: Iterate through them and index faces one by one
 			for (const user of usersToIndexFaces) {
-				console.log('\nindex-user-->>', user);
+				//console.log('\nindex-user-->>', user);
 				let userId = String(user.id);
-				console.log('faPhotos---->>>>', userId);
+				//console.log('faPhotos---->>>>', userId);
 				// Step-A Perform indexing of all 3 profile photos if not indexed
 				const faPhotos = JSON.parse(user.fa_photos_indexed);
-				console.log('faPhotos---->>>>', faPhotos);
+				//console.log('faPhotos---->>>>', faPhotos);
 
 				const faFaceIds = JSON.parse(user.fa_face_ids);
-				console.log('faFaceIds---->>>>', faFaceIds);
+				//console.log('faFaceIds---->>>>', faFaceIds);
 				let isUpdated = false;
 				//if limit to only 3 then add i<=3
 				//for now we set loop limit as number of documents of user
-				console.log('faPhotos.length', Object.keys(faPhotos).length);
+				//console.log('faPhotos.length', Object.keys(faPhotos).length);
 				let document_photoes_count = Object.keys(faPhotos).length;
 				for (let i = 1; i <= document_photoes_count; i++) {
 					const photokeyName = `profile_photo_${i}`;
@@ -70,12 +74,10 @@ export class FaceIndexingService {
 						faPhotos[photokeyName] ||
 						(isProfilePhotoNotAvailable && !isFaceIdAvailable)
 					) {
-						console.log(
+						/*console.log(
 							'>>>>>> No photos to be indexed use with ID:\n',
 							userId,
-						);
-
-						continue;
+						);*/
 					}
 					// Step-ii Else perform indexing based on operation
 					else {
@@ -149,10 +151,10 @@ export class FaceIndexingService {
 					}
 				}
 
-				console.log('faPhotos2');
-				console.dir(faPhotos);
-				console.log('faFaceIds2');
-				console.log(faFaceIds);
+				//console.log('faPhotos2');
+				//console.dir(faPhotos);
+				//console.log('faFaceIds2');
+				//console.log(faFaceIds);
 				// Step-C Set user as indexed in database
 				if (isUpdated) {
 					await this.markUserAsIndexed(user.id, {
@@ -182,14 +184,18 @@ export class FaceIndexingService {
 				}
 			}
 		} catch (error) {
-			console.log('Error occurred in indexRekognitionUsers.');
+			console.log(
+				'Error occurred in indexRekognitionUsers.',
+				error,
+				error.stack,
+			);
 		}
 	}
 
 	async fetchAllUsersToIndexFaces(limit: number) {
-		console.log(
+		/*console.log(
 			'START - Get batch of users for whom face photos to be indexed',
-		);
+		);*/
 
 		// We need to skip processing records wch were processed in past X hours
 		// @TODO - add config for hours here
@@ -272,7 +278,7 @@ export class FaceIndexingService {
 				error,
 				error.stack,
 			);
-			throw error;
+			return [];
 		}
 	}
 
@@ -289,7 +295,7 @@ export class FaceIndexingService {
 				faceId,
 			)
 		).success;
-		console.log('photoDisassociated------>>>>>', photoDisassociated);
+		//console.log('photoDisassociated------>>>>>', photoDisassociated);
 		let response = { success: false };
 		// Delete face from collection
 		if (photoDisassociated) {
@@ -315,7 +321,7 @@ export class FaceIndexingService {
 				collectionId,
 				imageName,
 			);
-		console.log('addFaceResponse111------>>>>>', addFaceResponse);
+		//console.log('addFaceResponse111------>>>>>', addFaceResponse);
 		const response = { success: false, faceId: addFaceResponse.faceId };
 		// Associate face to user
 		if (addFaceResponse.success) {
@@ -335,10 +341,10 @@ export class FaceIndexingService {
 		userId: number,
 		{ fa_photos_last_processed_at },
 	) {
-		console.log(
+		/*console.log(
 			'START - Mark fa last processed timestamp for user with: userId, as',
 			userId,
-		);
+		);*/
 
 		let updateQuery = `
             mutation MyMutation {
@@ -366,7 +372,7 @@ export class FaceIndexingService {
 				error.stack,
 			);
 
-			throw error;
+			return [];
 		}
 	}
 
@@ -399,8 +405,8 @@ export class FaceIndexingService {
 			return (await this.hasuraService.getData({ query: updateQuery }))
 				.data.update_users_by_pk;
 		} catch (error) {
-			console.log('markUserAsIndexed:', error);
-			throw error;
+			console.log('markUserAsIndexed:', error, error.stack);
+			return [];
 		}
 	}
 }

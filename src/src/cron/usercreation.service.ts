@@ -14,17 +14,19 @@ export class UserCreationService {
 		private hasuraService: HasuraService,
 	) {
 		this.data_limit = this.configService.get<string>(
-			'AWS_RECOGNITION_DATA_LIMIT',
+			'AWS_REKOGNITION_INDEX_USER_BATCH_SIZE',
 		);
 	}
 
-	@Cron(CronExpression.EVERY_10_MINUTES)
-	//for testing in local 30 seconds
-	//@Cron(CronExpression.EVERY_30_SECONDS)
+	//first cron runs for each hour's 5th minute eg: 10:05am, 11::05am
+	@Cron('05 * * * *')
 	async createCollectionUsers() {
 		try {
 			/*----------------------- Create users in collection -----------------------*/
-
+			console.log(
+				'cron job 1: createCollectionUsers started at time ' +
+					new Date(),
+			);
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
@@ -46,16 +48,17 @@ export class UserCreationService {
 			let nonexistusers = nonCreatedUsers.map((userObj) =>
 				String(userObj.id),
 			);
-			console.log('>>>nonexistusers', nonexistusers);
+			//console.log('>>>nonexistusers', nonexistusers);
 			// Step-3: Create not created users in collection and update status in users table
 			await this.awsRekognitionService.createUsersInCollection(
 				collectionId,
 				nonexistusers,
 			);
 		} catch (error) {
-			console.log(error);
 			console.log(
 				'Error occurred in createCollectionUsers.',
+				error,
+				error.stack,
 			);
 		}
 	}
@@ -76,13 +79,13 @@ export class UserCreationService {
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
-			console.log('fetchALluser cunt------>>>>>', users.length);
+			//console.log('fetchALluser cunt------>>>>>', users.length);
 			//console.log('fetchALluser------>>>>>', users);
 
 			return users;
 		} catch (error) {
-			console.log('fetchAllUsersExceptIds:', error);
-			throw error;
+			console.log('fetchAllUsersExceptIds:', error, error.stack);
+			return [];
 		}
 	}
 	async deleteCollection(
@@ -97,7 +100,7 @@ export class UserCreationService {
 				userId,
 				faceId,
 			);
-		console.log('photoDisassociated111------>>>>>', photoDisassociated);
+		//console.log('photoDisassociated111------>>>>>', photoDisassociated);
 		let response = { success: false };
 		// Delete face from collection
 		if (photoDisassociated) {
