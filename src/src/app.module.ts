@@ -25,6 +25,7 @@ import { CommentsModule } from './comments/comments.module';
 import { CampModule } from './camp/camp.module';
 import { ReferencesModule } from './references/references.module';
 import { PcrscoresModule } from './pcrscores/pcrscores.module';
+import { SentryModule } from './services/sentry/sentry.module';
 
 @Module({
 	imports: [
@@ -56,6 +57,7 @@ import { PcrscoresModule } from './pcrscores/pcrscores.module';
 		CampModule,
 		ReferencesModule,
 		PcrscoresModule,
+		SentryModule,
 	],
 	controllers: [],
 	providers: [],

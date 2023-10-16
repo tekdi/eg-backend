@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { SentryService } from '../services/sentry/sentry.service';
 
 @Injectable()
 export class FaAttendanceProcessingCron {
@@ -12,6 +13,7 @@ export class FaAttendanceProcessingCron {
 		private configService: ConfigService,
 		private awsRekognitionService: AwsRekognitionService,
 		private hasuraService: HasuraService,
+		private sentryService: SentryService,
 	) {
 		this.prefixed = this.configService.get<string>(
 			'AWS_REKOGNITION_CUSTOM_PREFIX',

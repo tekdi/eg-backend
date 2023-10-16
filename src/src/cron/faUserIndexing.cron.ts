@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { SentryService } from '../services/sentry/sentry.service';
 
 @Injectable()
 export class FaUserIndexingCron {
@@ -12,10 +13,29 @@ export class FaUserIndexingCron {
 		private configService: ConfigService,
 		private awsRekognitionService: AwsRekognitionService,
 		private hasuraService: HasuraService,
+		private sentryService: SentryService,
 	) {
 		this.data_limit = this.configService.get<string>(
 			'AWS_REKOGNITION_INDEX_USER_BATCH_SIZE',
 		);
+	}
+
+	@Cron('*/10 * * * * *')
+	async testCronJob() {
+		const transaction = this.sentryService.startTransaction(
+			'test',
+			'My First Test Transaction',
+		);
+		try {
+			let a = [1, 2, 3];
+			const length = a[5].toString();
+		} catch (e) {
+			this.sentryService.captureException(e);
+			console.log(e);
+		} finally {
+			(await transaction).finish();
+		}
+		console.log('hello');
 	}
 
 	//first cron runs for each hour's 5th minute eg: 10:05am, 11::05am
