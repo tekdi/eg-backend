@@ -1466,6 +1466,10 @@ export class CampService {
 				}
 				camps(limit: $limit, offset: $offset, where: ${filterQuery}) {
 				  id
+				  kit_received
+					kit_was_sufficient
+					kit_ratings
+					kit_feedback
 				  properties {
 					district
 					block
