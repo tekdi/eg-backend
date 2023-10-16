@@ -35,7 +35,7 @@ export class FaUserIndexingCron {
 		} finally {
 			(await transaction).finish();
 		}
-		console.log('hello test sentry');
+		console.log('hello test sentry test');
 	}
 
 	//first cron runs for each hour's 5th minute eg: 10:05am, 11::05am
