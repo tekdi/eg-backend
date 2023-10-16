@@ -583,32 +583,62 @@ export class BeneficiariesService {
 			await this.enumService.getEnumValue('BENEFICIARY_STATUS')
 		).data.map((item) => item.value);
 
-		let qury = `query MyQuery {                              
+		const variables: any = {};
+		let filterQueryArray = [];
+		let paramsQueryArray = [];
+
+		if (body.hasOwnProperty('district') && body?.district?.length) {
+			paramsQueryArray.push('$district: [String!]');
+			filterQueryArray.push('{district: { _in: $district }}');
+			variables.district = body?.district;
+		}
+
+		if (body.hasOwnProperty('block') && body?.block?.length) {
+			paramsQueryArray.push('$block: [String!]');
+			filterQueryArray.push('{block: { _in: $block }}');
+			variables.block = body?.block;
+		}
+
+		filterQueryArray.unshift(
+			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+		);
+
+		let paramsQuery = '';
+		if (paramsQueryArray.length) {
+			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+		}
+		let qury = `query MyQuery ${paramsQuery}{       
+			all:users_aggregate (where: { _and: [${filterQueryArray.join(',')}] }) {
+				aggregate {
+					count
+				}
+		  },
+		applied: users_aggregate(where:{ _and: [${filterQueryArray.join(
+			',',
+		)}, {program_beneficiaries:{_or: [
+			{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
+			{ status: { _is_null: true } }
+		 ]}}] } ) {
+			aggregate {
+				count
+			}},             
         ${status.map(
-			(item) => `${
-				!isNaN(Number(item[0])) ? '_' + item : item
-			}:program_beneficiaries_aggregate(where:{
-            _and: [
-              {
-				facilitator_id: { _eq: ${user?.data?.id} }
-              },{
-              status: {_eq: "${item}"}
-            },
-				{ user:	{ id: { _is_null: false } } }
-			
-                                     ]
-        }) {
-        aggregate {
-          count
-        }
-      }`,
-		)}
-	
-     }`;
+			(item) => `${!isNaN(
+				Number(item[0]),
+			)}:users_aggregate(where:{ _and: [${filterQueryArray.join(
+				',',
+			)},{program_beneficiaries: {status: {_eq: ${item}}}}] } ) {
+				aggregate {
+					count
+				}}`,
+		)}`;
 
 		const data = { query: qury };
 
-		const response = await this.hasuraServiceFromServices.getData(data);
+		const response = await this.hasuraServiceFromServices.getData({
+			query: data.query,
+			variables,
+		});
 		const newQdata = response?.data;
 		const res = status.map((item) => {
 			return {
@@ -716,7 +746,27 @@ export class BeneficiariesService {
 				);
 			}
 		}
+		/*
+query MyQuery {
+  all: users_aggregate(where: {_and: [{program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}}]}) {
+    aggregate {
+      count
+    }
+  }
+  applied: users_aggregate(where: {_and: [{program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}}, {program_beneficiaries: {_or: [{status: {_nin: ["identified", "ready_to_enroll", "enrolled", "not_enrolled", "enrollment_awaited", "enrollment_rejected", "enrolled_ip_verified", "registered_in_camp", "rejected", "dropout", "deactivated", "ineligible_for_pragati_camp", "10th_passed"]}}, {status: {_is_null: true}}]}}]}) {
+    aggregate {
+      count
+    }
+  }
+  
+  identified: users_aggregate(where: {_and: [{program_beneficiaries: {status: {_eq: "identified"},facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}}]}) {
+    aggregate {
+      count
+    }
+  }
+}
 
+*/
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
 		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
@@ -858,8 +908,6 @@ export class BeneficiariesService {
 		}
 	}
 	public async findAll(body: any, req: any, resp: any) {
-		
-		
 		const user = await this.userService.ipUserInfo(req);
 
 		if (!user?.data?.id) {
@@ -921,7 +969,9 @@ export class BeneficiariesService {
 		}
 
 		if (body?.is_duplicate && body?.is_duplicate !== '') {
-			filterQueryArray.push(`{is_duplicate:{_eq:"${body?.is_duplicate}"}}`);
+			filterQueryArray.push(
+				`{is_duplicate:{_eq:"${body?.is_duplicate}"}}`,
+			);
 		}
 		if (
 			body?.enrollment_verification_status &&
@@ -1114,10 +1164,10 @@ export class BeneficiariesService {
 				offset: offset,
 			},
 		};
-		
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
-		
+
 		let mappedResponse = result;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
@@ -1189,8 +1239,7 @@ export class BeneficiariesService {
 		}
 	}
 
-	public async findOne(id: number, resp?:any) {
-
+	public async findOne(id: number, resp?: any) {
 		var data = {
 			query: `query searchById {
 				users_by_pk(id: ${id}) {
@@ -1394,7 +1443,7 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
-		let result: any =  response?.data?.users_by_pk;
+		let result: any = response?.data?.users_by_pk;
 		if (!result) {
 			if (resp) {
 				return resp.status(404).send({
@@ -3093,7 +3142,7 @@ export class BeneficiariesService {
 		req?: any,
 		res?: any,
 	) {
-		const user = (await this.findOne(id,)).data;
+		const user = (await this.findOne(id)).data;
 
 		const sql = `
 			SELECT

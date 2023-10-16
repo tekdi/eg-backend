@@ -1476,6 +1476,10 @@ export class CampService {
 			let query = `query MyQuery {
 				camps_by_pk(id:${camp_id}) {
 					id
+					kit_received
+					kit_was_sufficient
+					kit_ratings
+					kit_feedback
 				  group {
 						name
 						status
@@ -1523,6 +1527,7 @@ export class CampService {
 					properties {
 						lat
 						long
+						property_type
 						state
 						district
 						village
