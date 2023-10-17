@@ -466,17 +466,6 @@ export class FacilitatorService {
         { email_id: { _ilike: "%${body.search}%" } }
       ]} `);
 		}
-		// if (
-		// 	body.hasOwnProperty('status') &&
-		// 	this.isValidString(body.status) &&
-		// 	this.allStatus.map((obj) => obj.value).includes(body.status)
-		// ) {
-		// 	paramsQueryArray.push('$status: String');
-		// 	filterQueryArray.push(
-		// 		'{program_faciltators: {status: {_eq: $status}}}',
-		// 	);
-		// 	variables.status = body.status;
-		// }
 
 		if (body.hasOwnProperty('district') && body.district.length) {
 			paramsQueryArray.push('$district: [String!]');
@@ -493,8 +482,6 @@ export class FacilitatorService {
 		filterQueryArray.unshift(
 			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
 		);
-
-		// let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 		let paramsQuery = '';
 		if (paramsQueryArray.length) {
 			paramsQuery = '(' + paramsQueryArray.join(',') + ')';

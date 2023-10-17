@@ -621,17 +621,31 @@ export class BeneficiariesService {
 		 ]}}] } ) {
 			aggregate {
 				count
-			}},             
-        ${status.map(
-			(item) => `${!isNaN(
-				Number(item[0]),
-			)}:users_aggregate(where:{ _and: [${filterQueryArray.join(
+			}},   
+			passed_10th: users_aggregate(where:{ _and: [${filterQueryArray.join(
 				',',
-			)},{program_beneficiaries: {status: {_eq: ${item}}}}] } ) {
+			)}, {program_beneficiaries:{_or: [
+				{status: {_nin: ${JSON.stringify(
+					status.filter((item) => item != '10th_passed'),
+				)}}},
+				{ status: { _is_null: true } }
+			 ]}}] } ) {
 				aggregate {
 					count
-				}}`,
-		)}`;
+				}},                
+		${status
+			.filter((item) => item != 'applied' && item != '10th_passed')
+			.map(
+				(
+					item,
+				) => `${item}:users_aggregate(where:{ _and: [${filterQueryArray.join(
+					',',
+				)},{program_beneficiaries: {status: {_eq: ${item}}}}] } ) {
+					aggregate {
+						count
+					}}`,
+			)}
+	}`;
 
 		const data = { query: qury };
 
@@ -640,18 +654,28 @@ export class BeneficiariesService {
 			variables,
 		});
 		const newQdata = response?.data;
-		const res = status.map((item) => {
+		const res = ['all', ...status].map((item) => {
+			if (item === '10th_passed') {
+				item = 'passed_10th';
+			}
 			return {
 				status: item,
-				count: newQdata?.[!isNaN(Number(item[0])) ? '_' + item : item]
-					?.aggregate?.count,
+				count:
+					(item === '10th_passed'
+						? newQdata?.['passed_10th']
+						: newQdata?.[item]
+					)?.aggregate?.count || 0,
 			};
 		});
+		const finalRes = res.filter((item, index, self) => {
+			return index === self.findIndex((t) => t.status === item.status);
+		});
+
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
 			data: {
-				data: res,
+				data: finalRes,
 			},
 		});
 	}
@@ -746,30 +770,10 @@ export class BeneficiariesService {
 				);
 			}
 		}
-		/*
-query MyQuery {
-  all: users_aggregate(where: {_and: [{program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}}]}) {
-    aggregate {
-      count
-    }
-  }
-  applied: users_aggregate(where: {_and: [{program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}}, {program_beneficiaries: {_or: [{status: {_nin: ["identified", "ready_to_enroll", "enrolled", "not_enrolled", "enrollment_awaited", "enrollment_rejected", "enrolled_ip_verified", "registered_in_camp", "rejected", "dropout", "deactivated", "ineligible_for_pragati_camp", "10th_passed"]}}, {status: {_is_null: true}}]}}]}) {
-    aggregate {
-      count
-    }
-  }
-  
-  identified: users_aggregate(where: {_and: [{program_beneficiaries: {status: {_eq: "identified"},facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}}]}) {
-    aggregate {
-      count
-    }
-  }
-}
-
-*/
+		
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
-		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
+		
 		var data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
 				users_aggregate(where:${filterQuery}) {
