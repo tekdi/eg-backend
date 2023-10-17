@@ -1243,6 +1243,83 @@ export class CampService {
 		}
 	}
 
+	async getAdminConsentBenficiaries(body: any, request: any, resp: any) {
+		let camp_id = body?.camp_id;
+		let facilitator_id = body?.facilitator_id;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+
+		const user = await this.userService.ipUserInfo(request);
+
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return resp.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
+		//check if faciltator comes under given IP
+
+		let qury = `query MyQuery {
+			users(where: {program_faciltators: {parent_ip: {_eq:"${user?.data?.program_users?.[0]?.organisation_id}"}, user_id: {_eq:${facilitator_id}}}}){
+			  id
+			}
+		  }
+		  `;
+		const validation_response =
+			await this.hasuraServiceFromServices.getData({
+				query: qury,
+			});
+		const users = validation_response?.data?.users;
+		if (users?.length == 0) {
+			return resp.json({
+				status: 401,
+				message: 'IP access denied for this faciltator',
+				data: [],
+			});
+		}
+		let query = `query MyQuery {
+			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
+			  id
+			  document_id
+			  user_id
+			  document{
+				id
+				name
+			  }
+			}
+		  }`;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const consent_response = hasura_response?.data;
+		if (!consent_response?.consents?.length) {
+			return resp.status(200).json({
+				success: true,
+				message: 'consents data not found!',
+				data: {},
+			});
+		} else {
+			const resultData = await Promise.all(
+				consent_response?.consents?.map(async (item) => {
+					if (item?.document?.name) {
+						item.document.fileUrl = await this.s3Service.getFileUrl(
+							item.document.name,
+						);
+					}
+					return item;
+				}),
+			);
+			return resp.json({
+				status: 200,
+				message: 'Successfully updated consents details',
+				data: resultData,
+			});
+		}
+	}
+
 	async updateCampStatus(id: any, body: any, req: any, resp: any) {
 		let facilitator_id = body?.facilitator_id;
 		let camp_id = id;
@@ -1389,6 +1466,10 @@ export class CampService {
 				}
 				camps(limit: $limit, offset: $offset, where: ${filterQuery}) {
 				  id
+				  kit_received
+					kit_was_sufficient
+					kit_ratings
+					kit_feedback
 				  properties {
 					district
 					block
