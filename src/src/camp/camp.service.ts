@@ -406,13 +406,7 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
-						id
-						name
-						doument_type
-						document_sub_type
-						path
-					  }
+					id 
 					name
 				  }
 			  }
