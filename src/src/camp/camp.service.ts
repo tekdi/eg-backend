@@ -7,6 +7,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
+import { query } from 'express';
 @Injectable()
 export class CampService {
 	constructor(
@@ -1492,8 +1493,30 @@ export class CampService {
 					  middle_name
 					  last_name
 					}
+					
 				  }
+				  beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+					user {
+						id
+						first_name
+						middle_name
+						last_name
+						mobile
+						state
+						district
+						block
+						village
+						profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+							id
+							name
+							doument_type
+							document_sub_type
+							path
+						}
+					}
 				}
+				}
+				
 			  }
 			  `,
 			variables: {
