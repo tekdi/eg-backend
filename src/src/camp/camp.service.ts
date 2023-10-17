@@ -7,7 +7,6 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
-import { query } from 'express';
 @Injectable()
 export class CampService {
 	constructor(
@@ -1778,7 +1777,6 @@ export class CampService {
 	}
 
 	public async getStatuswiseCount(req: any, body: any, resp: any) {
-		const user = await this.userService.ipUserInfo(req);
 		const status = this.enumService
 			.getEnumValue('GROUPS_STATUS')
 			.data.map((item) => item.value);
@@ -1786,18 +1784,7 @@ export class CampService {
 		const variables: any = {};
 
 		let filterQueryArray = [];
-		let paramsQueryArray = [];
 
-		if (
-			body.hasOwnProperty('qualificationIds') &&
-			body.qualificationIds.length
-		) {
-			paramsQueryArray.push('$qualificationIds: [Int!]');
-			filterQueryArray.push(
-				'{qualifications: {qualification_master_id: {_in: $qualificationIds}}}',
-			);
-			variables.qualificationIds = body.qualificationIds;
-		}
 		if (body.search && body.search !== '') {
 			filterQueryArray.push(`{_or: [
         { first_name: { _ilike: "%${body.search}%" } },
