@@ -1500,9 +1500,9 @@ export class CampService {
 			},
 		};
 
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: data.query,
-		});
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
 
 		const camps_data = hasura_response?.data?.camps;
 

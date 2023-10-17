@@ -16,7 +16,8 @@ import {
 } from '@nestjs/common';
 import { CampService } from './camp.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
-
+import { RoleGuard } from 'src/modules/auth/role.guard';
+import { Roles } from 'src/modules/auth/role.decorator';
 @Controller('camp')
 export class CampController {
 	constructor(private campService: CampService) {}
@@ -24,6 +25,8 @@ export class CampController {
 	@Post('/')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('faciltator', 'staff')
 	registerCamp(
 		@Body() body: any,
 		@Req() request: any,
@@ -34,12 +37,16 @@ export class CampController {
 
 	@Post('/list')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('facilitator', 'staff')
 	campList(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campList(body, request, response);
 	}
 
 	@Post('/:id')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('facilitator', 'staff')
 	campById(
 		@Req() request: any,
 		@Body() body: any,
@@ -51,6 +58,8 @@ export class CampController {
 
 	@Patch('/:id')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('facilitator', 'staff')
 	updateCampDetails(
 		@Req() request: any,
 		@Body() body: any,
@@ -62,6 +71,8 @@ export class CampController {
 
 	@Post('/consent/create')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('facilitator', 'staff')
 	createConsentBenficiaries(
 		@Req() request: any,
 		@Body() body: any,
@@ -76,6 +87,8 @@ export class CampController {
 
 	@Post('/consent/get')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('facilitator', 'staff') // Specify the required role for this route
 	getConsentBenficiaries(
 		@Req() request: any,
 		@Body() body: any,
@@ -100,6 +113,8 @@ export class CampController {
 
 	@Patch('admin/:id')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('staff') // Specify the required role for this route
 	updateCampStatus(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -111,12 +126,16 @@ export class CampController {
 
 	@Post('admin/camp-list')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('staff') // Specify the required role for this route
 	getCampList(@Req() req: any, @Res() response: any, @Body() body: any) {
 		return this.campService.getCampList(body, req, response);
 	}
 
 	@Get('admin/camp-details/:id')
 	@UseGuards(new AuthGuard())
+	@UseGuards(RoleGuard)
+	@Roles('staff') // Specify the required role for this route
 	getCampDetailsForAdmin(
 		@Param('id') id: number,
 		@Req() req: any,
