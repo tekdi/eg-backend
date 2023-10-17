@@ -6,11 +6,13 @@ import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
+import { EnumService } from '../enum/enum.service';
 @Injectable()
 export class CampService {
 	constructor(
 		private userService: UserService,
 		private hasuraService: HasuraService,
+		private enumService: EnumService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 		private s3Service: S3Service,
@@ -1750,5 +1752,107 @@ export class CampService {
 				data: {},
 			});
 		}
+	}
+
+	public async getStatuswiseCount(req: any, body: any, resp: any) {
+		const user = await this.userService.ipUserInfo(req);
+		const status = this.enumService
+			.getEnumValue('GROUPS_STATUS')
+			.data.map((item) => item.value);
+
+		const variables: any = {};
+
+		let filterQueryArray = [];
+		let paramsQueryArray = [];
+
+		if (
+			body.hasOwnProperty('qualificationIds') &&
+			body.qualificationIds.length
+		) {
+			paramsQueryArray.push('$qualificationIds: [Int!]');
+			filterQueryArray.push(
+				'{qualifications: {qualification_master_id: {_in: $qualificationIds}}}',
+			);
+			variables.qualificationIds = body.qualificationIds;
+		}
+		if (body.search && body.search !== '') {
+			filterQueryArray.push(`{_or: [
+        { first_name: { _ilike: "%${body.search}%" } },
+        { last_name: { _ilike: "%${body.search}%" } },
+        { email_id: { _ilike: "%${body.search}%" } }
+      ]} `);
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{properties:{district:{_in: ${JSON.stringify(
+					body?.district,
+				)}}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
+			);
+		}
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				`{group_users: {user:{id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}}}`,
+			);
+		}
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+		let query = `query MyQuery($limit: Int, $offset: Int) {
+			all:camps_aggregate(where:${filterQuery}) {
+			  aggregate {
+				count
+			  }
+			},
+			  not_registered: camps_aggregate(where:{ _and: [${filterQueryArray.join(
+					',',
+				)}, {group:{_or: [
+				{status: {_nin: ${JSON.stringify(
+					status.filter((item) => item != 'not_registered'),
+				)}}},
+				{ status: { _is_null: true } }
+			 ]}}] } ) {
+				aggregate {
+					count
+				}},
+			${status
+				.filter((item) => item != 'not_registered')
+				.map(
+					(
+						item,
+					) => `${item}:camps_aggregate(where:{ _and: [${filterQueryArray.join(
+						',',
+					)},{group: {status: {_eq: ${item}}}}] } ) {
+						aggregate {
+							count
+						}}`,
+				)}
+		}`;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query,
+			variables,
+		});
+
+		const newQdata = response?.data;
+		const res = ['all', ...status].map((item) => {
+			return {
+				status: item,
+				count: newQdata?.[item]?.aggregate?.count,
+			};
+		});
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: res,
+		});
 	}
 }

@@ -662,6 +662,14 @@
 		{
 			"title": "GROUPS_STATUS_INACTIVE",
 			"value": "inactive"
+		},
+		{
+			"title": "GROUPS_STATUS_APPROVED",
+			"value": "approved"
+		},
+		{
+			"title": "GROUPS_STATUS_CHANGE_REQUIRED",
+			"value": "change_required"
 		}
 	],
 	"CAMP_PROPERTY_FACILITIES": [
