@@ -4,7 +4,7 @@ import { startTransaction, Transaction } from '@sentry/node';
 
 @Injectable()
 export class SentryService {
-	async addBreadcrumb(category: string, message: string, info: any) {
+	async addBreadcrumb(category: string, message: any, info: any) {
 		Sentry.addBreadcrumb({
 			category: category,
 			message: message,

@@ -23,10 +23,19 @@ export class FaAttendanceProcessingCron {
 	//3rd cron runs for each hour's 25th minute eg: 10:25am, 11::25am
 	@Cron('25 * * * *')
 	async markAttendanceCron() {
+		const transaction = this.sentryService.startTransaction(
+			'Cron Job 3',
+			'Mark attendance',
+		);
 		try {
 			/*----------------------- Mark attendance of from face index of users in collection -----------------------*/
 			console.log(
 				'cron job 3: markAttendanceCron started at time ' + new Date(),
+			);
+			this.sentryService.addBreadcrumb(
+				'Cron Job 3',
+				'markAttendanceCron started at time ' + new Date(),
+				'info',
 			);
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
@@ -39,8 +48,11 @@ export class FaAttendanceProcessingCron {
 					),
 				),
 			);
-			//console.log('attendance users');
-			//console.dir(usersForAttendance, { depth: 99 });
+			this.sentryService.addBreadcrumb(
+				'Cron Job 3',
+				'response usersForAttendance ' + usersForAttendance,
+				'info',
+			);
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
 				const userId = String(user.id);
@@ -111,11 +123,9 @@ export class FaAttendanceProcessingCron {
 				}
 			}
 		} catch (error) {
-			console.log(
-				'Error occurred in markAttendanceCron.',
-				error,
-				error.stack,
-			);
+			this.sentryService.captureException(error);
+		} finally {
+			(await transaction).finish();
 		}
 	}
 
@@ -142,13 +152,18 @@ export class FaAttendanceProcessingCron {
 					}
 				}
 			`;
+		this.sentryService.addBreadcrumb(
+			'Cron Job 3',
+			'updateQuery: ' + updateQuery,
+			'info',
+		);
 		try {
 			return (
 				(await this.hasuraService.getData({ query: updateQuery })).data
 					.update_attendance_by_pk.id === attendanceId
 			);
 		} catch (error) {
-			console.log('markAttendance:', error, error.stack);
+			this.sentryService.captureException(error);
 			return [];
 		}
 	}
@@ -170,13 +185,18 @@ export class FaAttendanceProcessingCron {
 				}
 			}
 		`;
+		this.sentryService.addBreadcrumb(
+			'Cron Job 3',
+			'updateQuery: ' + updateQuery,
+			'info',
+		);
 		try {
 			return (
 				(await this.hasuraService.getData({ query: updateQuery })).data
 					.update_attendance_by_pk.id === attendanceId
 			);
 		} catch (error) {
-			console.log('markAttendance:', error, error.stack);
+			this.sentryService.captureException(error);
 			return [];
 		}
 	}
@@ -205,12 +225,17 @@ export class FaAttendanceProcessingCron {
 					}
 				}
 			`;
+		this.sentryService.addBreadcrumb(
+			'Cron Job 3',
+			'query: ' + query,
+			'info',
+		);
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
 			return users;
 		} catch (error) {
-			console.log('getAllUsersForAttendance:', error, error.stack);
+			this.sentryService.captureException(error);
 			return [];
 		}
 	}
