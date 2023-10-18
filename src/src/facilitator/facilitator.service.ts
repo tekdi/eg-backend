@@ -2034,7 +2034,7 @@ export class FacilitatorService {
 								count:
 									statusKey === 'identified'
 										? aggregateCount
-										: benefeciary[statusKey]?.aggregateCount
+										: benefeciary[statusKey]?.aggregate
 												?.count || 0,
 							}));
 
