@@ -656,10 +656,6 @@
 			"value": "registered"
 		},
 		{
-			"title": "GROUPS_STATUS_CAMP_VERIFIED",
-			"value": "camp_verified"
-		},
-		{
 			"title": "GROUPS_STATUS_INACTIVE",
 			"value": "inactive"
 		},
