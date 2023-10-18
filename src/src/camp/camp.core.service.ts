@@ -6,7 +6,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
-// import { CampService } from './camp.service';
+
 @Injectable()
 export class CampCoreService {
 	constructor(
@@ -15,7 +15,7 @@ export class CampCoreService {
 		private enumService: EnumService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
-		private s3Service: S3Service, // private campservice: CampService,
+		private s3Service: S3Service,
 	) {}
 
 	public async getStatuswiseCount(
