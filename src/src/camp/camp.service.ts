@@ -6,14 +6,18 @@ import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
+import { EnumService } from '../enum/enum.service';
+import { CampCoreService } from './camp.core.service';
 @Injectable()
 export class CampService {
 	constructor(
 		private userService: UserService,
 		private hasuraService: HasuraService,
+		private enumService: EnumService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 		private s3Service: S3Service,
+		private campcoreservice: CampCoreService,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -404,13 +408,7 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
-						id
-						name
-						doument_type
-						document_sub_type
-						path
-					  }
+					id 
 					name
 				  }
 			  }
@@ -1490,8 +1488,30 @@ export class CampService {
 					  middle_name
 					  last_name
 					}
+					
 				  }
+				  beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+					user {
+						id
+						first_name
+						middle_name
+						last_name
+						mobile
+						state
+						district
+						block
+						village
+						profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+							id
+							name
+							doument_type
+							document_sub_type
+							path
+						}
+					}
 				}
+				}
+				
 			  }
 			  `,
 			variables: {
@@ -1750,5 +1770,67 @@ export class CampService {
 				data: {},
 			});
 		}
+	}
+
+	public async getStatuswiseCount(req: any, body: any, resp: any) {
+		const status = this.enumService
+			.getEnumValue('GROUPS_STATUS')
+			.data.map((item) => item.value);
+
+		const variables: any = {};
+
+		let filterQueryArray = [];
+
+		if (body.search && body.search !== '') {
+			filterQueryArray.push(`{_or: [
+        { first_name: { _ilike: "%${body.search}%" } },
+        { last_name: { _ilike: "%${body.search}%" } },
+        { email_id: { _ilike: "%${body.search}%" } }
+      ]} `);
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{properties:{district:{_in: ${JSON.stringify(
+					body?.district,
+				)}}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
+			);
+		}
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				`{group_users: {user:{id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}}}`,
+			);
+		}
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+		const response = await this.campcoreservice.getStatuswiseCount(
+			filterQuery,
+			filterQueryArray,
+			status,
+			variables,
+		);
+
+		const newQdata = response?.data;
+		const res = ['all', ...status].map((item) => {
+			return {
+				status: item,
+				count: newQdata?.[item]?.aggregate?.count,
+			};
+		});
+
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: res,
+		});
 	}
 }

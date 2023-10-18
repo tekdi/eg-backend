@@ -124,4 +124,14 @@ export class CampController {
 	) {
 		return this.campService.getCampDetailsForAdmin(id, req, response);
 	}
+
+	@Get('/getStatuswiseCount')
+	@UseGuards(new AuthGuard())
+	getStatuswiseCount(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getStatuswiseCount(request, body, response);
+	}
 }

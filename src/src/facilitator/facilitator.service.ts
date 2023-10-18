@@ -1514,8 +1514,7 @@ export class FacilitatorService {
 
 	async getFacilitators(req: any, body: any, resp: any) {
 		const user: any = await this.userService.ipUserInfo(req);
-		
-		
+
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(400).send({
 				success: false,
@@ -1852,8 +1851,7 @@ export class FacilitatorService {
 
 		const count = mappedResponse.length;
 		const totalPages = Math.ceil(count / limit);
-		console.log("responseWithPagination ",responseWithPagination[0]);
-		
+
 		return resp.status(200).send({
 			success: true,
 			message: 'Facilitator data fetched successfully!',
