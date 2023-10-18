@@ -7,6 +7,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
+import { CampCoreService } from './camp.core.service';
 @Injectable()
 export class CampService {
 	constructor(
@@ -16,6 +17,7 @@ export class CampService {
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 		private s3Service: S3Service,
+		private campcoreservice: CampCoreService,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -1810,41 +1812,12 @@ export class CampService {
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
-		let query = `query MyQuery($limit: Int, $offset: Int) {
-			all:camps_aggregate(where:${filterQuery}) {
-			  aggregate {
-				count
-			  }
-			},
-			  not_registered: camps_aggregate(where:{ _and: [${filterQueryArray.join(
-					',',
-				)}, {group:{_or: [
-				{status: {_nin: ${JSON.stringify(
-					status.filter((item) => item != 'not_registered'),
-				)}}},
-				{ status: { _is_null: true } }
-			 ]}}] } ) {
-				aggregate {
-					count
-				}},
-			${status
-				.filter((item) => item != 'not_registered')
-				.map(
-					(
-						item,
-					) => `${item}:camps_aggregate(where:{ _and: [${filterQueryArray.join(
-						',',
-					)},{group: {status: {_eq: ${item}}}}] } ) {
-						aggregate {
-							count
-						}}`,
-				)}
-		}`;
-
-		const response = await this.hasuraServiceFromServices.getData({
-			query,
+		const response = await this.campcoreservice.getStatuswiseCount(
+			filterQuery,
+			filterQueryArray,
+			status,
 			variables,
-		});
+		);
 
 		const newQdata = response?.data;
 		const res = ['all', ...status].map((item) => {
@@ -1853,6 +1826,7 @@ export class CampService {
 				count: newQdata?.[item]?.aggregate?.count,
 			};
 		});
+
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
