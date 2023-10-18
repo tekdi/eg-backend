@@ -1851,7 +1851,6 @@ export class FacilitatorService {
 
 		const count = mappedResponse.length;
 		const totalPages = Math.ceil(count / limit);
-		console.log('responseWithPagination ', responseWithPagination[0]);
 
 		return resp.status(200).send({
 			success: true,
