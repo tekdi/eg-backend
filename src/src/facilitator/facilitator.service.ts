@@ -1491,7 +1491,7 @@ export class FacilitatorService {
 			if (users?.length == 0) {
 				resp.status(200).json({
 					message: 'BENEFICIARY_DATA_NOT_FOUND_ERROR',
-					data: { users: [] },
+					data: { data: [] },
 				});
 			} else {
 				resp.status(200).json({
