@@ -124,4 +124,36 @@ export class CampController {
 	) {
 		return this.campService.getCampDetailsForAdmin(id, req, response);
 	}
+
+	@Post('attendance/add')
+	@UseGuards(new AuthGuard())
+	markCampAttendance(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.campService.markCampAttendance(body, req, response);
+	}
+
+	@Patch('attendance/update/:id')
+	@UseGuards(new AuthGuard())
+	updateCampAttendance(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+		@Param('id') id: number,
+	) {
+		return this.campService.updateCampAttendance(id, body, req, response);
+	}
+
+	@Get('attendance/:id')
+	@UseGuards(new AuthGuard())
+	getCampAttendanceById(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+		@Param('id') id: number,
+	) {
+		return this.campService.getCampAttendanceById(id, req, response);
+	}
 }

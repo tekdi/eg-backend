@@ -6,11 +6,14 @@ import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
+import { AttendancesService } from '../attendances/attendances.service';
+
 @Injectable()
 export class CampService {
 	constructor(
 		private userService: UserService,
 		private hasuraService: HasuraService,
+		private attendancesService: AttendancesService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 		private s3Service: S3Service,
@@ -404,7 +407,7 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+					 profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 						id
 						name
 						doument_type
@@ -1748,6 +1751,143 @@ export class CampService {
 				status: 500,
 				message: 'IP_CAMP_DETAILS_ERROR' + error?.message,
 				data: {},
+			});
+		}
+	}
+
+	async markCampAttendance(body: any, req: any, resp: any) {
+		const photo_1 = body?.photo_1;
+		const photo_2 = body?.photo_2;
+
+		// Query for the names of both photo_1 and photo_2
+
+		const query = `query MyQuery {
+		  photo_1: documents_by_pk(id: ${photo_1}) {
+			id
+			name
+		  }
+		  photo_2: documents_by_pk(id: ${photo_2}) {
+			id
+			name
+		  }
+		}`;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const document_name_photo1 = hasura_response?.data?.photo_1?.name;
+		const document_name_photo2 = hasura_response?.data?.photo_2?.name;
+
+		// Update the camp_attendance_body object with the retrieved names
+		const camp_attendance_body = {
+			...body,
+			photo_1: document_name_photo1,
+			photo_2: document_name_photo2,
+		};
+
+		const response = await this.attendancesService.createAttendance(
+			camp_attendance_body,
+			req,
+			resp,
+		);
+
+		if (!response?.attendance?.id) {
+			return resp.json({
+				status: 500,
+				message: 'CAMP_ATTENDANCE_ERROR',
+				data: {},
+			});
+		} else {
+			return resp.json({
+				status: 200,
+				message: 'CAMP_ATTENDANCE_SUCCESS',
+				data: response,
+			});
+		}
+	}
+
+	async updateCampAttendance(id: any, body: any, req: any, resp: any) {
+		let UPDATE_TABLE_DETAILS = {
+			edit_attendance: {
+				attendance: ['photo_1', 'photo_2'],
+			},
+		};
+		const photo_1 = body?.photo_1;
+		const photo_2 = body?.photo_2;
+
+		// Query for the names of both photo_1 and photo_2
+
+		const query = `query MyQuery {
+		  photo_1: documents_by_pk(id: ${photo_1}) {
+			id
+			name
+		  }
+		  photo_2: documents_by_pk(id: ${photo_2}) {
+			id
+			name
+		  }
+		}`;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const document_name_photo1 = hasura_response?.data?.photo_1?.name;
+		const document_name_photo2 = hasura_response?.data?.photo_2?.name;
+
+		// Update the camp_attendance_body object with the retrieved names
+		const camp_attendance_body = {
+			...body,
+			photo_1: document_name_photo1,
+			photo_2: document_name_photo2,
+		};
+
+		console.log('camp_attendance_body-->>', camp_attendance_body);
+		let attendance_array = UPDATE_TABLE_DETAILS.edit_attendance.attendance;
+		const response = await this.attendancesService.updateAttendance(
+			id,
+			camp_attendance_body,
+			[...attendance_array, 'updated_by'],
+			req,
+			resp,
+		);
+
+		if (!response?.attendance?.id) {
+			return resp.json({
+				status: 500,
+				message: 'CAMP_ATTENDANCE_ERROR',
+				data: {},
+			});
+		} else {
+			return resp.json({
+				status: 200,
+				message: 'CAMP_ATTENDANCE_SUCCESS',
+				data: response,
+			});
+		}
+	}
+
+	async getCampAttendanceById(id: any, req: any, res: any) {
+		let response = await this.attendancesService.getCampAttendance(
+			id,
+			req,
+			res,
+		);
+
+		let attendance_data = response?.data?.attendance;
+
+		if (attendance_data?.length == 0) {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_NOT_FOUND',
+				data: [{}],
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_FOUND_SUCCESS',
+				data: attendance_data,
 			});
 		}
 	}
