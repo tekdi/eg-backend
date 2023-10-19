@@ -1412,9 +1412,9 @@ export class CampService {
 
 	async getCampList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-		const status_array = (
-			await this.enumService.getEnumValue('GROUPS_STATUS')
-		).data.map((item) => item.value);
+		const status_array = this.enumService
+			.getEnumValue('GROUPS_STATUS')
+			.data.map((item) => item.value);
 		let filterQueryArray = [];
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
