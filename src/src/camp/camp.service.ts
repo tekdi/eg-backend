@@ -1857,6 +1857,15 @@ export class CampService {
 				data: [{}],
 			});
 		} else {
+			attendance_data?.map((attendance) => {
+				if (attendance?.fa_similarity_percentage > 90) {
+					attendance.status = 'present';
+				} else if (attendance?.fa_similarity_percentage == null) {
+					attendance.status = 'pending';
+				} else {
+					attendance.status = 'absent';
+				}
+			});
 			return res.json({
 				status: 200,
 				message: 'ATTENDANCE_DATA_FOUND_SUCCESS',
