@@ -68,7 +68,7 @@ export class AwsRekognitionService {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 1',
-				'response ListCollectionsCommand ' + collections,
+				'response ListCollectionsCommand ' + JSON.stringify(collections),
 				'info',
 			);
 			if (!collections.CollectionIds.includes(collectionId)) {
@@ -78,7 +78,7 @@ export class AwsRekognitionService {
 				this.sentryService.addBreadcrumb(
 					'Cron Job 1',
 					'response CreateCollectionCommand ' +
-						createCollectionResponse,
+					JSON.stringify(createCollectionResponse),
 					'info',
 				);
 				response.new = true;
@@ -135,7 +135,7 @@ export class AwsRekognitionService {
 				this.sentryService.addBreadcrumb(
 					'Cron Job 1',
 					'Trying to create user with details as: ' +
-						createUserParams,
+					JSON.stringify(createUserParams),
 					'info',
 				);
 				await this.rekognition.send(
@@ -226,7 +226,7 @@ export class AwsRekognitionService {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'disassociateFaceResponse: ' + disassociateFaceResponse,
+				'disassociateFaceResponse: ' + JSON.stringify(disassociateFaceResponse),
 				'info',
 			);
 			if (disassociateFaceResponse.DisassociatedFaces.length === 1)
@@ -250,7 +250,7 @@ export class AwsRekognitionService {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'deleteFacesResponse: ' + deleteFacesResponse,
+				'deleteFacesResponse: ' + JSON.stringify(deleteFacesResponse),
 				'info',
 			);
 			if (deleteFacesResponse.DeletedFaces.length === 1)
@@ -278,7 +278,7 @@ export class AwsRekognitionService {
 			};
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'addFaceParams: ' + addFaceParams,
+				'addFaceParams: ' + JSON.stringify(addFaceParams),
 				'info',
 			);
 			const addFaceResponse = await this.rekognition.send(
@@ -286,7 +286,7 @@ export class AwsRekognitionService {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'addFaceResponse: ' + addFaceResponse,
+				'addFaceResponse: ' + JSON.stringify(addFaceResponse),
 				'info',
 			);
 			if (addFaceResponse.FaceRecords.length === 1) {
@@ -318,7 +318,7 @@ export class AwsRekognitionService {
 			};
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'associateFacesParams: ' + associateFacesParams,
+				'associateFacesParams: ' + JSON.stringify(associateFacesParams),
 				'info',
 			);
 			const associateFaceResponse = await this.rekognition.send(
@@ -326,7 +326,7 @@ export class AwsRekognitionService {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'associateFaceResponse: ' + associateFaceResponse,
+				'associateFaceResponse: ' + JSON.stringify(associateFaceResponse),
 				'info',
 			);
 			if (associateFaceResponse.AssociatedFaces.length === 1)
@@ -357,7 +357,7 @@ export class AwsRekognitionService {
 			};
 			this.sentryService.addBreadcrumb(
 				'Cron Job 3',
-				'searchParams: ' + searchParams,
+				'searchParams: ' + JSON.stringify(searchParams),
 				'info',
 			);
 			const compareResponse = await this.rekognition.send(
@@ -365,7 +365,7 @@ export class AwsRekognitionService {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 3',
-				'Matching faces: ' + compareResponse,
+				'Matching faces: ' + JSON.stringify(compareResponse),
 				'info',
 			);
 			return compareResponse.UserMatches;

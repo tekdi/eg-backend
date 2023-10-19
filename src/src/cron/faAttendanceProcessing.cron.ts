@@ -50,7 +50,8 @@ export class FaAttendanceProcessingCron {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 3',
-				'response usersForAttendance ' + usersForAttendance,
+				'response usersForAttendance ' +
+					JSON.stringify(usersForAttendance),
 				'info',
 			);
 			// Step-2 Iterate thorugh them

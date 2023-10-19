@@ -55,7 +55,7 @@ export class FaUserIndexingCron {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 1',
-				'response fetchAllUsersExceptCreated ' + nonCreatedUsers,
+				'response fetchAllUsersExceptCreated ' + JSON.stringify(nonCreatedUsers),
 				'info',
 			);
 			let nonexistusers = nonCreatedUsers.map((userObj) =>
@@ -63,7 +63,7 @@ export class FaUserIndexingCron {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 1',
-				'response nonexistusers ' + nonexistusers,
+				'response nonexistusers ' + JSON.stringify(nonexistusers),
 				'info',
 			);
 			// Step-3: Create not created users in collection and update status in users table
@@ -102,7 +102,7 @@ export class FaUserIndexingCron {
 				?.users;
 			this.sentryService.addBreadcrumb(
 				'Cron Job 1',
-				'fetchALluser count ' + users.length + ' fetchALluser ' + users,
+				'fetchALluser count ' + users.length + ' fetchALluser ' + JSON.stringify(users),
 				'info',
 			);
 			return users;
@@ -118,7 +118,7 @@ export class FaUserIndexingCron {
 			await this.awsRekognitionService.deleteCollection(collectionId);
 		this.sentryService.addBreadcrumb(
 			'Cron Job 1',
-			'collectionDeleted: ' + collectionDeleted,
+			'collectionDeleted: ' + JSON.stringify(collectionDeleted),
 			'info',
 		);
 		let response = { success: false };

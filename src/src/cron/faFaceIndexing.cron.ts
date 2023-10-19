@@ -53,7 +53,7 @@ export class FaFaceIndexingCron {
 			);
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'response usersToIndexFaces ' + usersToIndexFaces,
+				'response usersToIndexFaces ' + JSON.stringify(usersToIndexFaces),
 				'info',
 			);
 
@@ -270,7 +270,7 @@ export class FaFaceIndexingCron {
 				?.users;
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'fetchindex: ' + users,
+				'fetchindex: ' + JSON.stringify(users),
 				'info',
 			);
 			users.forEach((user) => {
@@ -288,7 +288,7 @@ export class FaFaceIndexingCron {
 			});
 			this.sentryService.addBreadcrumb(
 				'Cron Job 2',
-				'Batch of users for whom face photos to be indexed: ' + users,
+				'Batch of users for whom face photos to be indexed: ' + JSON.stringify(users),
 				'info',
 			);
 			return users;
@@ -313,7 +313,7 @@ export class FaFaceIndexingCron {
 		).success;
 		this.sentryService.addBreadcrumb(
 			'Cron Job 2',
-			'photoDisassociated: ' + photoDisassociated,
+			'photoDisassociated: ' + JSON.stringify(photoDisassociated),
 			'info',
 		);
 		let response = { success: false };
@@ -343,7 +343,7 @@ export class FaFaceIndexingCron {
 			);
 		this.sentryService.addBreadcrumb(
 			'Cron Job 2',
-			'addFaceResponse111: ' + addFaceResponse,
+			'addFaceResponse111: ' + JSON.stringify(addFaceResponse),
 			'info',
 		);
 		const response = { success: false, faceId: addFaceResponse.faceId };
