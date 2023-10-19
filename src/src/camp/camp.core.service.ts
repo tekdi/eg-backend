@@ -66,9 +66,9 @@ export class CampCoreService {
 	public async list(body: any) {
 		let filterQueryArray = [];
 
-		const status_array = (
-			await this.enumService.getEnumValue('GROUPS_STATUS')
-		).data.map((item) => item.value);
+		const status_array = this.enumService
+			.getEnumValue('GROUPS_STATUS')
+			.data.map((item) => item.value);
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
