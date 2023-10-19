@@ -134,4 +134,15 @@ export class CampController {
 	) {
 		return this.campService.getStatuswiseCount(request, body, response);
 	}
+
+	@Post('/admin/filter-by-camps')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	async getFilter_By_Camps(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		await this.campService.getFilter_By_Camps(body, req, response);
+	}
 }
