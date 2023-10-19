@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { startTransaction, Transaction } from '@sentry/node';
 
 @Injectable()
 export class SentryService {

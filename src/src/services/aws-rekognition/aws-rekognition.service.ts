@@ -81,7 +81,6 @@ export class AwsRekognitionService {
 						createCollectionResponse,
 					'info',
 				);
-				//console.dir(createCollectionResponse, { depth: 99 });
 				response.new = true;
 				response.data = createCollectionResponse;
 			} else {
