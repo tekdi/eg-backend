@@ -65,15 +65,17 @@ export class CampCoreService {
 
 	public async list(body: any) {
 		let filterQueryArray = [];
+
+		const status_array = (
+			await this.enumService.getEnumValue('GROUPS_STATUS')
+		).data.map((item) => item.value);
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 
 		let status = body?.status;
 
-		if (body?.search && body?.search !== '') {
-			filterQueryArray.push(`{group:{name:{_eq:"${body?.search}"}}}`);
-		}
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{properties:{district:{_in: ${JSON.stringify(
@@ -97,7 +99,15 @@ export class CampCoreService {
 		}
 
 		if (body?.status && body?.status !== '') {
-			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+			if (body?.status == 'all') {
+				filterQueryArray.push(
+					`{group: {status: {_in: ${JSON.stringify(
+						status_array.filter((item) => item != 'not_registered'),
+					)}}}}`,
+				);
+			} else {
+				filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+			}
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
