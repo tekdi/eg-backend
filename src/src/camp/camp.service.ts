@@ -6,6 +6,8 @@ import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
+import { AttendancesService } from '../attendances/attendances.service';
+
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
 @Injectable()
@@ -13,6 +15,7 @@ export class CampService {
 	constructor(
 		private userService: UserService,
 		private hasuraService: HasuraService,
+		private attendancesService: AttendancesService,
 		private enumService: EnumService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
@@ -1768,6 +1771,92 @@ export class CampService {
 				status: 500,
 				message: 'IP_CAMP_DETAILS_ERROR' + error?.message,
 				data: {},
+			});
+		}
+	}
+
+	async markCampAttendance(body: any, req: any, resp: any) {
+		const camp_attendance_body = {
+			...body,
+		};
+
+		const response = await this.attendancesService.createAttendance(
+			camp_attendance_body,
+			req,
+			resp,
+		);
+
+		if (!response?.attendance?.id) {
+			return resp.json({
+				status: 500,
+				message: 'CAMP_ATTENDANCE_ERROR',
+				data: {},
+			});
+		} else {
+			return resp.json({
+				status: 200,
+				message: 'CAMP_ATTENDANCE_SUCCESS',
+				data: response,
+			});
+		}
+	}
+
+	async updateCampAttendance(id: any, body: any, req: any, resp: any) {
+		let UPDATE_TABLE_DETAILS = {
+			edit_attendance: {
+				attendance: ['photo_1', 'photo_2'],
+			},
+		};
+
+		// Update the camp_attendance_body object with the retrieved names
+		const camp_attendance_body = {
+			...body,
+		};
+
+		let attendance_array = UPDATE_TABLE_DETAILS.edit_attendance.attendance;
+		const response = await this.attendancesService.updateAttendance(
+			id,
+			camp_attendance_body,
+			[...attendance_array, 'updated_by'],
+			req,
+			resp,
+		);
+
+		if (!response?.attendance?.id) {
+			return resp.json({
+				status: 500,
+				message: 'CAMP_ATTENDANCE_ERROR',
+				data: {},
+			});
+		} else {
+			return resp.json({
+				status: 200,
+				message: 'CAMP_ATTENDANCE_SUCCESS',
+				data: response,
+			});
+		}
+	}
+
+	async getCampAttendanceById(id: any, req: any, res: any) {
+		let response = await this.attendancesService.getCampAttendance(
+			id,
+			req,
+			res,
+		);
+
+		let attendance_data = response?.data?.attendance;
+
+		if (attendance_data?.length == 0) {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_NOT_FOUND',
+				data: [{}],
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_FOUND_SUCCESS',
+				data: attendance_data,
 			});
 		}
 	}
