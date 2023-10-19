@@ -1756,34 +1756,8 @@ export class CampService {
 	}
 
 	async markCampAttendance(body: any, req: any, resp: any) {
-		const photo_1 = body?.photo_1;
-		const photo_2 = body?.photo_2;
-
-		// Query for the names of both photo_1 and photo_2
-
-		const query = `query MyQuery {
-		  photo_1: documents_by_pk(id: ${photo_1}) {
-			id
-			name
-		  }
-		  photo_2: documents_by_pk(id: ${photo_2}) {
-			id
-			name
-		  }
-		}`;
-
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
-		const document_name_photo1 = hasura_response?.data?.photo_1?.name;
-		const document_name_photo2 = hasura_response?.data?.photo_2?.name;
-
-		// Update the camp_attendance_body object with the retrieved names
 		const camp_attendance_body = {
 			...body,
-			photo_1: document_name_photo1,
-			photo_2: document_name_photo2,
 		};
 
 		const response = await this.attendancesService.createAttendance(
@@ -1813,37 +1787,12 @@ export class CampService {
 				attendance: ['photo_1', 'photo_2'],
 			},
 		};
-		const photo_1 = body?.photo_1;
-		const photo_2 = body?.photo_2;
-
-		// Query for the names of both photo_1 and photo_2
-
-		const query = `query MyQuery {
-		  photo_1: documents_by_pk(id: ${photo_1}) {
-			id
-			name
-		  }
-		  photo_2: documents_by_pk(id: ${photo_2}) {
-			id
-			name
-		  }
-		}`;
-
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
-		const document_name_photo1 = hasura_response?.data?.photo_1?.name;
-		const document_name_photo2 = hasura_response?.data?.photo_2?.name;
 
 		// Update the camp_attendance_body object with the retrieved names
 		const camp_attendance_body = {
 			...body,
-			photo_1: document_name_photo1,
-			photo_2: document_name_photo2,
 		};
 
-		console.log('camp_attendance_body-->>', camp_attendance_body);
 		let attendance_array = UPDATE_TABLE_DETAILS.edit_attendance.attendance;
 		const response = await this.attendancesService.updateAttendance(
 			id,
