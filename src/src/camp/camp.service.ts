@@ -1412,6 +1412,9 @@ export class CampService {
 
 	async getCampList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+		const status_array = (
+			await this.enumService.getEnumValue('GROUPS_STATUS')
+		).data.map((item) => item.value);
 		let filterQueryArray = [];
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -1454,7 +1457,15 @@ export class CampService {
 		}
 
 		if (body?.status && body?.status !== '') {
-			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+			if (body?.status == 'all') {
+				filterQueryArray.push(
+					`{group: {status: {_in: ${JSON.stringify(
+						status_array.filter((item) => item != 'not_registered'),
+					)}}}}`,
+				);
+			} else {
+				filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+			}
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
