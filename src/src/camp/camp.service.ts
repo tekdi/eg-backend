@@ -1412,7 +1412,6 @@ export class CampService {
 
 	async getCampList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-		let filterQueryArray = [];
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
 				success: false,
@@ -1420,133 +1419,13 @@ export class CampService {
 				data: {},
 			});
 		}
+		const data = await this.campcoreservice.list(body);
 
-		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
-		let offset = page > 1 ? limit * (page - 1) : 0;
-
-		let status = body?.status;
-
-		if (body?.search && body?.search !== '') {
-			filterQueryArray.push(`{group:{name:{_eq:"${body?.search}"}}}`);
-		}
-
-		if (body?.district && body?.district.length > 0) {
-			filterQueryArray.push(
-				`{properties:{district:{_in: ${JSON.stringify(
-					body?.district,
-				)}}}}`,
-			);
-		}
-
-		if (body?.block && body?.block.length > 0) {
-			filterQueryArray.push(
-				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
-			);
-		}
-
-		if (body.facilitator && body.facilitator.length > 0) {
-			filterQueryArray.push(
-				`{group_users: {user:{id:{_in: ${JSON.stringify(
-					body.facilitator,
-				)}}}}}`,
-			);
-		}
-
-		if (body?.status && body?.status !== '') {
-			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
-		}
-
-		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-		let data = {
-			query: `query MyQuery($limit: Int, $offset: Int) {
-				camps_aggregate(where:${filterQuery}) {
-				  aggregate {
-					count
-				  }
-				}
-				camps(limit: $limit, offset: $offset, where: ${filterQuery}) {
-				  id
-				  kit_received
-					kit_was_sufficient
-					kit_ratings
-					kit_feedback
-				  properties {
-					district
-					block
-					state
-					village
-					landmark
-					grampanchayat
-					street
-				  }
-				  group {
-					name
-					status
-				  }
-				 faciltator:group_users(where: {member_type: {_eq: "owner"}}) {
-					user {
-					  faciltator_id: id
-					  first_name
-					  middle_name
-					  last_name
-					}
-					
-				  }
-				  beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
-					user {
-						id
-						first_name
-						middle_name
-						last_name
-						mobile
-						state
-						district
-						block
-						village
-						profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
-							id
-							name
-							doument_type
-							document_sub_type
-							path
-						}
-					}
-				}
-				}
-				
-			  }
-			  `,
-			variables: {
-				limit: limit,
-				offset: offset,
-			},
-		};
-
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: data.query,
-		});
-
-		const camps_data = hasura_response?.data?.camps;
-
-		let camps = camps_data?.map((camp) => {
-			camp.faciltator = camp?.faciltator?.[0];
-			return camp;
-		});
-
-		const count = hasura_response?.data?.camps_aggregate?.aggregate?.count;
-		const totalPages = Math.ceil(count / limit);
-		if (camps) {
+		if (data) {
 			return resp.json({
 				status: 200,
 				message: 'Camp Data Found Successfully',
-				data: {
-					camps,
-					totalCount: count,
-					limit,
-					currentPage: page,
-					totalPages: `${totalPages}`,
-				},
+				data: data,
 			});
 		} else {
 			return resp.json({
@@ -1925,5 +1804,44 @@ export class CampService {
 			message: 'Data found successfully!',
 			data: res,
 		});
+	}
+
+	async getFilter_By_Camps(body: any, req: any, resp: any) {
+		const data = await this.campcoreservice.list(body);
+
+		const faciltatorIds = new Set();
+		data?.camps?.forEach((item) => {
+			if (item?.faciltator?.user?.faciltator_id) {
+				faciltatorIds.add(item.faciltator.user.faciltator_id);
+			}
+		});
+
+		// Convert the Set to an array if needed
+		const uniqueFaciltatorIds = [...faciltatorIds];
+
+		const query = `query MyQuery{
+				users(where:{id:{_in:[${uniqueFaciltatorIds}]}}){
+					id
+					first_name
+					last_name
+				}
+			}`;
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		if (hasura_response?.data?.users) {
+			return resp.json({
+				status: 200,
+				message: 'Camp Data Found Successfully',
+				data: hasura_response?.data || { users: [] },
+			});
+		} else {
+			return resp.json({
+				status: 500,
+				message: 'IP_CAMP_LIST_ERROR',
+				data: {},
+			});
+		}
 	}
 }
