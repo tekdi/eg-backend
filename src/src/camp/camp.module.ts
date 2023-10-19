@@ -11,6 +11,7 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { AttendancesModule } from '../attendances/attendances.module';
+import { CampCoreService } from './camp.core.service';
 
 @Module({
 	imports: [
@@ -26,7 +27,7 @@ import { AttendancesModule } from '../attendances/attendances.module';
 		AttendancesModule,
 	],
 
+	providers: [CampService, CampCoreService],
 	controllers: [CampController],
-	providers: [CampService],
 })
 export class CampModule {}

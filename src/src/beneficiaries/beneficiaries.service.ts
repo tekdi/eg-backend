@@ -859,8 +859,6 @@ export class BeneficiariesService {
 		}
 	}
 	public async findAll(body: any, req: any, resp: any) {
-		
-		
 		const user = await this.userService.ipUserInfo(req);
 
 		if (!user?.data?.id) {
@@ -922,7 +920,9 @@ export class BeneficiariesService {
 		}
 
 		if (body?.is_duplicate && body?.is_duplicate !== '') {
-			filterQueryArray.push(`{is_duplicate:{_eq:"${body?.is_duplicate}"}}`);
+			filterQueryArray.push(
+				`{is_duplicate:{_eq:"${body?.is_duplicate}"}}`,
+			);
 		}
 		if (
 			body?.enrollment_verification_status &&
@@ -1115,10 +1115,10 @@ export class BeneficiariesService {
 				offset: offset,
 			},
 		};
-		
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
-		
+
 		let mappedResponse = result;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
@@ -1190,8 +1190,7 @@ export class BeneficiariesService {
 		}
 	}
 
-	public async findOne(id: number, resp?:any) {
-
+	public async findOne(id: number, resp?: any) {
 		var data = {
 			query: `query searchById {
 				users_by_pk(id: ${id}) {
@@ -1395,7 +1394,7 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
-		let result: any =  response?.data?.users_by_pk;
+		let result: any = response?.data?.users_by_pk;
 		if (!result) {
 			if (resp) {
 				return resp.status(404).send({
@@ -3300,7 +3299,7 @@ export class BeneficiariesService {
 
 		const hasuraResult = (
 			await this.hasuraServiceFromServices.getData(data)
-		)?.data.users;
+		)?.data?.users;
 
 		const result = {
 			success: false,
