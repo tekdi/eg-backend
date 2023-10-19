@@ -1212,7 +1212,7 @@ export class FacilitatorService {
 				filterQueryArray.push('{block: { _in: $block }}');
 				variables.block = body.block;
 			}
-			
+
 			filterQueryArray.unshift(
 				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
 			);
@@ -1401,126 +1401,120 @@ export class FacilitatorService {
 		return response;
 	}
 
-	async getFilter_By_Beneficiaries(body: any) {
-		const { district, block, status, search } = body;
+	async getFilter_By_Beneficiaries(body: any, resp: any, req: any) {
+		try {
+			const page = isNaN(body.page) ? 1 : parseInt(body.page);
+			const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
+			let offset = page > 1 ? limit * (page - 1) : 0;
 
-		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
-		let offset = page > 1 ? limit * (page - 1) : 0;
-
-		let variables = { limit: limit, offset: offset };
-		let split = search.split(' ');
-		let searchQuery = '';
-		if (search.trim()) {
-			if (split.length <= 1) {
-				searchQuery = `
-					{
-						_or: [
-							{ first_name: { _ilike: "%${search}%" } },
-							{ last_name: { _ilike: "%${search}%" } },
-						]
-					}
-				`;
-			} else if (split.length <= 2) {
-				const firstWord = split[0];
-				const lastWord = split[1];
-				searchQuery = `
-					{
-						_or: [
-							{
-								_and: [
-									{ first_name: { _ilike: "%${firstWord}%" } },
-									{ last_name: { _ilike: "%${lastWord}%" } },
-								],
-							},
-							{
-								_and: [
-									{ first_name: { _ilike: "%${lastWord}%" } },
-									{ last_name: { _ilike: "%${firstWord}%" } },
-								]
-							}
-						]
-					}
-				`;
+			const user: any = await this.userService.ipUserInfo(req);
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return resp.status(404).send({
+					success: false,
+					message: 'Invalid User',
+					data: {},
+				});
 			}
-		}
+			const variables: any = {};
+			let filterQueryArray = [];
 
-		const data = {
-			query: `query MyQuery1($limit:Int,$offset:Int) {
-				users_aggregate(limit:$limit,offset:$offset,where: {
-					_and:[
-						{
-							program_faciltators: {
-								beneficiaries: {
-									user: {
-										district: {_in: ${JSON.stringify(district)}},
-										block: {_in: ${JSON.stringify(block)}}
-									},
-									status: {_eq: "${status}"}
-								}
-							}
-						},
-						${searchQuery}
-					]
-				}) {
+			if (body?.search && body?.search !== '') {
+				const [first_name, last_name] = body.search.split(' ');
+
+				if (last_name?.length > 0) {
+					filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
+				 ]} `);
+				} else {
+					filterQueryArray.push(`{_or: [
+				{ first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${first_name}%" } }
+				 ]} `);
+				}
+			}
+
+			if (
+				body?.hasOwnProperty('status') &&
+				this.isValidString(body?.status) &&
+				this.allStatus.map((obj) => obj.value).includes(body?.status)
+			) {
+				filterQueryArray.push(
+					'{program_faciltators: {status: {_eq: $status}}}',
+				);
+				variables.status = body?.status;
+			}
+
+			if (body?.district && body?.district.length > 0) {
+				filterQueryArray.push(
+					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+				);
+			}
+
+			if (body?.block && body?.block.length > 0) {
+				filterQueryArray.push(
+					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+				);
+			}
+
+			filterQueryArray.unshift(
+				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
+			);
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+			const data = {
+				query: `query MyQuery1($limit:Int,$offset:Int) {
+				users_aggregate(limit:$limit,offset:$offset,where: ${filterQuery}) {
 					aggregate {
 					  count
 					}
 				  }
-				users(where: {
-					_and:[
-						{
-							program_faciltators: {
-								beneficiaries: {
-									user: {
-										district: {_in: ${JSON.stringify(district)}},
-										block: {_in: ${JSON.stringify(block)}}
-									},
-									status: {_eq: "${status}"}
-								}
-							}
-						},
-						${searchQuery}
-					]
-				}) {
+				users(where: ${filterQuery}) {
 				  id
 				  first_name
 				  middle_name
 				  last_name
 				}
 			  }`,
-			variables: variables,
-		};
+				variables: variables,
+			};
 
-		const response = {
-			success: false,
-			users: [],
-			message: '',
-			count: '',
-		};
+			const result = await this.hasuraService.getData({
+				query: data.query,
+			});
 
-		try {
-			let users = (await this.hasuraService.getData(data)).data;
-			let count = users.users_aggregate.aggregate.count;
-			let user_response = users.users;
+			let count = result?.data?.users_aggregate?.aggregate?.count;
 
-			if (!users) {
-				response.message = 'Hasura error';
+			const users = result?.data?.users;
+
+			if (users?.length == 0) {
+				resp.status(404).json({
+					message: 'BENEFICIARY_DATA_NOT_FOUND_ERROR',
+					data: { users: [] },
+				});
+			} else {
+				resp.status(200).json({
+					message: 'Data found successfully',
+					data: {
+						totalCount: count,
+						data: users || [],
+						limit,
+						currentPage: page,
+					},
+				});
 			}
-
-			response.success = true;
-			response.count = count;
-			response.users = user_response;
-			response.message = 'success';
-
-			return response;
 		} catch (error) {
-			response.message = 'Hasura error';
+			return resp.status(500).json({
+				message: 'BENEFICIARIES_LIST_ERROR',
+				data: {},
+			});
 		}
 	}
 
 	async getFacilitators(req: any, body: any, resp: any) {
 		const user: any = await this.userService.ipUserInfo(req);
+
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(400).send({
 				success: false,
@@ -2038,7 +2032,7 @@ export class FacilitatorService {
 								count:
 									statusKey === 'identified'
 										? aggregateCount
-										: benefeciary[statusKey]?.aggregateCount
+										: benefeciary[statusKey]?.aggregate
 												?.count || 0,
 							}));
 

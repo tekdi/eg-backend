@@ -115,17 +115,16 @@ export class FacilitatorController {
 	@Post('/admin/filter-by-beneficiaries')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
-	async getFilter_By_Beneficiaries(@Body() body: any, @Res() res: any) {
-		const result = await this.facilitatorService.getFilter_By_Beneficiaries(
+	async getFilter_By_Beneficiaries(
+		@Body() body: any,
+		@Res() res: any,
+		@Req() req: any,
+	) {
+		await this.facilitatorService.getFilter_By_Beneficiaries(
 			body,
+			res,
+			req,
 		);
-
-		return res.status(result.success ? 200 : 500).json({
-			success: result.success,
-			message: result.message,
-			data: result.users,
-			count: result.count,
-		});
 	}
 
 	@Post('/exportCsv')

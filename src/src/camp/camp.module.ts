@@ -10,6 +10,7 @@ import { EnumModule } from '../enum/enum.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
+import { CampCoreService } from './camp.core.service';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { UploadFileModule } from 'src/upload-file/upload-file.module';
 		UploadFileModule,
 		EnumModule,
 	],
-	providers: [CampService],
+	providers: [CampService, CampCoreService],
 	controllers: [CampController],
 })
 export class CampModule {}
