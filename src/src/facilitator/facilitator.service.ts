@@ -1505,7 +1505,7 @@ export class FacilitatorService {
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
-			var data = {
+			const data = {
 				query: `query MyQuery($limit:Int, $offset:Int) {
 					users_aggregate(where:${filterQuery}) {
 						aggregate {
