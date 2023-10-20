@@ -52,6 +52,7 @@ export class AttendancesCoreService {
 	) {
 		let query = `query MyQuery {
 			attendance(where: {context_id: {_eq:${id}}}){
+				id
 			  status
 			  fa_is_processed
 			  fa_similarity_percentage
