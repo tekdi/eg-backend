@@ -44,14 +44,11 @@ export class AttendancesCoreService {
 		return response;
 	}
 
-	public async getByCampId(
-		id: any,
+	public async getAttendanceByCampId(id: any, body: any, req: any, res: any) {
+		let { start_date, end_date } = body;
 
-		req: any,
-		res: any,
-	) {
 		let query = `query MyQuery {
-			attendance(where: {context_id: {_eq:${id}}}){
+			attendance(where: {context_id: {_eq:${id}}, date_time: {_gte:"${start_date}", _lte:"${end_date}"}}) {
 			  status
 			  fa_is_processed
 			  fa_similarity_percentage

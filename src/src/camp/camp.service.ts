@@ -1720,9 +1720,20 @@ export class CampService {
 		}
 	}
 
-	async getCampAttendanceById(id: any, req: any, res: any) {
+	async getCampAttendanceById(id: any, body: any, req: any, res: any) {
+		if (
+			!(body?.start_date && body?.start_date != '') ||
+			!(body?.end_date && body?.end_date != '')
+		) {
+			return res.json({
+				status: 400,
+				message: 'DATE_INTERVAL_REQUIRED_ERROR',
+				data: [{}],
+			});
+		}
 		let response = await this.attendancesService.getCampAttendance(
 			id,
+			body,
 			req,
 			res,
 		);

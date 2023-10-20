@@ -146,7 +146,7 @@ export class CampController {
 		return this.campService.updateCampAttendance(id, body, req, response);
 	}
 
-	@Get('attendance/:id')
+	@Post('attendance/:id')
 	@UseGuards(new AuthGuard())
 	getCampAttendanceById(
 		@Req() req: any,
@@ -154,7 +154,7 @@ export class CampController {
 		@Body() body: any,
 		@Param('id') id: number,
 	) {
-		return this.campService.getCampAttendanceById(id, req, response);
+		return this.campService.getCampAttendanceById(id, body, req, response);
 	}
 
 	@Get('/getStatuswiseCount')

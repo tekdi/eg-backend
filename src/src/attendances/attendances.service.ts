@@ -74,12 +74,14 @@ export class AttendancesService {
 		return updateAttendanceResponse;
 	}
 
-	public async getCampAttendance(id: any, req: any, res: any) {
-		let getCampResponse = await this.attendanceCoreService.getByCampId(
-			id,
-			req,
-			res,
-		);
+	public async getCampAttendance(id: any, body: any, req: any, res: any) {
+		let getCampResponse =
+			await this.attendanceCoreService.getAttendanceByCampId(
+				id,
+				body,
+				req,
+				res,
+			);
 
 		return getCampResponse;
 	}
