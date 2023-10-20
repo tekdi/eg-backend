@@ -6,21 +6,14 @@ import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
-import { AttendancesService } from '../attendances/attendances.service';
-
-import { EnumService } from '../enum/enum.service';
-import { CampCoreService } from './camp.core.service';
 @Injectable()
 export class CampService {
 	constructor(
 		private userService: UserService,
 		private hasuraService: HasuraService,
-		private attendancesService: AttendancesService,
-		private enumService: EnumService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 		private s3Service: S3Service,
-		private campcoreservice: CampCoreService,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -411,7 +404,13 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id 
+					id profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					  }
 					name
 				  }
 			  }
@@ -1412,6 +1411,7 @@ export class CampService {
 
 	async getCampList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+		let filterQueryArray = [];
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
 				success: false,
@@ -1419,13 +1419,111 @@ export class CampService {
 				data: {},
 			});
 		}
-		const data = await this.campcoreservice.list(body);
 
-		if (data) {
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
+		let status = body?.status;
+
+		if (body?.search && body?.search !== '') {
+			filterQueryArray.push(`{group:{name:{_eq:"${body?.search}"}}}`);
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{properties:{district:{_in: ${JSON.stringify(
+					body?.district,
+				)}}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
+			);
+		}
+
+		if (body.facilitator && body.facilitator.length > 0) {
+			filterQueryArray.push(
+				`{group_users: {user:{id:{_in: ${JSON.stringify(
+					body.facilitator,
+				)}}}}}`,
+			);
+		}
+
+		if (body?.status && body?.status !== '') {
+			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+		}
+
+		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		let data = {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				camps_aggregate(where:${filterQuery}) {
+				  aggregate {
+					count
+				  }
+				}
+				camps(limit: $limit, offset: $offset, where: ${filterQuery}) {
+				  id
+				  kit_received
+					kit_was_sufficient
+					kit_ratings
+					kit_feedback
+				  properties {
+					district
+					block
+					state
+					village
+					landmark
+					grampanchayat
+					street
+				  }
+				  group {
+					name
+					status
+				  }
+				 faciltator:group_users(where: {member_type: {_eq: "owner"}}) {
+					user {
+					  faciltator_id: id
+					  first_name
+					  middle_name
+					  last_name
+					}
+				  }
+				}
+			  }
+			  `,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: data.query,
+		});
+
+		const camps_data = hasura_response?.data?.camps;
+
+		let camps = camps_data?.map((camp) => {
+			camp.faciltator = camp?.faciltator?.[0];
+			return camp;
+		});
+
+		const count = hasura_response?.data?.camps_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
+		if (camps) {
 			return resp.json({
 				status: 200,
 				message: 'Camp Data Found Successfully',
-				data: data,
+				data: {
+					camps,
+					totalCount: count,
+					limit,
+					currentPage: page,
+					totalPages: `${totalPages}`,
+				},
 			});
 		} else {
 			return resp.json({
@@ -1510,6 +1608,7 @@ export class CampService {
 					properties {
 						lat
 						long
+						property_type
 						state
 						district
 						village
@@ -1653,193 +1752,6 @@ export class CampService {
 			return resp.json({
 				status: 500,
 				message: 'IP_CAMP_DETAILS_ERROR' + error?.message,
-				data: {},
-			});
-		}
-	}
-
-	async markCampAttendance(body: any, req: any, resp: any) {
-		const camp_attendance_body = {
-			...body,
-		};
-
-		const response = await this.attendancesService.createAttendance(
-			camp_attendance_body,
-			req,
-			resp,
-		);
-
-		if (!response?.attendance?.id) {
-			return resp.json({
-				status: 500,
-				message: 'CAMP_ATTENDANCE_ERROR',
-				data: {},
-			});
-		} else {
-			return resp.json({
-				status: 200,
-				message: 'CAMP_ATTENDANCE_SUCCESS',
-				data: response,
-			});
-		}
-	}
-
-	async updateCampAttendance(id: any, body: any, req: any, resp: any) {
-		let UPDATE_TABLE_DETAILS = {
-			edit_attendance: {
-				attendance: ['photo_1', 'photo_2'],
-			},
-		};
-
-		// Update the camp_attendance_body object with the retrieved names
-		const camp_attendance_body = {
-			...body,
-		};
-
-		let attendance_array = UPDATE_TABLE_DETAILS.edit_attendance.attendance;
-		const response = await this.attendancesService.updateAttendance(
-			id,
-			camp_attendance_body,
-			[...attendance_array, 'updated_by'],
-			req,
-			resp,
-		);
-
-		if (!response?.attendance?.id) {
-			return resp.json({
-				status: 500,
-				message: 'CAMP_ATTENDANCE_ERROR',
-				data: {},
-			});
-		} else {
-			return resp.json({
-				status: 200,
-				message: 'CAMP_ATTENDANCE_SUCCESS',
-				data: response,
-			});
-		}
-	}
-
-	async getCampAttendanceById(id: any, req: any, res: any) {
-		let response = await this.attendancesService.getCampAttendance(
-			id,
-			req,
-			res,
-		);
-
-		let attendance_data = response?.data?.attendance;
-
-		if (attendance_data?.length == 0) {
-			return res.json({
-				status: 200,
-				message: 'ATTENDANCE_DATA_NOT_FOUND',
-				data: [{}],
-			});
-		} else {
-			return res.json({
-				status: 200,
-				message: 'ATTENDANCE_DATA_FOUND_SUCCESS',
-				data: attendance_data,
-			});
-		}
-	}
-
-	public async getStatuswiseCount(req: any, body: any, resp: any) {
-		const status = this.enumService
-			.getEnumValue('GROUPS_STATUS')
-			.data.map((item) => item.value);
-
-		const variables: any = {};
-
-		let filterQueryArray = [];
-
-		if (body.search && body.search !== '') {
-			filterQueryArray.push(`{_or: [
-        { first_name: { _ilike: "%${body.search}%" } },
-        { last_name: { _ilike: "%${body.search}%" } },
-        { email_id: { _ilike: "%${body.search}%" } }
-      ]} `);
-		}
-
-		if (body?.district && body?.district.length > 0) {
-			filterQueryArray.push(
-				`{properties:{district:{_in: ${JSON.stringify(
-					body?.district,
-				)}}}}`,
-			);
-		}
-
-		if (body?.block && body?.block.length > 0) {
-			filterQueryArray.push(
-				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
-			);
-		}
-		if (body.facilitator && body.facilitator.length > 0) {
-			filterQueryArray.push(
-				`{group_users: {user:{id:{_in: ${JSON.stringify(
-					body.facilitator,
-				)}}}}}`,
-			);
-		}
-
-		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-
-		const response = await this.campcoreservice.getStatuswiseCount(
-			filterQuery,
-			filterQueryArray,
-			status,
-			variables,
-		);
-
-		const newQdata = response?.data;
-		const res = ['all', ...status].map((item) => {
-			return {
-				status: item,
-				count: newQdata?.[item]?.aggregate?.count,
-			};
-		});
-
-		return resp.status(200).json({
-			success: true,
-			message: 'Data found successfully!',
-			data: res,
-		});
-	}
-
-	async getFilter_By_Camps(body: any, req: any, resp: any) {
-		const data = await this.campcoreservice.list(body);
-
-		const faciltatorIds = new Set();
-		data?.camps?.forEach((item) => {
-			if (item?.faciltator?.user?.faciltator_id) {
-				faciltatorIds.add(item.faciltator.user.faciltator_id);
-			}
-		});
-
-		// Convert the Set to an array if needed
-		const uniqueFaciltatorIds = [...faciltatorIds];
-
-		const query = `query MyQuery{
-				users(where:{id:{_in:[${uniqueFaciltatorIds}]}}){
-					id
-					first_name
-					last_name
-				}
-			}`;
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
-		if (hasura_response?.data?.users) {
-			return resp.json({
-				status: 200,
-				message: 'Camp Data Found Successfully',
-				data: hasura_response?.data || { users: [] },
-			});
-		} else {
-			return resp.json({
-				status: 500,
-				message: 'IP_CAMP_LIST_ERROR',
 				data: {},
 			});
 		}

@@ -438,51 +438,89 @@ export class FacilitatorService {
 	}
 
 	//status count
-	public async getStatuswiseCount(req: any, resp: any) {
+	public async getStatuswiseCount(req: any, body: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
 		const status = (
 			await this.enumService.getEnumValue('FACILITATOR_STATUS')
 		).data.map((item) => item.value);
 
-		let query = `query MyQuery {
-			all:program_faciltators_aggregate(where: {
-				parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
-				user: {id: {_is_null: false}}
-			}) 
-			{
+		const variables: any = {};
+
+		let filterQueryArray = [];
+		let paramsQueryArray = [];
+
+		if (
+			body.hasOwnProperty('qualificationIds') &&
+			body.qualificationIds.length
+		) {
+			paramsQueryArray.push('$qualificationIds: [Int!]');
+			filterQueryArray.push(
+				'{qualifications: {qualification_master_id: {_in: $qualificationIds}}}',
+			);
+			variables.qualificationIds = body.qualificationIds;
+		}
+		if (body.search && body.search !== '') {
+			filterQueryArray.push(`{_or: [
+        { first_name: { _ilike: "%${body.search}%" } },
+        { last_name: { _ilike: "%${body.search}%" } },
+        { email_id: { _ilike: "%${body.search}%" } }
+      ]} `);
+		}
+
+		if (body.hasOwnProperty('district') && body.district.length) {
+			paramsQueryArray.push('$district: [String!]');
+			filterQueryArray.push('{district: { _in: $district }}');
+			variables.district = body.district;
+		}
+
+		if (body.hasOwnProperty('block') && body.block.length) {
+			paramsQueryArray.push('$block: [String!]');
+			filterQueryArray.push('{block: { _in: $block }}');
+			variables.block = body.block;
+		}
+
+		filterQueryArray.unshift(
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
+		);
+		let paramsQuery = '';
+		if (paramsQueryArray.length) {
+			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+		}
+
+		let query = `query MyQuery ${paramsQuery} {
+			all:users_aggregate (where: { _and: [${filterQueryArray.join(',')}] }) {
+					aggregate {
+						count
+					}
+			  },
+			applied: users_aggregate(where:{ _and: [${filterQueryArray.join(
+				',',
+			)}, {program_faciltators:{_or: [
+				{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
+				{ status: { _is_null: true } }
+			 ]}}] } ) {
 				aggregate {
 					count
-				}
-			},
-			
-			applied: program_faciltators_aggregate(
-				where: {
-					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, 
-					user: {id: {_is_null: false}},
-					_or: [
-						{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
-						{ status: { _is_null: true } }
-				 ]
-				}
-			) {
-				aggregate {
-					count
-				}
-			},
+				}},
 			${status
 				.filter((item) => item != 'applied')
 				.map(
-					(item) => `${item}:program_faciltators_aggregate(where: {
-							parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, user: {id: {_is_null: false}}, status: {_eq: "${item}"}
-						}) {
+					(
+						item,
+					) => `${item}:users_aggregate(where:{ _and: [${filterQueryArray.join(
+						',',
+					)},{program_faciltators: {status: {_eq: ${item}}}}] } ) {
 						aggregate {
 							count
 						}}`,
 				)}
 		}`;
+
 		const response = await this.hasuraServiceFromServices.getData({
 			query,
+			variables,
 		});
+
 		const newQdata = response?.data;
 		const res = ['all', ...status].map((item) => {
 			return {
@@ -1185,10 +1223,10 @@ export class FacilitatorService {
 			}
 			if (body.search && body.search !== '') {
 				filterQueryArray.push(`{_or: [
-        { first_name: { _ilike: "%${body.search}%" } },
-        { last_name: { _ilike: "%${body.search}%" } },
-        { email_id: { _ilike: "%${body.search}%" } }
-      ]} `);
+					{ first_name: { _ilike: "%${body.search}%" } },
+					{ last_name: { _ilike: "%${body.search}%" } },
+					{ email_id: { _ilike: "%${body.search}%" } }
+				]} `);
 			}
 			if (
 				body.hasOwnProperty('status') &&
@@ -2032,7 +2070,7 @@ export class FacilitatorService {
 								count:
 									statusKey === 'identified'
 										? aggregateCount
-										: benefeciary[statusKey]?.aggregate
+										: benefeciary[statusKey]?.aggregateCount
 												?.count || 0,
 							}));
 

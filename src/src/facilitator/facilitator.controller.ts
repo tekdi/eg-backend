@@ -46,10 +46,18 @@ export class FacilitatorController {
 	//   return this.facilitatorService.update(+id, request);
 	// }
 
-	@Get('/getStatuswiseCount')
+	@Post('/getStatuswiseCount')
 	@UseGuards(new AuthGuard())
-	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
-		return this.facilitatorService.getStatuswiseCount(request, response);
+	getStatuswiseCount(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.facilitatorService.getStatuswiseCount(
+			request,
+			body,
+			response,
+		);
 	}
 
 	@Post('/forOrientation')

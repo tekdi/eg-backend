@@ -583,45 +583,99 @@ export class BeneficiariesService {
 			await this.enumService.getEnumValue('BENEFICIARY_STATUS')
 		).data.map((item) => item.value);
 
-		let qury = `query MyQuery {                              
-        ${status.map(
-			(item) => `${
-				!isNaN(Number(item[0])) ? '_' + item : item
-			}:program_beneficiaries_aggregate(where:{
-            _and: [
-              {
-				facilitator_id: { _eq: ${user?.data?.id} }
-              },{
-              status: {_eq: "${item}"}
-            },
-				{ user:	{ id: { _is_null: false } } }
-			
-                                     ]
-        }) {
-        aggregate {
-          count
-        }
-      }`,
-		)}
-	
-     }`;
+		const variables: any = {};
+		let filterQueryArray = [];
+		let paramsQueryArray = [];
+
+		if (body.hasOwnProperty('district') && body?.district?.length) {
+			paramsQueryArray.push('$district: [String!]');
+			filterQueryArray.push('{district: { _in: $district }}');
+			variables.district = body?.district;
+		}
+
+		if (body.hasOwnProperty('block') && body?.block?.length) {
+			paramsQueryArray.push('$block: [String!]');
+			filterQueryArray.push('{block: { _in: $block }}');
+			variables.block = body?.block;
+		}
+
+		filterQueryArray.unshift(
+			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+		);
+
+		let paramsQuery = '';
+		if (paramsQueryArray.length) {
+			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+		}
+		let qury = `query MyQuery ${paramsQuery}{       
+			all:users_aggregate (where: { _and: [${filterQueryArray.join(',')}] }) {
+				aggregate {
+					count
+				}
+		  },
+		applied: users_aggregate(where:{ _and: [${filterQueryArray.join(
+			',',
+		)}, {program_beneficiaries:{_or: [
+			{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
+			{ status: { _is_null: true } }
+		 ]}}] } ) {
+			aggregate {
+				count
+			}},   
+			passed_10th: users_aggregate(where:{ _and: [${filterQueryArray.join(
+				',',
+			)}, {program_beneficiaries:{_or: [
+				{status: {_nin: ${JSON.stringify(
+					status.filter((item) => item != '10th_passed'),
+				)}}},
+				{ status: { _is_null: true } }
+			 ]}}] } ) {
+				aggregate {
+					count
+				}},                
+		${status
+			.filter((item) => item != 'applied' && item != '10th_passed')
+			.map(
+				(
+					item,
+				) => `${item}:users_aggregate(where:{ _and: [${filterQueryArray.join(
+					',',
+				)},{program_beneficiaries: {status: {_eq: ${item}}}}] } ) {
+					aggregate {
+						count
+					}}`,
+			)}
+	}`;
 
 		const data = { query: qury };
 
-		const response = await this.hasuraServiceFromServices.getData(data);
+		const response = await this.hasuraServiceFromServices.getData({
+			query: data.query,
+			variables,
+		});
 		const newQdata = response?.data;
-		const res = status.map((item) => {
+		const res = ['all', ...status].map((item) => {
+			if (item === '10th_passed') {
+				item = 'passed_10th';
+			}
 			return {
 				status: item,
-				count: newQdata?.[!isNaN(Number(item[0])) ? '_' + item : item]
-					?.aggregate?.count,
+				count:
+					(item === '10th_passed'
+						? newQdata?.['passed_10th']
+						: newQdata?.[item]
+					)?.aggregate?.count || 0,
 			};
 		});
+		const finalRes = res.filter((item, index, self) => {
+			return index === self.findIndex((t) => t.status === item.status);
+		});
+
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
 			data: {
-				data: res,
+				data: finalRes,
 			},
 		});
 	}
@@ -719,7 +773,6 @@ export class BeneficiariesService {
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
-		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
 		var data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
 				users_aggregate(where:${filterQuery}) {
@@ -3299,7 +3352,7 @@ export class BeneficiariesService {
 
 		const hasuraResult = (
 			await this.hasuraServiceFromServices.getData(data)
-		)?.data?.users;
+		)?.data.users;
 
 		const result = {
 			success: false,
