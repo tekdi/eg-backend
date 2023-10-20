@@ -5,23 +5,18 @@ import {
 	Body,
 	Patch,
 	Param,
-	Request,
-	Response,
 	Delete,
 } from '@nestjs/common';
 import { AttendancesService } from './attendances.service';
+import { CreateAttendanceDto } from './dto/create-attendance.dto';
 
 @Controller('attendances')
 export class AttendancesController {
 	constructor(private readonly attendancesService: AttendancesService) {}
 
 	@Post('/createattendances')
-	create(@Body() body, @Request() request, @Response() response) {
-		return this.attendancesService.createAttendance(
-			body,
-			request,
-			response,
-		);
+	create(@Body() createAttendanceDto: CreateAttendanceDto) {
+		return this.attendancesService.create(createAttendanceDto);
 	}
 
 	@Post()
