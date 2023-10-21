@@ -63,7 +63,7 @@ export class BeneficiariesService {
 		'is_eligible',
 		'original_facilitator_id',
 	];
-
+	public returnFieldsgroupUsers = ['status', 'id'];
 	async getBeneficiariesDuplicatesByAadhaar(
 		aadhaarNo: string,
 		limit: number,
@@ -569,7 +569,7 @@ export class BeneficiariesService {
 	}
 
 	//status count
-	public async getStatuswiseCount(req: any, resp: any) {
+	public async getStatuswiseCount(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
 
 		if (!user?.data?.id) {
@@ -583,11 +583,11 @@ export class BeneficiariesService {
 			await this.enumService.getEnumValue('BENEFICIARY_STATUS')
 		).data.map((item) => item.value);
 
-		let qury = `query MyQuery {
+		let qury = `query MyQuery {                              
         ${status.map(
 			(item) => `${
 				!isNaN(Number(item[0])) ? '_' + item : item
-			}:program_beneficiaries_aggregate(where: {
+			}:program_beneficiaries_aggregate(where:{
             _and: [
               {
 				facilitator_id: { _eq: ${user?.data?.id} }
@@ -603,8 +603,11 @@ export class BeneficiariesService {
         }
       }`,
 		)}
-    }`;
+	
+     }`;
+
 		const data = { query: qury };
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data;
 		const res = status.map((item) => {
@@ -639,7 +642,7 @@ export class BeneficiariesService {
 		let status = body?.status;
 		let filterQueryArray = [];
 		filterQueryArray.push(
-			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "approved", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 		);
 
 		if (body.search && body.search !== '') {
@@ -797,6 +800,7 @@ export class BeneficiariesService {
 				}
 			}
 		`;
+
 		delete data.variables;
 
 		const facilitatorListResponse = (
@@ -839,6 +843,7 @@ export class BeneficiariesService {
 					return mappedData;
 				}),
 			);
+
 			return resp.status(200).json({
 				success: true,
 				message: 'Benificiaries found success!',
@@ -855,6 +860,7 @@ export class BeneficiariesService {
 	}
 	public async findAll(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+
 		if (!user?.data?.id) {
 			return resp.status(404).send({
 				success: false,
@@ -907,7 +913,17 @@ export class BeneficiariesService {
 				 ]} `);
 			}
 		}
+		if (body?.is_deactivated && body?.is_deactivated !== '') {
+			filterQueryArray.push(
+				`{is_deactivated:{_eq:"${body?.is_deactivated}"}}`,
+			);
+		}
 
+		if (body?.is_duplicate && body?.is_duplicate !== '') {
+			filterQueryArray.push(
+				`{is_duplicate:{_eq:"${body?.is_duplicate}"}}`,
+			);
+		}
 		if (
 			body?.enrollment_verification_status &&
 			body?.enrollment_verification_status !== ''
@@ -1099,6 +1115,7 @@ export class BeneficiariesService {
 				offset: offset,
 			},
 		};
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
 
@@ -1176,7 +1193,7 @@ export class BeneficiariesService {
 	public async findOne(id: number, resp?: any) {
 		var data = {
 			query: `query searchById {
-            users_by_pk(id: ${id}) {
+				users_by_pk(id: ${id}) {
 				aadhaar_verification_mode
 				aadhar_no
 				aadhar_token
@@ -1438,7 +1455,7 @@ export class BeneficiariesService {
 			} else {
 				return {
 					success: true,
-					data: { result: mappedData },
+					data: mappedData,
 				};
 			}
 		}
@@ -1570,7 +1587,8 @@ export class BeneficiariesService {
 						updatedUserObj.id,
 						{
 							status: preUpdateDataObj[updatedUserObj.id]
-								.program_beneficiaries[0].status,
+								.program_beneficiaries[0]?.status,
+
 							is_duplicate:
 								preUpdateDataObj[updatedUserObj.id]
 									.is_duplicate,
@@ -1583,7 +1601,7 @@ export class BeneficiariesService {
 						},
 						{
 							status: updatedUserObj.program_beneficiaries[0]
-								.status,
+								?.status,
 							is_duplicate: updatedUserObj.is_duplicate,
 							duplicate_reason: updatedUserObj.duplicate_reason,
 							is_deactivated: updatedUserObj.is_deactivated,
@@ -3072,9 +3090,10 @@ export class BeneficiariesService {
 		id: number,
 		limit?: number,
 		skip?: number,
+		req?: any,
+		res?: any,
 	) {
-		const user = (await this.findOne(id)).data?.result;
-
+		const user = (await this.findOne(id)).data;
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3125,6 +3144,7 @@ export class BeneficiariesService {
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
+
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
@@ -3279,7 +3299,7 @@ export class BeneficiariesService {
 
 		const hasuraResult = (
 			await this.hasuraServiceFromServices.getData(data)
-		)?.data.users;
+		)?.data?.users;
 
 		const result = {
 			success: false,
@@ -3307,6 +3327,54 @@ export class BeneficiariesService {
 		beneficiaryId: number,
 		newFacilitatorId: number,
 	) {
+		const response = {
+			success: false,
+			data: null,
+			message: '',
+		};
+
+		let status = 'active';
+
+		let query = `query MyQuery {
+			users(where: {id: {_eq:${beneficiaryId}}, group_users: {status: {_eq:"${status}"}}}){
+			  id
+			  group_users{
+				id
+				group{
+					status
+				}
+			  }
+			}
+		  }
+		  `;
+
+		const hashura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		let users = hashura_response?.data?.users;
+
+		if (users?.length > 0) {
+			if (users[0]?.group_users[0]?.group?.status == 'not_registered') {
+				const update_body = {
+					status: 'inactive',
+				};
+				let update_array = ['status'];
+
+				await this.hasuraService.q(
+					'group_users',
+					{
+						...update_body,
+						id: users[0]?.group_users[0]?.id,
+					},
+					update_array,
+					true,
+					[...this.returnFieldsgroupUsers, 'id'],
+				);
+			} else {
+				return response;
+			}
+		}
+
 		const beneficiaryDetails = (await this.userById(beneficiaryId)).data;
 
 		const updatePayload: any = {
@@ -3327,12 +3395,6 @@ export class BeneficiariesService {
 				[...this.returnFields, 'id'],
 			)
 		).program_beneficiaries;
-
-		const response = {
-			success: false,
-			data: null,
-			message: '',
-		};
 
 		if (updateResult) {
 			response.success = true;
