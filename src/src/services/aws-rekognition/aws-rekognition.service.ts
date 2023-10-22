@@ -56,40 +56,41 @@ export class AwsRekognitionService {
 	async createCollectionIfNotExists(collectionId: string) {
 		const response = { new: false, data: null };
 		try {
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category:
+					'services.aws-rekognition.createCollectionIfNotExists',
+				message: 'create collection in aws',
+				data: { collectionId },
+			});
 			const collections = await this.rekognition.send(
 				new ListCollectionsCommand({ MaxResults: 1000 }),
 			);
-			//.promise();
-			//console.log('collections:------------>>>>>>', collections);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 1',
-				'Create collection in aws with id ' + collectionId,
-				'info',
-			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 1',
-				'response ListCollectionsCommand ' + JSON.stringify(collections),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category:
+					'services.aws-rekognition.createCollectionIfNotExists',
+				message: 'response of ListCollectionsCommand',
+				data: { collections },
+			});
 			if (!collections.CollectionIds.includes(collectionId)) {
 				const createCollectionResponse = await this.rekognition.send(
 					new CreateCollectionCommand({ CollectionId: collectionId }),
 				);
-				this.sentryService.addBreadcrumb(
-					'Cron Job 1',
-					'response CreateCollectionCommand ' +
-					JSON.stringify(createCollectionResponse),
-					'info',
-				);
+				this.sentryService.addBreadcrumb({
+					type: 'debug',
+					level: 'info',
+					category:
+						'services.aws-rekognition.createCollectionIfNotExists',
+					message: 'response of CreateCollectionCommand',
+					data: { createCollectionResponse },
+				});
 				response.new = true;
 				response.data = createCollectionResponse;
 			} else {
 				response.new = false;
-				this.sentryService.addBreadcrumb(
-					'Cron Job 1',
-					`Using existing collection with ID: ${collectionId}`,
-					'info',
-				);
 			}
 			return response;
 		} catch (error) {
@@ -105,11 +106,13 @@ export class AwsRekognitionService {
 					new ListUsersCommand({ CollectionId: collectionId }),
 				)
 			).Users.map((userObj) => userObj.UserId.replace(this.prefixed, ''));
-			this.sentryService.addBreadcrumb(
-				'Cron Job 1',
-				'users: ' + users.sort(),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.getAllUsersOfCollection',
+				message: 'response of ListUsersCommand',
+				data: { users },
+			});
 			return users;
 		} catch (error) {
 			this.sentryService.captureException(error);
@@ -120,11 +123,13 @@ export class AwsRekognitionService {
 	async createUsersInCollection(collectionId: string, userIds: any) {
 		try {
 			const aws_users = userIds;
-			this.sentryService.addBreadcrumb(
-				'Cron Job 1',
-				'createUsersInCollection ' + aws_users,
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.createUsersInCollection',
+				message: 'createUsersInCollection parameters',
+				data: { collectionId: collectionId, aws_users: aws_users },
+			});
 			for (const userId of aws_users) {
 				const createUserParams = {
 					CollectionId: collectionId,
@@ -132,12 +137,14 @@ export class AwsRekognitionService {
 					ClientRequestToken:
 						this.prefixed + new Date().getTime().toString(),
 				};
-				this.sentryService.addBreadcrumb(
-					'Cron Job 1',
-					'Trying to create user with details as: ' +
-					JSON.stringify(createUserParams),
-					'info',
-				);
+				this.sentryService.addBreadcrumb({
+					type: 'debug',
+					level: 'info',
+					category:
+						'services.aws-rekognition.createUsersInCollection',
+					message: 'request body of createUserParams',
+					data: { createUserParams },
+				});
 				await this.rekognition.send(
 					new CreateUserCommand(createUserParams),
 				);
@@ -176,11 +183,13 @@ export class AwsRekognitionService {
 					}
 				}
 			`;
-		this.sentryService.addBreadcrumb(
-			'Cron Job 1',
-			'updateQuery: ' + updateQuery,
-			'info',
-		);
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'services.aws-rekognition.markUserAsCreated',
+			message: 'hasura service query',
+			data: { query: updateQuery },
+		});
 		try {
 			return (await this.hasuraService.getData({ query: updateQuery }))
 				.data.update_users_by_pk;
@@ -224,11 +233,13 @@ export class AwsRekognitionService {
 			const disassociateFaceResponse = await this.rekognition.send(
 				new DisassociateFacesCommand(disassociateFaceParams),
 			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'disassociateFaceResponse: ' + JSON.stringify(disassociateFaceResponse),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.disassociatePhotoFromUser',
+				message: 'response of DisassociateFacesCommand',
+				data: { disassociateFaceResponse },
+			});
 			if (disassociateFaceResponse.DisassociatedFaces.length === 1)
 				response.success = true;
 			return response;
@@ -248,11 +259,13 @@ export class AwsRekognitionService {
 			const deleteFacesResponse = await this.rekognition.send(
 				new DeleteFacesCommand(deleteFaceParams),
 			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'deleteFacesResponse: ' + JSON.stringify(deleteFacesResponse),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.deleteFaceFromCollection',
+				message: 'response of DeleteFacesCommand',
+				data: { deleteFacesResponse },
+			});
 			if (deleteFacesResponse.DeletedFaces.length === 1)
 				response.success = true;
 			return response;
@@ -276,19 +289,23 @@ export class AwsRekognitionService {
 				ExternalImageId: imageName,
 				MaxFaces: 1,
 			};
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'addFaceParams: ' + JSON.stringify(addFaceParams),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.addFaceInCollection',
+				message: 'request body of IndexFacesCommand',
+				data: { addFaceParams },
+			});
 			const addFaceResponse = await this.rekognition.send(
 				new IndexFacesCommand(addFaceParams),
 			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'addFaceResponse: ' + JSON.stringify(addFaceResponse),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.addFaceInCollection',
+				message: 'response of IndexFacesCommand',
+				data: { addFaceResponse },
+			});
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
 				response.faceId = addFaceResponse.FaceRecords[0].Face.FaceId;
@@ -316,19 +333,23 @@ export class AwsRekognitionService {
 					this.prefixed + new Date().getTime()
 				).toString(),
 			};
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'associateFacesParams: ' + JSON.stringify(associateFacesParams),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.associateFaceToUser',
+				message: 'request body of AssociateFacesCommand',
+				data: { associateFacesParams },
+			});
 			const associateFaceResponse = await this.rekognition.send(
 				new AssociateFacesCommand(associateFacesParams),
 			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'associateFaceResponse: ' + JSON.stringify(associateFaceResponse),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.associateFaceToUser',
+				message: 'response of AssociateFacesCommand',
+				data: { associateFaceResponse },
+			});
 			if (associateFaceResponse.AssociatedFaces.length === 1)
 				response.success = true;
 			return response;
@@ -355,19 +376,23 @@ export class AwsRekognitionService {
 				UserMatchThreshold: faceMatchingThreshold,
 				MaxUsers: 5,
 			};
-			this.sentryService.addBreadcrumb(
-				'Cron Job 3',
-				'searchParams: ' + JSON.stringify(searchParams),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.associateFaceToUser',
+				message: 'request body of SearchUsersByImageCommand',
+				data: { searchParams },
+			});
 			const compareResponse = await this.rekognition.send(
 				new SearchUsersByImageCommand(searchParams),
 			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 3',
-				'Matching faces: ' + JSON.stringify(compareResponse),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.searchUsersByImage',
+				message: 'response of SearchUsersByImageCommand',
+				data: { compareResponse },
+			});
 			return compareResponse.UserMatches;
 		} catch (error) {
 			this.sentryService.captureException(error);
@@ -380,11 +405,13 @@ export class AwsRekognitionService {
 			const deleteCollectionParams = {
 				CollectionId: collectionId,
 			};
-			this.sentryService.addBreadcrumb(
-				'Cron Job 1',
-				'Attempting to delete collection named: ' + collectionId,
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'services.aws-rekognition.deleteCollection',
+				message: 'request body of deleteCollectionParams',
+				data: { deleteCollectionParams },
+			});
 			let response = await this.rekognition.send(
 				new DeleteCollectionCommand(deleteCollectionParams),
 			);

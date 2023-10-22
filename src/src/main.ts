@@ -1,10 +1,8 @@
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as Sentry from '@sentry/node';
-import { SentryFilter } from './sentry.filter';
 
 async function bootstrap() {
-
 	// Sentry initialization method and import the globally created ExceptionFilter in your main.ts file's
 	Sentry.init({
 		dsn: process.env.SENTRY_DSN_URL,
@@ -16,10 +14,6 @@ async function bootstrap() {
 	});
 
 	const app = await NestFactory.create(AppModule, { cors: true });
-
-	// Import the filter globally, capturing all exceptions on all routes
-	const { httpAdapter } = app.get(HttpAdapterHost);
-	app.useGlobalFilters(new SentryFilter(httpAdapter));
 
 	await app.listen(5000);
 }

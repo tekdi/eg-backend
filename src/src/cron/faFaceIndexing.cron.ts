@@ -22,22 +22,20 @@ export class FaFaceIndexingCron {
 
 	//2nd cron runs for each hour's 15th minute eg: 10:15am, 11::15am
 	@Cron('15 * * * *')
-	async indexRekognitionUsers() {
-		const transaction = this.sentryService.startTransaction(
-			'Cron Job 2',
-			'Create Face Index',
-		);
+	async handleCron() {
 		try {
 			/*----------------------- Create face index of users in collection -----------------------*/
 			console.log(
 				'cron job 2: indexRekognitionUsers started at time ' +
 					new Date(),
 			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'indexRekognitionUsers started at time ' + new Date(),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faFaceIndexing.handleCron',
+				message: 'faFaceIndexing cron started at time',
+				data: { date: new Date() },
+			});
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
@@ -51,11 +49,13 @@ export class FaFaceIndexingCron {
 					),
 				),
 			);
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'response usersToIndexFaces ' + JSON.stringify(usersToIndexFaces),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faFaceIndexing.handleCron',
+				message: 'response fetchAllUsersToIndexFaces',
+				data: { usersToIndexFaces },
+			});
 
 			// Step-2: Iterate through them and index faces one by one
 			for (const user of usersToIndexFaces) {
@@ -199,8 +199,6 @@ export class FaFaceIndexingCron {
 			}
 		} catch (error) {
 			this.sentryService.captureException(error);
-		} finally {
-			(await transaction).finish();
 		}
 	}
 
@@ -260,19 +258,16 @@ export class FaFaceIndexingCron {
 				}
 			}
 		`;
-		this.sentryService.addBreadcrumb(
-			'Cron Job 2',
-			'query: ' + query,
-			'info',
-		);
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faFaceIndexing.fetchAllUsersToIndexFaces',
+			message: 'hasura service query',
+			data: { query: query },
+		});
 		try {
 			let users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'fetchindex: ' + JSON.stringify(users),
-				'info',
-			);
 			users.forEach((user) => {
 				for (const key of [
 					'profile_photo_1',
@@ -286,11 +281,13 @@ export class FaFaceIndexingCron {
 					}
 				}
 			});
-			this.sentryService.addBreadcrumb(
-				'Cron Job 2',
-				'Batch of users for whom face photos to be indexed: ' + JSON.stringify(users),
-				'info',
-			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faFaceIndexing.fetchAllUsersToIndexFaces',
+				message: 'data fetch from database',
+				data: { users },
+			});
 			return users;
 		} catch (error) {
 			this.sentryService.captureException(error);
@@ -311,11 +308,13 @@ export class FaFaceIndexingCron {
 				faceId,
 			)
 		).success;
-		this.sentryService.addBreadcrumb(
-			'Cron Job 2',
-			'photoDisassociated: ' + JSON.stringify(photoDisassociated),
-			'info',
-		);
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faFaceIndexing.disassociateAndDeleteFace',
+			message: 'response photoDisassociated',
+			data: { photoDisassociated },
+		});
 		let response = { success: false };
 		// Delete face from collection
 		if (photoDisassociated) {
@@ -341,11 +340,13 @@ export class FaFaceIndexingCron {
 				collectionId,
 				imageName,
 			);
-		this.sentryService.addBreadcrumb(
-			'Cron Job 2',
-			'addFaceResponse111: ' + JSON.stringify(addFaceResponse),
-			'info',
-		);
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faFaceIndexing.addAndAssociatePhotoToUser',
+			message: 'response addFaceInCollection',
+			data: { addFaceResponse },
+		});
 		const response = { success: false, faceId: addFaceResponse.faceId };
 		// Associate face to user
 		if (addFaceResponse.success) {
@@ -380,11 +381,13 @@ export class FaFaceIndexingCron {
                 }
             }
         `;
-		this.sentryService.addBreadcrumb(
-			'Cron Job 2',
-			'updateQuery: ' + updateQuery,
-			'info',
-		);
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faFaceIndexing.markPhotosLastProcessedTimestamp',
+			message: 'hasura service query',
+			data: { query: updateQuery },
+		});
 		try {
 			return (await this.hasuraService.getData({ query: updateQuery }))
 				.data.update_users_by_pk;
@@ -419,11 +422,13 @@ export class FaFaceIndexingCron {
 					}
 				}
 			`;
-		this.sentryService.addBreadcrumb(
-			'Cron Job 2',
-			'updateQuery: ' + updateQuery,
-			'info',
-		);
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faFaceIndexing.markUserAsIndexed',
+			message: 'hasura service query',
+			data: { query: updateQuery },
+		});
 		try {
 			return (await this.hasuraService.getData({ query: updateQuery }))
 				.data.update_users_by_pk;
