@@ -1738,7 +1738,7 @@ export class CampService {
 		if (
 			(!camp_attendance_body.end_date &&
 				!camp_attendance_body.start_date) ||
-			(camp_attendance_body.end_date === '' &&
+			(camp_attendance_body.start_date === '' &&
 				camp_attendance_body.end_date === '')
 		) {
 			const formattedDate = setStartAndEndDate();
