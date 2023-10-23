@@ -660,8 +660,8 @@
 			"value": "inactive"
 		},
 		{
-			"title": "GROUPS_STATUS_APPROVED",
-			"value": "approved"
+			"title": "GROUPS_STATUS_CAMP_IP_VERIFIED",
+			"value": "camp_ip_verified"
 		},
 		{
 			"title": "GROUPS_STATUS_CHANGE_REQUIRED",
@@ -826,134 +826,134 @@
 			"value": "subject_content_facilitation"
 		},
 		{
-			"title":"LEARNING_ACTIVITIES_MOCK_TEST",
-			"value":"mock_test"
+			"title": "LEARNING_ACTIVITIES_MOCK_TEST",
+			"value": "mock_test"
 		},
 		{
-			"title":"LEARNING_ACTIVITIES_REFLECTION",
-			"value":"reflection"
+			"title": "LEARNING_ACTIVITIES_REFLECTION",
+			"value": "reflection"
 		},
 		{
-			"title":"LEARNING_ACTIVITIES_EXAM_PREPARATION",
-			"value":"exam_preparation"
+			"title": "LEARNING_ACTIVITIES_EXAM_PREPARATION",
+			"value": "exam_preparation"
 		},
 		{
-			"title":"LEARNING_ACTIVITIES_COMMUNICATION_SKILLS",
-			"value":"communication_skills"
+			"title": "LEARNING_ACTIVITIES_COMMUNICATION_SKILLS",
+			"value": "communication_skills"
 		},
 		{
-			"title":"LEARNING_ACTIVITIES_REVIEW_AND_REVISION",
-			"value":"review_and_revision"
+			"title": "LEARNING_ACTIVITIES_REVIEW_AND_REVISION",
+			"value": "review_and_revision"
 		},
 		{
-			"title":"LEARNING_ACTIVITIES_OTHER",
-			"value":"other"
+			"title": "LEARNING_ACTIVITIES_OTHER",
+			"value": "other"
 		}
 	],
 	"LIVELIHOOD_AWARENESS": [
 		{
-			"title":"LIVELIHOOD_AWARENESS_EXPOSURE_VISITS",
-			"value":"exposure_visits"
+			"title": "LIVELIHOOD_AWARENESS_EXPOSURE_VISITS",
+			"value": "exposure_visits"
 		},
 		{
-			"title":"LIVELIHOOD_AWARENESS_ROLE_MODEL_INTERACTION",
-			"value":"role_model_interaction"
+			"title": "LIVELIHOOD_AWARENESS_ROLE_MODEL_INTERACTION",
+			"value": "role_model_interaction"
 		},
 		{
-			"title":"LIVELIHOOD_AWARENESS_ASPIRATION_MAPPING",
-			"value":"aspiration_mapping"
+			"title": "LIVELIHOOD_AWARENESS_ASPIRATION_MAPPING",
+			"value": "aspiration_mapping"
 		},
 		{
-			"title":"LIVELIHOOD_AWARENESS_DIGITAL_LITERACY",
-			"value":"digital_literacy"
+			"title": "LIVELIHOOD_AWARENESS_DIGITAL_LITERACY",
+			"value": "digital_literacy"
 		},
 		{
-			"title":"LIVELIHOOD_AWARENESS_COMMUNICATION_SKILLS",
-			"value":"communication_skills"
+			"title": "LIVELIHOOD_AWARENESS_COMMUNICATION_SKILLS",
+			"value": "communication_skills"
 		},
 		{
-			"title":"LIVELIHOOD_AWARENESS_FINANCIAL_SKILLS",
-			"value":"financial_skills"
+			"title": "LIVELIHOOD_AWARENESS_FINANCIAL_SKILLS",
+			"value": "financial_skills"
 		},
 		{
-			"title":"LIVELIHOOD_AWARENESS_LINKAGE_SUPPORT",
-			"value":"linkage_support"
+			"title": "LIVELIHOOD_AWARENESS_LINKAGE_SUPPORT",
+			"value": "linkage_support"
 		},
 		{
-			"title":"LIVELIHOOD_AWARENESS_OTHER",
-			"value":"other"
+			"title": "LIVELIHOOD_AWARENESS_OTHER",
+			"value": "other"
 		}
 	],
-	"COMMUNITY_ENGAGEMENT":[
+	"COMMUNITY_ENGAGEMENT": [
 		{
-			"title":"COMMUNITY_ENGAGEMENT_PARENTS_CAMP_VISIT",
-			"value":"parents_camp_visit"
+			"title": "COMMUNITY_ENGAGEMENT_PARENTS_CAMP_VISIT",
+			"value": "parents_camp_visit"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_PARENT_MEET",
-			"value":"parent_meet"
+			"title": "COMMUNITY_ENGAGEMENT_PARENT_MEET",
+			"value": "parent_meet"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_ROLE_MODEL_VISIT",
-			"value":"role_model_visit"
+			"title": "COMMUNITY_ENGAGEMENT_ROLE_MODEL_VISIT",
+			"value": "role_model_visit"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_PRI_CAMP_VISIT",
-			"value":"pri_camp_visit"
+			"title": "COMMUNITY_ENGAGEMENT_PRI_CAMP_VISIT",
+			"value": "pri_camp_visit"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_PRI_MEET",
-			"value":"pri_meet"
+			"title": "COMMUNITY_ENGAGEMENT_PRI_MEET",
+			"value": "pri_meet"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_VILLAGE_INFLUENCER_MEET",
-			"value":"village_influencer_meet"
+			"title": "COMMUNITY_ENGAGEMENT_VILLAGE_INFLUENCER_MEET",
+			"value": "village_influencer_meet"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_TEACHER_CAMP_VISIT",
-			"value":"teacher_camp_visit"
+			"title": "COMMUNITY_ENGAGEMENT_TEACHER_CAMP_VISIT",
+			"value": "teacher_camp_visit"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_TEACHER_MEET",
-			"value":"teacher_meet"
+			"title": "COMMUNITY_ENGAGEMENT_TEACHER_MEET",
+			"value": "teacher_meet"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_HOME_VISIT",
-			"value":"home_visit"
+			"title": "COMMUNITY_ENGAGEMENT_HOME_VISIT",
+			"value": "home_visit"
 		},
 		{
-			"title":"COMMUNITY_ENGAGEMENT_OTHER",
-			"value":"other"
+			"title": "COMMUNITY_ENGAGEMENT_OTHER",
+			"value": "other"
 		}
 	],
-	"OPEN_SCHOOL_GOVERNMENT_ACTIVITY":[
+	"OPEN_SCHOOL_GOVERNMENT_ACTIVITY": [
 		{
-			"title":"OPEN_SCHOOL_GOVERNMENT_ACTIVITY_PCP_CAMP",
-			"value":"pcp_camp"
+			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_PCP_CAMP",
+			"value": "pcp_camp"
 		},
 		{
-			"title":"OPEN_SCHOOL_GOVERNMENT_ACTIVITY_PRACTICAL_FILE",
-			"value":"practical_file"
+			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_PRACTICAL_FILE",
+			"value": "practical_file"
 		},
 		{
-			"title":"OPEN_SCHOOL_GOVERNMENT_ACTIVITY_ENROLLMENT_RECEIPT",
-			"value":"enrollment_receipt"
+			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_ENROLLMENT_RECEIPT",
+			"value": "enrollment_receipt"
 		},
 		{
-			"title":"OPEN_SCHOOL_GOVERNMENT_ACTIVITY_ADMIT_CARD",
-			"value":"admit_card"
+			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_ADMIT_CARD",
+			"value": "admit_card"
 		},
 		{
-			"title":"OPEN_SCHOOL_GOVERNMENT_ACTIVITY_TEXT_BOOK_COLLECTION",
-			"value":"text_book_collection"
+			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_TEXT_BOOK_COLLECTION",
+			"value": "text_book_collection"
 		},
 		{
-			"title":"OPEN_SCHOOL_GOVERNMENT_ACTIVITY_NETWORKING_VISITS",
-			"value":"networking_visits"
+			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_NETWORKING_VISITS",
+			"value": "networking_visits"
 		},
 		{
-			"title":"OPEN_SCHOOL_GOVERNMENT_ACTIVITY_OTHER",
-			"value":"other"
+			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_OTHER",
+			"value": "other"
 		}
 	]
 }

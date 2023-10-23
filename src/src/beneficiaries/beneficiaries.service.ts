@@ -642,7 +642,7 @@ export class BeneficiariesService {
 		let status = body?.status;
 		let filterQueryArray = [];
 		filterQueryArray.push(
-			`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "approved", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 		);
 
 		if (body.search && body.search !== '') {
