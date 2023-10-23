@@ -10,7 +10,7 @@ import { AttendancesService } from '../attendances/attendances.service';
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
-import e from 'express';
+
 @Injectable()
 export class CampService {
 	constructor(
