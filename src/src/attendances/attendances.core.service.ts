@@ -49,6 +49,7 @@ export class AttendancesCoreService {
 
 		let query = `query MyQuery {
 			attendance(where: {context_id: {_eq:${id}}, date_time: {_gte:"${start_date}", _lte:"${end_date}"}}) {
+				id
 			  status
 			  fa_is_processed
 			  fa_similarity_percentage

@@ -1661,6 +1661,7 @@ export class CampService {
 	async markCampAttendance(body: any, req: any, resp: any) {
 		const camp_attendance_body = {
 			...body,
+			context: 'camps',
 		};
 
 		const response = await this.attendancesService.createAttendance(
@@ -1720,20 +1721,49 @@ export class CampService {
 		}
 	}
 
-	async getCampAttendanceById(id: any, body: any, req: any, res: any) {
+	async getCampAttendanceById(id, body, req, res) {
+		let camp_attendance_body = { ...body };
+
+		const setStartAndEndDate = () => {
+			const today = new Date();
+			today.setHours(0, 0, 0, 0); // Set the time to the beginning of the day (00:00:00.000).
+
+			const year = today.getFullYear();
+			const month = (today.getMonth() + 1).toString().padStart(2, '0');
+			const day = today.getDate().toString().padStart(2, '0');
+
+			return `${year}-${month}-${day}`;
+		};
+
 		if (
-			!(body?.start_date && body?.start_date != '') ||
-			!(body?.end_date && body?.end_date != '')
+			!camp_attendance_body.start_date ||
+			camp_attendance_body.start_date === ''
 		) {
-			return res.json({
-				status: 400,
-				message: 'DATE_INTERVAL_REQUIRED_ERROR',
-				data: [{}],
-			});
+			const formattedStartDate = setStartAndEndDate();
+			camp_attendance_body.start_date =
+				formattedStartDate + `T00:00:00.000Z`;
+			camp_attendance_body.end_date = `${camp_attendance_body.end_date}T23:59:59.999Z`;
 		}
+
+		if (
+			!camp_attendance_body.end_date ||
+			camp_attendance_body.end_date === ''
+		) {
+			const formattedDate = setStartAndEndDate();
+			camp_attendance_body.end_date = formattedDate + `T23:59:59.999Z`;
+			camp_attendance_body.start_date_ = `${camp_attendance_body.start_date}T00:00:00.000Z`;
+		}
+
+		if (
+			camp_attendance_body?.start_date === camp_attendance_body?.end_date
+		) {
+			camp_attendance_body.start_date_ = `${camp_attendance_body.start_date}T00:00:00.000Z`;
+			camp_attendance_body.end_date = `${camp_attendance_body.end_date}T23:59:59.999Z`;
+		}
+
 		let response = await this.attendancesService.getCampAttendance(
 			id,
-			body,
+			camp_attendance_body,
 			req,
 			res,
 		);
