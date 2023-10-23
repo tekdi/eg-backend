@@ -388,6 +388,26 @@ export class CampService {
 				description
 				status
 			  }
+			  faciltator: group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
+				user {
+					id
+					first_name
+					middle_name
+					last_name
+					mobile
+					state
+					district
+					village
+					block
+					profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+				}
+			}
 			  properties{
 				lat
 				long
@@ -458,6 +478,28 @@ export class CampService {
 
 		const userData = await Promise.all(
 			newQdata?.map(async (item) => {
+				item.faciltator = await Promise.all(
+					item?.faciltator?.map(async (item, key) => {
+						const userObj = item.user;
+						let profilePhoto = userObj.profile_photo_1?.[0] || {};
+
+						if (profilePhoto?.id) {
+							const { success, data: fileData } =
+								await this.uploadFileService.getDocumentById(
+									profilePhoto.id,
+								);
+							if (success && fileData?.fileUrl) {
+								userObj.profile_photo_1 = {
+									...profilePhoto,
+									fileUrl: fileData.fileUrl,
+								};
+							}
+						} else {
+							userObj.profile_photo_1 = profilePhoto;
+						}
+						return userObj;
+					}),
+				);
 				const group_users = await Promise.all(
 					item.group_users.map(async (userObj) => {
 						userObj = userObj.user;
