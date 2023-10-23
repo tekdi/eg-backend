@@ -180,13 +180,13 @@ export class CampController {
 
 	@Patch('/admin/reassign/:id')
 	@UseGuards(new AuthGuard())
-	reassignBeneficiarytoPrerakCamp(
+	reassignBeneficiarytoCamp(
 		@Req() request: any,
 		@Body() body: any,
 		@Param('id') id: number,
 		@Res() response: any,
 	) {
-		return this.campService.reassignBeneficiarytoPrerakCamp(
+		return this.campService.reassignBeneficiarytoCamp(
 			id,
 			body,
 			request,

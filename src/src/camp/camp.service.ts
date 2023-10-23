@@ -1940,12 +1940,7 @@ export class CampService {
 		}
 	}
 
-	async reassignBeneficiarytoPrerakCamp(
-		id: any,
-		body: any,
-		req: any,
-		resp: any,
-	) {
+	async reassignBeneficiarytoCamp(id: any, body: any, req: any, resp: any) {
 		let ip_id = req.mw_userid;
 
 		//validation to check if camp already have the user to be assigned
