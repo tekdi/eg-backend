@@ -1736,6 +1736,17 @@ export class CampService {
 		};
 
 		if (
+			(!camp_attendance_body.end_date &&
+				!camp_attendance_body.start_date) ||
+			(camp_attendance_body.end_date === '' &&
+				camp_attendance_body.end_date === '')
+		) {
+			const formattedDate = setStartAndEndDate();
+			camp_attendance_body.start_date = formattedDate + `T00:00:00.000Z`;
+			camp_attendance_body.end_date = formattedDate + `T23:59:59.999Z`;
+		}
+
+		if (
 			!camp_attendance_body.start_date ||
 			camp_attendance_body.start_date === ''
 		) {
