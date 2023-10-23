@@ -1774,7 +1774,7 @@ export class CampService {
 			return res.json({
 				status: 200,
 				message: 'ATTENDANCE_DATA_NOT_FOUND',
-				data: [{}],
+				data: [],
 			});
 		} else {
 			return res.json({
