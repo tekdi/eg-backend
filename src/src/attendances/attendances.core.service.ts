@@ -44,14 +44,9 @@ export class AttendancesCoreService {
 		return response;
 	}
 
-	public async getByCampId(
-		id: any,
-
-		req: any,
-		res: any,
-	) {
+	public async getByCampId(id: any, body: any, req: any, res: any) {
 		let query = `query MyQuery {
-			attendance(where: {context_id: {_eq:${id}}}){
+			attendance(where: {context_id: {_eq:${id}}, date_time: {_gte:"${body?.start_date}", _lte:"${body?.end_date}"}}) {
 				id
 			  status
 			  fa_is_processed
