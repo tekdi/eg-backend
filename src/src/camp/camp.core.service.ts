@@ -208,4 +208,45 @@ export class CampCoreService {
 			};
 		}
 	}
+
+	public async createCampUser(
+		body: any,
+		returnFields: any,
+		req: any,
+		res: any,
+	) {
+		let response = await this.hasuraService.q(
+			'group_users',
+			{
+				...body,
+			},
+			[],
+			false,
+			[...returnFields],
+		);
+
+		return response;
+	}
+
+	public async updateCampUser(
+		id: any,
+		body: any,
+		update_arr: any,
+		returnFieldsgroupUsers: any,
+		req: any,
+		res: any,
+	) {
+		let response = await this.hasuraService.q(
+			'group_users',
+			{
+				...body,
+				id: id,
+			},
+			update_arr,
+			true,
+			[...returnFieldsgroupUsers],
+		);
+
+		return response;
+	}
 }

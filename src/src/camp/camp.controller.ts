@@ -177,4 +177,20 @@ export class CampController {
 	) {
 		await this.campService.getFilter_By_Camps(body, req, response);
 	}
+
+	@Patch('/admin/reassign/:id')
+	@UseGuards(new AuthGuard())
+	reassignBeneficiarytoPrerakCamp(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.reassignBeneficiarytoPrerakCamp(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }

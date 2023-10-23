@@ -10,6 +10,7 @@ import { AttendancesService } from '../attendances/attendances.service';
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
+import e from 'express';
 @Injectable()
 export class CampService {
 	constructor(
@@ -1936,6 +1937,113 @@ export class CampService {
 				message: 'IP_CAMP_LIST_ERROR',
 				data: {},
 			});
+		}
+	}
+
+	async reassignBeneficiarytoPrerakCamp(
+		id: any,
+		body: any,
+		req: any,
+		resp: any,
+	) {
+		let ip_id = req.mw_userid;
+
+		//validation to check if camp already have the user to be assigned
+		let query = `query MyQuery {
+			camps_by_pk(id:${id}){
+			  group{
+				id
+				group_users(where:{user_id:{_eq:${body?.learner_id}}}){
+				  id
+				  user_id
+				  status
+				  
+				}
+			  }
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let result = hasura_response?.data?.camps_by_pk;
+
+		if (result?.group?.group_users?.length > 0) {
+			return resp.json({
+				status: 200,
+				success: false,
+				data: {},
+			});
+		} else {
+			let new_group_id = result?.group?.id;
+			//get group_user id and  for updating and creating new record
+
+			let query = `query MyQuery {
+				group_users(where: {user_id: {_eq:${body?.learner_id}}}){
+				  id
+				  user_id
+				  status
+				}
+			  }
+			  `;
+
+			const hasura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+			let id = hasura_response?.data?.group_users?.[0].id;
+
+			let update_inactive_body = {
+				status: 'inactive',
+				updated_by: ip_id,
+			};
+
+			let create_active_body = {
+				status: 'active',
+				created_by: ip_id,
+				updated_by: ip_id,
+				member_type: 'member',
+				user_id: body?.learner_id,
+				group_id: new_group_id,
+			};
+
+			let update_array = ['status', 'updated_by'];
+
+			let update_response = await this.campcoreservice.updateCampUser(
+				id,
+				update_inactive_body,
+				update_array,
+				['id', 'status', 'updated_by'],
+				req,
+				resp,
+			);
+
+			let create_response = await this.campcoreservice.createCampUser(
+				create_active_body,
+				['id', 'status', 'updated_by'],
+				req,
+				resp,
+			);
+
+			if (
+				update_response?.group_users?.id &&
+				create_response?.group_users?.id
+			) {
+				return resp.json({
+					status: 200,
+					message: 'Camp reassigned successfully',
+					data: create_response?.group_users?.id,
+				});
+			} else {
+				return resp.json({
+					status: 500,
+					message: 'CAMP_REASSIGN_FAILURE',
+					data: {},
+				});
+			}
 		}
 	}
 }
