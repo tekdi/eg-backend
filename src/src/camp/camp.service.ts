@@ -1731,7 +1731,7 @@ export class CampService {
 	async updateCampAttendance(id: any, body: any, req: any, resp: any) {
 		let UPDATE_TABLE_DETAILS = {
 			edit_attendance: {
-				attendance: ['photo_1', 'photo_2'],
+				attendance: ['lat', 'long', 'status', 'photo_1', 'photo_2'],
 			},
 		};
 
