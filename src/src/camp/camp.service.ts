@@ -1462,6 +1462,7 @@ export class CampService {
 				data: {},
 			});
 		}
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		const data = await this.campcoreservice.list(body);
 
 		if (data) {
@@ -1902,6 +1903,15 @@ export class CampService {
 	}
 
 	async getFilter_By_Camps(body: any, req: any, resp: any) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return resp.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		const data = await this.campcoreservice.list(body);
 
 		const faciltatorIds = new Set();
