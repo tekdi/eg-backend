@@ -60,6 +60,17 @@ export class CampController {
 		return this.campService.updateCampDetails(id, body, request, response);
 	}
 
+	@Patch('/admin/camp-details/:id')
+	@UseGuards(new AuthGuard())
+	adminUpdateCampDetails(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.updateCampDetails(id, body, request, response);
+	}
+
 	@Post('/consent/create')
 	@UseGuards(new AuthGuard())
 	createConsentBenficiaries(
