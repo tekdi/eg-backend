@@ -1462,8 +1462,8 @@ export class CampService {
 				data: {},
 			});
 		}
-		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const data = await this.campcoreservice.list(parent_ip_id, body);
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		const data = await this.campcoreservice.list(body);
 
 		if (data) {
 			return resp.json({
@@ -1911,8 +1911,8 @@ export class CampService {
 				data: {},
 			});
 		}
-		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const data = await this.campcoreservice.list(parent_ip_id, body);
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		const data = await this.campcoreservice.list(body);
 
 		const faciltatorIds = new Set();
 		data?.camps?.forEach((item) => {

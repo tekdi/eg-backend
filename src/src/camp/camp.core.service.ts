@@ -63,7 +63,7 @@ export class CampCoreService {
 		return response;
 	}
 
-	public async list(parent_ip_id: any, body: any) {
+	public async list(body: any) {
 		let filterQueryArray = [];
 
 		const status_array = this.enumService
@@ -75,7 +75,7 @@ export class CampCoreService {
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
-
+		let parent_ip_id = body?.parent_ip_id;
 		let status = body?.status;
 
 		filterQueryArray.push(
