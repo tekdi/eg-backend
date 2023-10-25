@@ -63,7 +63,7 @@ export class CampCoreService {
 		return response;
 	}
 
-	public async list(body: any) {
+	public async list(parent_ip_id: any, body: any) {
 		let filterQueryArray = [];
 
 		const status_array = this.enumService
@@ -73,8 +73,14 @@ export class CampCoreService {
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
 
 		let status = body?.status;
+
+		filterQueryArray.push(
+			`{group_users: {member_type: {_eq: "owner"}, group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}`,
+		);
 
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
