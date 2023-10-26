@@ -57,7 +57,28 @@ export class CampController {
 		@Param('id') id: number,
 		@Res() response: any,
 	) {
-		return this.campService.updateCampDetails(id, body, request, response);
+		return this.campService.updateCampDetailsForFacilitatore(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Patch('/admin/camp-details/:id')
+	@UseGuards(new AuthGuard())
+	adminUpdateCampDetails(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.updateCampDetailsForIp(
+			id,
+			body,
+			request,
+			response,
+		);
 	}
 
 	@Post('/consent/create')
@@ -67,7 +88,21 @@ export class CampController {
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		return this.campService.createConsentBenficiaries(
+		return this.campService.createConsentBenficiariesForFacilitator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/admin/consent/create')
+	@UseGuards(new AuthGuard())
+	adminCreateConsentBenficiaries(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.createConsentBenficiariesForAdmin(
 			body,
 			request,
 			response,

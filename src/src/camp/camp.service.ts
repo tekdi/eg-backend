@@ -610,6 +610,68 @@ export class CampService {
 		});
 	}
 
+	public async updateCampDetailsForIp(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		const user = await this.userService.ipUserInfo(request);
+
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return response.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
+		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		// get facilitator for the provided camp id
+
+		let query = `query MyQuery {
+			camps(where: {id: {_eq:${id}}, group_users: {group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}}}) {
+			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
+				user_id
+			  }
+			}
+		  }
+		  
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let facilitator_id =
+			hasura_response?.data?.camps?.[0]?.group_users?.[0]?.user_id;
+
+		if (!facilitator_id) {
+			return response.json({
+				status: 400,
+				data: {},
+				message: 'CAMP_INVALID_ERROR',
+			});
+		}
+
+		body.facilitator_id = facilitator_id;
+		const data = await this.updateCampDetails(id, body, request, response);
+		return response.status(data?.status || 400).json(data);
+	}
+
+	public async updateCampDetailsForFacilitatore(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		body.facilitator_id = request?.mw_userid;
+
+		const data = await this.updateCampDetails(id, body, request, response);
+		return response.status(data?.status || 400).json(data);
+	}
+
 	public async updateCampDetails(
 		id: any,
 		body: any,
@@ -688,19 +750,21 @@ export class CampService {
 		const campData = hasura_response?.data.camps_by_pk;
 
 		if (!campData?.id) {
-			return response.status(400).json({
+			return {
+				status: 400,
 				success: false,
 				message: 'CAMP_NOT_EXISTS_ERROR',
 				data: {},
-			});
+			};
 		}
 
 		if (campData?.group_users[0]?.user_id != facilitator_id) {
-			return response.status(401).json({
+			return {
+				status: 401,
 				success: false,
 				message: 'CAMP_UPDATE_ACTION_DENIED',
 				data: {},
-			});
+			};
 		}
 
 		let property_id = campData?.property_id;
@@ -716,11 +780,12 @@ export class CampService {
 				['created_by', 'updated_by'],
 			);
 			if (status === 500) {
-				return response.status(status).json({
+				return {
+					status,
 					success: false,
 					message,
 					data,
-				});
+				};
 			} else {
 				property_id = data?.property_id;
 			}
@@ -807,6 +872,7 @@ export class CampService {
 				const facilities_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities.properties;
 
+				console.log('property_id-->>', property_id);
 				await this.updatepropertyDetails(
 					camp_id,
 					property_id,
@@ -920,11 +986,12 @@ export class CampService {
 						);
 				}
 
-				return response.json({
+				return {
 					status: 200,
+					success: true,
 					message: 'Successfully updated camp details',
 					data: { resultCreate, resultActive, resultInactive },
-				});
+				};
 			}
 
 			case 'edit_camp_status': {
@@ -958,11 +1025,12 @@ export class CampService {
 				const res = await this.hasuraServiceFromServices.getData(qdata);
 
 				if (res?.data?.camps?.length == 0) {
-					return response.json({
+					return {
 						status: 400,
+						success: false,
 						message: 'INVALID_CAMP_ERROR',
 						data: {},
-					});
+					};
 				}
 				let { kit_received, properties } = res?.data?.camps[0] ?? {
 					kit_received: null,
@@ -970,18 +1038,20 @@ export class CampService {
 				};
 
 				if (kit_received == 'no' || kit_received == null) {
-					return response.json({
+					return {
 						status: 400,
+						success: false,
 						message: 'Please fill valid kit details',
 						data: {},
-					});
+					};
 				} else if (!properties?.property_facilities) {
-					return response.json({
+					return {
 						status: 400,
+						success: false,
 						message:
 							'Please fill valid property facilities details',
 						data: {},
-					});
+					};
 				} else if (
 					!properties?.lat ||
 					!properties.long ||
@@ -991,11 +1061,12 @@ export class CampService {
 					!properties.village ||
 					!properties.property_type
 				) {
-					return response.json({
+					return {
 						status: 400,
+						success: false,
 						message: 'Please fill valid location details',
 						data: {},
-					});
+					};
 				} else if (group_id) {
 					let group_update_body = {
 						status: update_body.status,
@@ -1014,17 +1085,19 @@ export class CampService {
 						[...this.returnFieldsGroups, 'id', 'status'],
 					);
 
-					return response.json({
+					return {
 						status: 200,
+						success: true,
 						message: 'Successfully updated camp details',
 						data: camp_id,
-					});
+					};
 				} else {
-					return response.json({
+					return {
 						status: 400,
+						success: false,
 						message: 'CAMP_UPDATE_FAILURE_ERROR',
 						data: {},
-					});
+					};
 				}
 			}
 		}
@@ -1140,7 +1213,7 @@ export class CampService {
 	async createConsentBenficiaries(body: any, request: any, resp: any) {
 		let user_id = body?.user_id;
 		let camp_id = body?.camp_id;
-		let facilitator_id = request.mw_userid;
+		let facilitator_id = body?.facilitator_id;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 		let document_id = body?.document_id;
@@ -1239,6 +1312,64 @@ export class CampService {
 		}
 	}
 
+	async createConsentBenficiariesForAdmin(
+		body: any,
+		request: any,
+		response: any,
+	) {
+		const user = await this.userService.ipUserInfo(request);
+		const camp_id = body?.camp_id;
+
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return response.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
+		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		// get facilitator for the provided camp id
+
+		let query = `query MyQuery {
+			camps(where: {id: {_eq:${camp_id}}, group_users: {group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}}}) {
+			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
+				user_id
+			  }
+			}
+		  }
+		  
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let facilitator_id =
+			hasura_response?.data?.camps?.[0]?.group_users?.[0]?.user_id;
+
+		if (!facilitator_id) {
+			return response.json({
+				status: 400,
+				data: {},
+				message: 'CAMP_INVALID_ERROR',
+			});
+		}
+
+		body.facilitator_id = facilitator_id;
+		await this.createConsentBenficiaries(body, request, response);
+	}
+
+	async createConsentBenficiariesForFacilitator(
+		body: any,
+		request: any,
+		response: any,
+	) {
+		body.facilitator_id = request?.mw_userid;
+
+		await this.createConsentBenficiaries(body, request, response);
+	}
 	//Get consents List
 	async getConsentBenficiaries(body: any, request: any, resp: any) {
 		let camp_id = body?.camp_id;
