@@ -1701,6 +1701,7 @@ export class FacilitatorService {
           dob
           aadhar_token
           address
+          aadhar_verified
           block_id
           block_village_id
           created_by
