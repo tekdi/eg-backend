@@ -2343,23 +2343,29 @@ export class FacilitatorService {
 			});
 		}
 	}
-	public async updateOkycResponse(req:any,body:any,res:any){
+	public async updateOkycResponse(req: any, body: any, res: any) {
 		const user_id = req?.mw_userid;
 		const program_id = body?.program_id || 1;
 		const academic_year_id = body?.academic_year_id || 1;
-		const updated_response = await this.facilitatorCoreService.update_okyc_response(body,program_id,user_id,academic_year_id);
-		if(updated_response != null){
+		const updated_response =
+			await this.facilitatorCoreService.updateOkycResponse(
+				body,
+				program_id,
+				user_id,
+				academic_year_id,
+			);
+		if (updated_response != null) {
 			return res.json({
 				status: 200,
 				message: 'Successfully updated okyc_response details',
 				data: [],
 			});
-		}else{
-		return res.json({
-			status: 200,
-			message: 'Cannot update okyc_response details',
-			data: [],
-		});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'Cannot update okyc_response details',
+				data: [],
+			});
+		}
 	}
-}
 }
