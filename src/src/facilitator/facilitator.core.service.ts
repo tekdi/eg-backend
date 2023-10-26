@@ -11,29 +11,37 @@ export class FacilitatorCoreService {
 		user_id: any,
 		academic_year_id: any,
 	) {
+		console.log('here');
 		const data = {
-			query: `query MyQuery {program_beneficiaries(where: {program_id: {_eq:${program_id}},user_id:{_eq: ${user_id}}, academic_year_id: {_eq:${academic_year_id}}}){
+			query: `query MyQuery {program_beneficiaries(where: {program_id: {_eq:${program_id}},user_id:{_eq: 1100}, academic_year_id: {_eq:${academic_year_id}}}){
 				id
 			}
 		}`,
 		};
 		const hasura_response = await this.hasuraService.getData(data);
 
-		const response = body.okyc_response.data
-			? JSON.stringify(body.okyc_response.data).replace(/"/g, '\\"')
-			: '';
-		const reqData = hasura_response.data.id;
+		const response = body ? JSON.stringify(body).replace(/"/g, '\\"') : '';
+		const reqData = hasura_response?.data?.program_beneficiaries?.[0]?.id;
 
-		const updated_response = await this.hasuraService.q(
-			'program_faciltators',
-			{
-				id: reqData,
-				okyc_response: response,
-			},
-			[],
-			true,
-		);
-
+		let updated_response = {};
+		let update_array = ['okyc_response'];
+		if (reqData) {
+			updated_response = await this.hasuraService.q(
+				'program_faciltators',
+				{
+					id: reqData,
+					okyc_response: response,
+				},
+				update_array,
+				true,
+			);
+		} else {
+			return {
+				status: 200,
+				message: 'Data not found',
+				data: {},
+			};
+		}
 		return updated_response;
 	}
 }
