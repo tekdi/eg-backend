@@ -1698,6 +1698,7 @@ export class FacilitatorService {
           middle_name
           dob
           aadhar_token
+		  aadhar_verified
           address
           block_id
           block_village_id
