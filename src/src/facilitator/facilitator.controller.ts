@@ -185,4 +185,14 @@ export class FacilitatorController {
 			response,
 		);
 	}
+	@Post('/okyc_response')
+	@UseGuards(new AuthGuard())
+	okyc_response(
+		@Req() req:any,
+		@Body()body:any,
+		@Res()res:any
+	)
+	{
+		return this.facilitatorService.updateOkycResponse(req,body,res);
+	}
 }
