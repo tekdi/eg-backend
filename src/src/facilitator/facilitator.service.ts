@@ -1415,19 +1415,9 @@ export class FacilitatorService {
 					data: {},
 				});
 			}
-			const variables: any = {};
 			let filterQueryArray = [];
-			let searchQuery = '';
-			if (body.search && body.search !== '') {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
+			let status = body?.status;
 
-				if (last_name?.length > 0) {
-					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
-				} else {
-					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
-				}
-			}
 			filterQueryArray.push(
 				`{_not: {
 					group_users: {
@@ -1441,7 +1431,6 @@ export class FacilitatorService {
 				}},{
 					program_beneficiaries: {
 						facilitator_user: {
-							${searchQuery}
 						program_faciltators: {					
 							parent_ip: {
 								 _eq: "${user?.data?.program_users[0]?.organisation_id}"
@@ -1456,7 +1445,7 @@ export class FacilitatorService {
 				body?.enrollment_verification_status !== ''
 			) {
 				filterQueryArray.push(
-					`{program_faciltators:{enrollment_verification_status:{_eq:${body?.enrollment_verification_status}}}}`,
+					`{program_beneficiaries:{enrollment_verification_status:{_eq:${body?.enrollment_verification_status}}}}`,
 				);
 			}
 
@@ -1486,37 +1475,35 @@ export class FacilitatorService {
 
 			if (body.facilitator && body.facilitator.length > 0) {
 				filterQueryArray.push(
-					`{program_faciltators: {facilitator_id:{_in: ${JSON.stringify(
+					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
 						body.facilitator,
 					)}}}}`,
 				);
 			}
 
-			if (
-				body?.hasOwnProperty('status') &&
-				this.isValidString(body?.status) &&
-				this.allStatus.map((obj) => obj.value).includes(body?.status)
-			) {
-				filterQueryArray.push(
-					'{program_faciltators: {status: {_eq: $status}}}',
-				);
-				variables.status = body?.status;
+			if (status && status !== '') {
+				if (status === 'identified') {
+					filterQueryArray.push(`{
+						_or: [
+							{ program_beneficiaries: { status: { _eq: "identified" } } },
+							{ program_beneficiaries: { status: { _is_null: true } } },
+							{ program_beneficiaries: { status: { _eq: "" } } },
+						]
+					}`);
+				} else {
+					filterQueryArray.push(
+						`{program_beneficiaries:{status:{_eq:${status}}}}`,
+					);
+				}
 			}
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
-			const data = {
-				query: `query MyQuery($limit:Int, $offset:Int) {
-					users_aggregate(where:${filterQuery}) {
-						aggregate {
-							count
-						}
-					}
-					users(where: ${filterQuery},
-						limit: $limit,
-						offset: $offset,
-					) {
+			const dataIds = {
+				query: `query MyQuery {
+					users(where: ${filterQuery}) {
 						program_beneficiaries {
+							facilitator_id
 							facilitator_user {
 								id
 								first_name
@@ -1526,24 +1513,53 @@ export class FacilitatorService {
 						}
 					}
 				}`,
+			};
+			const resultIds = await this.hasuraService.getData(dataIds);
+			const ids = resultIds?.data?.users?.map(
+				(user) => user?.program_beneficiaries?.[0].facilitator_id,
+			);
+			let searchQuery = '';
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+				} else {
+					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+				}
+			}
+
+			const where = `{id:{_in: ${JSON.stringify(ids)}},${searchQuery}}`;
+			const data = {
+				query: `query MyQuery($limit:Int, $offset:Int) {
+					users_aggregate(where:${where}) {
+						aggregate {
+							count
+						}
+					}
+					users(where: ${where},
+						limit: $limit,
+						offset: $offset,
+					) {
+						id
+						first_name
+						middle_name
+						last_name
+					}
+				}`,
 				variables: {
 					limit: limit,
 					offset: offset,
 				},
 			};
+			console.log(data?.query);
+			const result = await this.hasuraService.getData(data);
+			const extractedData = result?.data?.users;
+			const count = result?.data?.users_aggregate?.aggregate?.count;
+			const totalPages = Math.ceil(count / limit);
 
-			const result = await this.hasuraService.getData({
-				query: data.query,
-			});
-
-			const extractedData = result?.data?.users?.map(
-				(user) => user?.program_beneficiaries?.[0].facilitator_user,
-			);
-			let count = result?.data?.users_aggregate?.aggregate?.count;
-
-			const users = result?.data?.users;
-
-			if (users?.length == 0) {
+			if (extractedData?.length == 0) {
 				resp.status(404).json({
 					message: 'BENEFICIARY_DATA_NOT_FOUND_ERROR',
 					data: { users: [] },
@@ -1556,6 +1572,7 @@ export class FacilitatorService {
 						data: extractedData || [],
 						limit,
 						currentPage: page,
+						totalPages,
 					},
 				});
 			}
