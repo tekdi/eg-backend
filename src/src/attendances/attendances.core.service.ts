@@ -46,11 +46,19 @@ export class AttendancesCoreService {
 
 	public async getByCampId(id: any, body: any, req: any, res: any) {
 		let query = `query MyQuery {
-			attendance(where: {context_id: {_eq:${id}}, date_time: {_gte:"${body?.start_date}", _lte:"${body?.end_date}"}}) {
-				id
+			attendance(where: {context:{_eq:"camps"},context_id: {_eq:${id}}, date_time: {_gte:"${body?.start_date}", _lte:"${body?.end_date}"}}) {
+			  id
+			  lat
+			  long
+			  context_id
+			  context
+			  date_time
 			  status
 			  fa_is_processed
 			  fa_similarity_percentage
+			  user_id
+			  created_by
+			  updated_by
 			  user{
 				id
 				first_name
