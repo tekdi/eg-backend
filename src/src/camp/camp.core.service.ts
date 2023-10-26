@@ -104,16 +104,14 @@ export class CampCoreService {
 			);
 		}
 
-		if (body?.status && body?.status !== '') {
-			if (body?.status == 'all') {
-				filterQueryArray.push(
-					`{group: {status: {_in: ${JSON.stringify(
-						status_array.filter((item) => item != 'not_registered'),
-					)}}}}`,
-				);
-			} else {
-				filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
-			}
+		if (!body?.status || body?.status === '' || body?.status == 'all') {
+			filterQueryArray.push(
+				`{group: {status: {_in: ${JSON.stringify(
+					status_array.filter((item) => item != 'not_registered'),
+				)}}}}`,
+			);
+		} else {
+			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
 		}
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
