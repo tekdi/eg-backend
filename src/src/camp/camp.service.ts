@@ -679,7 +679,7 @@ export class CampService {
 		response: any,
 	) {
 		let camp_id = id;
-		let facilitator_id = request.mw_userid;
+		let facilitator_id = body?.facilitator_id;
 		let status = 'active';
 		let member_type = 'owner';
 		let update_body = body;
