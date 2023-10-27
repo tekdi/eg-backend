@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { SentryService } from '../services/sentry/sentry.service';
 
 @Injectable()
 export class FaAttendanceProcessingCron {
@@ -12,6 +13,7 @@ export class FaAttendanceProcessingCron {
 		private configService: ConfigService,
 		private awsRekognitionService: AwsRekognitionService,
 		private hasuraService: HasuraService,
+		private sentryService: SentryService,
 	) {
 		this.prefixed = this.configService.get<string>(
 			'AWS_REKOGNITION_CUSTOM_PREFIX',
@@ -20,12 +22,19 @@ export class FaAttendanceProcessingCron {
 
 	//3rd cron runs for each hour's 25th minute eg: 10:25am, 11::25am
 	@Cron('25 * * * *')
-	async markAttendanceCron() {
+	async handleCron() {
 		try {
 			/*----------------------- Mark attendance of from face index of users in collection -----------------------*/
 			console.log(
 				'cron job 3: markAttendanceCron started at time ' + new Date(),
 			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faAttendanceProcessing.handleCron',
+				message: 'faAttendanceProcessing cron started at time',
+				data: { date: new Date() },
+			});
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
@@ -37,8 +46,13 @@ export class FaAttendanceProcessingCron {
 					),
 				),
 			);
-			//console.log('attendance users');
-			//console.dir(usersForAttendance, { depth: 99 });
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faAttendanceProcessing.handleCron',
+				message: 'response getAllUsersForAttendance',
+				data: { usersForAttendance },
+			});
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
 				const userId = String(user.id);
@@ -109,11 +123,7 @@ export class FaAttendanceProcessingCron {
 				}
 			}
 		} catch (error) {
-			console.log(
-				'Error occurred in markAttendanceCron.',
-				error,
-				error.stack,
-			);
+			this.sentryService.captureException(error);
 		}
 	}
 
@@ -140,13 +150,20 @@ export class FaAttendanceProcessingCron {
 					}
 				}
 			`;
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faAttendanceProcessing.markAttendance',
+			message: 'hasura service query',
+			data: { query: updateQuery },
+		});
 		try {
 			return (
 				(await this.hasuraService.getData({ query: updateQuery })).data
 					.update_attendance_by_pk.id === attendanceId
 			);
 		} catch (error) {
-			console.log('markAttendance:', error, error.stack);
+			this.sentryService.captureException(error);
 			return [];
 		}
 	}
@@ -168,13 +185,20 @@ export class FaAttendanceProcessingCron {
 				}
 			}
 		`;
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faAttendanceProcessing.markProcessed',
+			message: 'hasura service query',
+			data: { query: updateQuery },
+		});
 		try {
 			return (
 				(await this.hasuraService.getData({ query: updateQuery })).data
 					.update_attendance_by_pk.id === attendanceId
 			);
 		} catch (error) {
-			console.log('markAttendance:', error, error.stack);
+			this.sentryService.captureException(error);
 			return [];
 		}
 	}
@@ -203,12 +227,19 @@ export class FaAttendanceProcessingCron {
 					}
 				}
 			`;
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faAttendanceProcessing.getAllUsersForAttendance',
+			message: 'hasura service query',
+			data: { query: query },
+		});
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
 			return users;
 		} catch (error) {
-			console.log('getAllUsersForAttendance:', error, error.stack);
+			this.sentryService.captureException(error);
 			return [];
 		}
 	}

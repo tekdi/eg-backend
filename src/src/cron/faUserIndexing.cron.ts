@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { SentryService } from '../services/sentry/sentry.service';
 
 @Injectable()
 export class FaUserIndexingCron {
@@ -12,6 +13,7 @@ export class FaUserIndexingCron {
 		private configService: ConfigService,
 		private awsRekognitionService: AwsRekognitionService,
 		private hasuraService: HasuraService,
+		private sentryService: SentryService,
 	) {
 		this.data_limit = this.configService.get<string>(
 			'AWS_REKOGNITION_INDEX_USER_BATCH_SIZE',
@@ -20,13 +22,20 @@ export class FaUserIndexingCron {
 
 	//first cron runs for each hour's 5th minute eg: 10:05am, 11::05am
 	@Cron('05 * * * *')
-	async createCollectionUsers() {
+	async handleCron() {
 		try {
 			/*----------------------- Create users in collection -----------------------*/
 			console.log(
 				'cron job 1: createCollectionUsers started at time ' +
 					new Date(),
 			);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faUserIndexing.handleCron',
+				message: 'faUserIndexing cron started at time',
+				data: { date: new Date() },
+			});
 			const collectionId = this.configService.get<string>(
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
@@ -42,22 +51,23 @@ export class FaUserIndexingCron {
 			const nonCreatedUsers = await this.fetchAllUsersExceptCreated(
 				this.data_limit,
 			);
-			//console.log('>>>fetchAllUsersExceptCreated', nonCreatedUsers);
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faUserIndexing.handleCron',
+				message: 'response of fetchAllUsersExceptCreated',
+				data: { nonCreatedUsers },
+			});
 			let nonexistusers = nonCreatedUsers.map((userObj) =>
 				String(userObj.id),
 			);
-			//console.log('>>>nonexistusers', nonexistusers);
 			// Step-3: Create not created users in collection and update status in users table
 			await this.awsRekognitionService.createUsersInCollection(
 				collectionId,
 				nonexistusers,
 			);
 		} catch (error) {
-			console.log(
-				'Error occurred in createCollectionUsers.',
-				error,
-				error.stack,
-			);
+			this.sentryService.captureException(error);
 		}
 	}
 
@@ -75,15 +85,26 @@ export class FaUserIndexingCron {
 					}
 				}
 			`;
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faUserIndexing.fetchAllUsersExceptCreated',
+			message: 'hasura service query',
+			data: { query: query },
+		});
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
-			//console.log('fetchALluser cunt------>>>>>', users.length);
-			//console.log('fetchALluser------>>>>>', users);
-
+			this.sentryService.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'cron.faUserIndexing.fetchAllUsersExceptCreated',
+				message: 'data fetch from database',
+				data: { users },
+			});
 			return users;
 		} catch (error) {
-			console.log('fetchAllUsersExceptIds:', error, error.stack);
+			this.sentryService.captureException(error);
 			return [];
 		}
 	}
@@ -92,7 +113,13 @@ export class FaUserIndexingCron {
 		//delete collection
 		const collectionDeleted =
 			await this.awsRekognitionService.deleteCollection(collectionId);
-		//console.log('collectionDeleted------>>>>>', collectionDeleted);
+		this.sentryService.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'cron.faUserIndexing.deleteCollection',
+			message: 'response collectionDeleted',
+			data: { collectionDeleted },
+		});
 		let response = { success: false };
 		if (collectionDeleted) {
 			response.success = true;
