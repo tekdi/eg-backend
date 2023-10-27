@@ -12,7 +12,7 @@ export class FacilitatorCoreService {
 		academic_year_id: any,
 	) {
 		const data = {
-			query: `query MyQuery {program_beneficiaries(where: {program_id: {_eq:${program_id}},user_id:{_eq: ${user_id}}, academic_year_id: {_eq:${academic_year_id}}}){
+			query: `query MyQuery {program_faciltators(where: {program_id: {_eq:${program_id}},user_id:{_eq: ${user_id}}, academic_year_id: {_eq:${academic_year_id}}}){
 				id
 			}
 		}`,
@@ -21,8 +21,9 @@ export class FacilitatorCoreService {
 		const hasura_response = await this.hasuraService.getData(data);
 
 		const response = body ? JSON.stringify(body).replace(/"/g, '\\"') : '';
-		const reqData = hasura_response?.data?.program_beneficiaries?.[0]?.id;
-
+		const reqData = hasura_response?.data?.program_faciltators?.[0]?.id;
+		
+		
 		let updated_response = {};
 		let update_array = ['okyc_response'];
 		if (reqData) {
