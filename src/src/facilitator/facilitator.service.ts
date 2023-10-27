@@ -2365,6 +2365,7 @@ export class FacilitatorService {
 		const user_id = req?.mw_userid;
 		const program_id = body?.program_id || 1;
 		const academic_year_id = body?.academic_year_id || 1;
+		
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
 				body,

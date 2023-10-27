@@ -17,23 +17,31 @@ export class FacilitatorCoreService {
 			}
 		}`,
 		};
+
 		const hasura_response = await this.hasuraService.getData(data);
 
-		const response = body.okyc_response.data
-			? JSON.stringify(body.okyc_response.data).replace(/"/g, '\\"')
-			: '';
-		const reqData = hasura_response.data.id;
+		const response = body ? JSON.stringify(body).replace(/"/g, '\\"') : '';
+		const reqData = hasura_response?.data?.program_beneficiaries?.[0]?.id;
 
-		const updated_response = await this.hasuraService.q(
-			'program_faciltators',
-			{
-				id: reqData,
-				okyc_response: response,
-			},
-			[],
-			true,
-		);
-
+		let updated_response = {};
+		let update_array = ['okyc_response'];
+		if (reqData) {
+			updated_response = await this.hasuraService.q(
+				'program_faciltators',
+				{
+					id: reqData,
+					okyc_response: response,
+				},
+				update_array,
+				true,
+			);
+		} else {
+			return {
+				status: 200,
+				message: 'Data not found',
+				data: {},
+			};
+		}
 		return updated_response;
 	}
 }
