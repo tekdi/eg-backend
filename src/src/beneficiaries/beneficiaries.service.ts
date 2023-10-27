@@ -451,7 +451,7 @@ export class BeneficiariesService {
 			}
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-			var data = {
+			let data = {
 				query: `query MyQuery {
 					users(where: ${filterQuery},
 						order_by: {
@@ -1157,7 +1157,7 @@ export class BeneficiariesService {
 	}
 
 	public async findOne(id: number, resp?: any) {
-		var data = {
+		let data = {
 			query: `query searchById {
 				users_by_pk(id: ${id}) {
 				aadhaar_verification_mode
