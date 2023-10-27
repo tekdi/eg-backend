@@ -565,7 +565,7 @@ export class UserService {
 	}
 
 	async userById(id: any, resp?: any) {
-		var data = {
+		const data = {
 			query: `query searchById {
 		users_by_pk(id:${id}) {
 		  aadhaar_verification_mode
@@ -722,6 +722,7 @@ export class UserService {
 			updated_by
 			academic_year_id
 			qualification_ids
+			okyc_response
 		  }
 		  qualifications {
 			created_by
