@@ -1680,6 +1680,10 @@ export class CampService {
 								document_sub_type
 								path
 							}
+							program_beneficiaries{
+								enrollment_number
+							}
+							
 						}
 					}
 					properties {
