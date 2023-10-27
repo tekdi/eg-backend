@@ -2,39 +2,79 @@ import { Injectable } from '@nestjs/common';
 import { ActivitiesCoreService } from './activities.core.service';
 import { EnumService } from 'src/enum/enum.service';
 
-
 @Injectable()
 export class ActivitiesService {
-    constructor(
-        private activitiesCoreService: ActivitiesCoreService,
-        private enumService: EnumService,
-    ) {}
-    allStatus = this.enumService.getEnumValue('LEARNING_ACTIVITIES').data;
-    public async create(request: any,body:any, resp: any){
-        let facilitator_id = request.mw_userid;
-		let user_id = body?.user_id;
-        let academic_year_id = body?.academic_year_id || 1;
-        let program_id = body?.program_id || 1;
-		const response = this.activitiesCoreService.create(body,user_id,facilitator_id,academic_year_id,program_id);
-        if(response != null){
-            return resp.json({
-                status: 200,
-                message: 'Successfully updated camp details',
-                data: [],
-            });
-        }
-         
-        
-    }
-    public async update(request:any,body:any,id:any,res:any){
-        let facilitator_id = request.mw_userid;
-		let user_id = body?.user_id;
-        let updated_response = this.activitiesCoreService.update(body,id,facilitator_id,user_id);
-    }
-    public async getById(id:any, body:any, request:any, response:any){
+	constructor(
+		private activitiesCoreService: ActivitiesCoreService,
+		private enumService: EnumService,
+	) {}
 
-    }
-    public async getList(request:any,response:any){
+	public async create(request: any, body: any, resp: any) {
+		try {
+			let facilitator_id = request.mw_userid;
+			let user_id = body?.user_id;
+			let academic_year_id = body?.academic_year_id || 1;
+			let program_id = body?.program_id || 1;
+			let created_by = request.mw_userid;
+			let updated_by = request.mw_userid;
 
-    }
+			const response = await this.activitiesCoreService.create(
+				body,
+				user_id,
+				facilitator_id,
+				academic_year_id,
+				program_id,
+				created_by,
+				updated_by,
+			);
+
+			if (response != null) {
+				return resp.json({
+					status: 200,
+					message: 'Successfully updated camp details',
+					data: response,
+				});
+			}
+		} catch (error) {
+			return resp.json({
+				status: 500,
+				message: 'Internal server error',
+				data: [],
+			});
+		}
+	}
+
+	public async List(body: any, req: any, resp: any) {
+		try {
+			let academic_year_id = body?.academic_year_id || 1;
+			let program_id = body?.program_id || 1;
+			let context_id = req.mw_userid;
+
+			let newQdata = await this.activitiesCoreService.list(
+				academic_year_id,
+				program_id,
+				context_id,
+			);
+
+			if (newQdata.length > 0) {
+				return resp.status(200).json({
+					success: true,
+					message: 'Data found successfully!',
+					data: { activities: newQdata },
+				});
+			} else {
+				return resp.status(400).json({
+					success: false,
+					message: 'Data Not Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: 'Internal server error',
+				data: {},
+			});
+		}
+	}
 }
