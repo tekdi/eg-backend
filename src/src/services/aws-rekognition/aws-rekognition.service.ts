@@ -1,16 +1,16 @@
 import {
-	RekognitionClient,
-	ListCollectionsCommand,
+	AssociateFacesCommand,
 	CreateCollectionCommand,
-	ListFacesCommand,
-	IndexFacesCommand,
-	DeleteFacesCommand,
-	ListUsersCommand,
-	SearchUsersByImageCommand,
 	CreateUserCommand,
 	DeleteCollectionCommand,
+	DeleteFacesCommand,
 	DisassociateFacesCommand,
-	AssociateFacesCommand,
+	IndexFacesCommand,
+	ListCollectionsCommand,
+	ListFacesCommand,
+	ListUsersCommand,
+	RekognitionClient,
+	SearchUsersByImageCommand,
 } from '@aws-sdk/client-rekognition';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -44,6 +44,7 @@ export class AwsRekognitionService {
 			'AWS_REKOGNITION_CUSTOM_PREFIX',
 		);
 
+		// Init client
 		this.rekognition = new RekognitionClient({
 			region: this.region,
 			credentials: {
@@ -56,66 +57,80 @@ export class AwsRekognitionService {
 	async createCollectionIfNotExists(collectionId: string) {
 		const response = { new: false, data: null };
 		try {
-			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
-				category:
-					'services.aws-rekognition.createCollectionIfNotExists',
-				message: 'create collection in aws',
-				data: { collectionId },
-			});
 			const collections = await this.rekognition.send(
 				new ListCollectionsCommand({ MaxResults: 1000 }),
 			);
-			this.sentryService.addBreadcrumb({
+
+			/*this.sentryService.addBreadcrumb({
 				type: 'debug',
 				level: 'info',
 				category:
 					'services.aws-rekognition.createCollectionIfNotExists',
-				message: 'response of ListCollectionsCommand',
+				message: 'AWS-API - Get ListCollectionsCommand response',
 				data: { collections },
-			});
+			});*/
+
 			if (!collections.CollectionIds.includes(collectionId)) {
-				const createCollectionResponse = await this.rekognition.send(
-					new CreateCollectionCommand({ CollectionId: collectionId }),
-				);
+				let createCollectionCommandInput = { CollectionId: collectionId };
+
 				this.sentryService.addBreadcrumb({
-					type: 'debug',
-					level: 'info',
 					category:
 						'services.aws-rekognition.createCollectionIfNotExists',
-					message: 'response of CreateCollectionCommand',
+					message: 'AWS-API - Get CreateCollectionCommand input',
+					data: createCollectionCommandInput,
+				});
+
+				const createCollectionResponse = await this.rekognition.send(
+					new CreateCollectionCommand(createCollectionCommandInput),
+				);
+
+				this.sentryService.addBreadcrumb({
+					category:
+						'services.aws-rekognition.createCollectionIfNotExists',
+					message: 'AWS-API - CreateCollectionCommand response',
 					data: { createCollectionResponse },
 				});
+
 				response.new = true;
 				response.data = createCollectionResponse;
 			} else {
 				response.new = false;
 			}
+
 			return response;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return response;
 		}
 	}
 
 	async getAllUsersOfCollection(collectionId: string) {
 		try {
+			const listUsersParams = { CollectionId: collectionId }
+
+			this.sentryService.addBreadcrumb({
+				category: 'services.aws-rekognition.getAllUsersOfCollection',
+				message: 'AWS-API - ListUsersCommand input',
+				data: listUsersParams,
+			});
+
 			const users = (
 				await this.rekognition.send(
-					new ListUsersCommand({ CollectionId: collectionId }),
+					new ListUsersCommand(listUsersParams),
 				)
 			).Users.map((userObj) => userObj.UserId.replace(this.prefixed, ''));
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.getAllUsersOfCollection',
-				message: 'response of ListUsersCommand',
+				message: 'AWS-API - ListUsersCommand response',
 				data: { users },
 			});
+
 			return users;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return [];
 		}
 	}
@@ -123,13 +138,13 @@ export class AwsRekognitionService {
 	async createUsersInCollection(collectionId: string, userIds: any) {
 		try {
 			const aws_users = userIds;
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.createUsersInCollection',
-				message: 'createUsersInCollection parameters',
-				data: { collectionId: collectionId, aws_users: aws_users },
+				message: 'Users to be added into collection',
+				data: { aws_users: aws_users },
 			});
+
 			for (const userId of aws_users) {
 				const createUserParams = {
 					CollectionId: collectionId,
@@ -137,20 +152,28 @@ export class AwsRekognitionService {
 					ClientRequestToken:
 						this.prefixed + new Date().getTime().toString(),
 				};
+
 				this.sentryService.addBreadcrumb({
-					type: 'debug',
-					level: 'info',
 					category:
 						'services.aws-rekognition.createUsersInCollection',
-					message: 'request body of createUserParams',
+					message: 'AWS-API - CreateUserCommand input',
 					data: { createUserParams },
 				});
-				await this.rekognition.send(
+
+				let createUserResponse = await this.rekognition.send(
 					new CreateUserCommand(createUserParams),
 				);
-				//update in hasura
+
+				this.sentryService.addBreadcrumb({
+					category: 'services.aws-rekognition.createUsersInCollection',
+					message: 'AWS-API - CreateUserCommand response',
+					data: { createUserResponse },
+				});
+
+				// Update in hasura
 				await this.markUserAsCreated(userId);
-				//wait some time to match aws rate limit 5 request per seconds
+
+				// Wait some time to match aws rate limit 5 request per seconds
 				await new Promise((resolve) =>
 					setTimeout(
 						resolve,
@@ -164,37 +187,39 @@ export class AwsRekognitionService {
 			}
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return [];
 		}
 	}
 
 	async markUserAsCreated(userId: number) {
 		let updateQuery = `
-				mutation MyMutation {
-					update_users_by_pk(
-						pk_columns: {
-							id: ${userId}
-						},
-						_set: {
-							fa_user_created: true,
-						}
-					) {
-						id
+			mutation MyMutation {
+				update_users_by_pk(
+					pk_columns: {
+						id: ${userId}
+					},
+					_set: {
+						fa_user_created: true,
 					}
+				) {
+					id
 				}
-			`;
+			}
+		`;
+
 		this.sentryService.addBreadcrumb({
-			type: 'debug',
-			level: 'info',
 			category: 'services.aws-rekognition.markUserAsCreated',
-			message: 'hasura service query',
+			message: 'GQL Mutation - Update User',
 			data: { query: updateQuery },
 		});
+
 		try {
 			return (await this.hasuraService.getData({ query: updateQuery }))
 				.data.update_users_by_pk;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return [];
 		}
 	}
@@ -205,15 +230,29 @@ export class AwsRekognitionService {
 				CollectionId: collectionId,
 				UserId: userId,
 			};
+
+			this.sentryService.addBreadcrumb({
+				category: 'services.aws-rekognition.getAllFacesOfUser',
+				message: 'AWS-API - ListFacesCommand input',
+				data: { getFaceListParams },
+			});
+
 			const faces = (
 				await this.rekognition.send(
 					new ListFacesCommand(getFaceListParams),
 				)
 			).Faces.map((faceObj) => faceObj.FaceId);
-			//console.log('faces:--------->>>>>>>>>>>>>>>>', faces);
+
+			this.sentryService.addBreadcrumb({
+				category: 'services.aws-rekognition.getAllFacesOfUser',
+				message: 'AWS-API - ListFacesCommand response',
+				data: { faces },
+			});
+
 			return faces;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return [];
 		}
 	}
@@ -230,21 +269,31 @@ export class AwsRekognitionService {
 				UserId: this.prefixed + userId,
 				FaceIds: [faceId],
 			};
+
+			this.sentryService.addBreadcrumb({
+				category: 'services.aws-rekognition.disassociatePhotoFromUser',
+				message: 'AWS-API - DisassociateFacesCommand input',
+				data: { disassociateFaceParams },
+			});
+
 			const disassociateFaceResponse = await this.rekognition.send(
 				new DisassociateFacesCommand(disassociateFaceParams),
 			);
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.disassociatePhotoFromUser',
-				message: 'response of DisassociateFacesCommand',
+				message: 'AWS-API - DisassociateFacesCommand response',
 				data: { disassociateFaceResponse },
 			});
-			if (disassociateFaceResponse.DisassociatedFaces.length === 1)
+
+			if (disassociateFaceResponse.DisassociatedFaces.length === 1) {
 				response.success = true;
+			}
+
 			return response;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return response;
 		}
 	}
@@ -256,21 +305,31 @@ export class AwsRekognitionService {
 				CollectionId: collectionId,
 				FaceIds: [faceId],
 			};
+
+			this.sentryService.addBreadcrumb({
+				category: 'services.aws-rekognition.deleteFaceFromCollection',
+				message: 'AWS-API - DeleteFacesCommand input',
+				data: { deleteFaceParams },
+			});
+
 			const deleteFacesResponse = await this.rekognition.send(
 				new DeleteFacesCommand(deleteFaceParams),
 			);
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.deleteFaceFromCollection',
-				message: 'response of DeleteFacesCommand',
+				message: 'AWS-API - DeleteFacesCommand response',
 				data: { deleteFacesResponse },
 			});
-			if (deleteFacesResponse.DeletedFaces.length === 1)
+
+			if (deleteFacesResponse.DeletedFaces.length === 1) {
 				response.success = true;
+			}
+
 			return response;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return response;
 		}
 	}
@@ -289,30 +348,32 @@ export class AwsRekognitionService {
 				ExternalImageId: imageName,
 				MaxFaces: 1,
 			};
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.addFaceInCollection',
-				message: 'request body of IndexFacesCommand',
+				message: 'AWS-API - IndexFacesCommand response',
 				data: { addFaceParams },
 			});
+
 			const addFaceResponse = await this.rekognition.send(
 				new IndexFacesCommand(addFaceParams),
 			);
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.addFaceInCollection',
-				message: 'response of IndexFacesCommand',
+				message: 'AWS-API - IndexFacesCommand response',
 				data: { addFaceResponse },
 			});
+
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
 				response.faceId = addFaceResponse.FaceRecords[0].Face.FaceId;
 			}
+
 			return response;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return response;
 		}
 	}
@@ -333,28 +394,31 @@ export class AwsRekognitionService {
 					this.prefixed + new Date().getTime()
 				).toString(),
 			};
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.associateFaceToUser',
-				message: 'request body of AssociateFacesCommand',
+				message: 'AWS-API - AssociateFacesCommand input',
 				data: { associateFacesParams },
 			});
+
 			const associateFaceResponse = await this.rekognition.send(
 				new AssociateFacesCommand(associateFacesParams),
 			);
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.associateFaceToUser',
-				message: 'response of AssociateFacesCommand',
+				message: 'AWS-API - AssociateFacesCommand response',
 				data: { associateFaceResponse },
 			});
-			if (associateFaceResponse.AssociatedFaces.length === 1)
+
+			if (associateFaceResponse.AssociatedFaces.length === 1) {
 				response.success = true;
+			}
+
 			return response;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return response;
 		}
 	}
@@ -376,26 +440,27 @@ export class AwsRekognitionService {
 				UserMatchThreshold: faceMatchingThreshold,
 				MaxUsers: 5,
 			};
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
-				category: 'services.aws-rekognition.associateFaceToUser',
-				message: 'request body of SearchUsersByImageCommand',
+				category: 'services.aws-rekognition.searchUsersByImage',
+				message: 'AWS-API - SearchUsersByImageCommand input',
 				data: { searchParams },
 			});
+
 			const compareResponse = await this.rekognition.send(
 				new SearchUsersByImageCommand(searchParams),
 			);
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.searchUsersByImage',
-				message: 'response of SearchUsersByImageCommand',
+				message: 'AWS-API - SearchUsersByImageCommand response',
 				data: { compareResponse },
 			});
+
 			return compareResponse.UserMatches;
 		} catch (error) {
 			this.sentryService.captureException(error);
+
 			return [];
 		}
 	}
@@ -405,19 +470,27 @@ export class AwsRekognitionService {
 			const deleteCollectionParams = {
 				CollectionId: collectionId,
 			};
+
 			this.sentryService.addBreadcrumb({
-				type: 'debug',
-				level: 'info',
 				category: 'services.aws-rekognition.deleteCollection',
-				message: 'request body of deleteCollectionParams',
+				message: 'AWS-API - DeleteCollectionCommand input',
 				data: { deleteCollectionParams },
 			});
+
 			let response = await this.rekognition.send(
 				new DeleteCollectionCommand(deleteCollectionParams),
 			);
-			return response; // For unit tests.
+
+			this.sentryService.addBreadcrumb({
+				category: 'services.aws-rekognition.deleteCollection',
+				message: 'AWS-API - DeleteCollectionCommand response',
+				data: { response },
+			});
+
+			return response;
 		} catch (err) {
 			this.sentryService.captureException(err);
+
 			return null;
 		}
 	}
