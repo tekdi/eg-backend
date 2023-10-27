@@ -9,7 +9,6 @@ import {
 	Req,
 	Res,
 	UseGuards,
-	UsePipes,
 } from '@nestjs/common';
 import { ActivitiesService } from './activities.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';

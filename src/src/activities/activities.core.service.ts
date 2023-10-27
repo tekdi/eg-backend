@@ -125,7 +125,5 @@ export class ActivitiesCoreService {
 		});
 
 		let response_data = hasura_response?.data;
-		if (response_data) {
-		}
 	}
 }

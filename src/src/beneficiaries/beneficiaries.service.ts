@@ -2927,7 +2927,7 @@ export class BeneficiariesService {
 	}
 
 	async userById(id: any) {
-		var data = {
+		const data = {
 			query: `query searchById {
             users_by_pk(id: ${id}) {
 			aadhaar_verification_mode
