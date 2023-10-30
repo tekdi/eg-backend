@@ -2105,9 +2105,9 @@ export class CampService {
 		//validation to check if camp already have the user to be assigned
 		let query = `query MyQuery {
 			camps_by_pk(id:${camp_id}){
-			  group{
+			  group {
 				id
-				group_users(where:{user_id:{_eq:${body?.learner_id}}}){
+				group_users(where: {user_id: {_eq:${body?.learner_id}}, status: {_eq: "active"}}) {
 				  id
 				  user_id
 				  status
@@ -2136,7 +2136,7 @@ export class CampService {
 			//get group_user id  for updating and creating new record
 
 			let query = `query MyQuery {
-				group_users(where: {user_id: {_eq:${body?.learner_id}}}){
+				group_users(where: {user_id: {_eq:${body?.learner_id}},status:{_eq:"active"}}){
 				  id
 				  user_id
 				  status
