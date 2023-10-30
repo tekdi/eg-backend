@@ -2330,15 +2330,6 @@ export class CampService {
 				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0]
 					.group_id;
 
-			// let beneficiary_data =
-
-			// 	hasura_response?.data?.camps?.[0].beneficiary_data;
-			// let beneficiary_id = [];
-
-			// beneficiary_data.map((beneficiary) =>
-			// 	beneficiary_id.push(beneficiary.user_id),
-			// );
-
 			let update_inactive_body = {
 				status: 'inactive',
 				updated_by: ip_id,
@@ -2370,17 +2361,6 @@ export class CampService {
 				req,
 				resp,
 			);
-
-			// for (const benId of beneficiary_id) {
-			// 	const updatedResult =
-			// 		await this.beneficiariesService.reassignBeneficiary(
-			// 			benId,
-			// 			body.facilitator_id,
-			// 			false,
-			// 		);
-			// 	if (!updatedResult.success)
-			// 		result.data.unsuccessfulReassignmentIds.push(benId);
-			// }
 
 			if (
 				update_response?.group_users?.id &&
@@ -2445,7 +2425,7 @@ export class CampService {
 	async calculateCampLearnerCountSum(user) {
 		if (user.camp_learner_count && user.camp_learner_count.length > 0) {
 			return user.camp_learner_count.reduce((sum, camp) => {
-				if (camp.group && camp.group.group_users_aggregate) {
+				if (camp?.group && camp?.group?.group_users_aggregate) {
 					return (
 						sum + camp.group.group_users_aggregate.aggregate.count
 					);
