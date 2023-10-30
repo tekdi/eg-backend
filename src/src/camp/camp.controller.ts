@@ -233,7 +233,7 @@ export class CampController {
 		);
 	}
 
-	@Get('/admin/facilitator/list')
+	@Get('/admin/facilitators')
 	@UseGuards(new AuthGuard())
 	getAvailableFacilitatorList(@Req() request: any, @Res() response: any) {
 		return this.campService.getAvailableFacilitatorList(request, response);
