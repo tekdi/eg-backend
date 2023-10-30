@@ -3,8 +3,6 @@ import {
 	Controller,
 	Get,
 	Injectable,
-	Param,
-	Patch,
 	Post,
 	Req,
 	Res,
