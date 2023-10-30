@@ -79,7 +79,7 @@ export class CampCoreService {
 		let status = body?.status;
 
 		filterQueryArray.push(
-			`{group_users: {member_type: {_eq: "owner"}, group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}}`,
+			`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
 		);
 
 		if (body?.district && body?.district.length > 0) {
@@ -181,9 +181,10 @@ export class CampCoreService {
 			},
 		};
 
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: data.query,
-		});
+		console.log('query-->>', data.query);
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
 
 		const camps_data = hasura_response?.data?.camps;
 
