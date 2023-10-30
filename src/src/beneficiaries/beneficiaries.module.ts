@@ -28,6 +28,7 @@ import { UploadFileModule } from 'src/upload-file/upload-file.module';
 	],
 	controllers: [BeneficiariesController],
 	providers: [BeneficiariesService],
+	exports: [BeneficiariesService],
 })
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
