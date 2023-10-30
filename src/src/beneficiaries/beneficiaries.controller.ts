@@ -405,6 +405,7 @@ export class BeneficiariesController {
 				await this.beneficiariesService.reassignBeneficiary(
 					benId,
 					body.facilitatorId,
+					true,
 				);
 			if (!updatedResult.success)
 				result.data.unsuccessfulReassignmentIds.push(benId);
