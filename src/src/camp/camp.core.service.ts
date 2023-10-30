@@ -213,6 +213,41 @@ export class CampCoreService {
 		}
 	}
 
+	public async getFacilitatorsForCamp(parent_ip_id: any) {
+		let query = `
+		query MyQuery {
+			users(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}) {
+			  id
+			  first_name
+			  middle_name
+			  last_name
+			  district
+			  block
+			  state
+			  camp_count: group_users_aggregate {
+				aggregate {
+				  count
+				}
+			  }
+			  camp_learner_count: group_users {
+				group {
+				  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+					aggregate {
+					  count
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  
+		`;
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		return hasura_response;
+	}
 	public async createCampUser(
 		body: any,
 		returnFields: any,
