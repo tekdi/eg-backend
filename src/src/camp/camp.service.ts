@@ -2091,11 +2091,20 @@ export class CampService {
 	}
 
 	async reassignBeneficiarytoCamp(id: any, body: any, req: any, resp: any) {
-		let ip_id = req.mw_userid;
+		let camp_id = id;
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return resp.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
 
 		//validation to check if camp already have the user to be assigned
 		let query = `query MyQuery {
-			camps_by_pk(id:${id}){
+			camps_by_pk(id:${camp_id}){
 			  group{
 				id
 				group_users(where:{user_id:{_eq:${body?.learner_id}}}){
@@ -2119,6 +2128,7 @@ export class CampService {
 			return resp.json({
 				status: 200,
 				success: false,
+				message: 'DUPLICATE_CAMP_BENEFICIARY_ASSIGNMENT',
 				data: {},
 			});
 		} else {
@@ -2172,6 +2182,34 @@ export class CampService {
 				req,
 				resp,
 			);
+
+			//get facilitator_id of new camp  to which beneficiary is to be assigned
+
+			let new_query = `query MyQuery {
+				camps(where: {id: {_eq:${camp_id}}}) {
+				  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}){
+					user_id
+				  }
+				}
+			  }
+			  `;
+
+			const new_hasura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: new_query,
+				});
+
+			let new_facilitator_id =
+				new_hasura_response?.data?.camps?.[0]?.group_users?.[0].user_id;
+
+			const updatedResult =
+				await this.beneficiariesService.reassignBeneficiary(
+					body?.learner_id,
+					new_facilitator_id,
+					false,
+				);
+			if (!updatedResult.success)
+				result.data.unsuccessfulReassignmentIds.push(body?.learner_id);
 
 			if (
 				update_response?.group_users?.id &&

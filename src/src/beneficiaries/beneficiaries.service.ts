@@ -3292,6 +3292,7 @@ export class BeneficiariesService {
 	public async reassignBeneficiary(
 		beneficiaryId: number,
 		newFacilitatorId: number,
+		checkCampValidation: any,
 	) {
 		const response = {
 			success: false,
@@ -3301,43 +3302,48 @@ export class BeneficiariesService {
 
 		let status = 'active';
 
-		let query = `query MyQuery {
-			users(where: {id: {_eq:${beneficiaryId}}, group_users: {status: {_eq:"${status}"}}}){
-			  id
-			  group_users{
-				id
-				group{
-					status
+		if (checkCampValidation) {
+			let query = `query MyQuery {
+				users(where: {id: {_eq:${beneficiaryId}}, group_users: {status: {_eq:"${status}"}}}){
+				  id
+				  group_users{
+					id
+					group{
+						status
+					}
+				  }
 				}
 			  }
-			}
-		  }
-		  `;
+			  `;
 
-		const hashura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-		let users = hashura_response?.data?.users;
+			const hashura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+			let users = hashura_response?.data?.users;
 
-		if (users?.length > 0) {
-			if (users[0]?.group_users[0]?.group?.status == 'not_registered') {
-				const update_body = {
-					status: 'inactive',
-				};
-				let update_array = ['status'];
+			if (users?.length > 0) {
+				if (
+					users[0]?.group_users[0]?.group?.status == 'not_registered'
+				) {
+					const update_body = {
+						status: 'inactive',
+					};
+					let update_array = ['status'];
 
-				await this.hasuraService.q(
-					'group_users',
-					{
-						...update_body,
-						id: users[0]?.group_users[0]?.id,
-					},
-					update_array,
-					true,
-					[...this.returnFieldsgroupUsers, 'id'],
-				);
-			} else {
-				return response;
+					await this.hasuraService.q(
+						'group_users',
+						{
+							...update_body,
+							id: users[0]?.group_users[0]?.id,
+						},
+						update_array,
+						true,
+						[...this.returnFieldsgroupUsers, 'id'],
+					);
+				} else {
+					return response;
+				}
 			}
 		}
 
