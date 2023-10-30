@@ -720,7 +720,7 @@ export class BeneficiariesService {
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
 		// facilitator_user is the relationship of program_beneficiaries.facilitator_id  to  users.id
-		let data = {
+		const data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
 				users_aggregate(where:${filterQuery}) {
 					aggregate {
@@ -777,40 +777,7 @@ export class BeneficiariesService {
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
-
-		data.query = `
-			query MyQuery {
-				users (
-					where: {
-						id: { _in: ${JSON.stringify([
-							...new Set(
-								response?.data?.users.map(
-									(userData) =>
-										userData.program_beneficiaries[0]
-											.facilitator_user.id,
-								),
-							),
-						])} }
-					}
-				) {
-					id
-					first_name
-					middle_name
-					last_name
-				}
-			}
-		`;
-
-		delete data.variables;
-
-		const facilitatorListResponse = (
-			await this.hasuraServiceFromServices.getData(data)
-		)?.data?.users?.sort((a, b) =>
-			a.first_name.localeCompare(b.first_name),
-		);
-
-		let result = response?.data?.users;
-		let mappedResponse = result;
+		let mappedResponse = response?.data?.users;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
 		if (!mappedResponse || mappedResponse.length < 1) {
@@ -850,7 +817,6 @@ export class BeneficiariesService {
 				data: {
 					totalCount: count,
 					data: mappedResponse,
-					facilitatorList: facilitatorListResponse,
 					limit,
 					currentPage: page,
 					totalPages: `${totalPages}`,

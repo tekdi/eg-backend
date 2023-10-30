@@ -116,7 +116,11 @@ export class CampController {
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		return this.campService.getConsentBenficiaries(body, request, response);
+		return this.campService.getConsentBenficiariesForFacilitators(
+			body,
+			request,
+			response,
+		);
 	}
 
 	@Post('/admin/consent/get')

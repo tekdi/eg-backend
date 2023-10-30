@@ -631,7 +631,7 @@ export class CampService {
 		// get facilitator for the provided camp id
 
 		let query = `query MyQuery {
-			camps(where: {id: {_eq:${id}}, group_users: {group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}}}) {
+			camps(where: {id: {_eq:${id}}, group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}, user: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}}}}) {
 			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
 				user_id
 			  }
@@ -679,7 +679,7 @@ export class CampService {
 		response: any,
 	) {
 		let camp_id = id;
-		let facilitator_id = request.mw_userid;
+		let facilitator_id = body?.facilitator_id;
 		let status = 'active';
 		let member_type = 'owner';
 		let update_body = body;
@@ -1333,7 +1333,7 @@ export class CampService {
 		// get facilitator for the provided camp id
 
 		let query = `query MyQuery {
-			camps(where: {id: {_eq:${camp_id}}, group_users: {group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}}}) {
+			camps(where: {id: {_eq:${camp_id}}, group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}, user: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}}}}) {
 			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
 				user_id
 			  }
@@ -1370,10 +1370,19 @@ export class CampService {
 
 		await this.createConsentBenficiaries(body, request, response);
 	}
+
+	async getConsentBenficiariesForFacilitators(
+		body: any,
+		request: any,
+		response: any,
+	) {
+		body.facilitator_id = request?.mw_userid;
+		await this.getConsentBenficiaries(body, request, response);
+	}
 	//Get consents List
 	async getConsentBenficiaries(body: any, request: any, resp: any) {
 		let camp_id = body?.camp_id;
-		let facilitator_id = request.mw_userid;
+		let facilitator_id = body?.facilitator_id;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 
@@ -1420,9 +1429,6 @@ export class CampService {
 
 	async getAdminConsentBenficiaries(body: any, request: any, resp: any) {
 		let camp_id = body?.camp_id;
-		let facilitator_id = body?.facilitator_id;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
 
 		const user = await this.userService.ipUserInfo(request);
 
@@ -1433,6 +1439,39 @@ export class CampService {
 				data: {},
 			});
 		}
+
+		//get facilitator_id from camp_id
+
+		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		// get facilitator for the provided camp id
+
+		let query = `query MyQuery {
+			camps(where: {id: {_eq:${camp_id}}, group_users: {group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}}}) {
+			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
+				user_id
+			  }
+			}
+		  }
+		  
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let facilitator_id =
+			hasura_response?.data?.camps?.[0]?.group_users?.[0]?.user_id;
+
+		if (!facilitator_id) {
+			return resp.json({
+				status: 400,
+				data: {},
+				message: 'CAMP_INVALID_ERROR',
+			});
+		}
+
+		body.facilitator_id = facilitator_id;
 
 		//check if faciltator comes under given IP
 
@@ -1454,45 +1493,8 @@ export class CampService {
 				data: [],
 			});
 		}
-		let query = `query MyQuery {
-			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
-			  id
-			  document_id
-			  user_id
-			  document{
-				id
-				name
-			  }
-			}
-		  }`;
 
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-		const consent_response = hasura_response?.data;
-		if (!consent_response?.consents?.length) {
-			return resp.status(200).json({
-				success: true,
-				message: 'consents data not found!',
-				data: {},
-			});
-		} else {
-			const resultData = await Promise.all(
-				consent_response?.consents?.map(async (item) => {
-					if (item?.document?.name) {
-						item.document.fileUrl = await this.s3Service.getFileUrl(
-							item.document.name,
-						);
-					}
-					return item;
-				}),
-			);
-			return resp.json({
-				status: 200,
-				message: 'Successfully updated consents details',
-				data: resultData,
-			});
-		}
+		await this.getConsentBenficiaries(body, request, resp);
 	}
 
 	async updateCampStatus(id: any, body: any, req: any, resp: any) {
@@ -1680,6 +1682,10 @@ export class CampService {
 								document_sub_type
 								path
 							}
+							program_beneficiaries{
+								enrollment_number
+							}
+							
 						}
 					}
 					properties {
@@ -1690,6 +1696,7 @@ export class CampService {
 						village
 						block
 						street
+						property_type
 						landmark
 						grampanchayat
 						property_facilities
