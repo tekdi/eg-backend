@@ -1449,7 +1449,7 @@ export class CampService {
 		// get facilitator for the provided camp id
 
 		let query = `query MyQuery {
-			camps(where: {id: {_eq:${camp_id}}, group_users: {group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}}}) {
+			camps(where: {id: {_eq:${camp_id}}, group_users: {user: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}}}}) {
 			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
 				user_id
 			  }
