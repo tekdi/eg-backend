@@ -471,7 +471,7 @@ export class CampService {
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.camps;
 
-		if (newQdata?.length == 0) {
+		if (!newQdata || newQdata?.length == 0) {
 			return resp.status(400).json({
 				success: false,
 				message: 'Camp data not found!',
@@ -1964,6 +1964,37 @@ export class CampService {
 		);
 
 		let attendance_data = response?.data?.attendance;
+
+		if (attendance_data?.length == 0) {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_NOT_FOUND',
+				data: [],
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_FOUND_SUCCESS',
+				data: attendance_data,
+			});
+		}
+	}
+
+	async getAttendanceList(body, req, res) {
+		let attendance_body = { ...body };
+
+		if (attendance_body?.start_date && attendance_body?.end_date) {
+			attendance_body.start_date = `${attendance_body.start_date}T00:00:00.000Z`;
+			attendance_body.end_date = `${attendance_body.end_date}T23:59:59.999Z`;
+		}
+
+		let response = await this.attendancesService.getAttendances(
+			attendance_body,
+			req,
+			res,
+		);
+
+		let attendance_data = response;
 
 		if (attendance_data?.length == 0) {
 			return res.json({
