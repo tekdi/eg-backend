@@ -641,9 +641,15 @@ export class BeneficiariesService {
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let status = body?.status;
 		let filterQueryArray = [];
-		filterQueryArray.push(
-			`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "approved", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
-		);
+		if (body?.reassign) {
+			filterQueryArray.push(
+				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			);
+		} else {
+			filterQueryArray.push(
+				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+			);
+		}
 
 		if (body.search && body.search !== '') {
 			let first_name = body.search.split(' ')[0];
@@ -824,6 +830,7 @@ export class BeneficiariesService {
 			});
 		}
 	}
+
 	public async findAll(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
 
