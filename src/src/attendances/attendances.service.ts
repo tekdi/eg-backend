@@ -74,9 +74,10 @@ export class AttendancesService {
 		return updateAttendanceResponse;
 	}
 
-	public async getCampAttendance(id: any, req: any, res: any) {
+	public async getCampAttendance(id: any, body: any, req: any, res: any) {
 		let getCampResponse = await this.attendanceCoreService.getByCampId(
 			id,
+			body,
 			req,
 			res,
 		);
@@ -87,6 +88,15 @@ export class AttendancesService {
 		return;
 	}
 
+	public async getAttendances(body: any, req: any, res: any) {
+		let getCampResponse = await this.attendanceCoreService.getAttendances(
+			body,
+			req,
+			res,
+		);
+
+		return getCampResponse;
+	}
 	findAll(request: any) {
 		return this.hasuraService.getAll(
 			this.table,

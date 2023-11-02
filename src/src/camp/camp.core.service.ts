@@ -65,15 +65,23 @@ export class CampCoreService {
 
 	public async list(body: any) {
 		let filterQueryArray = [];
+
+		const status_array = this.enumService
+			.getEnumValue('GROUPS_STATUS')
+			.data.map((item) => item.value);
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
-
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+		let parent_ip_id = body?.parent_ip_id;
 		let status = body?.status;
 
-		if (body?.search && body?.search !== '') {
-			filterQueryArray.push(`{group:{name:{_eq:"${body?.search}"}}}`);
-		}
+		filterQueryArray.push(
+			`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
+		);
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{properties:{district:{_in: ${JSON.stringify(
@@ -96,7 +104,13 @@ export class CampCoreService {
 			);
 		}
 
-		if (body?.status && body?.status !== '') {
+		if (!body?.status || body?.status === '' || body?.status == 'all') {
+			filterQueryArray.push(
+				`{group: {status: {_in: ${JSON.stringify(
+					status_array.filter((item) => item != 'not_registered'),
+				)}}}}`,
+			);
+		} else {
 			filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
 		}
 
@@ -167,9 +181,10 @@ export class CampCoreService {
 			},
 		};
 
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: data.query,
-		});
+		console.log('query-->>', data.query);
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
 
 		const camps_data = hasura_response?.data?.camps;
 
@@ -197,5 +212,81 @@ export class CampCoreService {
 				totalPages: `0`,
 			};
 		}
+	}
+
+	public async getFacilitatorsForCamp(parent_ip_id: any) {
+		let query = `
+		query MyQuery {
+			users(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}) {
+			  id
+			  first_name
+			  middle_name
+			  last_name
+			  district
+			  block
+			  state
+			  camp_count: group_users_aggregate {
+				aggregate {
+				  count
+				}
+			  }
+			  camp_learner_count: group_users {
+				group {
+				  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+					aggregate {
+					  count
+					}
+				  }
+				}
+			  }
+			}
+		  }
+		  
+		`;
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		return hasura_response;
+	}
+	public async createCampUser(
+		body: any,
+		returnFields: any,
+		req: any,
+		res: any,
+	) {
+		let response = await this.hasuraService.q(
+			'group_users',
+			{
+				...body,
+			},
+			[],
+			false,
+			[...returnFields],
+		);
+
+		return response;
+	}
+
+	public async updateCampUser(
+		id: any,
+		body: any,
+		update_arr: any,
+		returnFieldsgroupUsers: any,
+		req: any,
+		res: any,
+	) {
+		let response = await this.hasuraService.q(
+			'group_users',
+			{
+				...body,
+				id: id,
+			},
+			update_arr,
+			true,
+			[...returnFieldsgroupUsers],
+		);
+
+		return response;
 	}
 }

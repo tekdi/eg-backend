@@ -11,6 +11,7 @@ import {
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
+import { FacilitatorCoreService } from './facilitator.core.service';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -22,6 +23,7 @@ export class FacilitatorService {
 		private userService: UserService,
 		private s3Service: S3Service,
 		private uploadFileService: UploadFileService,
+		private facilitatorCoreService: FacilitatorCoreService,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -1716,6 +1718,7 @@ export class FacilitatorService {
           dob
           aadhar_token
           address
+          aadhar_verified
           block_id
           block_village_id
           created_by
@@ -2355,6 +2358,32 @@ export class FacilitatorService {
 				success: true,
 				message: 'Data updated successfully!',
 				data: res,
+			});
+		}
+	}
+	public async updateOkycResponse(req: any, body: any, res: any) {
+		const user_id = req?.mw_userid;
+		const program_id = body?.program_id || 1;
+		const academic_year_id = body?.academic_year_id || 1;
+		
+		const updated_response =
+			await this.facilitatorCoreService.updateOkycResponse(
+				body,
+				program_id,
+				user_id,
+				academic_year_id,
+			);
+		if (updated_response != null) {
+			return res.json({
+				status: 200,
+				message: 'Successfully updated okyc_response details',
+				data: [],
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'Cannot update okyc_response details',
+				data: [],
 			});
 		}
 	}
