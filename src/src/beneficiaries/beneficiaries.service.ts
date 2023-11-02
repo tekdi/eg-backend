@@ -641,7 +641,7 @@ export class BeneficiariesService {
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let status = body?.status;
 		let filterQueryArray = [];
-    
+
 		if (body?.reassign) {
 			filterQueryArray.push(
 				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
@@ -3332,7 +3332,7 @@ export class BeneficiariesService {
 
 			if (users?.length > 0) {
 				if (
-					users[0]?.group_users[0]?.group?.status == 'not_registered'
+					users[0]?.group_users[0]?.group?.status == 'camp_initiated'
 				) {
 					const update_body = {
 						status: 'inactive',

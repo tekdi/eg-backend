@@ -30,11 +30,11 @@ export class CampCoreService {
             count
           }
         },
-          not_registered: camps_aggregate(where:{ _and: [${filterQueryArray.join(
-				',',
-			)}, {group:{_or: [
+		camp_initiated: camps_aggregate(where:{ _and: [${filterQueryArray.join(
+			',',
+		)}, {group:{_or: [
             {status: {_nin: ${JSON.stringify(
-				status.filter((item) => item != 'not_registered'),
+				status.filter((item) => item != 'camp_initiated'),
 			)}}},
             { status: { _is_null: true } }
          ]}}] } ) {
@@ -42,7 +42,7 @@ export class CampCoreService {
                 count
             }},
         ${status
-			.filter((item) => item != 'not_registered')
+			.filter((item) => item != 'camp_initiated')
 			.map(
 				(
 					item,
@@ -107,7 +107,7 @@ export class CampCoreService {
 		if (!body?.status || body?.status === '' || body?.status == 'all') {
 			filterQueryArray.push(
 				`{group: {status: {_in: ${JSON.stringify(
-					status_array.filter((item) => item != 'not_registered'),
+					status_array.filter((item) => item != 'camp_initiated'),
 				)}}}}`,
 			);
 		} else {

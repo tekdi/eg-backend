@@ -134,7 +134,7 @@ export class CampService {
 			let create_group_object = {
 				name: campName,
 				type: 'camp',
-				status: 'not_registered',
+				status: 'camp_initiated',
 				program_id: body?.program_id || 1,
 				academic_year_id: body?.academic_year_id || 1,
 				created_by: facilitator_id,
@@ -252,12 +252,12 @@ export class CampService {
 				context_id: camp_id,
 				oldData: {
 					group_id: group_id,
-					status: 'not_registered',
+					status: 'camp_initiated',
 					learner_id: [learner_ids],
 				},
 				newData: {
 					group_id: group_id,
-					status: 'not_registered',
+					status: 'camp_initiated',
 					learner_id: [learner_ids],
 				},
 				tempArray: ['group_id', 'status', 'learner_id'],
