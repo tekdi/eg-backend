@@ -84,6 +84,9 @@ export class AttendancesService {
 
 		return getCampResponse;
 	}
+	create(request: any) {
+		return;
+	}
 
 	public async getAttendances(body: any, req: any, res: any) {
 		let getCampResponse = await this.attendanceCoreService.getAttendances(
