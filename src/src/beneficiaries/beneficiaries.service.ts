@@ -359,15 +359,15 @@ export class BeneficiariesService {
 			for (let data of allBeneficiaries) {
 				const dataObject = {};
 				dataObject['name'] =
-					data?.program_beneficiaries?.status !==
+					data?.program_beneficiaries[0]?.status !==
 					'enrolled_ip_verified'
 						? [data?.first_name, data?.last_name]
 								.filter((e) => e)
 								.join(' ')
 						: [
-								data?.program_beneficiaries
+								data?.program_beneficiaries[0]
 									?.enrollment_first_name,
-								data?.program_beneficiaries
+								data?.program_beneficiaries[0]
 									?.enrollment_last_name,
 						  ]
 								.filter((e) => e)
