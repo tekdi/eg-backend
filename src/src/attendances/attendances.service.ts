@@ -83,6 +83,9 @@ export class AttendancesService {
 
 		return getCampResponse;
 	}
+	create(request: any) {
+		return;
+	}
 
 	findAll(request: any) {
 		return this.hasuraService.getAll(
