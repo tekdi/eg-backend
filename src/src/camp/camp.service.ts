@@ -1677,6 +1677,8 @@ export class CampService {
 							district
 							block
 							village
+							lat
+							long
 							profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 								id
 								name
@@ -2390,8 +2392,6 @@ export class CampService {
 				await this.hasuraServiceFromServices.getData({
 					query: query,
 				});
-
-			console.log('hasura1-->>', hasura_response);
 
 			let group_user_id =
 				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0].id;
