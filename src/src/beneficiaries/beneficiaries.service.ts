@@ -269,18 +269,6 @@ export class BeneficiariesService {
 					);
 				}
 			}
-			// if (
-			// 	body.hasOwnProperty('status') &&
-			// 	this.isValidString(body.status) &&
-			// 	this.allStatus.map((obj) => obj.value).includes(body.status)
-			// ) {
-			// 	paramsQueryArray.push('$status: String');
-
-			// 	filterQueryArray.push(
-			// 		`{program_beneficiaries: {status: {_eq: $status}}}`,
-			// 	);
-			// 	variables.status = body.status;
-			// }
 
 			if (body.hasOwnProperty('district') && body.district.length) {
 				paramsQueryArray.push('$district: [String!]');
