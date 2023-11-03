@@ -312,16 +312,18 @@ export class BeneficiariesService {
 						block
 						district
 						program_beneficiaries{
-						user_id
-					    facilitator_id
-						status
-						enrollment_number
-						facilitator_user{
-							first_name
-							id
-							last_name
-						}
-					  }
+							user_id
+					    	facilitator_id
+							status
+							enrollment_number
+							enrollment_first_name
+							enrollment_last_name
+							facilitator_user{
+								first_name
+								id
+								last_name
+							}
+					  	}
 					}
 				  }
 				  `,
@@ -356,7 +358,20 @@ export class BeneficiariesService {
 			const records = [];
 			for (let data of allBeneficiaries) {
 				const dataObject = {};
-				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['name'] =
+					data?.program_beneficiaries?.status ===
+					'enrolled_ip_verified'
+						? [data?.first_name, data?.last_name]
+								.filter((e) => e)
+								.join(' ')
+						: [
+								data?.program_beneficiaries
+									?.enrollment_first_name,
+								data?.program_beneficiaries
+									?.enrollment_last_name,
+						  ]
+								.filter((e) => e)
+								.join(' ');
 				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['district'] = data?.district;
 				dataObject['block'] = data?.block;
