@@ -289,4 +289,26 @@ export class CampCoreService {
 
 		return response;
 	}
+
+	public async updateCampStatus(
+		id: any,
+		body: any,
+		update_arr: any,
+		returnFieldsGroups: any,
+		req: any,
+		res: any,
+	) {
+		let response = await this.hasuraService.q(
+			'groups',
+			{
+				...body,
+				id: id,
+			},
+			update_arr,
+			true,
+			[...returnFieldsGroups],
+		);
+
+		return response;
+	}
 }
