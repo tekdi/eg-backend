@@ -359,7 +359,7 @@ export class BeneficiariesService {
 			for (let data of allBeneficiaries) {
 				const dataObject = {};
 				dataObject['name'] =
-					data?.program_beneficiaries?.status ===
+					data?.program_beneficiaries?.status !==
 					'enrolled_ip_verified'
 						? [data?.first_name, data?.last_name]
 								.filter((e) => e)
