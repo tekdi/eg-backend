@@ -254,17 +254,20 @@ export class BeneficiariesService {
 				 ]} `);
 				}
 			}
-			if (
-				body.hasOwnProperty('status') &&
-				this.isValidString(body.status) &&
-				this.allStatus.map((obj) => obj.value).includes(body.status)
-			) {
-				paramsQueryArray.push('$status: String');
-
-				filterQueryArray.push(
-					`{program_beneficiaries: {status: {_eq: $status}}}`,
-				);
-				variables.status = body.status;
+			if (body?.status && body?.status !== '') {
+				if (body?.status === 'identified') {
+					filterQueryArray.push(`{
+						_or: [
+							{ program_beneficiaries: { status: { _eq: "identified" } } },
+							{ program_beneficiaries: { status: { _is_null: true } } },
+							{ program_beneficiaries: { status: { _eq: "" } } },
+						]
+					}`);
+				} else {
+					filterQueryArray.push(
+						`{program_beneficiaries:{status:{_eq:${body?.status}}}}`,
+					);
+				}
 			}
 
 			if (body.hasOwnProperty('district') && body.district.length) {
@@ -309,16 +312,18 @@ export class BeneficiariesService {
 						block
 						district
 						program_beneficiaries{
-						user_id
-					    facilitator_id
-						status
-						enrollment_number
-						facilitator_user{
-							first_name
-							id
-							last_name
-						}
-					  }
+							user_id
+					    	facilitator_id
+							status
+							enrollment_number
+							enrollment_first_name
+							enrollment_last_name
+							facilitator_user{
+								first_name
+								id
+								last_name
+							}
+					  	}
 					}
 				  }
 				  `,
@@ -353,7 +358,20 @@ export class BeneficiariesService {
 			const records = [];
 			for (let data of allBeneficiaries) {
 				const dataObject = {};
-				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['name'] =
+					data?.program_beneficiaries[0]?.status !==
+					'enrolled_ip_verified'
+						? [data?.first_name, data?.last_name]
+								.filter((e) => e)
+								.join(' ')
+						: [
+								data?.program_beneficiaries[0]
+									?.enrollment_first_name,
+								data?.program_beneficiaries[0]
+									?.enrollment_last_name,
+						  ]
+								.filter((e) => e)
+								.join(' ');
 				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['district'] = data?.district;
 				dataObject['block'] = data?.block;
