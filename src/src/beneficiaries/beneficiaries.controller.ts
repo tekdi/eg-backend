@@ -273,6 +273,26 @@ export class BeneficiariesController {
 	) {
 		const result = await this.beneficiariesService.statusUpdate(
 			body,
+
+			request,
+		);
+		return response.status(result.status).json({
+			success: result.success,
+			message: result.message,
+			data: result.data,
+		});
+	}
+	@Put('admin/statusUpdate')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	async statusUpdateByIp(
+		@Body() body: StatusUpdateDTO,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		const result = await this.beneficiariesService.statusUpdateByIp(
+			body,
+
 			request,
 		);
 		return response.status(result.status).json({

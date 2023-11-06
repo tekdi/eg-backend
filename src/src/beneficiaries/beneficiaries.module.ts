@@ -12,6 +12,7 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { BeneficiariesService } from './beneficiaries.service';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
+import { BeneficiariesCoreService } from './beneficiaries.core.service';
 
 @Module({
 	imports: [
@@ -27,8 +28,8 @@ import { UploadFileModule } from 'src/upload-file/upload-file.module';
 		UploadFileModule,
 	],
 	controllers: [BeneficiariesController],
-	providers: [BeneficiariesService],
-	exports: [BeneficiariesService],
+	providers: [BeneficiariesService, BeneficiariesCoreService],
+	exports: [BeneficiariesService, BeneficiariesCoreService],
 })
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
