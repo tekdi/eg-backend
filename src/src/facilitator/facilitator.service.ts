@@ -1553,7 +1553,7 @@ export class FacilitatorService {
 					offset: offset,
 				},
 			};
-
+			console.log(data?.query);
 			const result = await this.hasuraService.getData(data);
 			const extractedData = result?.data?.users;
 			const count = result?.data?.users_aggregate?.aggregate?.count;
