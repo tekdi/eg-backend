@@ -2919,17 +2919,6 @@ export class BeneficiariesService {
 		return await this.beneficiariesCoreService.userById(user_id);
 	}
 
-	// async userById(id: any) {
-	// 	const result = await this.beneficiariesCoreService.userById(id);
-	// 	if (result) {
-	// 		result.program_beneficiaries = result?.program_beneficiaries?.[0];
-	// 	}
-	// 	return {
-	// 		message: 'User data fetched successfully.',
-	// 		data: result,
-	// 	};
-	// }
-
 	public async getAllDuplicatesUnderIp(
 		id: number,
 		limit?: number,
