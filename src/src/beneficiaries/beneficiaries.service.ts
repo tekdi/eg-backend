@@ -1608,8 +1608,6 @@ export class BeneficiariesService {
 				request,
 			);
 
-		console.log('status_response', status_response);
-
 		return {
 			status: 200,
 			success: true,

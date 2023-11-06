@@ -282,6 +282,7 @@ export class BeneficiariesController {
 			data: result.data,
 		});
 	}
+
 	@Put('admin/statusUpdate')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
