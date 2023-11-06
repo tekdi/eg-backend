@@ -84,6 +84,20 @@ export class CampController {
 		return this.campService.getConsentBenficiaries(body, request, response);
 	}
 
+	@Post('/admin/consent/get')
+	@UseGuards(new AuthGuard())
+	getAdminConsentBenficiaries(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.getAdminConsentBenficiaries(
+			body,
+			request,
+			response,
+		);
+	}
+
 	@Patch('admin/:id')
 	@UseGuards(new AuthGuard())
 	updateCampStatus(
@@ -95,10 +109,10 @@ export class CampController {
 		return this.campService.updateCampStatus(id, body, req, response);
 	}
 
-	@Get('admin/camp-list')
+	@Post('admin/camp-list')
 	@UseGuards(new AuthGuard())
-	getCampList(@Req() req: any, @Res() response: any) {
-		return this.campService.getCampList(req, response);
+	getCampList(@Req() req: any, @Res() response: any, @Body() body: any) {
+		return this.campService.getCampList(body, req, response);
 	}
 
 	@Get('admin/camp-details/:id')
@@ -109,5 +123,58 @@ export class CampController {
 		@Res() response: any,
 	) {
 		return this.campService.getCampDetailsForAdmin(id, req, response);
+	}
+
+	@Post('attendance/add')
+	@UseGuards(new AuthGuard())
+	markCampAttendance(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.campService.markCampAttendance(body, req, response);
+	}
+
+	@Patch('attendance/update/:id')
+	@UseGuards(new AuthGuard())
+	updateCampAttendance(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+		@Param('id') id: number,
+	) {
+		return this.campService.updateCampAttendance(id, body, req, response);
+	}
+
+	@Get('attendance/:id')
+	@UseGuards(new AuthGuard())
+	getCampAttendanceById(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+		@Param('id') id: number,
+	) {
+		return this.campService.getCampAttendanceById(id, req, response);
+	}
+
+	@Get('/getStatuswiseCount')
+	@UseGuards(new AuthGuard())
+	getStatuswiseCount(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getStatuswiseCount(request, body, response);
+	}
+
+	@Post('/admin/filter-by-camps')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	async getFilter_By_Camps(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		await this.campService.getFilter_By_Camps(body, req, response);
 	}
 }

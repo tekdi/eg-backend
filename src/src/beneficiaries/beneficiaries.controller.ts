@@ -103,7 +103,7 @@ export class BeneficiariesController {
 		let duplicateArr;
 		// Fetch aadhar number of user to set as active
 		const aadhar_no = (
-			await this.beneficiariesService.findOne(+body.activeId)
+			await this.beneficiariesService.findOne(+body.activeId, req)
 		)?.data?.aadhar_no;
 
 		// Fetch valid duplication list of the token user
@@ -170,8 +170,16 @@ export class BeneficiariesController {
 	}
 
 	@Get('/getStatuswiseCount')
-	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
-		return this.beneficiariesService.getStatuswiseCount(request, response);
+	getStatuswiseCount(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.beneficiariesService.getStatuswiseCount(
+			body,
+			request,
+			response,
+		);
 	}
 
 	@Get('admin/list/duplicates-count-by-aadhaar')
@@ -203,6 +211,8 @@ export class BeneficiariesController {
 					request.mw_userid,
 					limit,
 					skip,
+					request,
+					response,
 				);
 		}
 		return response.status(200).json(resultPayload);
@@ -210,7 +220,11 @@ export class BeneficiariesController {
 
 	@Get(':id')
 	@UseGuards(new AuthGuard())
-	findOne(@Param('id') id: string, @Res() response: Response) {
+	findOne(
+		@Param('id') id: string,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
 		return this.beneficiariesService.findOne(+id, response);
 	}
 
