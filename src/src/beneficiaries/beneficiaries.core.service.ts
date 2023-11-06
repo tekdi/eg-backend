@@ -75,7 +75,7 @@ export class BeneficiariesCoreService {
 			await this.userById(res?.program_beneficiaries?.user_id)
 		).data;
 
-		const audit = await this.userService.addAuditLog(
+		await this.userService.addAuditLog(
 			body?.user_id,
 			request.mw_userid,
 			'program_beneficiaries.status',
