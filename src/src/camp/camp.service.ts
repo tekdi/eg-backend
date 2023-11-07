@@ -796,10 +796,6 @@ export class CampService {
 		switch (update_body.edit_page_type) {
 			case 'edit_camp_location': {
 				let bodyData = update_body;
-				if (campData?.properties?.lat || campData?.properties?.long) {
-					let { lat, long, ...otherData } = update_body;
-					bodyData = otherData;
-				}
 				let location_body = {
 					...bodyData,
 					updated_by: facilitator_id,
