@@ -25,6 +25,7 @@ import { CommentsModule } from './comments/comments.module';
 import { CampModule } from './camp/camp.module';
 import { ReferencesModule } from './references/references.module';
 import { PcrscoresModule } from './pcrscores/pcrscores.module';
+import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
 import { ActivitiesModule } from './activities/activities.module';
 
 @Module({
@@ -57,7 +58,8 @@ import { ActivitiesModule } from './activities/activities.module';
 		CampModule,
 		ReferencesModule,
 		PcrscoresModule,
-		ActivitiesModule,
+		EditRequestModule,
+		ActivitiesModule
 	],
 	controllers: [],
 	providers: [],
