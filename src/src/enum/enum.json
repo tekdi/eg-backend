@@ -648,8 +648,8 @@
 	],
 	"GROUPS_STATUS": [
 		{
-			"title": "GROUPS_STATUS_NOT_REGISTERED",
-			"value": "not_registered"
+			"title": "GROUPS_STATUS_CAMP_INITIATED",
+			"value": "camp_initiated"
 		},
 		{
 			"title": "GROUPS_STATUS_REGISTERED",

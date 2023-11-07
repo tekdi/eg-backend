@@ -134,7 +134,7 @@ export class CampService {
 			let create_group_object = {
 				name: campName,
 				type: 'camp',
-				status: 'not_registered',
+				status: 'camp_initiated',
 				program_id: body?.program_id || 1,
 				academic_year_id: body?.academic_year_id || 1,
 				created_by: facilitator_id,
@@ -252,12 +252,12 @@ export class CampService {
 				context_id: camp_id,
 				oldData: {
 					group_id: group_id,
-					status: 'not_registered',
+					status: 'camp_initiated',
 					learner_id: [learner_ids],
 				},
 				newData: {
 					group_id: group_id,
-					status: 'not_registered',
+					status: 'camp_initiated',
 					learner_id: [learner_ids],
 				},
 				tempArray: ['group_id', 'status', 'learner_id'],
@@ -471,7 +471,7 @@ export class CampService {
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.camps;
 
-		if (newQdata?.length == 0) {
+		if (!newQdata || newQdata?.length == 0) {
 			return resp.status(400).json({
 				success: false,
 				message: 'Camp data not found!',
@@ -1449,7 +1449,7 @@ export class CampService {
 		// get facilitator for the provided camp id
 
 		let query = `query MyQuery {
-			camps(where: {id: {_eq:${camp_id}}, group_users: {group_users_facilitators: {parent_ip: {_eq: "${parent_ip_id}"}}}}) {
+			camps(where: {id: {_eq:${camp_id}}, group_users: {user: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}}}}) {
 			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
 				user_id
 			  }
@@ -1677,6 +1677,8 @@ export class CampService {
 							district
 							block
 							village
+							lat
+							long
 							profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 								id
 								name
@@ -1964,6 +1966,37 @@ export class CampService {
 		);
 
 		let attendance_data = response?.data?.attendance;
+
+		if (attendance_data?.length == 0) {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_NOT_FOUND',
+				data: [],
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'ATTENDANCE_DATA_FOUND_SUCCESS',
+				data: attendance_data,
+			});
+		}
+	}
+
+	async getAttendanceList(body, req, res) {
+		let attendance_body = { ...body };
+
+		if (attendance_body?.start_date && attendance_body?.end_date) {
+			attendance_body.start_date = `${attendance_body.start_date}T00:00:00.000Z`;
+			attendance_body.end_date = `${attendance_body.end_date}T23:59:59.999Z`;
+		}
+
+		let response = await this.attendancesService.getAttendances(
+			attendance_body,
+			req,
+			res,
+		);
+
+		let attendance_data = response;
 
 		if (attendance_data?.length == 0) {
 			return res.json({
@@ -2359,8 +2392,6 @@ export class CampService {
 				await this.hasuraServiceFromServices.getData({
 					query: query,
 				});
-
-			console.log('hasura1-->>', hasura_response);
 
 			let group_user_id =
 				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0].id;

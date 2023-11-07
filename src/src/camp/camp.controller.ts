@@ -185,6 +185,16 @@ export class CampController {
 		return this.campService.updateCampAttendance(id, body, req, response);
 	}
 
+	@Post('/attendances/list')
+	@UseGuards(new AuthGuard())
+	getAttendanceList(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.campService.getAttendanceList(body, req, response);
+	}
+
 	@Post('attendance/:id')
 	@UseGuards(new AuthGuard())
 	getCampAttendanceById(
