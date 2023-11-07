@@ -1,8 +1,7 @@
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 import { HasuraService } from '../../hasura/hasura.service';
-import { Injectable, Res, Req } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EditRequestCoreService } from './edit-requests.core.service';
-import { EditRequestDto } from './edit-requests.dto';
 @Injectable()
 export class EditRequestService {
 	constructor(
@@ -77,7 +76,7 @@ export class EditRequestService {
 		);
 
 		if (
-			response.data.edit_requests.edit_req_approved_by !=
+			response.data.edit_requests[0].edit_req_approved_by !=
 			edit_req_approved_by
 		) {
 			return res.status(200).json({
@@ -89,7 +88,7 @@ export class EditRequestService {
 			const edit_requests_id = response.data.edit_requests[0].id;
 			const updatedStatus = body.status;
 
-			const result = await this.hasuraService.update(
+			await this.hasuraService.update(
 				edit_requests_id,
 				'edit_requests',
 				{

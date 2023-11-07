@@ -1,6 +1,5 @@
 import {
 	Post,
-	Injectable,
 	Controller,
 	UseGuards,
 	Res,
