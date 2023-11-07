@@ -1773,7 +1773,7 @@ export class BeneficiariesService {
 			)
 		).data;
 
-		const audit = await this.userService.addAuditLog(
+		await this.userService.addAuditLog(
 			body?.user_id,
 			request.mw_userid,
 			'program_beneficiaries.status',
@@ -2136,7 +2136,7 @@ export class BeneficiariesService {
 
 				// Audit duplicate flag history
 				if (updatedCurrentUser?.id) {
-					const audit = await this.userService.addAuditLog(
+					await this.userService.addAuditLog(
 						updatedCurrentUser.id,
 						request.mw_userid,
 						'program_beneficiaries.status',
