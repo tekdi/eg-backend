@@ -60,7 +60,10 @@ export class EditRequestCoreService {
 				edit_req_approved_by: edit_req_approved_by,
 				program_id: program_id,
 				academic_year_id: academic_year_id,
-				fields: body.fields,
+				fields: JSON.stringify(body.fields).replace(
+					/"/g,
+					'\\"',
+			  ),
 			},
 			[],
 			true,
