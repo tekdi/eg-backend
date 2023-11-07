@@ -94,6 +94,7 @@ export class EditRequestService {
 		const edit_req_for_context_id = body.edit_req_for_context_id;
 		const edit_req_for_context = body.edit_req_for_context;
 		const edit_req_by = body.edit_req_by;
+
 		if (
 			edit_req_for_context_id == '' ||
 			edit_req_for_context == '' ||
@@ -111,33 +112,51 @@ export class EditRequestService {
 			body?.program_id || 1,
 			body?.academic_year_id || 1,
 		);
-		if (
-			response.data.edit_requests[0].edit_req_approved_by !=
-			edit_req_approved_by
-		) {
+		const query = `query MyQuery {
+				edit_requests(where: {edit_req_for_context: {_eq: "${body.edit_req_for_context}"}, edit_req_for_context_id: {_eq: ${body.edit_req_for_context_id}}}){
+				  id
+				}
+			  }
+			  `;
+
+		const data_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		if (data_response?.data?.edit_requests?.length == 0) {
 			return res.status(200).json({
 				success: false,
-				message: 'Update request failed',
+				message: 'Please enter valid fields',
 				data: [],
 			});
 		} else {
-			const edit_requests_id = response.data.edit_requests[0].id;
-			const updatedStatus = body?.status || 'approved';
+			if (
+				response.data.edit_requests[0].edit_req_approved_by !=
+				edit_req_approved_by
+			) {
+				return res.status(200).json({
+					success: false,
+					message: 'Update request failed',
+					data: [],
+				});
+			} else {
+				const edit_requests_id = response.data.edit_requests[0].id;
+				const updatedStatus = body?.status || 'approved';
 
-			await this.hasuraService.update(
-				edit_requests_id,
-				'edit_requests',
-				{
-					status: updatedStatus,
-				},
-				this.returnField,
-			);
+				await this.hasuraService.update(
+					edit_requests_id,
+					'edit_requests',
+					{
+						status: updatedStatus,
+					},
+					this.returnField,
+				);
 
-			return res.status(200).json({
-				status: true,
-				message: 'status updated successfully',
-				data: [],
-			});
+				return res.status(200).json({
+					status: true,
+					message: 'status updated successfully',
+					data: [],
+				});
+			}
 		}
 	}
 }
