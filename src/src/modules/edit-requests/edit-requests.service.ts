@@ -32,7 +32,6 @@ export class EditRequestService {
 			program_id,
 			academic_year_id,
 		);
-
 		if (response.data.edit_requests.length > 0) {
 			return res.status(200).json({
 				success: true,
@@ -75,6 +74,8 @@ export class EditRequestService {
 			body?.academic_year_id || 1,
 		);
 
+		const status = response?.data.edit_requests[0]?.status || 'approved';
+
 		if (
 			response.data.edit_requests[0].edit_req_approved_by !=
 			edit_req_approved_by
@@ -86,9 +87,9 @@ export class EditRequestService {
 			});
 		} else {
 			const edit_requests_id = response.data.edit_requests[0].id;
-			const updatedStatus = body.status;
+			const updatedStatus = body?.status || 'approved';
 
-			await this.hasuraService.update(
+			const resu = await this.hasuraService.update(
 				edit_requests_id,
 				'edit_requests',
 				{
@@ -96,6 +97,7 @@ export class EditRequestService {
 				},
 				this.returnField,
 			);
+
 			return res.status(200).json({
 				status: true,
 				message: 'status updated successfully',
