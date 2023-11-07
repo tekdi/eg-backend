@@ -2103,6 +2103,7 @@ export class CampService {
 					last_name
 				}
 			}`;
+			
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
