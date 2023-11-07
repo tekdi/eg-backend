@@ -7,7 +7,6 @@ import {
 	Param,
 	Request,
 	Response,
-	Delete,
 } from '@nestjs/common';
 import { AttendancesService } from './attendances.service';
 

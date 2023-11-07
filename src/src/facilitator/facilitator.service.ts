@@ -11,6 +11,7 @@ import {
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
+import { FacilitatorCoreService } from './facilitator.core.service';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -22,6 +23,7 @@ export class FacilitatorService {
 		private userService: UserService,
 		private s3Service: S3Service,
 		private uploadFileService: UploadFileService,
+		private facilitatorCoreService: FacilitatorCoreService,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -1453,34 +1455,50 @@ export class FacilitatorService {
 					data: {},
 				});
 			}
-			const variables: any = {};
 			let filterQueryArray = [];
+			let status = body?.status;
 
-			if (body?.search && body?.search !== '') {
-				const [first_name, last_name] = body.search.split(' ');
-
-				if (last_name?.length > 0) {
-					filterQueryArray.push(`{_or: [
-				{ first_name: { _ilike: "%${first_name}%" } }
-				{ last_name: { _ilike: "%${last_name}%" } }
-				 ]} `);
-				} else {
-					filterQueryArray.push(`{_or: [
-				{ first_name: { _ilike: "%${first_name}%" } }
-				{ last_name: { _ilike: "%${first_name}%" } }
-				 ]} `);
-				}
-			}
+			filterQueryArray.push(
+				`{_not: {
+					group_users: {
+						status: {_eq: "active"},
+						group: {
+							status: {
+								_in: ["registered", "approved", "change_required"]
+							}
+						}
+					}
+				}},{
+					program_beneficiaries: {
+						facilitator_user: {
+						program_faciltators: {					
+							parent_ip: {
+								 _eq: "${user?.data?.program_users[0]?.organisation_id}"
+							}
+						}
+					}
+				}}`,
+			);
 
 			if (
-				body?.hasOwnProperty('status') &&
-				this.isValidString(body?.status) &&
-				this.allStatus.map((obj) => obj.value).includes(body?.status)
+				body?.enrollment_verification_status &&
+				body?.enrollment_verification_status !== ''
 			) {
 				filterQueryArray.push(
-					'{program_faciltators: {status: {_eq: $status}}}',
+					`{program_beneficiaries:{enrollment_verification_status:{_eq:${body?.enrollment_verification_status}}}}`,
 				);
-				variables.status = body?.status;
+			}
+
+			if (body?.is_deactivated && body?.is_deactivated !== '') {
+				filterQueryArray.push(
+					`{is_deactivated:{_eq:${body?.is_deactivated}}}`,
+				);
+			}
+
+			if (body?.is_duplicate && body?.is_duplicate !== '') {
+				filterQueryArray.push(
+					`{is_duplicate:{_eq:${body?.is_duplicate}}}`,
+				);
 			}
 
 			if (body?.district && body?.district.length > 0) {
@@ -1495,38 +1513,93 @@ export class FacilitatorService {
 				);
 			}
 
-			filterQueryArray.unshift(
-				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
-			);
+			if (body.facilitator && body.facilitator.length > 0) {
+				filterQueryArray.push(
+					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}`,
+				);
+			}
+
+			if (status && status !== '') {
+				if (status === 'identified') {
+					filterQueryArray.push(`{
+						_or: [
+							{ program_beneficiaries: { status: { _eq: "identified" } } },
+							{ program_beneficiaries: { status: { _is_null: true } } },
+							{ program_beneficiaries: { status: { _eq: "" } } },
+						]
+					}`);
+				} else {
+					filterQueryArray.push(
+						`{program_beneficiaries:{status:{_eq:${status}}}}`,
+					);
+				}
+			}
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
 
-			const data = {
-				query: `query MyQuery1($limit:Int,$offset:Int) {
-				users_aggregate(limit:$limit,offset:$offset,where: ${filterQuery}) {
-					aggregate {
-					  count
+			const dataIds = {
+				query: `query MyQuery {
+					users(where: ${filterQuery}) {
+						program_beneficiaries {
+							facilitator_id
+							facilitator_user {
+								id
+								first_name
+								middle_name
+								last_name
+							}
+						}
 					}
-				  }
-				users(where: ${filterQuery}) {
-				  id
-				  first_name
-				  middle_name
-				  last_name
-				}
-			  }`,
-				variables: variables,
+				}`,
 			};
+			const resultIds = await this.hasuraService.getData(dataIds);
+			const ids = resultIds?.data?.users?.map(
+				(user) => user?.program_beneficiaries?.[0].facilitator_id,
+			);
+			let searchQuery = '';
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
 
-			const result = await this.hasuraService.getData({
-				query: data.query,
-			});
+				if (last_name?.length > 0) {
+					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+				} else {
+					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+				}
+			}
 
-			let count = result?.data?.users_aggregate?.aggregate?.count;
+			const where = `{id:{_in: ${JSON.stringify(ids)}},${searchQuery}}`;
+			const data = {
+				query: `query MyQuery($limit:Int, $offset:Int) {
+					users_aggregate(where:${where}) {
+						aggregate {
+							count
+						}
+					}
+					users(where: ${where},
+						limit: $limit,
+						offset: $offset,
+					) {
+						id
+						first_name
+						middle_name
+						last_name
+					}
+				}`,
+				variables: {
+					limit: limit,
+					offset: offset,
+				},
+			};
+			console.log(data?.query);
+			const result = await this.hasuraService.getData(data);
+			const extractedData = result?.data?.users;
+			const count = result?.data?.users_aggregate?.aggregate?.count;
+			const totalPages = Math.ceil(count / limit);
 
-			const users = result?.data?.users;
-
-			if (users?.length == 0) {
+			if (extractedData?.length == 0) {
 				resp.status(404).json({
 					message: 'BENEFICIARY_DATA_NOT_FOUND_ERROR',
 					data: { users: [] },
@@ -1536,9 +1609,10 @@ export class FacilitatorService {
 					message: 'Data found successfully',
 					data: {
 						totalCount: count,
-						data: users || [],
+						data: extractedData || [],
 						limit,
 						currentPage: page,
+						totalPages,
 					},
 				});
 			}
@@ -1682,6 +1756,7 @@ export class FacilitatorService {
           dob
           aadhar_token
           address
+          aadhar_verified
           block_id
           block_village_id
           created_by
@@ -2321,6 +2396,32 @@ export class FacilitatorService {
 				success: true,
 				message: 'Data updated successfully!',
 				data: res,
+			});
+		}
+	}
+	public async updateOkycResponse(req: any, body: any, res: any) {
+		const user_id = req?.mw_userid;
+		const program_id = body?.program_id || 1;
+		const academic_year_id = body?.academic_year_id || 1;
+		
+		const updated_response =
+			await this.facilitatorCoreService.updateOkycResponse(
+				body,
+				program_id,
+				user_id,
+				academic_year_id,
+			);
+		if (updated_response != null) {
+			return res.json({
+				status: 200,
+				message: 'Successfully updated okyc_response details',
+				data: [],
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'Cannot update okyc_response details',
+				data: [],
 			});
 		}
 	}
