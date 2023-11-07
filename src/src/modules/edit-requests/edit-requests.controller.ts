@@ -18,7 +18,6 @@ import { EditRequestDto } from './edit-requests.dto';
 export class EditRequestController {
 	constructor(
 		private editRequestService: EditRequestService,
-		private editRequestCoreService: EditRequestCoreService,
 	) {}
 	@Post('/edit-requests')
 	@UseGuards(new AuthGuard())
@@ -59,5 +58,14 @@ export class EditRequestController {
 			body,
 			response,
 		);
+	}
+	@Post('/admin/edit-requests')
+	@UseGuards(new AuthGuard())
+	getAdminEditRequests(
+		@Req()request:any,
+		@Body()body:any,
+		@Res()response:any
+	){
+		return this.editRequestService.getEditRequestList(request,body,response);
 	}
 }

@@ -18,6 +18,7 @@ export class EditRequestCoreService {
 		'academic_year_id',
 		'status',
 		'edit_req_approved_by',
+		'edit_req_by',
 	];
 	public async getEditRequest(
 		edit_req_for_context_id,
@@ -38,13 +39,17 @@ export class EditRequestCoreService {
                   academic_year_id
                   status
                   edit_req_approved_by
+				  edit_req_by
 				}
 			  }`,
 		};
-
+		
 		const response = await this.hasuraServiceFromServices.getData(data);
 
+		
+		
 		return response;
+		
 	}
 	public async createEditRequest(
 		body: any,
@@ -64,19 +69,30 @@ export class EditRequestCoreService {
 				fields: JSON.stringify(body.fields).replace(/"/g, '\\"'),
 				req_date: new Date(Date.now()).toISOString(),
 				req_approved_date: new Date(Date.now()).toISOString(),
+				edit_req_by:body.edit_req_by,
 			},
 			[],
 			true,
 			['id'],
 		);
-
+			
 		return result;
 	}
 	public async getEditRequestList(body, edit_req_approved_by) {
 		const data = {
 			query: `query MyQuery {
                     edit_requests(where: {edit_req_for_context: {_eq: ${body.edit_req_for_context}}, edit_req_for_context_id: {_eq: ${body.edit_req_for_context_id}}, edit_req_approved_by: {_eq: ${edit_req_approved_by}}, status: {_eq: "approved"}}) {
-                      id
+						id
+						edit_req_for_context
+						edit_req_for_context_id
+						fields
+						req_date
+						req_approved_date
+						program_id
+						academic_year_id
+						status
+						edit_req_approved_by
+						edit_req_by
                     }
             }`,
 		};

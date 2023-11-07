@@ -23,6 +23,20 @@ export class EditRequestService {
 	];
 	public async createEditRequest(req, body, res) {
 		const edit_req_approved_by = req.mw_userid;
+		const edit_req_for_context_id = body.edit_req_for_context_id;
+		const edit_req_for_context = body.edit_req_for_context;
+		const edit_req_by = body.edit_req_by;
+		if (
+			edit_req_for_context_id == '' ||
+			edit_req_for_context == '' ||
+			edit_req_by == ''
+		) {
+			return res.status(401).json({
+				success: false,
+				message: 'Not a valid request',
+				data: [],
+			});
+		}
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 
@@ -54,6 +68,16 @@ export class EditRequestService {
 	}
 	public async getEditRequestList(req, body, res) {
 		const edit_req_approved_by = req.mw_userid;
+		if (
+			body.edit_req_for_context_id == '' ||
+			body.edit_req_for_context == ''
+		) {
+			return res.status(401).json({
+				success: false,
+				message: 'Not a valid request',
+				data: [],
+			});
+		}
 		const response = await this.editRequestCoreService.getEditRequestList(
 			body,
 			edit_req_approved_by,
@@ -67,6 +91,20 @@ export class EditRequestService {
 
 	public async updateEditRequest(req: any, body: any, res: any) {
 		const edit_req_approved_by = req.mw_userid;
+		const edit_req_for_context_id = body.edit_req_for_context_id;
+		const edit_req_for_context = body.edit_req_for_context;
+		const edit_req_by = body.edit_req_by;
+		if (
+			edit_req_for_context_id == '' ||
+			edit_req_for_context == '' ||
+			edit_req_by == ''
+		) {
+			return res.status(401).json({
+				success: false,
+				message: 'Not a valid request',
+				data: [],
+			});
+		}
 		const response = await this.editRequestCoreService.getEditRequest(
 			body.edit_req_for_context_id,
 			body.edit_req_for_context,
