@@ -37,4 +37,9 @@ export class AttendancesController {
 	update(@Param('id') id: string, @Body() request: Record<string, any>) {
 		return this.attendancesService.update(+id, request);
 	}
+
+	@Get('camps/list')
+	getCampListAttendance(@Request() request, @Response() response) {
+		return this.attendancesService.getCampListAttendance(request, response);
+	}
 }

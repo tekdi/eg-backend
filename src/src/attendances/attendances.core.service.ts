@@ -77,7 +77,18 @@ export class AttendancesCoreService {
 	}
 
 	public async getAttendances(body: any, req: any, res: any) {
-		const { context, start_date, end_date, limit, page } = body || {};
+		const {
+			context,
+			start_date,
+			end_date,
+			limit,
+			page,
+			user_id,
+			status,
+			confidence_level,
+			search,
+			camp_id,
+		} = body || {};
 		let pagination = '';
 		let variables = {};
 		let wherePagination = '';
@@ -87,6 +98,41 @@ export class AttendancesCoreService {
 			filterWhere.push(
 				`date_time: {_gte:"${start_date}", _lte:"${end_date}"}`,
 			);
+		}
+
+		if (status) {
+			filterWhere.push(`status:{_eq:${status}}`);
+		}
+
+		if (user_id) {
+			filterWhere.push(`status:{_eq:${user_id}}`);
+		}
+
+		if (search && search !== '') {
+			let first_name = search.split(' ')[0];
+			let last_name = search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterWhere.push(`user{_or: [
+			{ first_name: { _ilike: "%${first_name}%" } }
+			{ last_name: { _ilike: "%${last_name}%" } }
+			 ]} `);
+			} else {
+				filterWhere.push(`user{_or: [
+			{ first_name: { _ilike: "%${first_name}%" } }
+			{ last_name: { _ilike: "%${first_name}%" } }
+			 ]} `);
+			}
+		}
+
+		if (confidence_level == 'yes') {
+			filterWhere.push(`fa_similarity_percentage:{_neq:null}`);
+		} else if (confidence_level == 'no') {
+			filterWhere.push(`fa_similarity_percentage:{_eq:null}`);
+		}
+
+		if (camp_id) {
+			filterWhere.push(`context_id:{_eq:${camp_id}}`);
 		}
 
 		if (limit && page) {
@@ -182,24 +228,27 @@ export class AttendancesCoreService {
 		}
 	}
 
-	// findAll(request: any) {
-	// 	return this.hasuraService.getAll(
-	// 		this.table,
-	// 		this.returnFields,
-	// 		request,
-	// 	);
-	// }
+	public async CampListAttendance(id) {
+		let query = `query MyQuery {
+			camps(where: {user: {program_faciltators: {parent_ip: {_eq: "${id}"}}}}){
+			  camp_id:id,
+			  camp_name:group{
+				name
+			  }
+			   group_users(where:{member_type:{_eq:"owner"},status:{_eq:"active"}}){
+				prerak_data:user{
+				  id
+				  first_name,
+				  middle_name,
+				  last_name
+				}
+			  }
+			}
+		  }
+		  `;
 
-	// findOne(id: number) {
-	// 	return this.hasuraService.getOne(+id, this.table, this.returnFields);
-	// }
+		const camps_data = await this.hasuraServiceFromServices.getData(query);
 
-	// update(id: number, req: any) {
-	// 	return this.hasuraService.update(
-	// 		+id,
-	// 		this.table,
-	// 		req,
-	// 		this.returnFields,
-	// 	);
-	// }
+		return camps_data;
+	}
 }

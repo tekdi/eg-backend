@@ -3,6 +3,7 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { AttendancesCoreService } from './attendances.core.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class AttendancesService {
@@ -31,6 +32,7 @@ export class AttendancesService {
 	constructor(
 		private readonly hasuraService: HasuraService,
 		private readonly attendanceCoreService: AttendancesCoreService,
+		private readonly userService: UserService,
 	) {}
 	public async createAttendance(body: any, req: any, res: any) {
 		let faciltator_id = req.mw_userid;
@@ -116,5 +118,36 @@ export class AttendancesService {
 			req,
 			this.returnFields,
 		);
+	}
+
+	public async getCampListAttendance(req, resp) {
+		const user = await this.userService.ipUserInfo(req);
+
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return resp.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
+		let organisation_id = user?.data?.program_users?.[0]?.organisation_id;
+		let camps_result = await this.attendanceCoreService.CampListAttendance(
+			organisation_id,
+		);
+
+		if (!camps_result?.data?.camps) {
+			return resp.json({
+				status: 500,
+				message: 'ATTENDANCE_CAMP_LIST_ERROR',
+				data: [],
+			});
+		} else {
+			return resp.json({
+				status: 200,
+				message: 'ATTENDANCE_CAMP_LIST_SUCCESS',
+				data: camps_result?.data,
+			});
+		}
 	}
 }
