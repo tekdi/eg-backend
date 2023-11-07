@@ -7,6 +7,7 @@ import {
 	Body,
 	ValidationPipe,
 	UsePipes,
+	Patch,
 } from '@nestjs/common';
 import { EditRequestService } from './edit-requests.service';
 import { EditRequestCoreService } from './edit-requests.core.service';
@@ -19,7 +20,7 @@ export class EditRequestController {
 		private editRequestService: EditRequestService,
 		private editRequestCoreService: EditRequestCoreService,
 	) {}
-	@Post('/get-edit-requests-list')
+	@Post('/edit-requests')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
 	getEditRequestsList(
@@ -46,7 +47,7 @@ export class EditRequestController {
 			response,
 		);
 	}
-	@Post('/update-edit-requests')
+	@Patch('/update-edit-requests')
 	@UseGuards(new AuthGuard())
 	updateEditRequests(
 		@Req() request: any,
