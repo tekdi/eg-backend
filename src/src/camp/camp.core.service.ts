@@ -290,7 +290,7 @@ export class CampCoreService {
 		return response;
 	}
 
-	public async updateCampStatus(
+	public async updateCampGroup(
 		id: any,
 		body: any,
 		update_arr: any,
