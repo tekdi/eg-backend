@@ -73,9 +73,6 @@ export class EditRequestService {
 			body?.program_id || 1,
 			body?.academic_year_id || 1,
 		);
-
-		const status = response?.data.edit_requests[0]?.status || 'approved';
-
 		if (
 			response.data.edit_requests[0].edit_req_approved_by !=
 			edit_req_approved_by
@@ -89,7 +86,7 @@ export class EditRequestService {
 			const edit_requests_id = response.data.edit_requests[0].id;
 			const updatedStatus = body?.status || 'approved';
 
-			const resu = await this.hasuraService.update(
+			await this.hasuraService.update(
 				edit_requests_id,
 				'edit_requests',
 				{
