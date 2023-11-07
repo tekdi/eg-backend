@@ -206,18 +206,17 @@ export class FaFaceIndexingCron {
 		const query = `
 			query MyQuery {
 				users(
-					where: {
-						_or: [
-							{ fa_user_indexed: { _is_null: true } },
-							{ fa_user_indexed: { _eq: false } }
-						],
-						_and: {
-							_or: [
-								{ fa_photos_last_processed_at: { _is_null: true }},
-								{ fa_photos_last_processed_at: { _lte: "${filterTimestamp}}" } }
-							]
-						}
-					},
+					where:{
+						_and: [{
+						  _or: [
+							{fa_user_indexed: {_is_null: true}},
+							{fa_user_indexed: {_eq: false}}
+						]}, 
+						  {_or: [{fa_photos_last_processed_at: {_is_null: true}},
+							{fa_photos_last_processed_at: {_lte: "${filterTimestamp}"}}]},
+						  {documents: {document_sub_type: {_eq: "profile_photo_1"}}}]}
+
+					,
 					order_by: {id: asc},
 					limit: ${limit}
 				) {
