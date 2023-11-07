@@ -1684,6 +1684,9 @@ export class CampService {
 							}
 							program_beneficiaries{
 								enrollment_number
+								enrollment_first_name
+								enrollment_middle_name
+								enrollment_last_name
 							}
 							
 						}
