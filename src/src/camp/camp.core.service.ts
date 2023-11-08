@@ -181,7 +181,6 @@ export class CampCoreService {
 			},
 		};
 
-		console.log('query-->>', data.query);
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);

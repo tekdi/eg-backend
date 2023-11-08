@@ -2095,15 +2095,27 @@ export class CampService {
 
 		// Convert the Set to an array if needed
 		const uniqueFaciltatorIds = [...faciltatorIds];
+		
+		let searchQuery = '';
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
 
+			if (last_name?.length > 0) {
+				searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+			} else {
+				searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+			}
+		}
 		const query = `query MyQuery{
-				users(where:{id:{_in:[${uniqueFaciltatorIds}]}}){
+				users(where:{id:{_in:[${uniqueFaciltatorIds}]},${searchQuery}}){
 					id
 					first_name
 					last_name
 				}
 			}`;
-			
+		
+
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
