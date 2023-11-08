@@ -101,12 +101,13 @@ export class AwsRekognitionService {
 		try {
 			const aws_users = userIds;
 			for (const userId of aws_users) {
-				const createUserParams = {
-					CollectionId: collectionId,
-					UserId: this.prefixed + userId,
-					ClientRequestToken:
-						this.prefixed + new Date().getTime().toString(),
-				};
+				try {
+					const createUserParams = {
+						CollectionId: collectionId,
+						UserId: this.prefixed + userId,
+						ClientRequestToken:
+							this.prefixed + new Date().getTime().toString(),
+					};
 				/*console.log(
 					'Trying to create user with details as:',
 					createUserParams,
@@ -114,6 +115,14 @@ export class AwsRekognitionService {
 				await this.rekognition.send(
 					new CreateUserCommand(createUserParams),
 				);
+				} catch (error) {
+					console.log(
+						'createUsersInCollection_forloop:',
+						error,
+						error.stack,
+					);
+					
+				}
 				//update in hasura
 				await this.markUserAsCreated(userId);
 				//wait some time to match aws rate limit 5 request per seconds
