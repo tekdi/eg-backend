@@ -57,7 +57,28 @@ export class CampController {
 		@Param('id') id: number,
 		@Res() response: any,
 	) {
-		return this.campService.updateCampDetails(id, body, request, response);
+		return this.campService.updateCampDetailsForFacilitatore(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Patch('/admin/camp-details/:id')
+	@UseGuards(new AuthGuard())
+	adminUpdateCampDetails(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.updateCampDetailsForIp(
+			id,
+			body,
+			request,
+			response,
+		);
 	}
 
 	@Post('/consent/create')
@@ -67,7 +88,21 @@ export class CampController {
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		return this.campService.createConsentBenficiaries(
+		return this.campService.createConsentBenficiariesForFacilitator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/admin/consent/create')
+	@UseGuards(new AuthGuard())
+	adminCreateConsentBenficiaries(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.createConsentBenficiariesForAdmin(
 			body,
 			request,
 			response,
@@ -81,7 +116,11 @@ export class CampController {
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		return this.campService.getConsentBenficiaries(body, request, response);
+		return this.campService.getConsentBenficiariesForFacilitators(
+			body,
+			request,
+			response,
+		);
 	}
 
 	@Post('/admin/consent/get')
@@ -146,7 +185,17 @@ export class CampController {
 		return this.campService.updateCampAttendance(id, body, req, response);
 	}
 
-	@Get('attendance/:id')
+	@Post('/attendances/list')
+	@UseGuards(new AuthGuard())
+	getAttendanceList(
+		@Req() req: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.campService.getAttendanceList(body, req, response);
+	}
+
+	@Post('attendance/:id')
 	@UseGuards(new AuthGuard())
 	getCampAttendanceById(
 		@Req() req: any,
@@ -154,7 +203,7 @@ export class CampController {
 		@Body() body: any,
 		@Param('id') id: number,
 	) {
-		return this.campService.getCampAttendanceById(id, req, response);
+		return this.campService.getCampAttendanceById(id, body, req, response);
 	}
 
 	@Get('/getStatuswiseCount')
@@ -176,5 +225,43 @@ export class CampController {
 		@Body() body: any,
 	) {
 		await this.campService.getFilter_By_Camps(body, req, response);
+	}
+
+	@Patch('/admin/reassign/:id')
+	@UseGuards(new AuthGuard())
+	reassignBeneficiarytoCamp(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.reassignBeneficiarytoCamp(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Get('/admin/facilitators')
+	@UseGuards(new AuthGuard())
+	getAvailableFacilitatorList(@Req() request: any, @Res() response: any) {
+		return this.campService.getAvailableFacilitatorList(request, response);
+	}
+
+	@Patch('/admin/facilitator-reassign/:id')
+	@UseGuards(new AuthGuard())
+	reassignFaciltatorToCamp(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.reassignFaciltatorToCamp(
+			id,
+			body,
+			request,
+			response,
+		);
 	}
 }
