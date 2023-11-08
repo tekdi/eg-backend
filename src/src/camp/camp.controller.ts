@@ -243,10 +243,18 @@ export class CampController {
 		);
 	}
 
-	@Get('/admin/facilitators')
+	@Post('/admin/facilitators')
 	@UseGuards(new AuthGuard())
-	getAvailableFacilitatorList(@Req() request: any, @Res() response: any) {
-		return this.campService.getAvailableFacilitatorList(request, response);
+	getAvailableFacilitatorList(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.campService.getAvailableFacilitatorList(
+			body,
+			request,
+			response,
+		);
 	}
 
 	@Patch('/admin/facilitator-reassign/:id')
