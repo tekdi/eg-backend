@@ -489,6 +489,8 @@ export class BeneficiariesService {
 					user_id,
 					facilitator_id,
 					enrolled_for_board
+					enrollment_first_name
+					enrollment_last_name
 					subjects
 					facilitator_id
 					status
@@ -538,8 +540,23 @@ export class BeneficiariesService {
 				let selectedSubject = JSON.parse(
 					data?.program_beneficiaries[0]?.subjects,
 				);
+
 				const dataObject = {};
-				dataObject['name'] = data?.first_name + ' ' + data?.last_name;
+				dataObject['name'] =
+					data?.program_beneficiaries[0]?.status !==
+					'enrolled_ip_verified'
+						? [data?.first_name, data?.last_name]
+								.filter((e) => e)
+								.join(' ')
+						: [
+								data?.program_beneficiaries[0]
+									?.enrollment_first_name,
+								data?.program_beneficiaries[0]
+									?.enrollment_last_name,
+						  ]
+								.filter((e) => e)
+								.join(' ');
+				
 				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['facilitator_id'] =
 					data?.program_beneficiaries[0]?.facilitator_id;
