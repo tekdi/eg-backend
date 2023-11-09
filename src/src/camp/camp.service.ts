@@ -2526,7 +2526,10 @@ export class CampService {
 		}
 	}
 
-	async getAvailableFacilitatorList(req: any, resp: any) {
+	async getAvailableFacilitatorList(body: any, req: any, resp: any) {
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -2538,6 +2541,8 @@ export class CampService {
 		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		let response = await this.campcoreservice.getFacilitatorsForCamp(
 			parent_ip_id,
+			limit,
+			offset,
 		);
 
 		let users = response?.data?.users;
@@ -2552,6 +2557,11 @@ export class CampService {
 		});
 
 		let userData = await Promise.all(userDataPromises);
+
+		const count = response?.data?.users_aggregate?.aggregate?.count;
+
+		const totalPages = Math.ceil(count / limit);
+
 		if (users?.length == 0) {
 			return resp.json({
 				status: 200,
@@ -2563,6 +2573,10 @@ export class CampService {
 				status: 200,
 				message: 'FACILITATOR_DATA_FOUND_SUCCESS',
 				data: userData,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
 			});
 		}
 	}
