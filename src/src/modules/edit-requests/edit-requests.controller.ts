@@ -16,15 +16,13 @@ import { EditRequestDto } from './edit-requests.dto';
 
 @Controller('edit-request')
 export class EditRequestController {
-	constructor(
-		private editRequestService: EditRequestService,
-	) {}
+	constructor(private editRequestService: EditRequestService) {}
 	@Post('/edit-requests')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
 	getEditRequestsList(
 		@Req() request: any,
-		@Body() body: EditRequestDto,
+		@Body() body: any,
 		@Res() response: any,
 	) {
 		return this.editRequestService.getEditRequestList(
@@ -62,10 +60,14 @@ export class EditRequestController {
 	@Post('/admin/edit-requests')
 	@UseGuards(new AuthGuard())
 	getAdminEditRequests(
-		@Req()request:any,
-		@Body()body:any,
-		@Res()response:any
-	){
-		return this.editRequestService.getEditRequestList(request,body,response);
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.editRequestService.getEditRequestListAdmin(
+			request,
+			body,
+			response,
+		);
 	}
 }

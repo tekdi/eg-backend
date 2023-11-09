@@ -2,12 +2,14 @@ import { HasuraService as HasuraServiceFromServices } from '../../services/hasur
 import { HasuraService } from '../../hasura/hasura.service';
 import { Injectable } from '@nestjs/common';
 import { EditRequestCoreService } from './edit-requests.core.service';
+import { UserService } from '../../user/user.service';
 @Injectable()
 export class EditRequestService {
 	constructor(
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private hasuraService: HasuraService,
 		private editRequestCoreService: EditRequestCoreService,
+		private userService: UserService,
 	) {}
 	public returnField = [
 		'id',
@@ -67,21 +69,37 @@ export class EditRequestService {
 		}
 	}
 	public async getEditRequestList(req, body, res) {
-		const edit_req_approved_by = req.mw_userid;
-		if (
-			body.edit_req_for_context_id == '' ||
-			body.edit_req_for_context == ''
-		) {
-			return res.status(401).json({
-				success: false,
-				message: 'Not a valid request',
-				data: [],
-			});
-		}
+		const edit_req_by = req.mw_userid;
+		body.academic_year_id = body?.academic_year_id || 1;
+		body.program_id = body?.program_id || 1;
+
 		const response = await this.editRequestCoreService.getEditRequestList(
 			body,
-			edit_req_approved_by,
+			edit_req_by,
 		);
+		return res.status(200).json({
+			success: true,
+			message: 'success',
+			data: response.data.edit_requests,
+		});
+	}
+
+	public async getEditRequestListAdmin(req, body, res) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return res.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		body.academic_year_id = body?.academic_year_id || 1;
+		body.program_id = body?.program_id || 1;
+
+		const response =
+			await this.editRequestCoreService.getEditRequestListAdmin(body);
 		return res.status(200).json({
 			success: true,
 			message: 'success',
