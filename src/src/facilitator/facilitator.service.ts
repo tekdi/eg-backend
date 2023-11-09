@@ -2401,6 +2401,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
+		if(!id){
+			return res.json({
+				status: 422,
+				success: false,
+				message: "Id is required",})
+		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {
 			query: `query MyQuery {

@@ -63,9 +63,11 @@ export class FacilitatorCoreService {
 		const missingRequiredField = requiredFields.find(
 			(field) => !body[field] || body[field] === '',
 		);
+		
 		if (missingRequiredField) {
 			return { error: `${missingRequiredField} is required` };
 		}
+
 
 		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
 
