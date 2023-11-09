@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
-import { filter } from 'rxjs';
 
 @Injectable()
 export class EditRequestCoreService {
