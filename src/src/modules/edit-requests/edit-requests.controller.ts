@@ -10,7 +10,6 @@ import {
 	Patch,
 } from '@nestjs/common';
 import { EditRequestService } from './edit-requests.service';
-import { EditRequestCoreService } from './edit-requests.core.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { EditRequestDto } from './edit-requests.dto';
 
