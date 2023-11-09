@@ -57,7 +57,7 @@ export class FacilitatorCoreService {
 			'aadhar_verified',
 		];
 
-		const requiredFields = ['first_name', 'dob', 'last_name', 'gender'];
+		const requiredFields = ['id','first_name', 'dob', 'last_name', 'gender'];
 
 		// Check required fields
 		const missingRequiredField = requiredFields.find(
