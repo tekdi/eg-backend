@@ -105,7 +105,7 @@ export class AttendancesCoreService {
 		}
 
 		if (user_id) {
-			filterWhere.push(`status:{_eq:${user_id}}`);
+			filterWhere.push(`user_id:{_eq:${user_id}}`);
 		}
 
 		if (search && search !== '') {
@@ -113,22 +113,20 @@ export class AttendancesCoreService {
 			let last_name = search.split(' ')[1] || '';
 
 			if (last_name?.length > 0) {
-				filterWhere.push(`user{_or: [
-			{ first_name: { _ilike: "%${first_name}%" } }
-			{ last_name: { _ilike: "%${last_name}%" } }
-			 ]} `);
+				filterWhere.push(
+					`user: {_and: [{first_name: {_ilike: "%${first_name}%"}}, {last_name: {_ilike: "%${last_name}%"}}]}`,
+				);
 			} else {
-				filterWhere.push(`user{_or: [
-			{ first_name: { _ilike: "%${first_name}%" } }
-			{ last_name: { _ilike: "%${first_name}%" } }
-			 ]} `);
+				filterWhere.push(
+					`user: {_or: [{first_name: {_ilike: "%${first_name}%"}}, {last_name: {_ilike: "%${first_name}%"}}]}`,
+				);
 			}
 		}
 
 		if (confidence_level == 'yes') {
-			filterWhere.push(`fa_similarity_percentage:{_neq:null}`);
+			filterWhere.push(`fa_similarity_percentage: {_is_null: false}`);
 		} else if (confidence_level == 'no') {
-			filterWhere.push(`fa_similarity_percentage:{_eq:null}`);
+			filterWhere.push(`fa_similarity_percentage: {_is_null: true}`);
 		}
 
 		if (camp_id) {
@@ -247,7 +245,9 @@ export class AttendancesCoreService {
 		  }
 		  `;
 
-		const camps_data = await this.hasuraServiceFromServices.getData(query);
+		const camps_data = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
 
 		return camps_data;
 	}
