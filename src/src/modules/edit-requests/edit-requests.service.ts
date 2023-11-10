@@ -25,20 +25,33 @@ export class EditRequestService {
 	];
 	public async createEditRequest(req, body, res) {
 		const edit_req_approved_by = req.mw_userid;
-		const edit_req_for_context_id = body.edit_req_for_context_id;
-		const edit_req_for_context = body.edit_req_for_context;
-		const edit_req_by = body.edit_req_by;
-		if (
-			edit_req_for_context_id == '' ||
-			edit_req_for_context == '' ||
-			edit_req_by == ''
-		) {
-			return res.status(401).json({
+		let result;
+
+		const requiredFields = [
+			'edit_req_for_context_id',
+			'edit_req_for_context',
+			'edit_req_by',
+			'fields',
+		];
+
+		// Check required fields
+		const missingRequiredField = requiredFields.find(
+			(field) =>
+				!body[field] ||
+				(field === 'fields' &&
+					(!Array.isArray(body[field]) ||
+						body[field].length === 0)) ||
+				body[field] === '',
+		);
+
+		if (missingRequiredField) {
+			return res.json({
+				status: 422,
 				success: false,
-				message: 'Not a valid request',
-				data: [],
+				message: `${missingRequiredField} is required`,
 			});
 		}
+
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 
@@ -48,26 +61,33 @@ export class EditRequestService {
 			program_id,
 			academic_year_id,
 		);
-		if (response.data.edit_requests.length > 0) {
-			return res.status(200).json({
-				success: true,
-				message: 'Learner has used up its chance',
-				data: {},
-			});
+		if (response?.data?.edit_requests?.length > 0) {
+			let id = response?.data?.edit_requests[0]?.id;
+
+			body.fields = JSON.stringify(body?.fields).replace(/"/g, '\\"');
+
+			const update_array = ['status', 'fields'];
+
+			result = await this.editRequestCoreService.updateEditDetails(
+				id,
+				body,
+				update_array,
+			);
 		} else {
-			const result = await this.editRequestCoreService.createEditRequest(
+			result = await this.editRequestCoreService.createEditRequest(
 				body,
 				edit_req_approved_by,
 				program_id,
 				academic_year_id,
 			);
-			return res.status(200).json({
-				success: true,
-				message: 'EditRequest saved successfully',
-				data: result,
-			});
 		}
+		return res.status(200).json({
+			success: true,
+			message: 'EditRequest saved successfully',
+			data: result,
+		});
 	}
+
 	public async getEditRequestList(req, body, res) {
 		const edit_req_by = req.mw_userid;
 		body.academic_year_id = body?.academic_year_id || 1;
@@ -121,18 +141,30 @@ export class EditRequestService {
 
 		if (!status.includes(body?.status)) {
 			return res.json({
-				status: 400,
+				status: 422,
 				message: 'INVALID_PARAMETERS',
 				data: {},
 			});
 		}
 
-		let update_body = {
-			status: body?.status,
-		};
+		if (body?.status == 'approved' && body?.fields?.length == 0) {
+			return res.json({
+				status: 422,
+				message: 'INVALID_PARAMETERS',
+				data: {},
+			});
+		}
+
+		if (body?.status == 'closed') {
+			body.fields = [];
+		}
+
+		body.fields = JSON.stringify(body?.fields).replace(/"/g, '\\"');
+		let update_array = ['status', 'fields'];
 		let result = await this.editRequestCoreService.updateEditDetails(
 			id,
-			update_body,
+			body,
+			update_array,
 		);
 
 		if (!result?.edit_requests?.id) {
