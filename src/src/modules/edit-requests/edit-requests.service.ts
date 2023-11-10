@@ -107,74 +107,46 @@ export class EditRequestService {
 		});
 	}
 
-	public async updateEditRequest(req: any, body: any, res: any) {
-		const edit_req_approved_by = req.mw_userid;
-		const edit_req_for_context_id = body.edit_req_for_context_id;
-		const edit_req_for_context = body.edit_req_for_context;
-		const edit_req_by = body.edit_req_by;
-
-		if (
-			edit_req_for_context_id == '' ||
-			edit_req_for_context == '' ||
-			edit_req_by == ''
-		) {
-			return res.status(401).json({
+	public async updateEditRequest(id: any, req: any, body: any, res: any) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return res.status(404).send({
 				success: false,
-				message: 'Not a valid request',
-				data: [],
+				message: 'Invalid Ip',
+				data: {},
 			});
 		}
-		const response = await this.editRequestCoreService.getEditRequest(
-			body.edit_req_for_context_id,
-			body.edit_req_for_context,
-			body?.program_id || 1,
-			body?.academic_year_id || 1,
+
+		let status = ['approved', 'closed'];
+
+		if (!status.includes(body?.status)) {
+			return res.json({
+				status: 400,
+				message: 'INVALID_PARAMETERS',
+				data: {},
+			});
+		}
+
+		let update_body = {
+			status: body?.status,
+		};
+		let result = await this.editRequestCoreService.updateEditDetails(
+			id,
+			update_body,
 		);
-		const query = `query MyQuery {
-				edit_requests(where: {edit_req_for_context: {_eq: "${body.edit_req_for_context}"}, edit_req_for_context_id: {_eq: ${body.edit_req_for_context_id}}}){
-				  id
-				}
-			  }
-			  `;
 
-		const data_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-		if (data_response?.data?.edit_requests?.length == 0) {
-			return res.status(200).json({
-				success: false,
-				message: 'Please enter valid fields',
-				data: [],
+		if (!result?.edit_requests?.id) {
+			return res.status(500).json({
+				status: false,
+				message: 'STATUS_UPDATE_FAILURE',
+				data: {},
 			});
-		} else {
-			if (
-				response.data.edit_requests[0].edit_req_approved_by !=
-				edit_req_approved_by
-			) {
-				return res.status(200).json({
-					success: false,
-					message: 'Update request failed',
-					data: [],
-				});
-			} else {
-				const edit_requests_id = response.data.edit_requests[0].id;
-				const updatedStatus = body?.status || 'approved';
-
-				await this.hasuraService.update(
-					edit_requests_id,
-					'edit_requests',
-					{
-						status: updatedStatus,
-					},
-					this.returnField,
-				);
-
-				return res.status(200).json({
-					status: true,
-					message: 'status updated successfully',
-					data: [],
-				});
-			}
 		}
+
+		return res.status(200).json({
+			status: true,
+			message: 'STATUS_UPDATE_SUCCESS',
+			data: result?.edit_requests?.id,
+		});
 	}
 }

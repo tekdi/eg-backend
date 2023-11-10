@@ -20,6 +20,8 @@ export class EditRequestCoreService {
 		'edit_req_approved_by',
 		'edit_req_by',
 	];
+
+	public returnFieldUpdate = ['status'];
 	public async getEditRequest(
 		edit_req_for_context_id,
 		edit_req_for_context,
@@ -168,5 +170,19 @@ export class EditRequestCoreService {
 
 		const response = await this.hasuraServiceFromServices.getData(data);
 		return response;
+	}
+
+	public async updateEditDetails(id, body) {
+		let result = await this.hasuraService.q(
+			'edit_requests',
+			{
+				...body,
+				id: id,
+			},
+			['status'],
+			true,
+			[...this.returnFieldUpdate, 'id'],
+		);
+		return result;
 	}
 }

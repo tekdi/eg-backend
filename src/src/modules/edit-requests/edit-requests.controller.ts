@@ -8,6 +8,7 @@ import {
 	ValidationPipe,
 	UsePipes,
 	Patch,
+	Param,
 } from '@nestjs/common';
 import { EditRequestService } from './edit-requests.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
@@ -42,14 +43,16 @@ export class EditRequestController {
 			response,
 		);
 	}
-	@Patch('/update-edit-requests')
+	@Patch('/admin/update-edit-requests/:id')
 	@UseGuards(new AuthGuard())
 	updateEditRequests(
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
+		@Param('id') id: any,
 	) {
 		return this.editRequestService.updateEditRequest(
+			id,
 			request,
 			body,
 			response,
