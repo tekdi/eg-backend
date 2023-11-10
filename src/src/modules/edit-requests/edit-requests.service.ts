@@ -28,10 +28,13 @@ export class EditRequestService {
 		const edit_req_for_context_id = body.edit_req_for_context_id;
 		const edit_req_for_context = body.edit_req_for_context;
 		const edit_req_by = body.edit_req_by;
+		const fields = body.fields;
+		let result;
 		if (
 			edit_req_for_context_id == '' ||
 			edit_req_for_context == '' ||
-			edit_req_by == ''
+			edit_req_by == '' ||
+			fields?.length == 0
 		) {
 			return res.status(401).json({
 				success: false,
@@ -48,26 +51,33 @@ export class EditRequestService {
 			program_id,
 			academic_year_id,
 		);
-		if (response.data.edit_requests.length > 0) {
-			return res.status(200).json({
-				success: true,
-				message: 'Learner has used up its chance',
-				data: {},
-			});
+		if (response?.data?.edit_requests?.length > 0) {
+			let id = response?.data?.edit_requests[0]?.id;
+
+			body.fields = JSON.stringify(body?.fields).replace(/"/g, '\\"');
+
+			const update_array = ['status', 'fields'];
+
+			result = await this.editRequestCoreService.updateEditDetails(
+				id,
+				body,
+				update_array,
+			);
 		} else {
-			const result = await this.editRequestCoreService.createEditRequest(
+			result = await this.editRequestCoreService.createEditRequest(
 				body,
 				edit_req_approved_by,
 				program_id,
 				academic_year_id,
 			);
-			return res.status(200).json({
-				success: true,
-				message: 'EditRequest saved successfully',
-				data: result,
-			});
 		}
+		return res.status(200).json({
+			success: true,
+			message: 'EditRequest saved successfully',
+			data: result,
+		});
 	}
+
 	public async getEditRequestList(req, body, res) {
 		const edit_req_by = req.mw_userid;
 		body.academic_year_id = body?.academic_year_id || 1;
@@ -127,12 +137,24 @@ export class EditRequestService {
 			});
 		}
 
-		let update_body = {
-			status: body?.status,
-		};
+		if (body?.status == 'approved' && body?.fields?.length == 0) {
+			return res.json({
+				status: 400,
+				message: 'INVALID_PARAMETERS',
+				data: {},
+			});
+		}
+
+		if (body?.status == 'closed') {
+			body.fields = '[]';
+		}
+
+		body.fields = JSON.stringify(body?.fields).replace(/"/g, '\\"');
+		let update_array = ['status', 'fields'];
 		let result = await this.editRequestCoreService.updateEditDetails(
 			id,
-			update_body,
+			body,
+			update_array,
 		);
 
 		if (!result?.edit_requests?.id) {

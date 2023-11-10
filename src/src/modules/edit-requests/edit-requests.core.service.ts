@@ -71,7 +71,7 @@ export class EditRequestCoreService {
 				edit_req_by: body.edit_req_by,
 			},
 			[],
-			true,
+			false,
 			['id'],
 		);
 
@@ -172,14 +172,14 @@ export class EditRequestCoreService {
 		return response;
 	}
 
-	public async updateEditDetails(id, body) {
+	public async updateEditDetails(id, body, update_array) {
 		let result = await this.hasuraService.q(
 			'edit_requests',
 			{
 				...body,
 				id: id,
 			},
-			['status'],
+			update_array,
 			true,
 			[...this.returnFieldUpdate, 'id'],
 		);
