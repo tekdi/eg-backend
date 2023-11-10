@@ -38,13 +38,15 @@ export class EditRequestService {
 		const missingRequiredField = requiredFields.find(
 			(field) =>
 				!body[field] ||
-				(field === 'fields' && body[field].length === 0) ||
+				(field === 'fields' &&
+					(!Array.isArray(body[field]) ||
+						body[field].length === 0)) ||
 				body[field] === '',
 		);
 
 		if (missingRequiredField) {
 			return res.json({
-				status: 400,
+				status: 422,
 				success: false,
 				message: `${missingRequiredField} is required`,
 			});
@@ -139,7 +141,7 @@ export class EditRequestService {
 
 		if (!status.includes(body?.status)) {
 			return res.json({
-				status: 400,
+				status: 422,
 				message: 'INVALID_PARAMETERS',
 				data: {},
 			});
@@ -147,14 +149,14 @@ export class EditRequestService {
 
 		if (body?.status == 'approved' && body?.fields?.length == 0) {
 			return res.json({
-				status: 400,
+				status: 422,
 				message: 'INVALID_PARAMETERS',
 				data: {},
 			});
 		}
 
 		if (body?.status == 'closed') {
-			body.fields = '[]';
+			body.fields = [];
 		}
 
 		body.fields = JSON.stringify(body?.fields).replace(/"/g, '\\"');
