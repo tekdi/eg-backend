@@ -30,18 +30,33 @@ export class EditRequestService {
 		const edit_req_by = body.edit_req_by;
 		const fields = body.fields;
 		let result;
-		if (
-			edit_req_for_context_id == '' ||
-			edit_req_for_context == '' ||
-			edit_req_by == '' ||
-			fields?.length == 0
-		) {
-			return res.status(401).json({
-				success: false,
-				message: 'Not a valid request',
-				data: [],
-			});
+
+		const requiredFields = [
+			'edit_req_approved_by',
+			'edit_req_for_context_id',
+			'edit_req_for_context',
+			'edit_req_by',
+			'fields',
+		];
+
+		// Check required fields
+		const missingRequiredField = requiredFields.find(
+			(field) =>
+				!body[field] ||
+				(field === 'fields' && body[field].length === 0) ||
+				body[field] === '',
+		);
+
+		if (missingRequiredField) {
+			if (missingRequiredField) {
+				return res.json({
+					status: 400,
+					success: false,
+					message: `${missingRequiredField} is required`,
+				});
+			}
 		}
+
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 
