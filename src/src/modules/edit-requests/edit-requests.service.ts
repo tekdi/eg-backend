@@ -25,14 +25,9 @@ export class EditRequestService {
 	];
 	public async createEditRequest(req, body, res) {
 		const edit_req_approved_by = req.mw_userid;
-		const edit_req_for_context_id = body.edit_req_for_context_id;
-		const edit_req_for_context = body.edit_req_for_context;
-		const edit_req_by = body.edit_req_by;
-		const fields = body.fields;
 		let result;
 
 		const requiredFields = [
-			'edit_req_approved_by',
 			'edit_req_for_context_id',
 			'edit_req_for_context',
 			'edit_req_by',
@@ -48,13 +43,11 @@ export class EditRequestService {
 		);
 
 		if (missingRequiredField) {
-			if (missingRequiredField) {
-				return res.json({
-					status: 400,
-					success: false,
-					message: `${missingRequiredField} is required`,
-				});
-			}
+			return res.json({
+				status: 400,
+				success: false,
+				message: `${missingRequiredField} is required`,
+			});
 		}
 
 		let program_id = body?.program_id || 1;
