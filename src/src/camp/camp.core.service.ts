@@ -181,7 +181,6 @@ export class CampCoreService {
 			},
 		};
 
-		console.log('query-->>', data.query);
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
@@ -214,38 +213,54 @@ export class CampCoreService {
 		}
 	}
 
-	public async getFacilitatorsForCamp(parent_ip_id: any) {
-		let query = `
-		query MyQuery {
-			users(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}) {
-			  id
-			  first_name
-			  middle_name
-			  last_name
-			  district
-			  block
-			  state
-			  camp_count: group_users_aggregate {
-				aggregate {
-				  count
+	public async getFacilitatorsForCamp(
+		parent_ip_id: any,
+		limit: any,
+		offset: any,
+	) {
+		let data = {
+			query: `
+			query MyQuery($limit: Int, $offset: Int){
+				users_aggregate(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}){
+				  aggregate{
+					count
+				  }
 				}
-			  }
-			  camp_learner_count: group_users {
-				group {
-				  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+				users(limit: $limit, offset: $offset,where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}) {
+				  id
+				  first_name
+				  middle_name
+				  last_name
+				  district
+				  block
+				  state
+				  camp_count: group_users_aggregate {
 					aggregate {
 					  count
 					}
 				  }
+				  camp_learner_count: group_users {
+					group {
+					  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+						aggregate {
+						  count
+						}
+					  }
+					}
+				  }
 				}
 			  }
-			}
-		  }
-		  
-		`;
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
+			  
+			`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
 
 		return hasura_response;
 	}

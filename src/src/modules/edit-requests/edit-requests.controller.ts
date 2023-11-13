@@ -8,23 +8,20 @@ import {
 	ValidationPipe,
 	UsePipes,
 	Patch,
+	Param,
 } from '@nestjs/common';
 import { EditRequestService } from './edit-requests.service';
-import { EditRequestCoreService } from './edit-requests.core.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
-import { EditRequestDto } from './edit-requests.dto';
 
 @Controller('edit-request')
 export class EditRequestController {
-	constructor(
-		private editRequestService: EditRequestService,
-	) {}
+	constructor(private editRequestService: EditRequestService) {}
 	@Post('/edit-requests')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
 	getEditRequestsList(
 		@Req() request: any,
-		@Body() body: EditRequestDto,
+		@Body() body: any,
 		@Res() response: any,
 	) {
 		return this.editRequestService.getEditRequestList(
@@ -46,14 +43,16 @@ export class EditRequestController {
 			response,
 		);
 	}
-	@Patch('/update-edit-requests')
+	@Patch('/admin/update-edit-requests/:id')
 	@UseGuards(new AuthGuard())
 	updateEditRequests(
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
+		@Param('id') id: any,
 	) {
 		return this.editRequestService.updateEditRequest(
+			id,
 			request,
 			body,
 			response,
@@ -62,10 +61,14 @@ export class EditRequestController {
 	@Post('/admin/edit-requests')
 	@UseGuards(new AuthGuard())
 	getAdminEditRequests(
-		@Req()request:any,
-		@Body()body:any,
-		@Res()response:any
-	){
-		return this.editRequestService.getEditRequestList(request,body,response);
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.editRequestService.getEditRequestListAdmin(
+			request,
+			body,
+			response,
+		);
 	}
 }

@@ -2096,14 +2096,25 @@ export class CampService {
 		// Convert the Set to an array if needed
 		const uniqueFaciltatorIds = [...faciltatorIds];
 
+		let searchQuery = '';
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+			} else {
+				searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+			}
+		}
 		const query = `query MyQuery{
-				users(where:{id:{_in:[${uniqueFaciltatorIds}]}}){
+				users(where:{id:{_in:[${uniqueFaciltatorIds}]},${searchQuery}}){
 					id
 					first_name
 					last_name
 				}
 			}`;
-			
+
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
@@ -2526,7 +2537,10 @@ export class CampService {
 		}
 	}
 
-	async getAvailableFacilitatorList(req: any, resp: any) {
+	async getAvailableFacilitatorList(body: any, req: any, resp: any) {
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -2538,6 +2552,8 @@ export class CampService {
 		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		let response = await this.campcoreservice.getFacilitatorsForCamp(
 			parent_ip_id,
+			limit,
+			offset,
 		);
 
 		let users = response?.data?.users;
@@ -2552,6 +2568,11 @@ export class CampService {
 		});
 
 		let userData = await Promise.all(userDataPromises);
+
+		const count = response?.data?.users_aggregate?.aggregate?.count;
+
+		const totalPages = Math.ceil(count / limit);
+
 		if (users?.length == 0) {
 			return resp.json({
 				status: 200,
@@ -2563,6 +2584,10 @@ export class CampService {
 				status: 200,
 				message: 'FACILITATOR_DATA_FOUND_SUCCESS',
 				data: userData,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
 			});
 		}
 	}

@@ -2,12 +2,14 @@ import { HasuraService as HasuraServiceFromServices } from '../../services/hasur
 import { HasuraService } from '../../hasura/hasura.service';
 import { Injectable } from '@nestjs/common';
 import { EditRequestCoreService } from './edit-requests.core.service';
+import { UserService } from '../../user/user.service';
 @Injectable()
 export class EditRequestService {
 	constructor(
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private hasuraService: HasuraService,
 		private editRequestCoreService: EditRequestCoreService,
+		private userService: UserService,
 	) {}
 	public returnField = [
 		'id',
@@ -23,20 +25,33 @@ export class EditRequestService {
 	];
 	public async createEditRequest(req, body, res) {
 		const edit_req_approved_by = req.mw_userid;
-		const edit_req_for_context_id = body.edit_req_for_context_id;
-		const edit_req_for_context = body.edit_req_for_context;
-		const edit_req_by = body.edit_req_by;
-		if (
-			edit_req_for_context_id == '' ||
-			edit_req_for_context == '' ||
-			edit_req_by == ''
-		) {
-			return res.status(401).json({
+		let result;
+
+		const requiredFields = [
+			'edit_req_for_context_id',
+			'edit_req_for_context',
+			'edit_req_by',
+			'fields',
+		];
+
+		// Check required fields
+		const missingRequiredField = requiredFields.find(
+			(field) =>
+				!body[field] ||
+				(field === 'fields' &&
+					(!Array.isArray(body[field]) ||
+						body[field].length === 0)) ||
+				body[field] === '',
+		);
+
+		if (missingRequiredField) {
+			return res.json({
+				status: 422,
 				success: false,
-				message: 'Not a valid request',
-				data: [],
+				message: `${missingRequiredField} is required`,
 			});
 		}
+
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 
@@ -46,41 +61,41 @@ export class EditRequestService {
 			program_id,
 			academic_year_id,
 		);
-		if (response.data.edit_requests.length > 0) {
-			return res.status(200).json({
-				success: true,
-				message: 'Learner has used up its chance',
-				data: {},
-			});
+		if (response?.data?.edit_requests?.length > 0) {
+			let id = response?.data?.edit_requests[0]?.id;
+
+			body.fields = JSON.stringify(body?.fields).replace(/"/g, '\\"');
+
+			const update_array = ['status', 'fields'];
+
+			result = await this.editRequestCoreService.updateEditDetails(
+				id,
+				body,
+				update_array,
+			);
 		} else {
-			const result = await this.editRequestCoreService.createEditRequest(
+			result = await this.editRequestCoreService.createEditRequest(
 				body,
 				edit_req_approved_by,
 				program_id,
 				academic_year_id,
 			);
-			return res.status(200).json({
-				success: true,
-				message: 'EditRequest saved successfully',
-				data: result,
-			});
 		}
+		return res.status(200).json({
+			success: true,
+			message: 'EditRequest saved successfully',
+			data: result,
+		});
 	}
+
 	public async getEditRequestList(req, body, res) {
-		const edit_req_approved_by = req.mw_userid;
-		if (
-			body.edit_req_for_context_id == '' ||
-			body.edit_req_for_context == ''
-		) {
-			return res.status(401).json({
-				success: false,
-				message: 'Not a valid request',
-				data: [],
-			});
-		}
+		const edit_req_by = req.mw_userid;
+		body.academic_year_id = body?.academic_year_id || 1;
+		body.program_id = body?.program_id || 1;
+
 		const response = await this.editRequestCoreService.getEditRequestList(
 			body,
-			edit_req_approved_by,
+			edit_req_by,
 		);
 		return res.status(200).json({
 			success: true,
@@ -89,74 +104,81 @@ export class EditRequestService {
 		});
 	}
 
-	public async updateEditRequest(req: any, body: any, res: any) {
-		const edit_req_approved_by = req.mw_userid;
-		const edit_req_for_context_id = body.edit_req_for_context_id;
-		const edit_req_for_context = body.edit_req_for_context;
-		const edit_req_by = body.edit_req_by;
-
-		if (
-			edit_req_for_context_id == '' ||
-			edit_req_for_context == '' ||
-			edit_req_by == ''
-		) {
-			return res.status(401).json({
+	public async getEditRequestListAdmin(req, body, res) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return res.status(404).send({
 				success: false,
-				message: 'Not a valid request',
-				data: [],
+				message: 'Invalid Ip',
+				data: {},
 			});
 		}
-		const response = await this.editRequestCoreService.getEditRequest(
-			body.edit_req_for_context_id,
-			body.edit_req_for_context,
-			body?.program_id || 1,
-			body?.academic_year_id || 1,
-		);
-		const query = `query MyQuery {
-				edit_requests(where: {edit_req_for_context: {_eq: "${body.edit_req_for_context}"}, edit_req_for_context_id: {_eq: ${body.edit_req_for_context_id}}}){
-				  id
-				}
-			  }
-			  `;
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		body.academic_year_id = body?.academic_year_id || 1;
+		body.program_id = body?.program_id || 1;
 
-		const data_response = await this.hasuraServiceFromServices.getData({
-			query: query,
+		const response =
+			await this.editRequestCoreService.getEditRequestListAdmin(body);
+		return res.status(200).json({
+			success: true,
+			message: 'success',
+			data: response.data.edit_requests,
 		});
-		if (data_response?.data?.edit_requests?.length == 0) {
-			return res.status(200).json({
+	}
+
+	public async updateEditRequest(id: any, req: any, body: any, res: any) {
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return res.status(404).send({
 				success: false,
-				message: 'Please enter valid fields',
-				data: [],
+				message: 'Invalid Ip',
+				data: {},
 			});
-		} else {
-			if (
-				response.data.edit_requests[0].edit_req_approved_by !=
-				edit_req_approved_by
-			) {
-				return res.status(200).json({
-					success: false,
-					message: 'Update request failed',
-					data: [],
-				});
-			} else {
-				const edit_requests_id = response.data.edit_requests[0].id;
-				const updatedStatus = body?.status || 'approved';
-
-				await this.hasuraService.update(
-					edit_requests_id,
-					'edit_requests',
-					{
-						status: updatedStatus,
-					},
-					this.returnField,
-				);
-
-				return res.status(200).json({
-					status: true,
-					message: 'status updated successfully',
-					data: [],
-				});
-			}
 		}
+
+		let status = ['approved', 'closed'];
+
+		if (!status.includes(body?.status)) {
+			return res.json({
+				status: 422,
+				message: 'INVALID_PARAMETERS',
+				data: {},
+			});
+		}
+
+		if (body?.status == 'approved' && body?.fields?.length == 0) {
+			return res.json({
+				status: 422,
+				message: 'INVALID_PARAMETERS',
+				data: {},
+			});
+		}
+
+		if (body?.status == 'closed') {
+			body.fields = [];
+		}
+
+		body.fields = JSON.stringify(body?.fields).replace(/"/g, '\\"');
+		let update_array = ['status', 'fields'];
+		let result = await this.editRequestCoreService.updateEditDetails(
+			id,
+			body,
+			update_array,
+		);
+
+		if (!result?.edit_requests?.id) {
+			return res.status(500).json({
+				status: false,
+				message: 'STATUS_UPDATE_FAILURE',
+				data: {},
+			});
+		}
+
+		return res.status(200).json({
+			status: true,
+			message: 'STATUS_UPDATE_SUCCESS',
+			data: result?.edit_requests?.id,
+		});
 	}
 }
