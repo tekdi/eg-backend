@@ -29,7 +29,7 @@ import { BeneficiariesCoreService } from './beneficiaries.core.service';
 	],
 	controllers: [BeneficiariesController],
 	providers: [BeneficiariesService, BeneficiariesCoreService],
-	exports: [BeneficiariesService],
+	exports: [BeneficiariesService, BeneficiariesCoreService],
 })
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

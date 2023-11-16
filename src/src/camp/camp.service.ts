@@ -8,6 +8,7 @@ import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
 import { AttendancesService } from '../attendances/attendances.service';
 import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
+import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.service';
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
@@ -24,6 +25,7 @@ export class CampService {
 		private s3Service: S3Service,
 		private campcoreservice: CampCoreService,
 		private beneficiariesService: BeneficiariesService,
+		private beneficiariesCoreService: BeneficiariesCoreService,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -984,6 +986,28 @@ export class CampService {
 						);
 				}
 
+				if (learner_ids?.length > 0) {
+					let update_beneficiaries_array = [];
+					let status = 'enrolled_ip_verified';
+					for (let i = 0; i < learner_ids.length; i++) {
+						let result =
+							await this.beneficiariesCoreService.getBeneficiaryDetailsById(
+								learner_ids[i],
+								status,
+							);
+						update_beneficiaries_array.push(result);
+					}
+
+					console.log(update_beneficiaries_array);
+					const update_body = {
+						status: 'registered_in_camp',
+					};
+
+					await this.beneficiariesCoreService.updateBeneficiaryDetails(
+						update_beneficiaries_array,
+						update_body,
+					);
+				}
 				return {
 					status: 200,
 					success: true,
