@@ -142,7 +142,7 @@ export class CampCoreService {
 					name
 					status
 				  }
-				 faciltator:group_users(where: {member_type: {_eq: "owner"}}) {
+				 faciltator:group_users(where: {member_type: {_eq: "owner"},status: {_eq: "active"}}) {
 					user {
 					  faciltator_id: id
 					  first_name
@@ -180,7 +180,7 @@ export class CampCoreService {
 				offset: offset,
 			},
 		};
-
+		
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
@@ -234,7 +234,7 @@ export class CampCoreService {
 				  district
 				  block
 				  state
-				  camp_count: group_users_aggregate {
+				  camp_count: group_users_aggregate(where: {status: {_eq: "active"}}){
 					aggregate {
 					  count
 					}
@@ -257,7 +257,7 @@ export class CampCoreService {
 				offset: offset,
 			},
 		};
-
+		
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);

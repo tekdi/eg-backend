@@ -1601,6 +1601,7 @@ export class CampService {
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		const data = await this.campcoreservice.list(body);
+		
 
 		if (data) {
 			return resp.json({
@@ -1619,6 +1620,7 @@ export class CampService {
 
 	async getCampDetailsForAdmin(id: any, req: any, resp: any) {
 		let camp_id = id;
+		
 		try {
 			if (!camp_id) {
 				return resp.json({
@@ -1628,7 +1630,7 @@ export class CampService {
 				});
 			}
 			const user = await this.userService.ipUserInfo(req);
-
+			
 			if (!user?.data?.program_users?.[0]?.organisation_id) {
 				return resp.status(404).send({
 					success: false,
@@ -1727,8 +1729,7 @@ export class CampService {
 						}
 					}
 			  }
-			}`;
-
+			}`;			
 			const hasura_response =
 				await this.hasuraServiceFromServices.getData({
 					query: query,
