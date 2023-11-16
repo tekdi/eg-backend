@@ -25,6 +25,7 @@ export class ActivitiesCoreService {
 		'program_id',
 	];
 	public returnFields = [
+		'id',
 		'user_id',
 		'type',
 		'activity_data',
@@ -63,6 +64,7 @@ export class ActivitiesCoreService {
 			}
 		  }
 		`;
+
 		try {
 			const result = await this.hasuraServiceFromServices.getData({
 				query,
@@ -70,92 +72,38 @@ export class ActivitiesCoreService {
 
 			const users = result?.data?.users?.[0]?.id;
 
-			if (!users) {
+			if (users) {
+				response = await this.hasuraService.create(
+					this.table,
+					{
+						...body,
+						context: 'activity_users',
+						context_id: facilitator_id,
+						activity_data: JSON.stringify(
+							body.activity_data,
+						).replace(/"/g, '\\"'),
+						created_by: facilitator_id,
+						updated_by: facilitator_id,
+					},
+					this.returnFields,
+				);
+				if (response) {
+					return {
+						status: 200,
+						success: true,
+						message: 'Activity created Successfully',
+						data: { response },
+					};
+				}
+				return response;
+			} else {
 				return {
+					status: 422,
 					success: false,
 					message: 'Beneficiary is not under this facilitator!',
 					data: {},
 				};
 			}
-
-			let query_update = `
-			query GetActivitiesQuery {
-			  activities(
-				where: {
-				  user_id: { _eq: ${user_id} },
-				  academic_year_id: { _eq: ${academic_year_id} },
-				  program_id: { _eq: ${program_id} },
-				  created_by:{_eq:${created_by}},
-				  updated_by:{_eq:${updated_by}}
-				}
-			  ) {
-				id
-				user_id
-			  }
-			}
-		  `;
-
-			const queryResult = await this.hasuraServiceFromServices.getData({
-				query: query_update,
-			});
-
-			const activityId = queryResult?.data?.activities?.[0]?.id;
-
-			let update_arr = [
-				'user_id',
-				'type',
-				'activity_data',
-				'academic_year_id',
-				'context',
-				'context_id',
-				'date',
-				'program_id',
-				'created_by',
-				'updated_by',
-			];
-
-			if (!activityId) {
-				let create_body = {
-					...body,
-					context: 'activity_user',
-					context_id: facilitator_id,
-					activity_data: JSON.stringify(body.activity_data).replace(
-						/"/g,
-						'\\"',
-					),
-					created_by: facilitator_id,
-					updated_by: facilitator_id,
-				};
-
-				response = await this.hasuraService.q(
-					this.table,
-					create_body,
-					update_arr,
-					true,
-					this.returnFields,
-				);
-			} else {
-				let update_body = {
-					...body,
-					activity_data: JSON.stringify(body.activity_data).replace(
-						/"/g,
-						'\\"',
-					),
-				};
-
-				response = await this.hasuraService.q(
-					this.table,
-					{
-						...update_body,
-						id: activityId,
-					},
-					update_arr,
-					true,
-					this.returnFields,
-				);
-			}
-
-			return response;
 		} catch (error) {
 			return {
 				success: false,
@@ -165,33 +113,142 @@ export class ActivitiesCoreService {
 		}
 	}
 
+	public async update(
+		body,
+		activities_id,
+		user_id,
+		academic_year_id,
+		program_id,
+		created_by,
+		updated_by,
+	) {
+		let query_update = `
+			query GetActivitiesQuery {
+			  activities(
+				where: {
+				  user_id: { _eq: ${user_id} },
+				  academic_year_id: { _eq: ${academic_year_id} },
+				  program_id: { _eq: ${program_id} },
+				  created_by:{_eq:${created_by}},
+				  updated_by:{_eq:${updated_by}}, id: {_eq: ${activities_id}}
+				}
+			  ) {
+				id
+				user_id
+				type
+				activity_data
+				academic_year_id
+				context
+				context_id
+				date
+				program_id
+				created_by
+				updated_by
+			  }
+			}
+		  `;
+
+		const queryResult = await this.hasuraServiceFromServices.getData({
+			query: query_update,
+		});
+
+		const activityId = queryResult?.data?.activities?.[0]?.id;
+
+		let response;
+		if (activityId) {
+			response = await this.hasuraService.q(
+				this.table,
+				{
+					...body,
+					id: activityId,
+				},
+				[
+					'user_id',
+					'type',
+					'activity_data',
+					'academic_year_id',
+					'context',
+					'context_id',
+					'date',
+					'program_id',
+					'created_by',
+					'updated_by',
+				],
+				true,
+				[...this.returnFields, 'id'],
+			);
+		}
+
+		return response;
+	}
+
 	public async list(
 		academic_year_id: number,
 		program_id: number,
 		context_id: number,
+		body: any,
+		limit: any,
+		offset: any,
 	) {
+		const { type, date } = body;
+		let filterConditions = '';
+
+		if (type) {
+			filterConditions += `, type: {_eq: "${type}"}`;
+		}
+
+		if (date) {
+			const dateString = date.split('T')[0]; // Extracting only the date part
+
+			filterConditions += `, date: {
+	  _gte: "${dateString}",
+	  _lt: "${dateString} 24:00:00" 
+	}`;
+		}
+
 		let query = `query MyQuery {
-		  activities(where: {context_id: {_eq: ${context_id}}, program_id: {_eq: ${program_id}}, academic_year_id: {_eq:  ${academic_year_id}}})
-		  {
-			id
-			user_id
-			type
-			activity_data
-			academic_year_id
-			program_id
-			context
-			context_id
-			created_by
-			updated_by
-		  }
+			activities_aggregate(
+				where: {
+					context_id: {_eq: ${context_id}},
+					program_id: {_eq: ${program_id}},
+					academic_year_id: {_eq: ${academic_year_id}}${filterConditions}
+				}
+			) {
+				aggregate {
+					count
+				}
+			}
+			activities(
+				where: {
+					context_id: {_eq: ${context_id}},
+					program_id: {_eq: ${program_id}},
+					academic_year_id: {_eq: ${academic_year_id}}${filterConditions}
+				},
+				
+			) {
+				id
+				user_id
+				type
+				date
+				activity_data
+				academic_year_id
+				program_id
+				context
+				context_id
+				created_by
+				updated_by
+			}
 		}`;
 
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
 
+		const count = response?.data?.activities_aggregate?.aggregate?.count;
+
+		const totalPages = Math.ceil(count / limit);
 		const newQdata = response?.data?.activities;
 
-		return newQdata;
+		return { activities: newQdata, count: count, totalPages: totalPages };
 	}
 }

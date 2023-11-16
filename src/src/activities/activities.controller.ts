@@ -3,6 +3,8 @@ import {
 	Controller,
 	Get,
 	Injectable,
+	Param,
+	Patch,
 	Post,
 	Req,
 	Res,
@@ -26,5 +28,16 @@ export class ActivitiesController {
 	@UseGuards(new AuthGuard())
 	list(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.activitiesService.List(body, request, response);
+	}
+
+	@Patch('/:id')
+	@UseGuards(new AuthGuard())
+	update(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.activitiesService.update(id, body, request, response);
 	}
 }
