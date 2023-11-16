@@ -802,10 +802,6 @@ export class CampService {
 		switch (update_body.edit_page_type) {
 			case 'edit_camp_location': {
 				let bodyData = update_body;
-				if (campData?.properties?.lat || campData?.properties?.long) {
-					let { lat, long, ...otherData } = update_body;
-					bodyData = otherData;
-				}
 				let location_body = {
 					...bodyData,
 					updated_by: facilitator_id,
@@ -1694,6 +1690,9 @@ export class CampService {
 							}
 							program_beneficiaries{
 								enrollment_number
+								enrollment_first_name
+								enrollment_middle_name
+								enrollment_last_name
 							}
 							
 						}
@@ -2104,13 +2103,25 @@ export class CampService {
 		// Convert the Set to an array if needed
 		const uniqueFaciltatorIds = [...faciltatorIds];
 
+		let searchQuery = '';
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+			} else {
+				searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+			}
+		}
 		const query = `query MyQuery{
-				users(where:{id:{_in:[${uniqueFaciltatorIds}]}}){
+				users(where:{id:{_in:[${uniqueFaciltatorIds}]},${searchQuery}}){
 					id
 					first_name
 					last_name
 				}
 			}`;
+
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
@@ -2166,14 +2177,36 @@ export class CampService {
 
 		if (result?.group?.group_users?.length > 0) {
 			return resp.json({
-				status: 200,
+				status: 401,
 				success: false,
 				message: 'DUPLICATE_CAMP_BENEFICIARY_ASSIGNMENT',
 				data: {},
 			});
 		} else {
 			let new_group_id = result?.group?.id;
-			//get group_user id  for updating and creating new record
+
+			//get old group_id for the learner to be reassigned to new camp
+
+			let query3 = `query MyQuery {
+				group_users(where: {user_id: {_eq:${body?.learner_id}}, status: {_eq: "active"}, member_type: {_eq: "member"}}){
+				  group_id
+				  group{
+					group_users_aggregate(where:{user_id:{_neq:${body?.learner_id}}, member_type:{_eq:"member"},status:{_eq:"active"}}){
+					  aggregate{
+						count
+					  }
+					}
+				  }
+				}
+			  }
+			  `;
+			const old_camp_details_repsonse =
+				await this.hasuraServiceFromServices.getData({
+					query: query3,
+				});
+
+			let old_group_id =
+				old_camp_details_repsonse?.data?.group_users?.[0].group_id;
 
 			let query = `query MyQuery {
 				group_users(where: {user_id: {_eq:${body?.learner_id}},member_type:{_eq:"member"},status:{_eq:"active"}}){
@@ -2252,6 +2285,22 @@ export class CampService {
 				result.data.unsuccessfulReassignmentIds.push(body?.learner_id);
 
 			if (
+				old_camp_details_repsonse?.data?.group_users?.[0].group
+					?.group_users_aggregate?.aggregate?.count == 0
+			) {
+				await this.campcoreservice.updateCampGroup(
+					old_group_id,
+					{
+						status: 'inactive',
+					},
+					['status'],
+					['id', 'status'],
+					req,
+					resp,
+				);
+			}
+
+			if (
 				update_response?.group_users?.id &&
 				create_response?.group_users?.id
 			) {
@@ -2271,7 +2320,10 @@ export class CampService {
 	}
 
 	async reassignFaciltatorToCamp(id: any, body: any, req: any, resp: any) {
+		//get IP information from token
 		const user = await this.userService.ipUserInfo(req);
+
+		//check for availability of IP from token
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
 				success: false,
@@ -2299,7 +2351,7 @@ export class CampService {
 
 		if (!access_check_result) {
 			return resp.json({
-				status: 200,
+				status: 401,
 				success: false,
 				message: 'FACILITATOR_REASSIGNMENT_ACCESS_DENIED_ERROR',
 				data: {},
@@ -2324,7 +2376,7 @@ export class CampService {
 
 		if (!status_check_result) {
 			return resp.json({
-				status: 200,
+				status: 401,
 				success: false,
 				message: 'FACILITATOR_ASSIGNMENT_DENIED',
 				data: {},
@@ -2347,9 +2399,9 @@ export class CampService {
 
 		let camp_count_result = camp_count_response?.data?.camps;
 
-		if (camp_count_result.length > 1) {
+		if (camp_count_result?.length > 1) {
 			return resp.json({
-				status: 200,
+				status: 401,
 				success: false,
 				message: 'FACILITATOR_CAMP_ASSIGNMENT_LIMIT_EXCEEDING_ERROR',
 				data: {},
@@ -2373,13 +2425,13 @@ export class CampService {
 
 		if (result) {
 			return resp.json({
-				status: 200,
+				status: 401,
 				success: false,
 				message: 'DUPLICATE_FACILITATOR_ASSIGNMENT_ERROR',
 				data: {},
 			});
 		} else {
-			//get group_user id and  for updating and creating new record
+			//get group_user id and  for updating and creating new record with beneficiary data
 
 			let query = `query MyQuery2 {
 				camps(where: {id: {_eq:${camp_id}}}) {
@@ -2388,12 +2440,14 @@ export class CampService {
 					group_id
 					user_id
 				  }
+				  beneficiaries_data: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+					user_id
+				  }
 					
 				}
 			  }
 			  
-			  
-			  `;
+			 `;
 
 			const hasura_response =
 				await this.hasuraServiceFromServices.getData({
@@ -2406,11 +2460,23 @@ export class CampService {
 				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0]
 					.group_id;
 
+			let beneficiaries_id = [];
+
+			let beneficiaries_data =
+				hasura_response?.data?.camps?.[0]?.beneficiaries_data;
+
+			//map all the beneficiary id's into an array
+			beneficiaries_data?.map((beneficiary) => {
+				beneficiaries_id.push(beneficiary.user_id);
+			});
+
+			//json body to update old camp data for old facilitator
 			let update_inactive_body = {
 				status: 'inactive',
 				updated_by: ip_id,
 			};
 
+			//json body to create new body for new facilitator for given camp
 			let create_active_body = {
 				status: 'active',
 				created_by: ip_id,
@@ -2422,6 +2488,10 @@ export class CampService {
 
 			let update_array = ['status', 'updated_by'];
 
+			//array to push failed reassignments for beneficiaries to new facilitator
+			let unsuccessfulReassignmentIds = [];
+
+			// update previous camp record of the old facilitator
 			let update_response = await this.campcoreservice.updateCampUser(
 				group_user_id,
 				update_inactive_body,
@@ -2431,12 +2501,25 @@ export class CampService {
 				resp,
 			);
 
+			//create new facilitator record for the same camp
 			let create_response = await this.campcoreservice.createCampUser(
 				create_active_body,
 				['id', 'status', 'updated_by'],
 				req,
 				resp,
 			);
+
+			// reassign beneficiaries to new facilitator for given camp
+			for (const benId of beneficiaries_id) {
+				const updatedResult =
+					await this.beneficiariesService.reassignBeneficiary(
+						benId,
+						body?.facilitator_id,
+						false,
+					);
+				if (!updatedResult.success)
+					unsuccessfulReassignmentIds.push(benId);
+			}
 
 			if (
 				update_response?.group_users?.id &&
@@ -2445,7 +2528,11 @@ export class CampService {
 				return resp.json({
 					status: 200,
 					message: 'Camp reassigned successfully',
-					data: create_response?.group_users?.id,
+					data: {
+						camp_id: camp_id,
+						unsuccessfulReassignmentIds:
+							unsuccessfulReassignmentIds,
+					},
 				});
 			} else {
 				return resp.json({
@@ -2457,7 +2544,10 @@ export class CampService {
 		}
 	}
 
-	async getAvailableFacilitatorList(req: any, resp: any) {
+	async getAvailableFacilitatorList(body: any, req: any, resp: any) {
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -2469,6 +2559,8 @@ export class CampService {
 		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		let response = await this.campcoreservice.getFacilitatorsForCamp(
 			parent_ip_id,
+			limit,
+			offset,
 		);
 
 		let users = response?.data?.users;
@@ -2483,6 +2575,11 @@ export class CampService {
 		});
 
 		let userData = await Promise.all(userDataPromises);
+
+		const count = response?.data?.users_aggregate?.aggregate?.count;
+
+		const totalPages = Math.ceil(count / limit);
+
 		if (users?.length == 0) {
 			return resp.json({
 				status: 200,
@@ -2494,6 +2591,10 @@ export class CampService {
 				status: 200,
 				message: 'FACILITATOR_DATA_FOUND_SUCCESS',
 				data: userData,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
 			});
 		}
 	}

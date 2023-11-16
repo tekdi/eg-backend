@@ -94,6 +94,12 @@ export class FacilitatorController {
 		return this.facilitatorService.update(+id, body, response);
 	}
 
+	@Patch('admin/okyc_details_override')
+	@UseGuards(new AuthGuard())
+	okyc_update(@Req() req: any, @Body() body: any, @Res() response: any) {
+		return this.facilitatorService.okyc_update(body, req, response);
+	}
+
 	@Post('/')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
