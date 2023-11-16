@@ -989,10 +989,10 @@ export class CampService {
 				if (learner_ids?.length > 0) {
 					let update_beneficiaries_array = [];
 					let status = 'enrolled_ip_verified';
-					for (let i = 0; i < learner_ids.length; i++) {
+					for (const learnerId of learner_ids) {
 						let result =
 							await this.beneficiariesCoreService.getBeneficiaryDetailsById(
-								learner_ids[i],
+								learnerId,
 								status,
 							);
 						update_beneficiaries_array.push(result);

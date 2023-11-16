@@ -258,7 +258,7 @@ export class BeneficiariesCoreService {
 	}
 
 	public async updateBeneficiaryDetails(ids, body) {
-		let result = await this.hasuraServiceFromServices.update(
+		await this.hasuraServiceFromServices.update(
 			null,
 			'program_beneficiaries',
 			body,
