@@ -69,13 +69,13 @@ export class ActivitiesService {
 		if (response) {
 			return resp.status(200).json({
 				success: true,
-				message: 'Community Reference Updated successfully!',
+				message: 'Activities Updated successfully!',
 				data: response,
 			});
 		} else {
 			return resp.json({
 				status: 400,
-				message: 'Unable to Update Community Reference!',
+				message: 'Unable to Update Activities!',
 				data: {},
 			});
 		}
