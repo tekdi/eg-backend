@@ -18,6 +18,13 @@ export class CampCoreService {
 		private s3Service: S3Service,
 	) {}
 
+	public returnFieldsconsents = [
+		'id',
+		'user_id',
+		'document_id',
+		'facilitator_id',
+	];
+
 	public async getStatuswiseCount(
 		filterQuery: any,
 		filterQueryArray: any,
@@ -322,6 +329,29 @@ export class CampCoreService {
 			update_arr,
 			true,
 			[...returnFieldsGroups],
+		);
+
+		return response;
+	}
+
+	public async updateConsentDetails(body) {
+		let response = await this.hasuraService.q(
+			'consents',
+			{
+				...body,
+				id: body?.consent_id,
+			},
+			body?.update_arr,
+			true,
+			[
+				...this.returnFieldsconsents,
+				'id',
+				'user_id',
+				'document_id',
+				'camp_id',
+				'facilitator_id',
+				'status',
+			],
 		);
 
 		return response;

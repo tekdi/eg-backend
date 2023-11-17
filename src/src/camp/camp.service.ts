@@ -1243,11 +1243,12 @@ export class CampService {
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 		let document_id = body?.document_id;
+		body.status = 'active';
 		let response;
 
 		const tableName = 'consents';
 		let query = `query MyQuery {
-			consents(where: {user_id: {_eq:${user_id}}, facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
+			consents(where: {user_id: {_eq:${user_id}},status:{_eq:"active"}, facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
 			  id
 			  document_id
 			  document{
@@ -1413,7 +1414,7 @@ export class CampService {
 		let academic_year_id = body?.academic_year_id || 1;
 
 		let query = `query MyQuery {
-			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
+			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
 			  id
 			  document_id
 			  user_id
@@ -2164,6 +2165,8 @@ export class CampService {
 
 	async reassignBeneficiarytoCamp(id: any, body: any, req: any, resp: any) {
 		let camp_id = id;
+		let academic_year_id = body?.academic_year_id || 1;
+		let program_id = body?.program_id || 1;
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -2176,25 +2179,25 @@ export class CampService {
 
 		//validation to check if camp already have the user to be assigned
 		let query = `query MyQuery {
-			camps_by_pk(id:${camp_id}) {
+			camps(where: {id: {_eq: ${camp_id}}, group: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
 			  group {
 				id
 				group_users(where: {user_id: {_eq:${body?.learner_id}}, member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 				  id
 				  user_id
 				  status
-				  
 				}
 			  }
 			}
 		  }
+		  
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
 
-		let result = hasura_response?.data?.camps_by_pk;
+		let result = hasura_response?.data?.camps?.[0];
 
 		if (result?.group?.group_users?.length > 0) {
 			return resp.json({
@@ -2209,7 +2212,7 @@ export class CampService {
 			//get old group_id for the learner to be reassigned to new camp
 
 			let query3 = `query MyQuery {
-				group_users(where: {user_id: {_eq:${body?.learner_id}}, status: {_eq: "active"}, member_type: {_eq: "member"}}){
+				group_users(where: {user_id: {_eq:${body?.learner_id} }, status: {_eq: "active"}, member_type: {_eq: "member"}, group: {academic_year_id: {_eq:${academic_year_id} }, program_id: {_eq:${program_id}}}}) {
 				  group_id
 				  group{
 					group_users_aggregate(where:{user_id:{_neq:${body?.learner_id}}, member_type:{_eq:"member"},status:{_eq:"active"}}){
@@ -2218,9 +2221,16 @@ export class CampService {
 					  }
 					}
 				  }
+				  camps {
+					id
+					consents(where: {_or: [{status: {_eq: "active"}}, {status: {_is_null: true}}],program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} ,user_id: {_eq:${body?.learner_id}}}) {
+					  id
+					}
+				  }
 				}
 			  }
 			  `;
+
 			const old_camp_details_repsonse =
 				await this.hasuraServiceFromServices.getData({
 					query: query3,
@@ -2228,6 +2238,10 @@ export class CampService {
 
 			let old_group_id =
 				old_camp_details_repsonse?.data?.group_users?.[0].group_id;
+
+			let old_consent_id =
+				old_camp_details_repsonse?.data?.group_users?.[0]?.camps
+					?.consents?.[0]?.id;
 
 			let query = `query MyQuery {
 				group_users(where: {user_id: {_eq:${body?.learner_id}},member_type:{_eq:"member"},status:{_eq:"active"}}){
@@ -2243,7 +2257,7 @@ export class CampService {
 					query: query,
 				});
 
-			let id = hasura_response?.data?.group_users?.[0].id;
+			let id = hasura_response?.data?.group_users?.[0]?.id;
 
 			let update_inactive_body = {
 				status: 'inactive',
@@ -2304,6 +2318,15 @@ export class CampService {
 				);
 			if (!updatedResult.success)
 				result.data.unsuccessfulReassignmentIds.push(body?.learner_id);
+
+			if (old_consent_id) {
+				let consent_body = {
+					status: 'inactive',
+					consent_id: old_consent_id,
+					update_arr: ['status'],
+				};
+				await this.campcoreservice.updateConsentDetails(consent_body);
+			}
 
 			if (
 				old_camp_details_repsonse?.data?.group_users?.[0].group
