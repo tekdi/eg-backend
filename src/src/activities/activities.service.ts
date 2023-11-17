@@ -28,11 +28,11 @@ export class ActivitiesService {
 				updated_by,
 			);
 
-			if (response != null) {
+			if (response) {
 				return resp.json({
-					status: 200,
-					message: 'Successfully updated camp details',
-					data: response,
+					status: response.status,
+					message: response.message,
+					data: response.data,
 				});
 			}
 		} catch (error) {
@@ -44,23 +44,71 @@ export class ActivitiesService {
 		}
 	}
 
+	async update(id: any, body: any, request: any, resp: any) {
+		let actvities_id = id;
+		let user_id = body?.user_id;
+		let academic_year_id = body?.academic_year_id || 1;
+		let program_id = body?.program_id || 1;
+		let created_by = request.mw_userid;
+		let updated_by = request.mw_userid;
+
+		body.activity_data = JSON.stringify(body?.activity_data).replace(
+			/"/g,
+			'\\"',
+		);
+		const response = await this.activitiesCoreService.update(
+			body,
+			actvities_id,
+			user_id,
+			academic_year_id,
+			program_id,
+			created_by,
+			updated_by,
+		);
+
+		if (response) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Community Reference Updated successfully!',
+				data: response,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Unable to Update Community Reference!',
+				data: {},
+			});
+		}
+	}
+
 	public async List(body: any, req: any, resp: any) {
 		try {
 			let academic_year_id = body?.academic_year_id || 1;
 			let program_id = body?.program_id || 1;
 			let context_id = req.mw_userid;
+			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
+			let offset = page > 1 ? limit * (page - 1) : 0;
 
 			let newQdata = await this.activitiesCoreService.list(
 				academic_year_id,
 				program_id,
 				context_id,
+				body,
+				limit,
+				offset,
 			);
+			
 
-			if (newQdata.length > 0) {
+			if (newQdata.activities.length > 0) {
 				return resp.status(200).json({
 					success: true,
 					message: 'Data found successfully!',
-					data: { activities: newQdata },
+					data: { activities: newQdata.activities },
+					totalCount: newQdata.count,
+					limit,
+					currentPage: page,
+					totalPages: `${newQdata.totalPages}`,
 				});
 			} else {
 				return resp.status(400).json({
