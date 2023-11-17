@@ -687,6 +687,8 @@ export class CampService {
 		let status = 'active';
 		let member_type = 'owner';
 		let update_body = body;
+		let academic_year_id = body?.academic_year_id || 1;
+		let program_id = body?.program_id || 1;
 
 		let PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -989,16 +991,18 @@ export class CampService {
 				if (learner_ids?.length > 0) {
 					let update_beneficiaries_array = [];
 					let status = 'enrolled_ip_verified';
+					body.program_id = program_id;
+					body.academic_year_id = academic_year_id;
 					for (const learnerId of learner_ids) {
 						let result =
 							await this.beneficiariesCoreService.getBeneficiaryDetailsById(
 								learnerId,
 								status,
+								body,
 							);
 						update_beneficiaries_array.push(result);
 					}
 
-					console.log(update_beneficiaries_array);
 					const update_body = {
 						status: 'registered_in_camp',
 					};
