@@ -180,7 +180,7 @@ export class CampCoreService {
 				offset: offset,
 			},
 		};
-		
+
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
@@ -239,7 +239,7 @@ export class CampCoreService {
 					  count
 					}
 				  }
-				  camp_learner_count: group_users {
+				  camp_learner_count: group_users(where: {status: {_eq: "active"}}) {
 					group {
 					  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 						aggregate {
@@ -257,7 +257,7 @@ export class CampCoreService {
 				offset: offset,
 			},
 		};
-		
+
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
