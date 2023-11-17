@@ -142,7 +142,7 @@ export class CampCoreService {
 					name
 					status
 				  }
-				 faciltator:group_users(where: {member_type: {_eq: "owner"}}) {
+				 faciltator:group_users(where: {member_type: {_eq: "owner"},status: {_eq: "active"}}) {
 					user {
 					  faciltator_id: id
 					  first_name
@@ -234,12 +234,12 @@ export class CampCoreService {
 				  district
 				  block
 				  state
-				  camp_count: group_users_aggregate {
+				  camp_count: group_users_aggregate(where: {status: {_eq: "active"}}) {
 					aggregate {
 					  count
 					}
 				  }
-				  camp_learner_count: group_users {
+				  camp_learner_count: group_users(where: {status: {_eq: "active"}}) {
 					group {
 					  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 						aggregate {
