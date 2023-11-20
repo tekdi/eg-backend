@@ -11,6 +11,7 @@ import { FacilitatorService } from './facilitator.service';
 import { FacilitatorController } from './facilitator.controller';
 import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
+import { FacilitatorCoreService } from './facilitator.core.service';
 
 @Module({
 	imports: [
@@ -22,9 +23,9 @@ import { UploadFileModule } from 'src/upload-file/upload-file.module';
 		S3Module,
 		UploadFileModule,
 	],
-	providers: [FacilitatorService],
+	providers: [FacilitatorService,FacilitatorCoreService],
 	controllers: [FacilitatorController],
-	exports: [],
+	//exports: [FacilitatorCoreService,FacilitatorService],
 })
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

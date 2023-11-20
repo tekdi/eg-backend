@@ -11,6 +11,7 @@ import {
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
+import { FacilitatorCoreService } from './facilitator.core.service';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -22,6 +23,7 @@ export class FacilitatorService {
 		private userService: UserService,
 		private s3Service: S3Service,
 		private uploadFileService: UploadFileService,
+		private facilitatorCoreService: FacilitatorCoreService,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -1553,7 +1555,7 @@ export class FacilitatorService {
 					offset: offset,
 				},
 			};
-
+			console.log(data?.query);
 			const result = await this.hasuraService.getData(data);
 			const extractedData = result?.data?.users;
 			const count = result?.data?.users_aggregate?.aggregate?.count;
@@ -1716,6 +1718,7 @@ export class FacilitatorService {
           dob
           aadhar_token
           address
+          aadhar_verified
           block_id
           block_village_id
           created_by
@@ -2357,5 +2360,94 @@ export class FacilitatorService {
 				data: res,
 			});
 		}
+	}
+	public async updateOkycResponse(req: any, body: any, res: any) {
+		const user_id = req?.mw_userid;
+		const program_id = body?.program_id || 1;
+		const academic_year_id = body?.academic_year_id || 1;
+
+		const updated_response =
+			await this.facilitatorCoreService.updateOkycResponse(
+				body,
+				program_id,
+				user_id,
+				academic_year_id,
+			);
+		if (updated_response != null) {
+			return res.json({
+				status: 200,
+				message: 'Successfully updated okyc_response details',
+				data: [],
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'Cannot update okyc_response details',
+				data: [],
+			});
+		}
+	}
+
+	public async okyc_update(body: any, request: any, res: any) {
+		const id = body.id;
+
+		const user = await this.userService.ipUserInfo(request);
+
+		let organisation_id = user?.data?.program_users?.[0]?.organisation_id;
+		if (!organisation_id) {
+			return res.json({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		if(!id){
+			return res.json({
+				status: 422,
+				success: false,
+				message: "Id is required",})
+		}
+		//check validation for id benlongs to same IP under prerak
+		let data = {
+			query: `query MyQuery {
+				users(where: {id: {_eq: ${id}}, program_faciltators: {parent_ip: {_eq: "${organisation_id}"}}}) {
+				  id
+				  aadhar_verified
+				}
+			  }
+			  `,
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+
+		if (result?.data?.users?.length == 0) {
+			return res.json({
+				status: 401,
+				success: false,
+				message: 'IP_ACCESS_DENIED',
+				data: {},
+			});
+		}
+		const userData = result?.data?.users?.[0];
+		let okyc_response = {};
+		let message = 'Okyc Details already Updated';
+		let status = 200;
+		if (userData?.aadhar_verified === 'yes') {
+			okyc_response = await this.facilitatorCoreService.updateOkycDetails(
+				body,
+			);
+			if (!okyc_response?.['error']) {
+				message = 'Okyc Details Updated successfully';
+			} else {
+				status = 422;
+				message = okyc_response?.['error'];
+				okyc_response = {};
+			}
+		}
+		return res.json({
+			status,
+			message,
+			data: okyc_response || {},
+		});
 	}
 }

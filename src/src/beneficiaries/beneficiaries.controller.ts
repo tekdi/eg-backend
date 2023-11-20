@@ -103,7 +103,7 @@ export class BeneficiariesController {
 		let duplicateArr;
 		// Fetch aadhar number of user to set as active
 		const aadhar_no = (
-			await this.beneficiariesService.findOne(+body.activeId, req)
+			await this.beneficiariesService.findOne(+body.activeId)
 		)?.data?.aadhar_no;
 
 		// Fetch valid duplication list of the token user
@@ -273,6 +273,27 @@ export class BeneficiariesController {
 	) {
 		const result = await this.beneficiariesService.statusUpdate(
 			body,
+
+			request,
+		);
+		return response.status(result.status).json({
+			success: result.success,
+			message: result.message,
+			data: result.data,
+		});
+	}
+
+	@Put('admin/statusUpdate')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	async statusUpdateByIp(
+		@Body() body: StatusUpdateDTO,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		const result = await this.beneficiariesService.statusUpdateByIp(
+			body,
+
 			request,
 		);
 		return response.status(result.status).json({
@@ -405,6 +426,7 @@ export class BeneficiariesController {
 				await this.beneficiariesService.reassignBeneficiary(
 					benId,
 					body.facilitatorId,
+					true,
 				);
 			if (!updatedResult.success)
 				result.data.unsuccessfulReassignmentIds.push(benId);

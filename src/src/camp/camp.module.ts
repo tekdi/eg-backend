@@ -12,6 +12,7 @@ import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { AttendancesModule } from '../attendances/attendances.module';
 import { CampCoreService } from './camp.core.service';
+import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
 
 @Module({
 	imports: [
@@ -25,6 +26,7 @@ import { CampCoreService } from './camp.core.service';
 		UploadFileModule,
 		EnumModule,
 		AttendancesModule,
+		BeneficiariesModule,
 	],
 
 	providers: [CampService, CampCoreService],

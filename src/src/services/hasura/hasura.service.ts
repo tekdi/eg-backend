@@ -356,8 +356,6 @@ export class HasuraService {
 			fields,
 		);
 
-		console.log('GQL: ' + query);
-
 		return this.getResponce(
 			await lastValueFrom(
 				this.httpService
