@@ -179,10 +179,10 @@ export class UserController {
 		);
 	}
 
-	@Post('/is-camp-exist')
+	@Post('/is-camp-exist/:id')
 	@UseGuards(new AuthGuard())
 	public async userCampExist(
-		@Param('userId') id: any,
+		@Param('id') id: any,
 		@Req() request: any,
 		@Res() response: any,
 		@Body() body: any,

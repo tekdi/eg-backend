@@ -1304,8 +1304,8 @@ export class UserService {
 	}
 
 	public async userCampExist(user_id: any, body: any, req: any, res: any) {
-		let program_id = body?.program_id;
-		let academic_year_id = body?.academic_year_id;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
 
 		const user = await this.ipUserInfo(req);
 
