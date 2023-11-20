@@ -178,4 +178,15 @@ export class UserController {
 			response,
 		);
 	}
+
+	@Post('/is-camp-exist')
+	@UseGuards(new AuthGuard())
+	public async userCampExist(
+		@Param('userId') id: any,
+		@Req() request: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.userService.userCampExist(id, body, request, response);
+	}
 }
