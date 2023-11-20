@@ -1347,7 +1347,7 @@ export class UserService {
 		//query to get camps list under specific user with respect to cohorts
 
 		let query = `query MyQuery {
-			users(where: {group_users: {user_id: {_eq:${user_id}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
+			users(where: {id:{_eq:${user_id}} ,program_faciltators: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
 			  facilitator_id: id
 			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
 				group {
@@ -1365,11 +1365,12 @@ export class UserService {
 			query: query,
 		});
 
-		let user_result = hasura_response?.data?.users;
+		let { group_users, ...user_result } =
+			hasura_response?.data?.users[0] || {};
 
 		return res.json({
 			status: 200,
-			data: user_result,
+			data: group_users,
 			success: true,
 			message: 'USER_CAMP_DETAILS_SUCCESS',
 		});
