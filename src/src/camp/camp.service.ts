@@ -1243,7 +1243,7 @@ export class CampService {
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 		let document_id = body?.document_id;
-		body.status = 'active';
+
 		let response;
 
 		const tableName = 'consents';
@@ -1308,6 +1308,7 @@ export class CampService {
 					facilitator_id,
 					updated_by: facilitator_id,
 					created_by: facilitator_id,
+					status: 'active',
 				},
 				[
 					'user_id',
@@ -1318,10 +1319,12 @@ export class CampService {
 					'facilitator_id',
 					'created_by',
 					'updated_by',
+					'status',
 				],
 				['id', 'user_id', 'document_id', 'camp_id', 'facilitator_id'],
 			);
 		}
+
 		const consent_response = response?.consents;
 
 		if (!consent_response?.id) {
