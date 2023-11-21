@@ -256,4 +256,49 @@ export class BeneficiariesCoreService {
 			data: result,
 		};
 	}
+
+	public async updateBeneficiaryDetails(ids, body) {
+		await this.hasuraServiceFromServices.update(
+			null,
+			'program_beneficiaries',
+			body,
+			[],
+			this.returnFields,
+			{
+				where: `{id:{_in:[${ids}]}}`,
+			},
+		);
+	}
+
+	public async getBeneficiaryDetailsById(id, status, body) {
+		let filter_query = [];
+		const { program_id, academic_year_id } = body;
+
+		filter_query.push(`id:{_eq:${id}}`);
+		if (status) {
+			filter_query.push(
+				`program_beneficiaries: {status: {_eq: ${status}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}`,
+			);
+		}
+
+		let query = `query MyQuery {
+			users(where: {${filter_query}}){
+			  id
+			  program_beneficiaries{
+				id
+			  }
+			}
+		  }
+		  `;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let result = response?.data?.users?.[0]?.program_beneficiaries[0]?.id;
+
+		if (result) {
+			return result;
+		}
+	}
 }

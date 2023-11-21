@@ -18,6 +18,13 @@ export class CampCoreService {
 		private s3Service: S3Service,
 	) {}
 
+	public returnFieldsconsents = [
+		'id',
+		'user_id',
+		'document_id',
+		'facilitator_id',
+	];
+
 	public async getStatuswiseCount(
 		filterQuery: any,
 		filterQueryArray: any,
@@ -142,7 +149,7 @@ export class CampCoreService {
 					name
 					status
 				  }
-				 faciltator:group_users(where: {member_type: {_eq: "owner"}}) {
+				 faciltator:group_users(where: {member_type: {_eq: "owner"},status: {_eq: "active"}}) {
 					user {
 					  faciltator_id: id
 					  first_name
@@ -234,12 +241,12 @@ export class CampCoreService {
 				  district
 				  block
 				  state
-				  camp_count: group_users_aggregate {
+				  camp_count: group_users_aggregate(where: {status: {_eq: "active"}}) {
 					aggregate {
 					  count
 					}
 				  }
-				  camp_learner_count: group_users {
+				  camp_learner_count: group_users(where: {status: {_eq: "active"}}) {
 					group {
 					  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 						aggregate {
@@ -322,6 +329,29 @@ export class CampCoreService {
 			update_arr,
 			true,
 			[...returnFieldsGroups],
+		);
+
+		return response;
+	}
+
+	public async updateConsentDetails(body) {
+		let response = await this.hasuraService.q(
+			'consents',
+			{
+				...body,
+				id: body?.consent_id,
+			},
+			body?.update_arr,
+			true,
+			[
+				...this.returnFieldsconsents,
+				'id',
+				'user_id',
+				'document_id',
+				'camp_id',
+				'facilitator_id',
+				'status',
+			],
 		);
 
 		return response;

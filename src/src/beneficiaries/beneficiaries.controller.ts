@@ -103,7 +103,7 @@ export class BeneficiariesController {
 		let duplicateArr;
 		// Fetch aadhar number of user to set as active
 		const aadhar_no = (
-			await this.beneficiariesService.findOne(+body.activeId, req)
+			await this.beneficiariesService.findOne(+body.activeId)
 		)?.data?.aadhar_no;
 
 		// Fetch valid duplication list of the token user
