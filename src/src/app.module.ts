@@ -27,6 +27,7 @@ import { ReferencesModule } from './references/references.module';
 import { PcrscoresModule } from './pcrscores/pcrscores.module';
 import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { CohortModule } from './cohort/cohort.module';
 
 @Module({
 	imports: [
@@ -59,7 +60,8 @@ import { ActivitiesModule } from './activities/activities.module';
 		ReferencesModule,
 		PcrscoresModule,
 		EditRequestModule,
-		ActivitiesModule
+		ActivitiesModule,
+		CohortModule,
 	],
 	controllers: [],
 	providers: [],
