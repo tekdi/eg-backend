@@ -887,13 +887,17 @@ export class CampService {
 			}
 
 			case 'edit_learners': {
-				let learner_ids = body.learner_ids;
+				let learner_ids = body?.learner_ids;
 				let resultCreate = [];
 				let resultActive = [];
 				let resultInactive = [];
 				let qury = `query MyQuery {
 					camps_by_pk(id:${camp_id})  {
 					group_id
+					group {
+						id
+						status
+					  }
 					  group_users(where:{member_type:{_eq:"member"}}){
 						id
 						user_id
@@ -906,6 +910,7 @@ export class CampService {
 
 				const res = await this.hasuraServiceFromServices.getData(qdata);
 				const group_id = res?.data?.camps_by_pk?.group_id;
+				const camp_status = res?.data?.camps_by_pk?.group?.status;
 				const group_users = res?.data?.camps_by_pk?.group_users;
 				const returnFields = [
 					'status',
@@ -914,6 +919,7 @@ export class CampService {
 					'created_by',
 					'updated_by',
 				];
+
 				// add new beneficiary Ids
 				const createData = learner_ids
 					.filter(
@@ -929,6 +935,35 @@ export class CampService {
 						created_by: facilitator_id,
 						updated_by: facilitator_id,
 					}));
+
+				//get primary id of user_id to be deactivated
+				const deactivateIds = group_users
+					.filter(
+						(item) =>
+							item.status === 'active' &&
+							!learner_ids.includes(item.user_id),
+					)
+					.map((item) => item.id);
+
+				//get learner_ids that is user_id to be deactivated
+				const deactiveLearnerIds = group_users
+					.filter(
+						(item) =>
+							item.status === 'active' &&
+							!learner_ids.includes(item.user_id),
+					)
+					.map((item) => item.user_id);
+
+				if (deactivateIds.length > 0 && camp_status == 'registered') {
+					return {
+						status: 422,
+						message:
+							'Cannot remove learners from a registered camp',
+						data: {
+							ids: deactiveLearnerIds,
+						},
+					};
+				}
 
 				if (createData?.length > 0) {
 					resultCreate = await this.hasuraServiceFromServices.qM(
@@ -961,26 +996,6 @@ export class CampService {
 						{ where: `{id:{_in:[${activeIds}]}}` },
 					);
 				}
-
-				// update active to inactive user
-
-				//get primary id of user_id to be deactivated
-				const deactivateIds = group_users
-					.filter(
-						(item) =>
-							item.status === 'active' &&
-							!learner_ids.includes(item.user_id),
-					)
-					.map((item) => item.id);
-
-				//get learner_ids that is user_id to be deactivated
-				const deactiveLearnerIds = group_users
-					.filter(
-						(item) =>
-							item.status === 'active' &&
-							!learner_ids.includes(item.user_id),
-					)
-					.map((item) => item.user_id);
 
 				if (deactivateIds?.length > 0) {
 					resultInactive =
