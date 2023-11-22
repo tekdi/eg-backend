@@ -4,6 +4,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 import { SentryService } from '../services/sentry/sentry.service';
 
+
 @Injectable()
 export class GeolocationService {
 	constructor(
