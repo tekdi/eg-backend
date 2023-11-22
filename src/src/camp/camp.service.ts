@@ -963,6 +963,8 @@ export class CampService {
 				}
 
 				// update active to inactive user
+
+				//get primary id of user_id to be deactivated
 				const deactivateIds = group_users
 					.filter(
 						(item) =>
@@ -970,6 +972,15 @@ export class CampService {
 							!learner_ids.includes(item.user_id),
 					)
 					.map((item) => item.id);
+
+				//get learner_ids that is user_id to be deactivated
+				const deactiveLearnerIds = group_users
+					.filter(
+						(item) =>
+							item.status === 'active' &&
+							!learner_ids.includes(item.user_id),
+					)
+					.map((item) => item.user_id);
 
 				if (deactivateIds?.length > 0) {
 					resultInactive =
@@ -1012,6 +1023,32 @@ export class CampService {
 						update_body,
 					);
 				}
+
+				if (deactiveLearnerIds?.length > 0) {
+					let update_beneficiaries_array = [];
+					let status = 'registered_in_camp';
+					body.program_id = program_id;
+					body.academic_year_id = academic_year_id;
+					for (const deactivateId of deactiveLearnerIds) {
+						let result =
+							await this.beneficiariesCoreService.getBeneficiaryDetailsById(
+								deactivateId,
+								status,
+								body,
+							);
+						update_beneficiaries_array.push(result);
+					}
+
+					const update_body = {
+						status: 'enrolled_ip_verified',
+					};
+
+					await this.beneficiariesCoreService.updateBeneficiaryDetails(
+						update_beneficiaries_array,
+						update_body,
+					);
+				}
+
 				return {
 					status: 200,
 					success: true,
@@ -1243,7 +1280,7 @@ export class CampService {
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 		let document_id = body?.document_id;
-		body.status = 'active';
+
 		let response;
 
 		const tableName = 'consents';
@@ -1308,6 +1345,7 @@ export class CampService {
 					facilitator_id,
 					updated_by: facilitator_id,
 					created_by: facilitator_id,
+					status: 'active',
 				},
 				[
 					'user_id',
@@ -1318,10 +1356,12 @@ export class CampService {
 					'facilitator_id',
 					'created_by',
 					'updated_by',
+					'status',
 				],
 				['id', 'user_id', 'document_id', 'camp_id', 'facilitator_id'],
 			);
 		}
+
 		const consent_response = response?.consents;
 
 		if (!consent_response?.id) {
