@@ -2207,6 +2207,8 @@ export class CampService {
 		let camp_id = id;
 		let academic_year_id = body?.academic_year_id || 1;
 		let program_id = body?.program_id || 1;
+		let create_response;
+		let update_response;
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -2299,6 +2301,29 @@ export class CampService {
 
 			let id = hasura_response?.data?.group_users?.[0]?.id;
 
+			//get new camp's inactive data if present for the given beneficiary to be reassigned
+
+			let query4 = `query MyQuery {
+				camps(where: {id: {_eq: ${camp_id}}, group: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+				  group {
+					id
+					group_users(where: {user_id: {_eq:${body?.learner_id}}, member_type: {_eq: "member"}, status: {_eq: "inactive"}}) {
+					  id
+					  user_id
+					  status
+					}
+				  }
+				}
+			  }`;
+
+			const new_response = await this.hasuraServiceFromServices.getData({
+				query: query4,
+			});
+
+			//inactive record for the new camp with same beneficiary
+
+			let new_result = new_response?.data?.camps?.[0]?.group?.group_users;
+
 			let update_inactive_body = {
 				status: 'inactive',
 				updated_by: ip_id,
@@ -2315,7 +2340,7 @@ export class CampService {
 
 			let update_array = ['status', 'updated_by'];
 
-			let update_response = await this.campcoreservice.updateCampUser(
+			update_response = await this.campcoreservice.updateCampUser(
 				id,
 				update_inactive_body,
 				update_array,
@@ -2324,12 +2349,30 @@ export class CampService {
 				resp,
 			);
 
-			let create_response = await this.campcoreservice.createCampUser(
-				create_active_body,
-				['id', 'status', 'updated_by'],
-				req,
-				resp,
-			);
+			if (new_result.length > 0) {
+				let group_user_id = new_result?.[0]?.id;
+				let update_array = ['status', 'updated_by'];
+				let update_active_body = {
+					status: 'active',
+					updated_by: ip_id,
+				};
+
+				create_response = await this.campcoreservice.updateCampUser(
+					group_user_id,
+					update_active_body,
+					update_array,
+					['id', 'status', 'updated_by'],
+					req,
+					resp,
+				);
+			} else {
+				create_response = await this.campcoreservice.createCampUser(
+					create_active_body,
+					['id', 'status', 'updated_by'],
+					req,
+					resp,
+				);
+			}
 
 			//get facilitator_id of new camp  to which beneficiary is to be assigned
 
