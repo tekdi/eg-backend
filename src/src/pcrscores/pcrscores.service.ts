@@ -88,8 +88,12 @@ export class PcrscoresService {
 				let auditData = {
 					userId: user_id,
 					mw_userid: facilitator_id,
+					user_type: 'Facilitator',
 					context: 'pcrscore.user',
 					context_id: facilitator_id,
+					subject: 'beneficiary',
+					subject_id: user_id,
+					log_transaction_text: `Facilitator ${facilitator_id} updated pcr for user ${user_id}}`,
 					oldData: newData,
 					newData: newData,
 					tempArray: [
@@ -106,9 +110,13 @@ export class PcrscoresService {
 				let data = body;
 				let auditData = {
 					userId: user_id,
+					user_type: 'Facilitator',
 					mw_userid: facilitator_id,
 					context: 'pcrscore.user',
 					context_id: facilitator_id,
+					subject: 'beneficiary',
+					subject_id: user_id,
+					log_transaction_text: `Facilitator ${facilitator_id} updated pcr for user ${user_id}}`,
 					tempArray: [
 						'user_id',
 						'baseline_learning_level',
