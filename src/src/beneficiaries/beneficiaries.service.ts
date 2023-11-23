@@ -556,7 +556,7 @@ export class BeneficiariesService {
 						  ]
 								.filter((e) => e)
 								.join(' ');
-				
+
 				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['facilitator_id'] =
 					data?.program_beneficiaries[0]?.facilitator_id;
@@ -677,6 +677,7 @@ export class BeneficiariesService {
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let status = body?.status;
+		let academic_year_id = body?.academic_year_id || 1;
 		let filterQueryArray = [];
 
 		if (body?.reassign) {
@@ -685,7 +686,7 @@ export class BeneficiariesService {
 			);
 		} else {
 			filterQueryArray.push(
-				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: {academic_year_id: {_eq: ${academic_year_id}},facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 			);
 		}
 
@@ -819,7 +820,6 @@ export class BeneficiariesService {
 				offset: offset,
 			},
 		};
-
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let mappedResponse = response?.data?.users;
 		const count = response?.data?.users_aggregate?.aggregate?.count;

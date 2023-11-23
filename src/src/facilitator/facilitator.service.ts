@@ -1598,6 +1598,7 @@ export class FacilitatorService {
 		}
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let academic_year_id = body?.academic_year_id || 1;
 
 		let skip = page > 1 ? limit * (page - 1) : 0;
 
@@ -1648,7 +1649,7 @@ export class FacilitatorService {
 		}
 
 		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}}}}`,
 		);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
@@ -2401,11 +2402,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
-		if(!id){
+		if (!id) {
 			return res.json({
 				status: 422,
 				success: false,
-				message: "Id is required",})
+				message: 'Id is required',
+			});
 		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {
