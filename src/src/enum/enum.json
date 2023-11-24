@@ -678,8 +678,8 @@
 			"value": "fan"
 		},
 		{
-			"title": "CAMP_PROPERTY_FACILITIES_CLEAN_SEATING_AREA",
-			"value": "clean_seating_area"
+			"title": "CAMP_PROPERTY_FACILITIES_CLEAN_AND_USABLE_SEATING_AREA",
+			"value": "clean_and_usable_seating_area"
 		},
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_SHED",
@@ -692,6 +692,14 @@
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_PROPER_LIGHTINGS",
 			"value": "proper_lightings"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_DRINKING_WATER",
+			"value": "drinking_water"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_ENOUGH_SEATING_AREA",
+			"value": "enough_seating_area"
 		}
 	],
 	"COMMUNITY_MEMBER_DESIGNATIONS": [
@@ -954,6 +962,44 @@
 		{
 			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_OTHER",
 			"value": "other"
+		}
+	],
+	"CAMP_ABSENT_REASONS": [
+		{
+			"title": "CAMP_ABSENT_REASONS_PERSONAL_LEAVE",
+			"value": "personal_leave"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_OTHER_WEEKLY_OFF",
+			"value": "other_weekly_off"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_FESTIVAL_HOLIDAY",
+			"value": "festival_holiday"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STACKHOLDER",
+			"value": "meeting_with_stackholder"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PCP",
+			"value": "pcp"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PRERAK_TRAINING",
+			"value": "prerak_training"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_LEARNER_EXPOSER_VISIT",
+			"value": "learner_exposer_visit"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_CAMP_FACILITY_RELATED_WORK",
+			"value": "camp_facility_related_work"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_EXAM",
+			"value": "exam"
 		}
 	]
 }
