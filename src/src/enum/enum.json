@@ -678,8 +678,8 @@
 			"value": "fan"
 		},
 		{
-			"title": "CAMP_PROPERTY_FACILITIES_CLEAN_AND_USABLE_SEATING_AREA",
-			"value": "clean_and_usable_seating_area"
+			"title": "CAMP_PROPERTY_FACILITIES_SUFFICIENT_AND_SUTABLE_SEATING_AREA",
+			"value": "sufficient_and sutable_seating_area"
 		},
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_SHED",
