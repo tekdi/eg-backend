@@ -850,7 +850,7 @@ export class CampService {
 					context_id: property_id,
 					subject: 'camp',
 					subject_id: camp_id,
-					log_transaction_text: `Facilitator ${facilitator_id} updated camp location of camp ${camp_id}`,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp location of camp ${camp_id}`,
 					oldData: old_location_body,
 					newData: new_location_body,
 					tempArray: [
@@ -910,7 +910,7 @@ export class CampService {
 					context_id: camp_id,
 					subject: 'camp',
 					subject_id: camp_id,
-					log_transaction_text: `Facilitator ${facilitator_id} updated camp kit details of camp ${camp_id}`,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp kit details of camp ${camp_id}`,
 					oldData: old_kit_details,
 					newData: camp_details,
 					tempArray: [
@@ -959,7 +959,7 @@ export class CampService {
 					context_id: property_id,
 					subject: 'camp',
 					subject_id: camp_id,
-					log_transaction_text: `Facilitator ${facilitator_id} updated camp photos of camp ${camp_id}`,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp photos of camp ${camp_id}`,
 					oldData: old_photos_details,
 					newData: photo_details_body,
 					tempArray: [
@@ -1006,7 +1006,7 @@ export class CampService {
 					context_id: property_id,
 					subject: 'camp',
 					subject_id: camp_id,
-					log_transaction_text: `Facilitator ${facilitator_id} updated camp facilities of camp ${camp_id}`,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp facilities of camp ${camp_id}`,
 					oldData: old_facilities_body,
 					newData: update_body,
 					tempArray: ['property_facilities'],
