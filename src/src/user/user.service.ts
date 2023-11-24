@@ -1213,6 +1213,10 @@ export class UserService {
 			mw_userid,
 			context,
 			context_id,
+			subject,
+			subject_id,
+			log_transaction_text,
+			user_type,
 			oldData,
 			newData,
 			tempArray,
@@ -1232,6 +1236,9 @@ export class UserService {
 			storeNew = newData;
 		}
 
+		console.log('storeOld', storeOld);
+		console.log('storeNew', storeNew);
+
 		if (
 			Object.keys(storeOld).length !== 0 &&
 			Object.keys(storeNew).length !== 0
@@ -1244,6 +1251,10 @@ export class UserService {
 					user_id: userId,
 					context: context,
 					context_id: context_id,
+					subject_id: subject_id,
+					subject: subject,
+					user_type: user_type,
+					log_transaction_text: log_transaction_text,
 					updated_by_user: mw_userid,
 					action: action,
 				},
@@ -1254,6 +1265,10 @@ export class UserService {
 					'old_data',
 					'context',
 					'context_id',
+					'subject',
+					'subject_id',
+					'log_transaction_text',
+					'user_type',
 					'updated_at',
 					'created_at',
 					'updated_by_user',
