@@ -696,10 +696,6 @@
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_DRINKING_WATER",
 			"value": "drinking_water"
-		},
-		{
-			"title": "CAMP_PROPERTY_FACILITIES_ENOUGH_SEATING_AREA",
-			"value": "enough_seating_area"
 		}
 	],
 	"COMMUNITY_MEMBER_DESIGNATIONS": [
