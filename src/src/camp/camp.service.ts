@@ -843,8 +843,8 @@ export class CampService {
 				};
 
 				let auditData = {
-					userId: facilitator_id,
-					mw_userid: facilitator_id,
+					userId: request.mw_userid,
+					mw_userid: request.mw_userid,
 					user_type: 'Facilitator',
 					context: 'camp.update.properties',
 					context_id: property_id,
@@ -903,9 +903,9 @@ export class CampService {
 				};
 
 				let auditData = {
-					userId: facilitator_id,
+					userId: request.mw_userid,
 					user_type: 'Facilitator',
-					mw_userid: facilitator_id,
+					mw_userid: request.mw_userid,
 					context: 'camp.update.kit_details',
 					context_id: camp_id,
 					subject: 'camp',
@@ -952,9 +952,9 @@ export class CampService {
 				};
 
 				let auditData = {
-					userId: facilitator_id,
+					userId: request.mw_userid,
 					user_type: 'Facilitator',
-					mw_userid: facilitator_id,
+					mw_userid: request.mw_userid,
 					context: 'camp.update.property.photos',
 					context_id: property_id,
 					subject: 'camp',
@@ -999,9 +999,9 @@ export class CampService {
 				};
 
 				let auditData = {
-					userId: facilitator_id,
+					userId: request.mw_userid,
 					user_type: 'Facilitator',
-					mw_userid: facilitator_id,
+					mw_userid: request.mw_userid,
 					context: 'camp.update.property.facilities',
 					context_id: property_id,
 					subject: 'camp',
@@ -2895,6 +2895,9 @@ export class CampService {
 				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0]
 					.group_id;
 
+			let old_facilitator_id =
+				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0]
+					.user_id;
 			let beneficiaries_id = [];
 
 			let beneficiaries_data =
@@ -2956,6 +2959,28 @@ export class CampService {
 					unsuccessfulReassignmentIds.push(benId);
 			}
 
+			const auditData = {
+				userId: req?.mw_userid,
+				mw_userid: req?.mw_userid,
+				user_type: 'IP',
+				context: 'camp.facilitator.reassign',
+				context_id: camp_id,
+				oldData: {
+					camp_id: camp_id,
+					facilitator_id: old_facilitator_id,
+				},
+				newData: {
+					camp_id: camp_id,
+					facilitator_id: body?.facilitator_id,
+				},
+				subject: 'facilitator',
+				subject_id: body?.facilitator_id,
+				log_transaction_text: `IP ${req.mw_userid} reassigned facilitator  ${body?.facilitator_id} for camp ${camp_id}`,
+				tempArray: ['facilitator_id', 'camp_id'],
+				action: 'create',
+			};
+
+			await this.userService.addAuditLogAction(auditData);
 			if (
 				update_response?.group_users?.id &&
 				create_response?.group_users?.id
