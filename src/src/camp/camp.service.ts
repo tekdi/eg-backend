@@ -698,16 +698,6 @@ export class CampService {
 		let update_body = body;
 		let academic_year_id = body?.academic_year_id || 1;
 		let program_id = body?.program_id || 1;
-		let profile_photo_1 = body.property_photo_building;
-		let profile_photo_2 = body.property_photo_classroom;
-		let profile_photo_3 = body.property_photo_other;
-
-		if (!profile_photo_1 || !profile_photo_2 || !profile_photo_3) {
-			return response.status(400).json({
-				success: false,
-				message: 'profile_photo not provided',
-			});
-		}
 
 		let PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -850,10 +840,10 @@ export class CampService {
 					'week_off',
 				];
 
-				const startTime = new Date(campData?.preferred_start_time); // Replace this with your start_time ISO string
-				const endTime = new Date(campData?.preferred_end_time);
-
-				if (startTime >= endTime) {
+				if (
+					update_body?.preferred_start_time >=
+					update_body?.preferred_end_time
+				) {
 					return {
 						status: 422,
 						message: 'Start time cannot be greater than End time',
@@ -1005,6 +995,16 @@ export class CampService {
 			}
 
 			case 'edit_photo_details': {
+				let profile_photo_1 = body?.property_photo_building;
+				let profile_photo_2 = body?.property_photo_classroom;
+				let profile_photo_3 = body?.property_photo_other;
+
+				if (!profile_photo_1 || !profile_photo_2 || !profile_photo_3) {
+					return response.status(400).json({
+						success: false,
+						message: 'profile_photo not provided',
+					});
+				}
 				const photo_details_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_photo_details
 						.properties;
