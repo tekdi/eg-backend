@@ -696,10 +696,6 @@
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_DRINKING_WATER",
 			"value": "drinking_water"
-		},
-		{
-			"title": "CAMP_PROPERTY_FACILITIES_ENOUGH_SEATING_AREA",
-			"value": "enough_seating_area"
 		}
 	],
 	"COMMUNITY_MEMBER_DESIGNATIONS": [
@@ -1000,6 +996,32 @@
 		{
 			"title": "CAMP_ABSENT_REASONS_EXAM",
 			"value": "exam"
+		}
+	],
+	"FACILITATOR_MOOD_LIST":[
+		{
+			"title": "FACILITATOR_MOOD_LIST_FULL_OF_COURAGE",
+			"value": "facilitator_mood_list_full_of_courage"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_CREATIVE",
+			"value": "facilitator_mood_list_creative"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_CARE_FOR_EACH_OTHER",
+			"value": "facilitator_mood_list_care_for_each_other"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_MUTUAL_SUPPORT",
+			"value": "facilitator_mood_list_mutual_support"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_FEEL_GOOD",
+			"value": "facilitator_mood_list_feel_good"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_ASPIRATIONAL",
+			"value": "facilitator_mood_list_aspirational"
 		}
 	]
 }

@@ -126,7 +126,6 @@ export class CampService {
 						'CAMP_VALIDATION_MESSAGE_LEARNER_ALREADY_ADDED_WITH_ANOTHER_PRERAK',
 				});
 			}
-
 			const count =
 				faciltator_camp_data?.data?.camps_aggregate?.aggregate?.count +
 				1;
@@ -151,6 +150,10 @@ export class CampService {
 				false,
 				[...this.returnFieldsgroups, 'id', 'name', 'type', 'status'],
 			);
+			let create_property_object = {
+				created_by: facilitator_id,
+				updated_by: facilitator_id,
+			};
 
 			let group_id = createresponse?.groups?.id;
 			if (group_id) {
@@ -394,6 +397,9 @@ export class CampService {
 			  kit_feedback
 			  kit_received
 			  kit_was_sufficient
+			  preferred_start_time
+			  preferred_end_time
+			  week_off
 			  group{
 				name
 				description
@@ -695,7 +701,6 @@ export class CampService {
 		let update_body = body;
 		let academic_year_id = body?.academic_year_id || 1;
 		let program_id = body?.program_id || 1;
-		let audit_logs_details;
 
 		let PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -746,6 +751,9 @@ export class CampService {
               kit_was_sufficient
 			  kit_ratings
 			  kit_feedback
+			  preferred_start_time
+			  preferred_end_time
+			  week_off
 			  properties {
 				lat
 				long
@@ -822,7 +830,63 @@ export class CampService {
 			}
 		}
 
-		switch (update_body.edit_page_type) {
+		switch (update_body?.edit_page_type) {
+			case 'edit_camp_settings': {
+				let camp_settings_body = {
+					...update_body,
+					updated_by: facilitator_id,
+				};
+
+				let settings_array = [
+					'preferred_start_time',
+					'preferred_end_time',
+					'week_off',
+				];
+
+				if (
+					update_body?.preferred_start_time >=
+					update_body?.preferred_end_time
+				) {
+					return {
+						status: 422,
+						message: 'Start time cannot be greater than End time',
+						data: {},
+					};
+				}
+				let old_settings_data = {
+					preferred_start_time: campData?.preferred_start_time,
+					preferred_end_time: campData?.preferred_end_time,
+					week_off: campData?.week_off,
+				};
+				let auditData = {
+					userId: request.mw_userid,
+					mw_userid: request.mw_userid,
+					user_type: 'Facilitator',
+					context: 'camp.update.settings',
+					context_id: camp_id,
+					subject: 'camp',
+					subject_id: camp_id,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp settings of camp ${camp_id}`,
+					oldData: old_settings_data,
+					newData: camp_settings_body,
+					tempArray: [
+						'preferred_start_time',
+						'preferred_end_time',
+						'week_off',
+					],
+					action: 'update',
+				};
+
+				await this.updateCampData(
+					camp_id,
+					camp_settings_body,
+					settings_array,
+					response,
+					auditData,
+				);
+
+				break;
+			}
 			case 'edit_camp_location': {
 				let bodyData = update_body;
 				let location_body = {
@@ -934,6 +998,16 @@ export class CampService {
 			}
 
 			case 'edit_photo_details': {
+				let profile_photo_1 = body?.property_photo_building;
+				let profile_photo_2 = body?.property_photo_classroom;
+				let profile_photo_3 = body?.property_photo_other;
+
+				if (!profile_photo_1 || !profile_photo_2 || !profile_photo_3) {
+					return response.status(400).json({
+						success: false,
+						message: 'profile_photo not provided',
+					});
+				}
 				const photo_details_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_photo_details
 						.properties;
@@ -1440,6 +1514,12 @@ export class CampService {
 						data: {},
 					};
 				}
+			}
+			default: {
+				return {
+					success: false,
+					message: 'please provide edit field',
+				};
 			}
 		}
 	}
