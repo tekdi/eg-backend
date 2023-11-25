@@ -701,17 +701,13 @@ export class CampService {
 		let profile_photo_1 = body.property_photo_building;
 		let profile_photo_2 = body.property_photo_classroom;
 		let profile_photo_3 = body.property_photo_other;
-		if (
-			profile_photo_1 == null ||
-			profile_photo_2 == null ||
-			profile_photo_3 == null
-		) {
+
+		if (!profile_photo_1 || !profile_photo_2 || !profile_photo_3) {
 			return response.status(400).json({
 				success: false,
 				message: 'profile_photo not provided',
 			});
 		}
-		let audit_logs_details;
 
 		let PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -838,7 +834,7 @@ export class CampService {
 			}
 		}
 
-		switch (update_body.edit_page_type) {
+		switch (update_body?.edit_page_type) {
 			case 'edit_camp_location': {
 				let bodyData = update_body;
 				let location_body = {
@@ -1456,6 +1452,12 @@ export class CampService {
 						data: {},
 					};
 				}
+			}
+			default: {
+				return {
+					success: false,
+					message: 'please provide edit field',
+				};
 			}
 		}
 	}
