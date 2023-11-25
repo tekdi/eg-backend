@@ -126,7 +126,6 @@ export class CampService {
 						'CAMP_VALIDATION_MESSAGE_LEARNER_ALREADY_ADDED_WITH_ANOTHER_PRERAK',
 				});
 			}
-
 			const count =
 				faciltator_camp_data?.data?.camps_aggregate?.aggregate?.count +
 				1;
@@ -151,6 +150,10 @@ export class CampService {
 				false,
 				[...this.returnFieldsgroups, 'id', 'name', 'type', 'status'],
 			);
+			let create_property_object = {
+				created_by: facilitator_id,
+				updated_by: facilitator_id,
+			};
 
 			let group_id = createresponse?.groups?.id;
 			if (group_id) {
@@ -695,6 +698,19 @@ export class CampService {
 		let update_body = body;
 		let academic_year_id = body?.academic_year_id || 1;
 		let program_id = body?.program_id || 1;
+		let profile_photo_1 = body.property_photo_building;
+		let profile_photo_2 = body.property_photo_classroom;
+		let profile_photo_3 = body.property_photo_other;
+		if (
+			profile_photo_1 == null ||
+			profile_photo_2 == null ||
+			profile_photo_3 == null
+		) {
+			return response.status(400).json({
+				success: false,
+				message: 'profile_photo not provided',
+			});
+		}
 		let audit_logs_details;
 
 		let PAGE_WISE_UPDATE_TABLE_DETAILS = {
