@@ -397,6 +397,9 @@ export class CampService {
 			  kit_feedback
 			  kit_received
 			  kit_was_sufficient
+			  preferred_start_time
+			  preferred_end_time
+			  week_off
 			  group{
 				name
 				description
