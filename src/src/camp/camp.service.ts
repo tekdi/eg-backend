@@ -758,6 +758,9 @@ export class CampService {
               kit_was_sufficient
 			  kit_ratings
 			  kit_feedback
+			  preferred_start_time
+			  preferred_end_time
+			  week_off
 			  properties {
 				lat
 				long
@@ -835,6 +838,62 @@ export class CampService {
 		}
 
 		switch (update_body?.edit_page_type) {
+			case 'edit_camp_settings': {
+				let camp_settings_body = {
+					...update_body,
+					updated_by: facilitator_id,
+				};
+
+				let settings_array = [
+					'preferred_start_time',
+					'preferred_end_time',
+					'week_off',
+				];
+
+				const startTime = new Date(campData?.preferred_start_time); // Replace this with your start_time ISO string
+				const endTime = new Date(campData?.preferred_end_time);
+
+				if (startTime >= endTime) {
+					return {
+						status: 422,
+						message: 'Start time cannot be greater than End time',
+						data: {},
+					};
+				}
+				let old_settings_data = {
+					preferred_start_time: campData?.preferred_start_time,
+					preferred_end_time: campData?.preferred_end_time,
+					week_off: campData?.week_off,
+				};
+				let auditData = {
+					userId: request.mw_userid,
+					mw_userid: request.mw_userid,
+					user_type: 'Facilitator',
+					context: 'camp.update.settings',
+					context_id: camp_id,
+					subject: 'camp',
+					subject_id: camp_id,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp settings of camp ${camp_id}`,
+					oldData: old_settings_data,
+					newData: camp_settings_body,
+					tempArray: [
+						'preferred_start_time',
+						'preferred_end_time',
+						'week_off',
+					],
+					action: 'update',
+				};
+
+				await this.updateCampData(
+					camp_id,
+					camp_settings_body,
+					settings_array,
+					response,
+					auditData,
+				);
+
+				break;
+			}
 			case 'edit_camp_location': {
 				let bodyData = update_body;
 				let location_body = {
