@@ -1023,5 +1023,63 @@
 			"title": "FACILITATOR_MOOD_LIST_ASPIRATIONAL",
 			"value": "facilitator_mood_list_aspirational"
 		}
+	],
+	"KIT_MATERIALS_CHECKLISTS": [
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_SATRA_YOJANA",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_SATRA_YOJANA_QUANTITY",
+			"value": "satra_yojana"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_MIND_MAPS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_MIND_MAPS_QUANTITY",
+			"value": "mind_maps"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_MOCK_TEST_QUESTION_PAPERS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_MOCK_TEST_QUESTION_PAPERS_QUANTITY",
+			"value": "mock_test_question_papers"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS_QUANTITY",
+			"value": "answer_keys"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER_QUANTITY",
+			"value": "ypp_cpp_posh_poster"
+			
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH_QUANTITY",
+			"value": "passbook_hindi_home_science_social_sciences_ich"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_ONE_WEEK_SERIES",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_ONE_WEEK_SERIES_QUANTITY",
+			"value": "one_week_series"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_BANNER_AND_POSTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_BANNER_AND_POSTER_QUANTITY",
+			"value": "banner_and_poster "
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_PRERAK_HAND_BOOK",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRERAK_HAND_BOOK_QUANTITY",
+			"value": "prerak_hand_book"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_TEXT_BOOKS_HINDI",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_TEXT_BOOKS_HINDI_QUANTITY",
+			"value": "text_books_hindi"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_GOVERNMENT_CONSENT_LETTER_FOR_CAMP",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_GOVERNMENT_CONSENT_LETTER_FOR_CAMP_QUANTITY",
+			"value": "government_consent_letter_for_camp"
+		}
 	]
 }
