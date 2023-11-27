@@ -1167,7 +1167,12 @@ export class CampService {
 					)
 					.map((item) => item.user_id);
 
-				if (deactivateIds.length > 0 && camp_status == 'registered') {
+				if (
+					deactivateIds.length > 0 &&
+					(camp_status == 'registered' ||
+						camp_status == 'camp_ip_verified' ||
+						camp_status == 'change_required')
+				) {
 					return {
 						status: 422,
 						message:
@@ -1330,7 +1335,13 @@ export class CampService {
 					);
 				}
 
-				if (learner_ids?.length > 0) {
+				if (
+					learner_ids?.length > 0 &&
+					(camp_status == 'registered' ||
+						camp_status == 'camp_ip_verified' ||
+						camp_status == 'change_required' ||
+						camp_status == 'inactive')
+				) {
 					let update_beneficiaries_array = [];
 					let status = 'enrolled_ip_verified';
 					body.program_id = program_id;
@@ -1478,6 +1489,57 @@ export class CampService {
 						true,
 						[...this.returnFieldsGroups, 'id', 'status'],
 					);
+
+					if (update_body?.status == 'registered') {
+						//get all the active learners in that camp
+						let query = `query MyQuery {
+							camps(where: {id: {_eq:${camp_id}}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
+							  id
+							  group_users(where: {status: {_eq: "active"}, member_type: {_eq: "member"}}){
+								user {
+									program_beneficiaries {
+									  id
+									}
+								  }
+							  }
+							}
+						  }
+						  `;
+
+						const res =
+							await this.hasuraServiceFromServices.getData({
+								query: query,
+							});
+
+						let group_users_array =
+							res?.data?.camps?.[0]?.group_users;
+
+						let allUserIds = [];
+						if (group_users_array?.length > 0) {
+							// Mapping over the "groupusers" array and pushing user_id values into allUserIds array
+							group_users_array.forEach((item) => {
+								const programBeneficiaries =
+									item.user.program_beneficiaries;
+								programBeneficiaries.forEach((beneficiary) => {
+									allUserIds.push(beneficiary.id);
+								});
+							});
+						}
+
+						if (allUserIds?.length > 0) {
+							await this.hasuraServiceFromServices.update(
+								null,
+								'program_beneficiaries',
+								{
+									status: 'registered_in_camp',
+									updated_by: facilitator_id,
+								},
+								[],
+								['id', 'user_id', 'status'],
+								{ where: `{id:{_in:[${allUserIds}]}}` },
+							);
+						}
+					}
 
 					let old_camp_status = {
 						status: campData?.group?.status,
@@ -2581,6 +2643,46 @@ export class CampService {
 			});
 		}
 		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		//validation to check beneficiary status and camp status
+
+		let validation_query = `query MyQuery {
+			camp_details:camps(where: {id: {_eq:${camp_id}}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
+			  id
+			  group {
+				status
+			  }
+			 
+			}
+			learner_details:program_beneficiaries(where:{user_id:{_eq:${body?.learner_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}){
+			  status
+			}
+		  }
+		  
+		  
+		  `;
+
+		const validation_hasura_response =
+			await this.hasuraServiceFromServices.getData({
+				query: validation_query,
+			});
+
+		let reassign_camp_status =
+			validation_hasura_response?.data?.camp_details?.[0]?.group?.status;
+		let reassign_learner_status =
+			validation_hasura_response?.data?.learner_details?.[0]?.status;
+
+		if (
+			reassign_camp_status == 'camp_initiated' ||
+			reassign_learner_status == 'enrolled_ip_verified'
+		) {
+			return resp.json({
+				status: 422,
+				success: false,
+				message: 'INVALID_REASSIGNMENT_REQUEST',
+				data: {},
+			});
+		}
 
 		//validation to check if camp already have the user to be assigned
 		let query = `query MyQuery {
