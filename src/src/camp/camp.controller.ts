@@ -272,4 +272,9 @@ export class CampController {
 			response,
 		);
 	}
+	@Get('/:id/get-camp-sessions')
+	@UseGuards(new AuthGuard())
+	getCampSession(@Req() req:any,@Param('id')id:number,@Res()res){
+		return this.campService.getCampSessions(req,id,res);
+	}
 }
