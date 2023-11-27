@@ -72,8 +72,8 @@ export class LMSService {
 		} else {
 			const user_id = req.mw_userid;
 			try {
-				let query = `query GetLms_test_tracking {
-				Lms_test_tracking(
+				let query = `query Getlms_test_tracking {
+				lms_test_tracking(
 				  where:{
 					user_id:{
 					  _eq: "${user_id}"
@@ -84,7 +84,7 @@ export class LMSService {
 				}
 			}`;
 				let data_list = await this.hasuraService.getData({ query });
-				if (data_list?.data?.Lms_test_tracking.length > 0) {
+				if (data_list?.data?.lms_test_tracking.length > 0) {
 					return response.status(200).send({
 						success: true,
 						message: 'Get Test Allow Status',
@@ -100,7 +100,7 @@ export class LMSService {
 			} catch (error) {
 				return response.status(404).send({
 					success: false,
-					message: 'Error in GetLms_test_tracking_allow_status!',
+					message: 'Error in Getlms_test_tracking_allow_status!',
 					error: error,
 				});
 			}
@@ -117,8 +117,8 @@ export class LMSService {
 		lmsTestTrackingDto.created_by = user_id;
 		const test_id = lmsTestTrackingDto?.test_id;
 
-		let query_user_test = `query GetLms_test_tracking {
-			Lms_test_tracking(
+		let query_user_test = `query Getlms_test_tracking {
+			lms_test_tracking(
 			  where:{
 				user_id:{
 				  _eq: "${user_id}"
@@ -134,7 +134,7 @@ export class LMSService {
 		let data_list = await this.hasuraService.getData({
 			query: query_user_test,
 		});
-		if (data_list?.data?.Lms_test_tracking.length > 0) {
+		if (data_list?.data?.lms_test_tracking.length > 0) {
 			return response.status(200).send({
 				success: false,
 				message: 'Not Allowed To Give Test. Test Data Already present.',
@@ -160,7 +160,7 @@ export class LMSService {
 		});
 
 		let query = `mutation CreateTestTracking {
-			  insert_Lms_test_tracking_one(object: {${queryObj}}) {
+			  insert_lms_test_tracking_one(object: {${queryObj}}) {
 			   id
 			  }
 			}
@@ -170,7 +170,7 @@ export class LMSService {
 			let query_response = await this.hasuraService.getData({
 				query: query,
 			});
-			if (query_response?.data?.insert_Lms_test_tracking_one) {
+			if (query_response?.data?.insert_lms_test_tracking_one) {
 				//create score detail
 				//called without await
 				this.createScoreDetails(
@@ -181,7 +181,7 @@ export class LMSService {
 				return response.status(200).send({
 					success: true,
 					message: 'CreateTestTracking created successfully!',
-					data: query_response.data.insert_Lms_test_tracking_one,
+					data: query_response.data.insert_lms_test_tracking_one,
 				});
 			} else {
 				return response.status(404).send({
@@ -205,7 +205,7 @@ export class LMSService {
 		user_id: any,
 	) {
 		try {
-			let testId = query_response.data.insert_Lms_test_tracking_one.id;
+			let testId = query_response.data.insert_lms_test_tracking_one.id;
 			let score_detail = lmsTestTrackingDto['score_details'];
 			let scoreObj = [];
 			for (let i = 0; i < score_detail.length; i++) {
@@ -231,8 +231,8 @@ export class LMSService {
 				}
 			}
 			let data_score_details = {
-				query: `mutation insert_multiple_Lms_score_details($objects: [Lms_score_details_insert_input!]!) {
-					  insert_Lms_score_details(objects: $objects) {
+				query: `mutation insert_multiple_lms_score_details($objects: [lms_score_details_insert_input!]!) {
+					  insert_lms_score_details(objects: $objects) {
 						returning {
 						  id
 						}
@@ -246,7 +246,7 @@ export class LMSService {
 			//insert multiple items
 			let query_score_response =
 				await this.hasuraService.queryWithVariable(data_score_details);
-			if (query_score_response?.data?.data?.insert_Lms_score_details) {
+			if (query_score_response?.data?.data?.insert_lms_score_details) {
 				//CreateScoreDetail success
 			} else {
 				//Error in CreateScoreDetail!
@@ -269,7 +269,7 @@ export class LMSService {
 	}
 
 	//get link will be like http://localhost:5000/lms/test/f7185760-bd82-47f2-9b56-6c9777ca0bd4
-	//here f7185760-bd82-47f2-9b56-6c9777ca0bd4 is id from table Lms_test_tracking
+	//here f7185760-bd82-47f2-9b56-6c9777ca0bd4 is id from table lms_test_tracking
 	public async getTestTracking(id: any, req, response) {
 		if (!req?.mw_userid) {
 			return response.status(400).send({
@@ -280,8 +280,8 @@ export class LMSService {
 		}
 
 		try {
-			let query = `query GetLms_test_tracking {
-				Lms_test_tracking(
+			let query = `query Getlms_test_tracking {
+				lms_test_tracking(
 				  where:{
 					id:{
 					  _eq: "${id}"
@@ -302,8 +302,8 @@ export class LMSService {
 				}
 			}`;
 			let data_list = await this.hasuraService.getData({ query });
-			if (data_list?.data?.Lms_test_tracking.length > 0) {
-				let response_data = data_list.data.Lms_test_tracking;
+			if (data_list?.data?.lms_test_tracking.length > 0) {
+				let response_data = data_list.data.lms_test_tracking;
 				//convert score text to json object
 				for (let i = 0; i < response_data.length; i++) {
 					response_data[i].score_details = response_data[
@@ -318,20 +318,20 @@ export class LMSService {
 				}
 				return response.status(200).send({
 					success: true,
-					message: 'GetLms_test_tracking Data Found!',
+					message: 'Getlms_test_tracking Data Found!',
 					data: response_data,
 				});
 			} else {
 				return response.status(200).send({
 					success: true,
-					message: 'GetLms_test_tracking Data Not Found!',
+					message: 'Getlms_test_tracking Data Not Found!',
 					data: {},
 				});
 			}
 		} catch (error) {
 			return response.status(404).send({
 				success: false,
-				message: 'Error in GetLms_test_tracking!',
+				message: 'Error in Getlms_test_tracking!',
 				error: error,
 			});
 		}
@@ -365,8 +365,8 @@ export class LMSService {
 			});
 		});
 		let query_test_search = {
-			query: `query SearchLms_test_tracking($filters:Lms_test_tracking_bool_exp,$limit:Int, $offset:Int) {
-			Lms_test_tracking(where:$filters, limit: $limit, offset: $offset,) {
+			query: `query Searchlms_test_tracking($filters:lms_test_tracking_bool_exp,$limit:Int, $offset:Int) {
+			lms_test_tracking(where:$filters, limit: $limit, offset: $offset,) {
 				id
 				user_id
 				test_id
@@ -391,8 +391,8 @@ export class LMSService {
 		let query_test_list = await this.hasuraService.queryWithVariable(
 			query_test_search,
 		);
-		if (query_test_list?.data?.data?.Lms_test_tracking.length > 0) {
-			let response_data = query_test_list.data.data.Lms_test_tracking;
+		if (query_test_list?.data?.data?.lms_test_tracking.length > 0) {
+			let response_data = query_test_list.data.data.lms_test_tracking;
 			//convert score text to json object
 			for (let i = 0; i < response_data.length; i++) {
 				response_data[i].score_details = response_data[
@@ -407,13 +407,13 @@ export class LMSService {
 			}
 			return response.status(200).send({
 				success: true,
-				message: 'GetLms_test_tracking Data Found!',
+				message: 'Getlms_test_tracking Data Found!',
 				data: response_data,
 			});
 		} else {
 			return response.status(200).send({
 				success: true,
-				message: 'GetLms_test_tracking Data Not Found!',
+				message: 'Getlms_test_tracking Data Not Found!',
 				data: {},
 			});
 		}
