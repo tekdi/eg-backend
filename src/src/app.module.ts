@@ -29,6 +29,7 @@ import { EditRequestModule } from './modules/edit-requests/edit-requests.module'
 import { ActivitiesModule } from './activities/activities.module';
 import { LMSModule } from './lms/lms.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { KitMaterialsModule } from './kit-materials/kit-materials.module';
 
 @Module({
 	imports: [
@@ -64,6 +65,7 @@ import { SessionsModule } from './sessions/sessions.module';
 		ActivitiesModule,
 		LMSModule,
 		SessionsModule,
+		KitMaterialsModule,
 	],
 	controllers: [],
 	providers: [],
