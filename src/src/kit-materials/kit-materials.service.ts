@@ -30,7 +30,7 @@ export class KitMaterialsService {
 	constructor(
 		private readonly hasuraService: HasuraService,
 		private KitMaterialsCoreService: KitMaterialsCoreService,
-		private hasuraServiceFromServices: HasuraServiceFromServices, 
+		private hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	public async create(body: any, request: any, resp: any) {
@@ -61,10 +61,11 @@ export class KitMaterialsService {
 				data: {},
 			});
 		} else {
+			const currentDate = moment().format('YYYY-MM-DD');
+			const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+			const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
 			let query = `query MyQuery {
-				kit_materials_checklist(where: {camp_id: {_eq: ${camp_id}}, 
-					date: {_eq: "${date}"
-							}}) {
+				kit_materials_checklist(where: {camp_id: {_eq: ${camp_id}},date: {_gte: "${startOfMonth}",_lte: "${endOfMonth}"}},order_by:{created_at:desc}) {
 					id
 					date
 					camp_id
@@ -75,21 +76,25 @@ export class KitMaterialsService {
 				query,
 			});
 
+			const kit = result?.data?.kit_materials_checklist?.[0];
+			
 			if (
-				result?.data?.date &&
+				kit?.date &&
 				moment().format('YYYY-MM') ===
-					moment(result?.data?.date).format('YYYY-MM')
+					moment(kit?.date).format('YYYY-MM')
 			) {
 				const data = {
 					query: `mutation MyMutation($list_of_materials: jsonb) {
-						update_kit_materials_checklist(_set:{list_of_materials:$list_of_materials}, where: {camp_id: {_eq: ${camp_id}}, date: {_eq: "${date}"}, user_id: {_eq: ${user_id}}}) {
+						update_kit_materials_checklist(_set:{list_of_materials:$list_of_materials}, where: {id:{_eq:${kit.id}}}) {
 							affected_rows
 							returning {
 								camp_id
-								date
 								id
+								date
+								created_at
 								list_of_materials
 								user_id
+								updated_at
 							}
 						}
 					}`,
@@ -97,20 +102,21 @@ export class KitMaterialsService {
 						list_of_materials,
 					},
 				};
-				
-				response = await this.hasuraServiceFromServices.getData(data);
-				
+
+				const result = await this.hasuraServiceFromServices.getData(data);
+				response = result?.data?.update_kit_materials_checklist?.returning?.[0]
+
 				return resp.status(200).json({
 					success: true,
 					message: 'Kit Updated successfully!',
-					data: response?.data,
+					data: response,
 				});
 			} else {
 				const data = {
 					query: `mutation MyMutation($list_of_materials: jsonb) {
 					insert_kit_materials_checklist(objects: {
 						camp_id: ${camp_id},
-						date: "${date}",
+						date: "${currentDate}",
 						list_of_materials:$list_of_materials,
 						user_id: ${user_id}
 					}) {
@@ -130,7 +136,8 @@ export class KitMaterialsService {
 					},
 				};
 
-				response = await this.hasuraServiceFromServices.getData(data);
+				const result = await this.hasuraServiceFromServices.getData(data);
+				response = result?.data?.insert_kit_materials_checklist?.returning?.[0]
 			}
 
 			return resp.status(200).json({
@@ -143,17 +150,13 @@ export class KitMaterialsService {
 
 	public async List(body: any, req: any, resp: any) {
 		try {
-			
-			let kit_data = await this.KitMaterialsCoreService.list(
-				body,
-			);
+			let kit_data = await this.KitMaterialsCoreService.list(body);
 
 			if (kit_data) {
 				return resp.status(200).json({
 					success: true,
 					message: 'Data found successfully!',
 					data: kit_data,
-					
 				});
 			} else {
 				return resp.status(400).json({
