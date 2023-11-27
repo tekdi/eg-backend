@@ -1,0 +1,274 @@
+import { Injectable } from '@nestjs/common';
+import { UserService } from 'src/user/user.service';
+import { HasuraService } from '../hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+
+@Injectable()
+export class SessionsService {
+	constructor(
+		private userService: UserService,
+		private hasuraService: HasuraService,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
+	) {}
+
+	async createSession(body: any, request: any, response: any) {
+		//validation to check if the data is already present in the
+		let validation_query = `query MyQuery {
+            learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq:${body?.learning_lesson_plan_id}}, camp_id: {_eq:${body?.camp_id}}}){
+                learning_lesson_plan_id
+                camp_id
+            }
+          }
+          `;
+
+		const res = await this.hasuraServiceFromServices.getData({
+			query: validation_query,
+		});
+
+		const learning_session_data = res?.data?.learning_sessions_tracker;
+
+		if (learning_session_data.length > 0) {
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Successfully retrieved learning session',
+				data: {
+					learning_lesson_plan_id:
+						learning_session_data?.[0]?.learning_lesson_plan_id,
+					camp_id: learning_session_data?.[0]?.camp_id,
+				},
+			});
+		}
+
+		let createSessionResponse = await this.hasuraService.q(
+			'learning_sessions_tracker',
+			{
+				...body,
+				created_by: request?.mw_userid,
+				updated_by: request?.mw_userid,
+				status: 'incomplete',
+			},
+			[],
+			false,
+			['id', 'learning_lesson_plan_id', 'camp_id'],
+		);
+
+		if (createSessionResponse?.learning_sessions_tracker?.id) {
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Successfully create learning session',
+				data: {
+					learning_lesson_plan_id:
+						createSessionResponse?.learning_sessions_tracker
+							?.learning_lesson_plan_id,
+					camp_id:
+						createSessionResponse?.learning_sessions_tracker
+							?.camp_id,
+				},
+			});
+		}
+	}
+
+	async updateSession(id: any, body: any, request: any, response: any) {
+		switch (body?.edit_session_type) {
+			case 'edit_incomplete_session': {
+				if (
+					body?.session_feedback == '' ||
+					!body?.session_feedback ||
+					body?.session_feedback != 'incomplete'
+				) {
+					return response.json({
+						status: 400,
+						message: 'Please enter a valid request',
+						success: false,
+						data: {},
+					});
+				}
+
+				let update_body = {
+					...body,
+					updated_by: request?.mw_userid,
+					updated_at: new Date().toISOString(),
+				};
+
+				let update_response = await this.hasuraService.q(
+					'learning_sessions_tracker',
+					{
+						...update_body,
+						id: id,
+					},
+					[
+						'status',
+						'lesson_plan_incomplete_feedback',
+						'updated_by',
+						'updated_at',
+					],
+					true,
+					[
+						'id',
+						'status',
+						'lesson_plan_incomplete_feedback',
+						'updated_at',
+					],
+				);
+
+				if (update_response?.learning_sessions_tracker?.id) {
+					return response.json({
+						status: 200,
+						message: 'Successfully updated data',
+						success: true,
+						data: {
+							learning_lesson_plan_id:
+								update_response?.learning_sessions_tracker
+									?.learning_lesson_plan_id,
+							camp_id:
+								update_response?.learning_sessions_tracker
+									?.camp_id,
+						},
+					});
+				}
+			}
+			case 'edit_complete_session': {
+				if (
+					body?.session_feedback == '' ||
+					!body?.session_feedback ||
+					body?.session_feedback != 'complete'
+				) {
+					return response.json({
+						status: 400,
+						message: 'Please enter a valid request',
+						success: false,
+						data: {},
+					});
+				}
+
+				let update_body = {
+					...body,
+					updated_by: request?.mw_userid,
+					updated_at: new Date().toISOString(),
+					status: 'complete',
+				};
+				let update_response = await this.hasuraService.q(
+					'learning_sessions_tracker',
+					{
+						...update_body,
+						id: id,
+					},
+					[
+						'status',
+						'lesson_plan_complete_feedback',
+						'updated_by',
+						'updated_at',
+					],
+					true,
+					[
+						'id',
+						'status',
+						'lesson_plan_complete_feedback',
+						'updated_at',
+					],
+				);
+
+				if (update_response?.learning_sessions_tracker?.id) {
+					return response.json({
+						status: 200,
+						message: 'Successfully updated data',
+						success: true,
+						data: {
+							learning_lesson_plan_id:
+								update_response?.learning_sessions_tracker
+									?.learning_lesson_plan_id,
+							camp_id:
+								update_response?.learning_sessions_tracker
+									?.camp_id,
+						},
+					});
+				}
+			}
+		}
+	}
+
+	public async getSessionsListByCampId(id: any, request: any, response: any) {
+		let query = `query MyQuery {
+            learning_lesson_plans_master{
+              ordering
+              id
+              session_tracks(where:{camp_id:{_eq:${id}}}){
+                learning_lesson_plan_id
+                lesson_plan_complete_feedback
+                lesson_plan_incomplete_feedback
+                created_at
+                updated_at
+              }
+            }
+          }
+          
+          `;
+
+		const res = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		if (res?.data) {
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Successfully retrieved data',
+				data: res?.data,
+			});
+		} else {
+			return response.json({
+				status: 500,
+				success: false,
+				message: 'Error retrieving data',
+				data: [],
+			});
+		}
+	}
+
+	public async getSessionDetailsById(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let query = `query MyQuery {
+            learning_lesson_plans_master(where: {session_tracks: {camp_id: {_eq:${body?.camp_id}},learning_lesson_plan_id:{_eq:${id}}}}) {
+              ordering
+              id
+              session_tracks(where: {camp_id: {_eq:${body?.camp_id}}}) {
+                learning_lesson_plan_id
+                lesson_plan_complete_feedback
+                lesson_plan_incomplete_feedback
+                created_at
+                updated_at
+              }
+            }
+          }
+          
+          
+          
+          `;
+
+		const res = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		if (res?.data) {
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Successfully retrieved data',
+				data: res?.data,
+			});
+		} else {
+			return response.json({
+				status: 500,
+				success: false,
+				message: 'Error retrieving data',
+				data: [],
+			});
+		}
+	}
+}
