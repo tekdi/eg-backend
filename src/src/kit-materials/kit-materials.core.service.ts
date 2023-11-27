@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-
+const moment = require('moment');
 
 @Injectable()
 export class KitMaterialsCoreService {
@@ -13,34 +13,28 @@ export class KitMaterialsCoreService {
 
 
 
-public async list(body: any) {
+public async list(body: any,camp_id:any) {
   
+  
+  const currentDate = moment().format('YYYY-MM-DD');
+  const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+  const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
   let query = `query MyQuery {
-    kit_materials_checklist_aggregate {
-      aggregate {
-        count
-      }
-    }
-    kit_materials_checklist{
+    kit_materials_checklist(where: {camp_id: {_eq: ${camp_id}},date: {_gte: "${startOfMonth}",_lte: "${endOfMonth}"}},order_by:{created_at:desc}) {
       id
-      camp_id
-      user_id
-      list_of_materials
       date
-      created_at
-      updated_at
-    }
-  }
-  `;
-
-  const response = await this.hasuraServiceFromServices.getData({
-    query: query,
+      camp_id
+      list_of_materials
+      user_id
+    }}`;
+  const result = await this.hasuraServiceFromServices.getData({
+    query,
   });
 
 
-  const kit_data = response?.data?.kit_materials_checklist;
+  const kit = result?.data?.kit_materials_checklist?.[0];
 
-  return { kit_data };
+  return { kit };
 }
 
 }

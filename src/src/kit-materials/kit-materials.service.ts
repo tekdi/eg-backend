@@ -148,9 +148,9 @@ export class KitMaterialsService {
 		}
 	}
 
-	public async List(body: any, req: any, resp: any) {
+	public async List(body: any, req: any, resp: any,camp_id:any) {
 		try {
-			let kit_data = await this.KitMaterialsCoreService.list(body);
+			let kit_data = await this.KitMaterialsCoreService.list(body,camp_id);
 
 			if (kit_data) {
 				return resp.status(200).json({
