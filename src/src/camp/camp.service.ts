@@ -3254,6 +3254,107 @@ export class CampService {
 		}
 		return 0;
 	}
+
+	public async createCampDayActivity(body: any, req: any, res: any) {
+		let createresponse = await this.hasuraService.q(
+			'camp_days_activities_tracker',
+			{
+				...body,
+				created_by: req?.mw_userid,
+				updated_by: req?.mw_userid,
+				start_date: new Date().toISOString(),
+				end_date: new Date().toISOString(),
+			},
+			[],
+			false,
+			['id'],
+		);
+
+		if (createresponse?.camp_days_activities_tracker?.id) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: createresponse?.camp_days_activities_tracker?.id,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
+			});
+		}
+	}
+
+	public async update_camp_day_activity(
+		id: any,
+		body: any,
+		req: any,
+		res: any,
+	) {
+		let createresponse = await this.hasuraService.q(
+			'camp_days_activities_tracker',
+			{
+				...body,
+				id: id,
+			},
+			[
+				'mood',
+				'camp_day_happening',
+				'camp_day_not_happening_reason',
+				'start_date',
+				'end_date',
+				'updated_by',
+				'misc_activites',
+			],
+			true,
+			['id'],
+		);
+
+		if (createresponse?.camp_days_activities_tracker?.id) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: createresponse?.camp_days_activities_tracker?.id,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
+			});
+		}
+	}
+
+	public async getCampDayActivityById(
+		id: any,
+		body: any,
+		req: any,
+		res: any,
+	) {
+		let query = `query MyQuery {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:${body?.start_date}}}){
+			  id
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let result = hasura_response?.data;
+
+		if (result) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: result,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
 	async getCampSessions(req:any,id:number,res:any){
 		const result = await this.campcoreservice.getCampSessions(id);
 		if(result){
