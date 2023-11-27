@@ -7,7 +7,7 @@ import {
 	IsNumber,
 } from 'class-validator';
 
-export class LSMTestTrackingDto {
+export class LMSTestTrackingDto {
 	//generated fields
 	@Expose()
 	id: string;
@@ -28,7 +28,7 @@ export class LSMTestTrackingDto {
 	@Expose()
 	score_details: any;
 
-	constructor(partial: Partial<LSMTestTrackingDto>) {
+	constructor(partial: Partial<LMSTestTrackingDto>) {
 		Object.assign(this, partial);
 	}
 }

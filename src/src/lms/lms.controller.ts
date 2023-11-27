@@ -18,7 +18,7 @@ import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { SearchLMSDto } from './dto/search-lms.dto';
 import { LMSService } from './lms.service';
-import { LSMTestTrackingDto } from './dto/lms-test-tracking.dto';
+import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('lms')
@@ -38,7 +38,7 @@ export class LMSController {
 	@Post('/testTracking')
 	@UseGuards(new AuthGuard())
 	createTestTracking(
-		@Body() lmsTestTrackingDto: LSMTestTrackingDto,
+		@Body() lmsTestTrackingDto: LMSTestTrackingDto,
 		@Req() header: Request,
 		@Res() response: Response,
 	) {
@@ -61,9 +61,8 @@ export class LMSController {
 	@UseGuards(new AuthGuard())
 	public async searchTestTracking(
 		@Body() searchLMSDto: SearchLMSDto,
-		@Req() header: Request,
 		@Res() response: Response,
 	) {
-		return this.lmsService.searchTestTracking(searchLMSDto, header, response);
+		return this.lmsService.searchTestTracking(searchLMSDto, response);
 	}
 }

@@ -70,7 +70,7 @@ export class HasuraService {
 			let admin_secret = this.configService.get<string>(
 				'HASURA_ADMIN_SECRET',
 			);
-			var config_field_value = {
+			var config = {
 				method: 'post',
 				url: url,
 				headers: {
@@ -80,9 +80,9 @@ export class HasuraService {
 				data: query,
 			};
 
-			return await axios(config_field_value);
+			return await axios(config);
 		} catch (e) {
-			console.log('insert data error', e.message);
+			console.log('query data error', e.message);
 			return { error: e.message };
 		}
 	}

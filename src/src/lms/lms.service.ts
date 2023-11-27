@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { LSMTestTrackingDto } from './dto/lms-test-tracking.dto';
+import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { ConfigService } from '@nestjs/config';
 import { SearchLMSDto } from './dto/search-lms.dto';
 
@@ -62,17 +62,15 @@ export class LMSService {
 		private readonly userService: UserService,
 	) {}
 
-	public async getTestAllowStatus(header, response) {
-		const userDetail: any = await this.userService.ipUserInfo(header);
-		if (!userDetail?.data?.id) {
+	public async getTestAllowStatus(req, response) {
+		if (!req?.mw_userid) {
 			return response.status(400).send({
 				success: false,
 				message: 'Invalid User',
 				data: {},
 			});
 		} else {
-			let user_id = userDetail.data.id;
-
+			const user_id = req.mw_userid;
 			try {
 				let query = `query GetLms_test_tracking {
 				Lms_test_tracking(
@@ -100,11 +98,6 @@ export class LMSService {
 					});
 				}
 			} catch (error) {
-				console.log(
-					`GetLms_test_tracking_allow_status '. Error!\n`,
-					error,
-					error.stack,
-				);
 				return response.status(404).send({
 					success: false,
 					message: 'Error in GetLms_test_tracking_allow_status!',
@@ -115,20 +108,23 @@ export class LMSService {
 	}
 
 	public async createTestTracking(
-		lmsTestTrackingDto: LSMTestTrackingDto,
-		header,
+		lmsTestTrackingDto: LMSTestTrackingDto,
+		req,
 		response,
 	) {
-		const userDetail = await this.userService.ipUserInfo(header);
-		let user_id = userDetail.data.id;
+		const user_id = req.mw_userid;
 		lmsTestTrackingDto.user_id = user_id;
 		lmsTestTrackingDto.created_by = user_id;
+		const test_id = lmsTestTrackingDto?.test_id;
 
 		let query_user_test = `query GetLms_test_tracking {
 			Lms_test_tracking(
 			  where:{
 				user_id:{
 				  _eq: "${user_id}"
+				},
+				test_id:{
+				  _eq: "${test_id}"
 				}
 			  }
 			){
@@ -154,7 +150,6 @@ export class LMSService {
 						JSON.stringify(lmsTestTrackingDto[e]),
 					)}, `;
 				} else if (Array.isArray(lmsTestTrackingDto[e])) {
-					console.log('is array');
 					queryObj += `${e}: "${JSON.stringify(
 						lmsTestTrackingDto[e],
 					)}", `;
@@ -196,7 +191,6 @@ export class LMSService {
 				});
 			}
 		} catch (error) {
-			console.log(`CreateTestTracking '. Error!\n`, error.stack);
 			return response.status(404).send({
 				success: false,
 				message: 'Error in CreateTestTracking!',
@@ -206,7 +200,7 @@ export class LMSService {
 	}
 
 	public async createScoreDetails(
-		lmsTestTrackingDto: LSMTestTrackingDto,
+		lmsTestTrackingDto: LMSTestTrackingDto,
 		query_response: any,
 		user_id: any,
 	) {
@@ -276,9 +270,8 @@ export class LMSService {
 
 	//get link will be like http://localhost:5000/lms/test/f7185760-bd82-47f2-9b56-6c9777ca0bd4
 	//here f7185760-bd82-47f2-9b56-6c9777ca0bd4 is id from table Lms_test_tracking
-	public async getTestTracking(id: any, header, response) {
-		const userDetail: any = await this.userService.ipUserInfo(header);
-		if (!userDetail?.data?.id) {
+	public async getTestTracking(id: any, req, response) {
+		if (!req?.mw_userid) {
 			return response.status(400).send({
 				success: false,
 				message: 'Invalid User',
@@ -336,7 +329,6 @@ export class LMSService {
 				});
 			}
 		} catch (error) {
-			console.log(`GetLms_test_tracking '. Error!\n`, error, error.stack);
 			return response.status(404).send({
 				success: false,
 				message: 'Error in GetLms_test_tracking!',
@@ -355,11 +347,7 @@ export class LMSService {
 		},
 		"page": 0
 	}*/
-	public async searchTestTracking(
-		searchLMSDto: SearchLMSDto,
-		header,
-		response,
-	) {
+	public async searchTestTracking(searchLMSDto: SearchLMSDto, response) {
 		let offset = 0;
 		if (searchLMSDto.page > 1) {
 			offset = parseInt(searchLMSDto.limit) * (searchLMSDto.page - 1);
