@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { LSMTestDto } from './dto/lms-test.dto';
+import { LSMTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { ConfigService } from '@nestjs/config';
 import { SearchLMSDto } from './dto/search-lms.dto';
 
@@ -114,11 +114,15 @@ export class LMSService {
 		}
 	}
 
-	public async createTest(lmsTestDto: LSMTestDto, header, response) {
+	public async createTestTracking(
+		lmsTestTrackingDto: LSMTestTrackingDto,
+		header,
+		response,
+	) {
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
-		lmsTestDto.user_id = user_id;
-		lmsTestDto.created_by = user_id;
+		lmsTestTrackingDto.user_id = user_id;
+		lmsTestTrackingDto.created_by = user_id;
 
 		let query_user_test = `query GetLms_test_tracking {
 			Lms_test_tracking(
@@ -143,17 +147,19 @@ export class LMSService {
 		}
 
 		let queryObj = '';
-		Object.keys(lmsTestDto).forEach((e) => {
-			if (lmsTestDto[e] && lmsTestDto[e] != '') {
+		Object.keys(lmsTestTrackingDto).forEach((e) => {
+			if (lmsTestTrackingDto[e] && lmsTestTrackingDto[e] != '') {
 				if (e === 'score_details') {
 					queryObj += `${e}: ${JSON.stringify(
-						JSON.stringify(lmsTestDto[e]),
+						JSON.stringify(lmsTestTrackingDto[e]),
 					)}, `;
-				} else if (Array.isArray(lmsTestDto[e])) {
+				} else if (Array.isArray(lmsTestTrackingDto[e])) {
 					console.log('is array');
-					queryObj += `${e}: "${JSON.stringify(lmsTestDto[e])}", `;
+					queryObj += `${e}: "${JSON.stringify(
+						lmsTestTrackingDto[e],
+					)}", `;
 				} else {
-					queryObj += `${e}: "${lmsTestDto[e]}", `;
+					queryObj += `${e}: "${lmsTestTrackingDto[e]}", `;
 				}
 			}
 		});
@@ -170,65 +176,18 @@ export class LMSService {
 				query: query,
 			});
 			if (query_response?.data?.insert_Lms_test_tracking_one) {
-				let testId =
-					query_response.data.insert_Lms_test_tracking_one.id;
-				let score_detail = lmsTestDto['score_details'];
-				let scoreObj = [];
-				for (let i = 0; i < score_detail.length; i++) {
-					let section = score_detail[i];
-					let itemData = section?.data;
-					if (itemData) {
-						for (let j = 0; j < itemData.length; j++) {
-							let dataItem = itemData[j];
-							scoreObj.push({
-								user_id: user_id,
-								test_id: testId,
-								question_id: dataItem?.item?.id,
-								pass: dataItem?.pass,
-								section_id: dataItem?.item?.sectionId,
-								max_score: dataItem?.item?.maxscore,
-								score: dataItem?.score,
-								res_value: dataItem?.resvalues
-									? JSON.stringify(dataItem.resvalues)
-									: '',
-								duration: dataItem?.duration,
-							});
-						}
-					}
-				}
-				let data_score_details = {
-					query: `mutation insert_multiple_Lms_score_details($objects: [Lms_score_details_insert_input!]!) {
-					  insert_Lms_score_details(objects: $objects) {
-						returning {
-						  id
-						}
-					  }
-					}
-					`,
-					variables: {
-						objects: scoreObj,
-					},
-				};
-				//insert multiple items
-				let query_score_response =
-					await this.hasuraService.queryWithVariable(
-						data_score_details,
-					);
-				if (
-					query_score_response?.data?.data?.insert_Lms_score_details
-				) {
-					return response.status(200).send({
-						success: true,
-						message: 'CreateTestTracking created successfully!',
-						data: query_response.data.insert_Lms_test_tracking_one,
-					});
-				} else {
-					return response.status(404).send({
-						success: false,
-						message: 'Error in CreateScoreDetail!',
-						error: query_score_response.data,
-					});
-				}
+				//create score detail
+				//called without await
+				this.createScoreDetails(
+					lmsTestTrackingDto,
+					query_response,
+					user_id,
+				);
+				return response.status(200).send({
+					success: true,
+					message: 'CreateTestTracking created successfully!',
+					data: query_response.data.insert_Lms_test_tracking_one,
+				});
 			} else {
 				return response.status(404).send({
 					success: false,
@@ -246,7 +205,78 @@ export class LMSService {
 		}
 	}
 
-	public async getTest(id: any, header, response) {
+	public async createScoreDetails(
+		lmsTestTrackingDto: LSMTestTrackingDto,
+		query_response: any,
+		user_id: any,
+	) {
+		try {
+			let testId = query_response.data.insert_Lms_test_tracking_one.id;
+			let score_detail = lmsTestTrackingDto['score_details'];
+			let scoreObj = [];
+			for (let i = 0; i < score_detail.length; i++) {
+				let section = score_detail[i];
+				let itemData = section?.data;
+				if (itemData) {
+					for (let j = 0; j < itemData.length; j++) {
+						let dataItem = itemData[j];
+						scoreObj.push({
+							user_id: user_id,
+							test_id: testId,
+							question_id: dataItem?.item?.id,
+							pass: dataItem?.pass,
+							section_id: dataItem?.item?.sectionId,
+							max_score: dataItem?.item?.maxscore,
+							score: dataItem?.score,
+							res_value: dataItem?.resvalues
+								? JSON.stringify(dataItem.resvalues)
+								: '',
+							duration: dataItem?.duration,
+						});
+					}
+				}
+			}
+			let data_score_details = {
+				query: `mutation insert_multiple_Lms_score_details($objects: [Lms_score_details_insert_input!]!) {
+					  insert_Lms_score_details(objects: $objects) {
+						returning {
+						  id
+						}
+					  }
+					}
+					`,
+				variables: {
+					objects: scoreObj,
+				},
+			};
+			//insert multiple items
+			let query_score_response =
+				await this.hasuraService.queryWithVariable(data_score_details);
+			if (query_score_response?.data?.data?.insert_Lms_score_details) {
+				//CreateScoreDetail success
+			} else {
+				//Error in CreateScoreDetail!
+				//call again
+				this.createScoreDetails(
+					lmsTestTrackingDto,
+					query_response,
+					user_id,
+				);
+			}
+		} catch (e) {
+			//Error in CreateScoreDetail!
+			//call again
+			this.createScoreDetails(
+				lmsTestTrackingDto,
+				query_response,
+				user_id,
+			);
+		}
+	}
+
+	//get link will be like http://localhost:5000/lms/test/f7185760-bd82-47f2-9b56-6c9777ca0bd4
+	//here f7185760-bd82-47f2-9b56-6c9777ca0bd4 is id from table Lms_test_tracking
+	public async getTestTracking(id: any, header, response) {
 		const userDetail: any = await this.userService.ipUserInfo(header);
 		if (!userDetail?.data?.id) {
 			return response.status(400).send({
@@ -315,8 +345,21 @@ export class LMSService {
 		}
 	}
 
-	//search with filter
-	public async searchTest(searchLMSDto: SearchLMSDto, header, response) {
+	//search link will be like http://localhost:5000/lms/test/search with filter
+	/*{
+		"limit": "10",
+		"filters": {
+			"user_id": {
+				"_eq": "795"
+			}
+		},
+		"page": 0
+	}*/
+	public async searchTestTracking(
+		searchLMSDto: SearchLMSDto,
+		header,
+		response,
+	) {
 		let offset = 0;
 		if (searchLMSDto.page > 1) {
 			offset = parseInt(searchLMSDto.limit) * (searchLMSDto.page - 1);
@@ -333,7 +376,7 @@ export class LMSService {
 				}
 			});
 		});
-		var query_test_search = {
+		let query_test_search = {
 			query: `query SearchLms_test_tracking($filters:Lms_test_tracking_bool_exp,$limit:Int, $offset:Int) {
 			Lms_test_tracking(where:$filters, limit: $limit, offset: $offset,) {
 				id
@@ -356,7 +399,7 @@ export class LMSService {
 			},
 		};
 
-		//insert multiple items
+		//search multiple items
 		let query_test_list = await this.hasuraService.queryWithVariable(
 			query_test_search,
 		);

@@ -18,7 +18,7 @@ import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { SearchLMSDto } from './dto/search-lms.dto';
 import { LMSService } from './lms.service';
-import { LSMTestDto } from './dto/lms-test.dto';
+import { LSMTestTrackingDto } from './dto/lms-test-tracking.dto';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('lms')
@@ -28,42 +28,42 @@ export class LMSController {
 	//test CRUD
 
 	//user test allow
-	@Get('/test')
+	@Get('/testTracking')
 	@UseGuards(new AuthGuard())
 	getTestAllowStatus(@Req() header: Request, @Res() response: Response) {
 		return this.lmsService.getTestAllowStatus(header, response);
 	}
 
 	//create test tracking
-	@Post('/test')
+	@Post('/testTracking')
 	@UseGuards(new AuthGuard())
-	createTest(
-		@Body() lmsTestDto: LSMTestDto,
+	createTestTracking(
+		@Body() lmsTestTrackingDto: LSMTestTrackingDto,
 		@Req() header: Request,
 		@Res() response: Response,
 	) {
-		return this.lmsService.createTest(lmsTestDto, header, response);
+		return this.lmsService.createTestTracking(lmsTestTrackingDto, header, response);
 	}
 
 	//get test tracking
-	@Get('/test/:id')
+	@Get('/testTracking/:id')
 	@UseGuards(new AuthGuard())
-	getTest(
+	getTestTracking(
 		@Param('id') id: string,
 		@Req() header: Request,
 		@Res() response: Response,
 	) {
-		return this.lmsService.getTest(id, header, response);
+		return this.lmsService.getTestTracking(id, header, response);
 	}
 
 	//search test tracking
-	@Post('/test/search')
+	@Post('/testTracking/search')
 	@UseGuards(new AuthGuard())
-	public async searchCohort(
+	public async searchTestTracking(
 		@Body() searchLMSDto: SearchLMSDto,
 		@Req() header: Request,
 		@Res() response: Response,
 	) {
-		return this.lmsService.searchTest(searchLMSDto, header, response);
+		return this.lmsService.searchTestTracking(searchLMSDto, header, response);
 	}
 }
