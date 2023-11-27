@@ -356,4 +356,28 @@ export class CampCoreService {
 
 		return response;
 	}
+	public async getCampSessions(id){
+		let data = {
+			query:`query MyQuery {
+				learning_lesson_plans_master(order_by:{ordering:asc}) {
+				  ordering
+				  id
+				  session_tracks(where:{camp_id:{_eq:${id}}}) {
+					id
+					status
+					camp_id
+					learning_lesson_plan_id
+					created_by
+					updated_by
+					created_at
+					updated_at
+					lesson_plan_complete_feedback
+					lesson_plan_incomplete_feedback
+				  }
+				}
+			}`
+		}
+		const result = await this.hasuraServiceFromServices.getData(data);
+		return result;
+	}
 }

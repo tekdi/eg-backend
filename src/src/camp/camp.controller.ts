@@ -272,4 +272,50 @@ export class CampController {
 			response,
 		);
 	}
+
+	@Post('/add/campdayactivity')
+	@UseGuards(new AuthGuard())
+	createCampDayActivity(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.createCampDayActivity(body, request, response);
+	}
+
+	@Patch('/camp-day-activity/:id')
+	@UseGuards(new AuthGuard())
+	update_camp_day_activity(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.update_camp_day_activity(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Get('/camp-day-activity/:id')
+	@UseGuards(new AuthGuard())
+	getCampDayActivityById(
+		@Param('id') id: number,
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getCampDayActivityById(
+			id,
+			body,
+			request,
+			response,
+		);
+	@Get('/:id/get-camp-sessions')
+	@UseGuards(new AuthGuard())
+	getCampSession(@Req() req:any,@Param('id')id:number,@Res()res){
+		return this.campService.getCampSessions(req,id,res);
+	}
 }
