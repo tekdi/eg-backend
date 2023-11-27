@@ -28,6 +28,7 @@ import { PcrscoresModule } from './pcrscores/pcrscores.module';
 import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { LMSModule } from './lms/lms.module';
+import { KitMaterialsModule } from './kit-materials/kit-materials.module';
 
 @Module({
 	imports: [
@@ -62,6 +63,7 @@ import { LMSModule } from './lms/lms.module';
 		EditRequestModule,
 		ActivitiesModule,
 		LMSModule,
+		KitMaterialsModule
 	],
 	controllers: [],
 	providers: [],
