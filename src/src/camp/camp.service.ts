@@ -2342,7 +2342,7 @@ export class CampService {
 			...body,
 			context: 'camp_days_activities_tracker',
 		};
-		
+
 		const response = await this.attendancesService.createAttendance(
 			camp_attendance_body,
 			req,
@@ -3508,12 +3508,13 @@ export class CampService {
 		});
 
 		let result = hasura_response?.data;
+		console.log(result);
 
 		if (result) {
 			return res.json({
 				status: 200,
 				success: true,
-				data: result,
+				data: result?.camp_days_activities_tracker?.[0],
 			});
 		} else {
 			return res.json({
