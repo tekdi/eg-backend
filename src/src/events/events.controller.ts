@@ -19,7 +19,6 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { AcceptEventDto } from './dto/accept-event.dto';
 import { CreateEventDto } from './dto/create-event.dto';
 import { EventsService } from './events.service';
-
 @UseInterceptors(SentryInterceptor)
 @Controller('events')
 export class EventsController {
@@ -38,11 +37,8 @@ export class EventsController {
 
 	@Get('/list')
 	@UseGuards(new AuthGuard())
-	getEventsList(
-		@Req() header: Request,
-		@Res() response: Response,
-	) {
-		return this.eventsService.getEventsList( header, response);
+	getEventsList(@Req() header: Request, @Res() response: Response) {
+		return this.eventsService.getEventsList(header, response);
 	}
 
 	@Post()
@@ -77,7 +73,7 @@ export class EventsController {
 	) {
 		return this.eventsService.updateEventAcceptDetail(
 			+id,
-			{rsvp:request.rsvp},
+			{ rsvp: request.rsvp },
 			response,
 		);
 	}
@@ -98,7 +94,16 @@ export class EventsController {
 
 	@Delete(':id')
 	@UseGuards(new AuthGuard())
-	remove(@Param('id') id: string,@Req() header: Request,@Res() response: Response) {
-		return this.eventsService.remove(+id,header,response);
+	remove(
+		@Param('id') id: string,
+		@Req() header: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.remove(+id, header, response);
+	}
+	@Get('/:id/get-participants')
+	@UseGuards(new AuthGuard())
+	getParticipants(@Req() req: any, @Param('id') id: any, @Res() res: any) {
+		return this.eventsService.getParticipants(req, id, res);
 	}
 }
