@@ -1123,5 +1123,37 @@
 			"subTitle": "KIT_MATERIALS_CHECKLISTS_GOVERNMENT_CONSENT_LETTER_FOR_CAMP_QUANTITY",
 			"value": "government_consent_letter_for_camp"
 		}
+	],
+	"SESSION_PARTIALLY_COMPLETE": [
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_COMPLEXITY_OF_CONCEPTS",
+			"value": "session_partially_complete_complexity_of_concepts"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_TIME_ALLOCATION",
+			"value": "session_partially_complete_time_allocation"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_LEARNING_ACTIVITIES",
+			"value": "session_partially_complete_learning_activites"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_OTHER",
+			"value": "session_partially_complete_other"
+		}
+	],
+	"SESSION_COMPLETED": [
+		{
+			"title": "SESSION_COMPLETED_THE_SESSION_COULD_NOT_BE_IMPLEMENTED_PROPERLY_DUE_TO_LACK_OF_UNDERSTANDING",
+			"value": "session_completed_the session_could_not_be_implemented_properly_due_to_lack_of_understanding"
+		},
+		{
+			"title": "SESSION_COMPLETED_MORE_WORK_NEEDED_TO_IMPLEMENT_THE_SESSION_WELL",
+			"value": "session_completed_more_work_needed_to_implement_the_session_well"
+		},
+		{
+			"title": "SESSION_COMPLETED_SESSION_SUCCESSFULLY_IMPLEMENTED",
+			"value": "session_completed_session_successfully_implemented"
+		}
 	]
 }

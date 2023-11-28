@@ -12,7 +12,7 @@ import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.s
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
-
+const moment = require('moment');
 @Injectable()
 export class CampService {
 	constructor(
@@ -2340,9 +2340,9 @@ export class CampService {
 	async markCampAttendance(body: any, req: any, resp: any) {
 		const camp_attendance_body = {
 			...body,
-			context: 'camps',
+			context: 'camp_days_activities_tracker',
 		};
-
+		
 		const response = await this.attendancesService.createAttendance(
 			camp_attendance_body,
 			req,
@@ -3256,24 +3256,46 @@ export class CampService {
 	}
 
 	public async createCampDayActivity(body: any, req: any, res: any) {
-		let createresponse = await this.hasuraService.q(
-			'camp_days_activities_tracker',
-			{
-				...body,
-				created_by: req?.mw_userid,
-				updated_by: req?.mw_userid,
-				start_date: new Date().toISOString(),
-			},
-			[],
-			false,
-			['id'],
-		);
+		let created_by = req?.mw_userid;
+		let updated_by = req?.mw_userid;
+		let camp_id = body.camp_id;
+		let camp_day_happening = body.camp_day_happening;
+		let camp_day_not_happening_reason = body.camp_day_not_happening_reason;
+		let misc_activities = body.misc_activities;
 
-		if (createresponse?.camp_days_activities_tracker?.id) {
+		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+
+		const data = {
+			query: `mutation MyQuery($misc_activities: json) {
+			insert_camp_days_activities_tracker_one(object: {camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", misc_activities: $misc_activities, created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}) {
+				id
+				camp_id
+				updated_at
+				created_by
+				updated_by
+				camp_day_happening
+				camp_day_not_happening_reason
+				misc_activities
+				mood
+				start_date
+				end_date
+
+			}
+		}`,
+			variables: {
+				misc_activities,
+			},
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+
+		let createresponse = result?.data;
+
+		if (createresponse) {
 			return res.json({
 				status: 200,
 				success: true,
-				data: createresponse?.camp_days_activities_tracker?.id,
+				data: createresponse,
 			});
 		} else {
 			return res.json({
@@ -3290,43 +3312,120 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
-		let update_body = {
-			...body,
-			updated_by: req?.mw_userid,
-			updated_date: new Date().toISOString(),
-		};
-		let createresponse = await this.hasuraService.q(
-			'camp_days_activities_tracker',
-			{
-				...update_body,
-				id: id,
-			},
-			[
-				'mood',
-				'camp_day_happening',
-				'camp_day_not_happening_reason',
-				'start_date',
-				'end_date',
-				'updated_by',
-				'updated_date',
-				'misc_activites',
-			],
-			true,
-			['id'],
-		);
+		let misc_activities = body.misc_activities;
+		switch (body?.edit_page_type) {
+			case 'edit_mood': {
+				const data = {
+					query: `mutation MyQuery {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {mood:${body?.mood}}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
 
-		if (createresponse?.camp_days_activities_tracker?.id) {
-			return res.json({
-				status: 200,
-				success: true,
-				data: createresponse?.camp_days_activities_tracker?.id,
-			});
-		} else {
-			return res.json({
-				status: 500,
-				success: false,
-				data: {},
-			});
+																		}
+					}
+				}`,
+				};
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
+			case 'edit_misc_activities': {
+				const data = {
+					query: `mutation MyQuery($misc_activities: json) {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {misc_activities:$misc_activities}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
+
+																		}
+					}
+				}`,
+					variables: {
+						misc_activities,
+					},
+				};
+
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
+			case 'edit_end_date': {
+				const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+
+				const data = {
+					query: `mutation MyQuery {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}"}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
+
+																		}
+					}
+				}`,
+				};
+
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
 		}
 	}
 
@@ -3336,8 +3435,9 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
+		const dateString = body?.start_date.split('T')[0];
 		let query = `query MyQuery {
-			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:"${body?.start_date}"}}) {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:"${dateString}"},end_date:{_is_null:true}}) {
 			  id
 			  camp_id
 			  camp_day_happening
@@ -3348,11 +3448,10 @@ export class CampService {
 			  start_date
 			  end_date
 			  updated_by
-			  updated_date
+			  updated_at
 			  
 			}
-		  }
-		  
+		  }		  
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3375,7 +3474,7 @@ export class CampService {
 			});
 		}
 	}
-  
+
 	async getCampSessions(req: any, id: number, res: any) {
 		const result = await this.campcoreservice.getCampSessions(id);
 		if (result) {
@@ -3383,6 +3482,44 @@ export class CampService {
 				success: true,
 				message: 'Data found successfully',
 				data: result.data,
+			});
+		}
+	}
+
+	public async getPreviousCampAcitivityById(id, body, req, res) {
+		let query = `query MyQuery {
+			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq:${id}}, end_date: {_is_null: true}}, limit: 1) {
+			  id
+			  camp_id
+			  start_date
+			  end_date
+			  camp_day_happening
+			  camp_day_not_happening_reason
+			  misc_activities
+			  mood
+			  updated_at
+			  updated_by
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let result = hasura_response?.data;
+
+		if (result) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: result,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
 			});
 		}
 	}
