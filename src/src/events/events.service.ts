@@ -136,38 +136,35 @@ export class EventsService {
 		}
 	}
 
-	public async getEventsList( header, response) {
-		const userDetail:any = await this.userService.ipUserInfo(header);		
-		if(!userDetail?.data?.id){
+	public async getEventsList(header, response) {
+		const userDetail: any = await this.userService.ipUserInfo(header);
+		if (!userDetail?.data?.id) {
 			return response.status(400).send({
 				success: false,
 				message: 'Invalid User',
 				data: {},
 			});
 		}
-		const data={
-			query:`query MyQuery {
+		const data = {
+			query: `query MyQuery {
 				users(where: {program_users: {organisation_id: {_eq: "${userDetail?.data?.program_users[0]?.organisation_id}"}}}){
 				  id
 				}
-			  }`
-		}
+			  }`,
+		};
 		const getIps = await this.hasuraServiceFromServices.getData(data);
 
-		if(!getIps?.data?.users){
+		if (!getIps?.data?.users) {
 			return response.status(500).send({
 				success: false,
-				message: 'Hasura Error!'
-				
+				message: 'Hasura Error!',
 			});
 		}
-		
+
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
-		events(where: {created_by: {_in: ${JSON.stringify(
-			allIpList,
-		)}}}) {
+		events(where: {created_by: {_in: ${JSON.stringify(allIpList)}}}) {
 		  id
 		  location
 		  location_type
@@ -524,8 +521,11 @@ export class EventsService {
 				}
 			  }`,
 			};
-			const eventcreatedUserResponse = await this.hasuraServiceFromServices.getData(EventUserdata);
-			const eventUserOrganizationId =eventcreatedUserResponse?.data?.users_by_pk?.program_users[0]?.organisation_id;
+			const eventcreatedUserResponse =
+				await this.hasuraServiceFromServices.getData(EventUserdata);
+			const eventUserOrganizationId =
+				eventcreatedUserResponse?.data?.users_by_pk?.program_users[0]
+					?.organisation_id;
 			//if logged user and event created user organization id is same then only perform delete operation
 			if (organizationId == eventUserOrganizationId) {
 				const deletePromise = [];
@@ -566,5 +566,29 @@ export class EventsService {
 				data: {},
 			});
 		}
+	}
+	async getParticipants(req, id, res) {
+		const data = {
+			query: `query searchById {
+				events(where:{attendances:{user_id:{_eq:${id}},context:{_eq:"events"}}}) {
+				  id
+				  type
+				  user_id
+				  start_date
+				  start_time
+				  end_date
+				  end_time
+				}
+			  }
+			  `,
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+
+		return res.status(200).send({
+			success: true,
+			message: 'Data found Successfully',
+			data: result.data,
+		});
 	}
 }
