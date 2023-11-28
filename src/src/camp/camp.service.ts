@@ -3264,7 +3264,7 @@ export class CampService {
 		let misc_activities = body.misc_activities;
 
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
-		
+
 		const data = {
 			query: `mutation MyQuery($misc_activities: json) {
 			insert_camp_days_activities_tracker_one(object: {camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", misc_activities: $misc_activities, created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}) {
@@ -3337,13 +3337,12 @@ export class CampService {
 					}
 				}`,
 				};
-;
 				const result = await this.hasuraServiceFromServices.getData(
 					data,
 				);
-			
+
 				let createresponse = result?.data;
-				
+
 				return res.json({
 					status: 200,
 					success: true,
@@ -3380,16 +3379,16 @@ export class CampService {
 				const result = await this.hasuraServiceFromServices.getData(
 					data,
 				);
-				
+
 				let createresponse = result?.data;
-				
+
 				return res.json({
 					status: 200,
 					success: true,
 					data: createresponse,
 				});
 			}
-			case 'edit_end_date':{
+			case 'edit_end_date': {
 				const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
 				const data = {
@@ -3418,18 +3417,15 @@ export class CampService {
 				const result = await this.hasuraServiceFromServices.getData(
 					data,
 				);
-				
+
 				let createresponse = result?.data;
-				
+
 				return res.json({
 					status: 200,
 					success: true,
 					data: createresponse,
 				});
-
 			}
-
-			
 		}
 	}
 
@@ -3457,7 +3453,7 @@ export class CampService {
 			}
 		  }		  
 		  `;
-				
+
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
@@ -3486,6 +3482,44 @@ export class CampService {
 				success: true,
 				message: 'Data found successfully',
 				data: result.data,
+			});
+		}
+	}
+
+	public async getPreviousCampAcitivityById(id, body, req, res) {
+		let query = `query MyQuery {
+			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq:${id}}, end_date: {_is_null: true}}, limit: 1) {
+			  id
+			  camp_id
+			  start_date
+			  end_date
+			  camp_day_happening
+			  camp_day_not_happening_reason
+			  misc_activities
+			  mood
+			  updated_at
+			  updated_by
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let result = hasura_response?.data;
+
+		if (result) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: result,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
 			});
 		}
 	}
