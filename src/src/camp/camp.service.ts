@@ -3263,7 +3263,6 @@ export class CampService {
 				created_by: req?.mw_userid,
 				updated_by: req?.mw_userid,
 				start_date: new Date().toISOString(),
-				end_date: new Date().toISOString(),
 			},
 			[],
 			false,
@@ -3291,10 +3290,15 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
+		let update_body = {
+			...body,
+			updated_by: req?.mw_userid,
+			updated_date: new Date().toISOString(),
+		};
 		let createresponse = await this.hasuraService.q(
 			'camp_days_activities_tracker',
 			{
-				...body,
+				...update_body,
 				id: id,
 			},
 			[
@@ -3304,6 +3308,7 @@ export class CampService {
 				'start_date',
 				'end_date',
 				'updated_by',
+				'updated_date',
 				'misc_activites',
 			],
 			true,
@@ -3332,10 +3337,22 @@ export class CampService {
 		res: any,
 	) {
 		let query = `query MyQuery {
-			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:${body?.start_date}}}){
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:"${body?.start_date}"}}) {
 			  id
+			  camp_id
+			  camp_day_happening
+			  camp_day_not_happening_reason
+			  created_by
+			  misc_activities
+			  mood
+			  start_date
+			  end_date
+			  updated_by
+			  updated_date
+			  
 			}
 		  }
+		  
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3358,7 +3375,7 @@ export class CampService {
 			});
 		}
 	}
-
+  
 	async getCampSessions(req: any, id: number, res: any) {
 		const result = await this.campcoreservice.getCampSessions(id);
 		if (result) {

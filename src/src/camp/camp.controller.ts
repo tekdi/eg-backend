@@ -299,7 +299,7 @@ export class CampController {
 		);
 	}
 
-	@Get('/camp-day-activity/:id')
+	@Post('/camp-day-activity/:id')
 	@UseGuards(new AuthGuard())
 	getCampDayActivityById(
 		@Param('id') id: number,
