@@ -320,4 +320,20 @@ export class CampController {
 	getCampSession(@Req() req: any, @Param('id') id: number, @Res() res) {
 		return this.campService.getCampSessions(req, id, res);
 	}
+
+	@Post('/incomplete/camp-day-activity/:id')
+	@UseGuards(new AuthGuard())
+	getPreviousCampAcitivityById(
+		@Param('id') id: number,
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getPreviousCampAcitivityById(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }
