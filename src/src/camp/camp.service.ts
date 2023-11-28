@@ -3514,7 +3514,7 @@ export class CampService {
 			return res.json({
 				status: 200,
 				success: true,
-				data: result?.camp_days_activities_tracker?.[0],
+				data: result?.camp_days_activities_tracker?.[0] || {},
 			});
 		} else {
 			return res.json({
