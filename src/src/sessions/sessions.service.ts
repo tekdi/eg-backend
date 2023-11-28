@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+const moment = require('moment');
 
 @Injectable()
 export class SessionsService {
@@ -208,6 +209,7 @@ export class SessionsService {
 							academic_year_id
 							program_id
               session_tracks(where:{camp_id:{_eq:${id}}}){
+								id
                 learning_lesson_plan_id
                 lesson_plan_complete_feedback
                 lesson_plan_incomplete_feedback
@@ -244,48 +246,98 @@ export class SessionsService {
 		}
 	}
 
+	public async getDetailData(body) {
+		let whereArr = [];
+
+		if (body.learning_lesson_plan_id) {
+			whereArr = [
+				...whereArr,
+				`{session_tracks:{learning_lesson_plan_id:{_eq:${body?.learning_lesson_plan_id}}}}`,
+			];
+		}
+
+		if (body.ordering) {
+			whereArr = [...whereArr, `{ordering:{_eq:${body?.ordering}}}`];
+		}
+
+		let query = `query MyQuery {
+			learning_lesson_plans_master(where: { _and: [${whereArr.join(',')}] }) {
+				ordering
+				id
+				title
+				cms_lesson_id
+				academic_year_id
+				program_id
+				session_tracks(where: {camp_id: {_eq:${body?.camp_id}}}) {
+					id
+					learning_lesson_plan_id
+					lesson_plan_complete_feedback
+					lesson_plan_incomplete_feedback
+					created_at
+					updated_at
+					camp_id
+					status
+					created_by
+					updated_by
+				}
+			}
+		}`;
+
+		return await this.hasuraServiceFromServices.getData({ query });
+	}
+
 	public async getSessionDetailsById(
 		id: any,
 		body: any,
 		request: any,
 		response: any,
 	) {
-		let query = `query MyQuery {
-            learning_lesson_plans_master(where: {session_tracks: {camp_id: {_eq:${body?.camp_id}},learning_lesson_plan_id:{_eq:${id}}}}) {
-              ordering
-              id
-							title
-							cms_lesson_id
-							academic_year_id
-							program_id
-              session_tracks(where: {camp_id: {_eq:${body?.camp_id}}}) {
-                learning_lesson_plan_id
-                lesson_plan_complete_feedback
-                lesson_plan_incomplete_feedback
-                created_at
-                updated_at
-								camp_id
-								status
-								created_by
-								updated_by
-              }
-            }
-          }
-          
-          
-          
-          `;
-
-		const res = await this.hasuraServiceFromServices.getData({
-			query: query,
+		const result = await this.getDetailData({
+			...body,
+			learning_lesson_plan_id: id,
 		});
+		const currentData =
+			result?.data?.learning_lesson_plans_master?.[0] || {};
+		let data = [currentData];
 
-		if (res?.data) {
+		if (currentData?.ordering === 1) {
+			const resultN = await this.getDetailData({
+				...body,
+				ordering: 2,
+			});
+			const dataN = resultN.data?.learning_lesson_plans_master?.[0];
+			data = [...data, dataN];
+		} else if (currentData?.ordering > 1) {
+			const resultP = await this.getDetailData({
+				...body,
+				ordering: currentData?.ordering - 1,
+			});
+			const dataP = resultP.data?.learning_lesson_plans_master?.[0];
+			const sessionData = dataP?.session_tracks?.[0];
+			if (
+				(sessionData.status === 'complete' &&
+					sessionData.updated_at &&
+					moment(sessionData.updated_at).format('YYYY-MM-DD') ===
+						moment().format('YYYY-MM-DD')) ||
+				sessionData.status === 'incomplete'
+			) {
+				data = [dataP, ...data];
+			} else {
+				const resultP = await this.getDetailData({
+					...body,
+					ordering: currentData?.ordering + 1,
+				});
+				const dataP = resultP.data?.learning_lesson_plans_master?.[0];
+				data = [...data, dataP];
+			}
+		}
+
+		if (result?.data) {
 			return response.json({
 				status: 200,
 				success: true,
 				message: 'Successfully retrieved data',
-				data: res?.data,
+				data: data,
 			});
 		} else {
 			return response.json({
