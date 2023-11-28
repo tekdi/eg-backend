@@ -71,13 +71,10 @@ export class SessionsService {
 	}
 
 	async updateSession(id: any, body: any, request: any, response: any) {
+		console.log('here');
 		switch (body?.edit_session_type) {
 			case 'edit_incomplete_session': {
-				if (
-					body?.session_feedback == '' ||
-					!body?.session_feedback ||
-					body?.session_feedback != 'incomplete'
-				) {
+				if (body?.session_feedback == '' || !body?.session_feedback) {
 					return response.json({
 						status: 400,
 						message: 'Please enter a valid request',
@@ -90,6 +87,8 @@ export class SessionsService {
 					...body,
 					updated_by: request?.mw_userid,
 					updated_at: new Date().toISOString(),
+					lesson_plan_incomplete_feedback: body?.session_feedback,
+					status: 'incomplete',
 				};
 
 				let update_response = await this.hasuraService.q(
@@ -110,6 +109,8 @@ export class SessionsService {
 						'status',
 						'lesson_plan_incomplete_feedback',
 						'updated_at',
+						'camp_id',
+						'learning_lesson_plan_id',
 					],
 				);
 
@@ -128,64 +129,72 @@ export class SessionsService {
 						},
 					});
 				}
+
+				break;
 			}
-			case 'edit_complete_session': {
-				if (
-					body?.session_feedback == '' ||
-					!body?.session_feedback ||
-					body?.session_feedback != 'complete'
-				) {
-					return response.json({
-						status: 400,
-						message: 'Please enter a valid request',
-						success: false,
-						data: {},
-					});
-				}
+			case 'edit_complete_session':
+				{
+					if (
+						body?.session_feedback == '' ||
+						!body?.session_feedback
+					) {
+						return response.json({
+							status: 400,
+							message: 'Please enter a valid request',
+							success: false,
+							data: {},
+						});
+					}
 
-				let update_body = {
-					...body,
-					updated_by: request?.mw_userid,
-					updated_at: new Date().toISOString(),
-					status: 'complete',
-				};
-				let update_response = await this.hasuraService.q(
-					'learning_sessions_tracker',
-					{
-						...update_body,
-						id: id,
-					},
-					[
-						'status',
-						'lesson_plan_complete_feedback',
-						'updated_by',
-						'updated_at',
-					],
-					true,
-					[
-						'id',
-						'status',
-						'lesson_plan_complete_feedback',
-						'updated_at',
-					],
-				);
-
-				if (update_response?.learning_sessions_tracker?.id) {
-					return response.json({
-						status: 200,
-						message: 'Successfully updated data',
-						success: true,
-						data: {
-							learning_lesson_plan_id:
-								update_response?.learning_sessions_tracker
-									?.learning_lesson_plan_id,
-							camp_id:
-								update_response?.learning_sessions_tracker
-									?.camp_id,
+					let update_body = {
+						...body,
+						updated_by: request?.mw_userid,
+						updated_at: new Date().toISOString(),
+						lesson_plan_complete_feedback: body?.session_feedback,
+						status: 'complete',
+					};
+					let update_response = await this.hasuraService.q(
+						'learning_sessions_tracker',
+						{
+							...update_body,
+							id: id,
 						},
-					});
+						[
+							'status',
+							'lesson_plan_complete_feedback',
+							'updated_by',
+							'updated_at',
+						],
+						true,
+						[
+							'id',
+							'status',
+							'lesson_plan_complete_feedback',
+							'updated_at',
+							'camp_id',
+							'learning_lesson_plan_id',
+						],
+					);
+
+					if (update_response?.learning_sessions_tracker?.id) {
+						return response.json({
+							status: 200,
+							message: 'Successfully updated data',
+							success: true,
+							data: {
+								learning_lesson_plan_id:
+									update_response?.learning_sessions_tracker
+										?.learning_lesson_plan_id,
+								camp_id:
+									update_response?.learning_sessions_tracker
+										?.camp_id,
+							},
+						});
+					} else {
+					}
 				}
-			}
+
+				break;
 		}
 	}
 
