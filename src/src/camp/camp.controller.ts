@@ -299,7 +299,7 @@ export class CampController {
 		);
 	}
 
-	@Get('/camp-day-activity/:id')
+	@Post('/camp-day-activity/:id')
 	@UseGuards(new AuthGuard())
 	getCampDayActivityById(
 		@Param('id') id: number,
@@ -313,9 +313,11 @@ export class CampController {
 			request,
 			response,
 		);
+	}
+
 	@Get('/:id/get-camp-sessions')
 	@UseGuards(new AuthGuard())
-	getCampSession(@Req() req:any,@Param('id')id:number,@Res()res){
-		return this.campService.getCampSessions(req,id,res);
+	getCampSession(@Req() req: any, @Param('id') id: number, @Res() res) {
+		return this.campService.getCampSessions(req, id, res);
 	}
 }
