@@ -3441,7 +3441,7 @@ export class CampService {
 	) {
 		const dateString = body?.start_date.split('T')[0];
 		let query = `query MyQuery {
-			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:"${dateString}"}}) {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:"${dateString}"},end_date:{_is_null:true}}) {
 			  id
 			  camp_id
 			  camp_day_happening
@@ -3455,10 +3455,9 @@ export class CampService {
 			  updated_at
 			  
 			}
-		  }
-		  
+		  }		  
 		  `;
-		
+				
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
