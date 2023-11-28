@@ -194,12 +194,20 @@ export class SessionsService {
             learning_lesson_plans_master{
               ordering
               id
+							title
+							cms_lesson_id
+							academic_year_id
+							program_id
               session_tracks(where:{camp_id:{_eq:${id}}}){
                 learning_lesson_plan_id
                 lesson_plan_complete_feedback
                 lesson_plan_incomplete_feedback
                 created_at
                 updated_at
+								camp_id
+								status
+								created_by
+								updated_by
               }
             }
           }
@@ -237,12 +245,20 @@ export class SessionsService {
             learning_lesson_plans_master(where: {session_tracks: {camp_id: {_eq:${body?.camp_id}},learning_lesson_plan_id:{_eq:${id}}}}) {
               ordering
               id
+							title
+							cms_lesson_id
+							academic_year_id
+							program_id
               session_tracks(where: {camp_id: {_eq:${body?.camp_id}}}) {
                 learning_lesson_plan_id
                 lesson_plan_complete_feedback
                 lesson_plan_incomplete_feedback
                 created_at
                 updated_at
+								camp_id
+								status
+								created_by
+								updated_by
               }
             }
           }
