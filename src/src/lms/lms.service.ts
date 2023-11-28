@@ -5,6 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import { SearchLMSDto } from './dto/search-lms.dto';
 import { LMSCertificateDto } from './dto/lms-certificate.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { html_code } from './certificate_html';
+const moment = require('moment');
+const qr = require('qrcode');
+const { parse, HTMLElement } = require('node-html-parser');
 
 @Injectable()
 export class LMSService {
@@ -371,9 +375,9 @@ export class LMSService {
 	}
 
 	//cron issue certificate run every 5 minutes
-	@Cron(CronExpression.EVERY_30_SECONDS)
+	@Cron(CronExpression.EVERY_5_MINUTES)
 	async issueCertificate() {
-		console.log('hi cron');
+		console.log('cron job: issueCertificate started at time ' + new Date());
 		//fetch all test tracking data which has certificate_status null
 		const userForIssueCertificate = await this.fetchTestTrackingData(
 			parseInt(
@@ -382,7 +386,6 @@ export class LMSService {
 				),
 			),
 		);
-		console.log('userForIssueCertificate', userForIssueCertificate);
 		if (userForIssueCertificate.length > 0) {
 			for (let i = 0; i < userForIssueCertificate.length; i++) {
 				let userTestData = userForIssueCertificate[i];
@@ -392,15 +395,128 @@ export class LMSService {
 						'LMS_CERTIFICATE_ISSUE_MIN_SCORE',
 					),
 				);
+				let user_id = userTestData?.user_id;
+				let test_id = userTestData?.test_id;
 				let context = userTestData?.context;
 				let context_id = userTestData?.context_id;
+				let getUserList = await this.getUserName(user_id);
+				let user_name = '';
+				if (getUserList.length > 0) {
+					user_name =
+						getUserList[0]?.first_name +
+						' ' +
+						getUserList[0]?.last_name;
+				}
 				//get attendance status
 				let attendance_valid = false;
-
+				let usrAttendanceList = await this.getUserAttendanceList(
+					user_id,
+					context,
+					context_id,
+				);
+				let minAttendance = parseInt(
+					this.configService.get<string>(
+						'LMS_CERTIFICATE_ISSUE_MIN_ATTENDANCE',
+					),
+				);
+				if (usrAttendanceList.length >= minAttendance) {
+					attendance_valid = true;
+				}
+				//check certificate criteria
 				if (userTestData?.score >= minPercentage && attendance_valid) {
 					issue_status = 'true';
 				} else {
 					issue_status = 'false';
+				}
+				//issue certificate
+				if (issue_status == 'true') {
+					let temp_html_code = html_code;
+					let issuance_date = moment().format('YYYY-MM-DD');
+					let issuance_date_tx = moment().format('DD MMM YYYY');
+					let expiration_date = moment(issuance_date)
+						.add(12, 'M')
+						.format('YYYY-MM-DD');
+
+					//update html code
+					temp_html_code = temp_html_code.replace(
+						'{{name}}',
+						user_name,
+					);
+					temp_html_code = temp_html_code.replace(
+						'{{issue_date}}',
+						issuance_date_tx,
+					);
+					temp_html_code = temp_html_code.replace(
+						'{{user_id}}',
+						user_id,
+					);
+
+					//qr code
+					try {
+						let qr_code_verify_link =
+							this.configService.get<string>(
+								'LMS_CERTIFICATE_VERIFY_URL',
+							) +
+							'' +
+							user_id +
+							'/' +
+							test_id;
+
+						let modifiedHtml = null;
+						const modified = await new Promise(
+							(resolve, reject) => {
+								qr.toDataURL(
+									qr_code_verify_link,
+									function (err, code) {
+										if (err) {
+											resolve(null);
+											return;
+										}
+
+										if (code) {
+											const newHtml = code;
+
+											const root = parse(temp_html_code);
+
+											// Find the img tag with id "qrcode"
+											const qrcodeImg =
+												root.querySelector(
+													'#qr_certificate',
+												);
+
+											if (qrcodeImg) {
+												qrcodeImg.setAttribute(
+													'src',
+													newHtml,
+												);
+												modifiedHtml = root.toString();
+
+												resolve(modifiedHtml);
+											} else {
+												resolve(null);
+											}
+										} else {
+											resolve(null);
+										}
+									},
+								);
+							},
+						);
+						if (modifiedHtml != null) {
+							temp_html_code = modifiedHtml;
+						}
+					} catch (e) {
+						console.log(e);
+					}
+					const lmsCertificate = new LMSCertificateDto({
+						user_id: user_id,
+						test_id: test_id,
+						certificate_status: 'Issued',
+						issuance_date: issuance_date,
+						expiration_date: expiration_date,
+						certificate_html: temp_html_code,
+					});
+					await this.issueCertificateHtml(lmsCertificate);
 				}
 				// Update in attendance data in database
 				await this.markCertificateStatus(
@@ -418,7 +534,8 @@ export class LMSService {
 					certificate_status:{
 						_is_null: true
 					}
-				}
+				},
+				limit: ${limit}
 				){
 					id
 					user_id
@@ -440,12 +557,88 @@ export class LMSService {
 			return [];
 		}
 	}
+	async getUserAttendanceList(user_id, context, context_id) {
+		const query = `query MyQuery {
+				attendance(where: {user_id: {_eq: ${user_id}}, context: {_eq: ${context}}, context_id: {_eq:${context_id}}, status: {_eq: "present"}}) {
+					id
+					status
+					context
+					context_id
+				  }
+			  }`;
+		try {
+			const data_list = (await this.hasuraService.getData({ query }))
+				?.data?.attendance;
+			//console.log('data_list cunt------>>>>>', data_list.length);
+			//console.log('data_list------>>>>>', data_list);
+			return data_list;
+		} catch (error) {
+			console.log('getUserAttendanceList:', error, error.stack);
+			return [];
+		}
+	}
+	async getUserName(user_id) {
+		const query = `query MyQuery {
+			users(where: {id: {_eq: ${user_id}}}) {
+					first_name
+					last_name
+				  }
+			  }`;
+		try {
+			const data_list = (await this.hasuraService.getData({ query }))
+				?.data?.users;
+			//console.log('data_list cunt------>>>>>', data_list.length);
+			//console.log('data_list------>>>>>', data_list);
+			return data_list;
+		} catch (error) {
+			console.log('getUserName:', error, error.stack);
+			return [];
+		}
+	}
+	async issueCertificateHtml(lmsCertificateDto: LMSCertificateDto) {
+		let queryObj = '';
+		Object.keys(lmsCertificateDto).forEach((e) => {
+			if (lmsCertificateDto[e] && lmsCertificateDto[e] != '') {
+				if (e === 'certificate_html') {
+					queryObj += `${e}: ${JSON.stringify(
+						JSON.stringify(lmsCertificateDto[e]),
+					)}, `;
+				} else if (Array.isArray(lmsCertificateDto[e])) {
+					queryObj += `${e}: "${JSON.stringify(
+						lmsCertificateDto[e],
+					)}", `;
+				} else {
+					queryObj += `${e}: "${lmsCertificateDto[e]}", `;
+				}
+			}
+		});
+
+		let query = `mutation CreateTrainingCertificate {
+			  insert_lms_training_certificate_one(object: {${queryObj}}) {
+			   id
+			  }
+			}
+			`;
+
+		try {
+			let query_response = await this.hasuraService.getData({
+				query: query,
+			});
+			if (query_response?.data?.insert_lms_training_certificate_one) {
+				//success issueCertificateHtml
+			} else {
+				//error in issueCertificateHtml
+			}
+		} catch (error) {
+			//error in issueCertificateHtml
+		}
+	}
 	async markCertificateStatus(id, status) {
 		let updateQuery = `
 			mutation MyMutation {
 				update_lms_test_tracking_by_pk (
 					pk_columns: {
-						id: ${id}
+						id: "${id}"
 					},
 					_set: {
 						certificate_status: ${status}
@@ -508,6 +701,19 @@ export class LMSService {
 				query: query_user_test,
 			});
 			if (data_list?.data?.lms_training_certificate.length > 0) {
+				for (
+					let i = 0;
+					i < data_list?.data?.lms_training_certificate.length;
+					i++
+				) {
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html = JSON.parse(
+						data_list?.data?.lms_training_certificate[i]
+							?.certificate_html,
+					);
+				}
+
 				return response.status(200).send({
 					success: true,
 					message: 'Certificate Found',
