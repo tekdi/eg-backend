@@ -3355,9 +3355,13 @@ export class CampService {
 				status: 500,
 				success: false,
 				data: {},
-	async getCampSessions(req:any,id:number,res:any){
+			});
+		}
+	}
+
+	async getCampSessions(req: any, id: number, res: any) {
 		const result = await this.campcoreservice.getCampSessions(id);
-		if(result){
+		if (result) {
 			return res.status(200).send({
 				success: true,
 				message: 'Data found successfully',
