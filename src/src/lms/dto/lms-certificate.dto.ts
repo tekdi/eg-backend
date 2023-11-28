@@ -7,7 +7,7 @@ import {
 	IsNumber,
 } from 'class-validator';
 
-export class LMSTestTrackingDto {
+export class LMSCertificateDto {
 	//generated fields
 	@Expose()
 	id: string;
@@ -16,23 +16,15 @@ export class LMSTestTrackingDto {
 	@Expose()
 	test_id: string;
 	@Expose()
-	spent_time: number;
+	certificate_status: string;
 	@Expose()
-	score: string;
+	issuance_date: string;
 	@Expose()
-	status: string;
+	expiration_date: string;
 	@Expose()
-	created_at: string;
-	@Expose()
-	created_by: number;
-	@Expose()
-	score_details: any;
-	@Expose()
-	context: string;
-	@Expose()
-	context_id: number;
+	certificate_html: string;
 
-	constructor(partial: Partial<LMSTestTrackingDto>) {
+	constructor(partial: Partial<LMSCertificateDto>) {
 		Object.assign(this, partial);
 	}
 }

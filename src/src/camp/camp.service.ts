@@ -12,7 +12,7 @@ import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.s
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
-
+const moment = require('moment');
 @Injectable()
 export class CampService {
 	constructor(
@@ -126,7 +126,6 @@ export class CampService {
 						'CAMP_VALIDATION_MESSAGE_LEARNER_ALREADY_ADDED_WITH_ANOTHER_PRERAK',
 				});
 			}
-
 			const count =
 				faciltator_camp_data?.data?.camps_aggregate?.aggregate?.count +
 				1;
@@ -151,6 +150,10 @@ export class CampService {
 				false,
 				[...this.returnFieldsgroups, 'id', 'name', 'type', 'status'],
 			);
+			let create_property_object = {
+				created_by: facilitator_id,
+				updated_by: facilitator_id,
+			};
 
 			let group_id = createresponse?.groups?.id;
 			if (group_id) {
@@ -250,7 +253,8 @@ export class CampService {
 			const auditData = {
 				userId: facilitator_id,
 				mw_userid: facilitator_id,
-				context: 'camp',
+				user_type: 'Facilitator',
+				context: 'camp.added',
 				context_id: camp_id,
 				oldData: {
 					group_id: group_id,
@@ -262,6 +266,11 @@ export class CampService {
 					status: 'camp_initiated',
 					learner_id: [learner_ids],
 				},
+				subject: 'camp',
+				subject_id: camp_id,
+				log_transaction_text: `Facilitator ${facilitator_id} created camp ${camp_id} with learners ${[
+					learner_ids,
+				]}`,
 				tempArray: ['group_id', 'status', 'learner_id'],
 				action: 'create',
 			};
@@ -388,6 +397,9 @@ export class CampService {
 			  kit_feedback
 			  kit_received
 			  kit_was_sufficient
+			  preferred_start_time
+			  preferred_end_time
+			  week_off
 			  group{
 				name
 				description
@@ -735,14 +747,35 @@ export class CampService {
 			  id
 			  group_id
 			  property_id
+			  kit_received
+              kit_was_sufficient
+			  kit_ratings
+			  kit_feedback
+			  preferred_start_time
+			  preferred_end_time
+			  week_off
 			  properties {
 				lat
 				long
+				street
+				state
+				district
+				block
+				village
+				grampanchayat
+				property_photo_building
+				property_photo_classroom
+				property_photo_other
+				property_facilities
 			  }
 			  group_users(where: {user_id: {_eq:${facilitator_id}}, member_type: {_eq:${member_type}}, status: {_eq:${status}}}) {
 				id
 				user_id
 				
+			  }
+			  group{
+				id
+				status
 			  }
 			}
 		  }
@@ -797,7 +830,63 @@ export class CampService {
 			}
 		}
 
-		switch (update_body.edit_page_type) {
+		switch (update_body?.edit_page_type) {
+			case 'edit_camp_settings': {
+				let camp_settings_body = {
+					...update_body,
+					updated_by: facilitator_id,
+				};
+
+				let settings_array = [
+					'preferred_start_time',
+					'preferred_end_time',
+					'week_off',
+				];
+
+				if (
+					update_body?.preferred_start_time >=
+					update_body?.preferred_end_time
+				) {
+					return {
+						status: 422,
+						message: 'Start time cannot be greater than End time',
+						data: {},
+					};
+				}
+				let old_settings_data = {
+					preferred_start_time: campData?.preferred_start_time,
+					preferred_end_time: campData?.preferred_end_time,
+					week_off: campData?.week_off,
+				};
+				let auditData = {
+					userId: request.mw_userid,
+					mw_userid: request.mw_userid,
+					user_type: 'Facilitator',
+					context: 'camp.update.settings',
+					context_id: camp_id,
+					subject: 'camp',
+					subject_id: camp_id,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp settings of camp ${camp_id}`,
+					oldData: old_settings_data,
+					newData: camp_settings_body,
+					tempArray: [
+						'preferred_start_time',
+						'preferred_end_time',
+						'week_off',
+					],
+					action: 'update',
+				};
+
+				await this.updateCampData(
+					camp_id,
+					camp_settings_body,
+					settings_array,
+					response,
+					auditData,
+				);
+
+				break;
+			}
 			case 'edit_camp_location': {
 				let bodyData = update_body;
 				let location_body = {
@@ -807,12 +896,47 @@ export class CampService {
 				const location_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_location.properties;
 
+				//get old data for camp location
+
+				let old_location_body = {
+					...campData.properties,
+				};
+
+				let new_location_body = {
+					...bodyData,
+				};
+
+				let auditData = {
+					userId: request.mw_userid,
+					mw_userid: request.mw_userid,
+					user_type: 'Facilitator',
+					context: 'camp.update.properties',
+					context_id: property_id,
+					subject: 'camp',
+					subject_id: camp_id,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp location of camp ${camp_id}`,
+					oldData: old_location_body,
+					newData: new_location_body,
+					tempArray: [
+						'lat',
+						'long',
+						'street',
+						'state',
+						'district',
+						'block',
+						'village',
+						'grampanchayat',
+					],
+					action: 'update',
+				};
+
 				await this.updatepropertyDetails(
 					camp_id,
 					property_id,
 					location_body,
 					[...location_arr, 'updated_by'],
 					response,
+					auditData,
 				);
 
 				break;
@@ -835,17 +959,55 @@ export class CampService {
 				let camp_details =
 					camp_body.kit_received === 'yes' ? camp_body : no_kit_body;
 
+				let old_kit_details = {
+					kit_received: campData?.kit_received,
+					kit_was_sufficient: campData?.kit_was_sufficient,
+					kit_ratings: campData?.kit_ratings,
+					kit_feedback: campData?.kit_feedback,
+				};
+
+				let auditData = {
+					userId: request.mw_userid,
+					user_type: 'Facilitator',
+					mw_userid: request.mw_userid,
+					context: 'camp.update.kit_details',
+					context_id: camp_id,
+					subject: 'camp',
+					subject_id: camp_id,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp kit details of camp ${camp_id}`,
+					oldData: old_kit_details,
+					newData: camp_details,
+					tempArray: [
+						'kit_received',
+						'kit_was_sufficient',
+						'kit_ratings',
+						'kit_feedback',
+					],
+					action: 'update',
+				};
+
 				await this.updateCampData(
 					camp_id,
 					camp_details,
 					kit_arr,
 					response,
+					auditData,
 				);
 
 				break;
 			}
 
 			case 'edit_photo_details': {
+				let profile_photo_1 = body?.property_photo_building;
+				let profile_photo_2 = body?.property_photo_classroom;
+				let profile_photo_3 = body?.property_photo_other;
+
+				if (!profile_photo_1 || !profile_photo_2 || !profile_photo_3) {
+					return response.status(400).json({
+						success: false,
+						message: 'profile_photo not provided',
+					});
+				}
 				const photo_details_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_photo_details
 						.properties;
@@ -853,12 +1015,42 @@ export class CampService {
 					...update_body,
 					updated_by: facilitator_id,
 				};
+
+				let old_photos_details = {
+					property_photo_building:
+						campData?.properties?.property_photo_building,
+					property_photo_classroom:
+						campData?.properties?.property_photo_classroom,
+					property_photo_other:
+						campData?.properties?.property_photo_other,
+				};
+
+				let auditData = {
+					userId: request.mw_userid,
+					user_type: 'Facilitator',
+					mw_userid: request.mw_userid,
+					context: 'camp.update.property.photos',
+					context_id: property_id,
+					subject: 'camp',
+					subject_id: camp_id,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp photos of camp ${camp_id}`,
+					oldData: old_photos_details,
+					newData: photo_details_body,
+					tempArray: [
+						'property_photo_building',
+						'property_photo_classroom',
+						'property_photo_other',
+					],
+					action: 'update',
+				};
+
 				await this.updatepropertyDetails(
 					camp_id,
 					property_id,
 					photo_details_body,
 					[...photo_details_arr, 'updated_by'],
 					response,
+					auditData,
 				);
 				break;
 			}
@@ -874,26 +1066,51 @@ export class CampService {
 				const facilities_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities.properties;
 
-				console.log('property_id-->>', property_id);
+				let old_facilities_body = {
+					property_facilities: JSON.parse(
+						campData?.properties?.property_facilities,
+					),
+				};
+
+				let auditData = {
+					userId: request.mw_userid,
+					user_type: 'Facilitator',
+					mw_userid: request.mw_userid,
+					context: 'camp.update.property.facilities',
+					context_id: property_id,
+					subject: 'camp',
+					subject_id: camp_id,
+					log_transaction_text: `Facilitator ${request.mw_userid} updated camp facilities of camp ${camp_id}`,
+					oldData: old_facilities_body,
+					newData: update_body,
+					tempArray: ['property_facilities'],
+					action: 'update',
+				};
+
 				await this.updatepropertyDetails(
 					camp_id,
 					property_id,
 					{ ...camp_facilities, updated_by: facilitator_id },
 					[...facilities_arr, 'updated_by'],
 					response,
+					auditData,
 				);
 
 				break;
 			}
 
 			case 'edit_learners': {
-				let learner_ids = body.learner_ids;
+				let learner_ids = body?.learner_ids;
 				let resultCreate = [];
 				let resultActive = [];
 				let resultInactive = [];
 				let qury = `query MyQuery {
 					camps_by_pk(id:${camp_id})  {
 					group_id
+					group {
+						id
+						status
+					  }
 					  group_users(where:{member_type:{_eq:"member"}}){
 						id
 						user_id
@@ -906,6 +1123,7 @@ export class CampService {
 
 				const res = await this.hasuraServiceFromServices.getData(qdata);
 				const group_id = res?.data?.camps_by_pk?.group_id;
+				const camp_status = res?.data?.camps_by_pk?.group?.status;
 				const group_users = res?.data?.camps_by_pk?.group_users;
 				const returnFields = [
 					'status',
@@ -914,6 +1132,7 @@ export class CampService {
 					'created_by',
 					'updated_by',
 				];
+
 				// add new beneficiary Ids
 				const createData = learner_ids
 					.filter(
@@ -930,12 +1149,77 @@ export class CampService {
 						updated_by: facilitator_id,
 					}));
 
+				//get primary id of user_id to be deactivated
+				const deactivateIds = group_users
+					.filter(
+						(item) =>
+							item.status === 'active' &&
+							!learner_ids.includes(item.user_id),
+					)
+					.map((item) => item.id);
+
+				//get learner_ids that is user_id to be deactivated
+				const deactiveLearnerIds = group_users
+					.filter(
+						(item) =>
+							item.status === 'active' &&
+							!learner_ids.includes(item.user_id),
+					)
+					.map((item) => item.user_id);
+
+				if (
+					deactivateIds.length > 0 &&
+					(camp_status == 'registered' ||
+						camp_status == 'camp_ip_verified' ||
+						camp_status == 'change_required')
+				) {
+					return {
+						status: 422,
+						message:
+							'Cannot remove learners from a registered camp',
+						data: {
+							ids: deactiveLearnerIds,
+						},
+					};
+				}
+
 				if (createData?.length > 0) {
 					resultCreate = await this.hasuraServiceFromServices.qM(
 						'insert_group_users',
 						createData,
 						[],
 						returnFields,
+					);
+				}
+
+				const createAuditData = learner_ids
+					.filter(
+						(id) =>
+							!group_users.filter((item) => item.user_id === id)
+								.length,
+					)
+					.map((user_id) => ({
+						user_id: facilitator_id,
+						user_type: 'Facilitator',
+						updated_by_user: facilitator_id,
+						context: 'campBeneficiaryAdded',
+						context_id: camp_id,
+						subject: 'beneficiary',
+						subject_id: user_id,
+						log_transaction_text: JSON.stringify(
+							`Facilitator ${facilitator_id} added beneficiary ${user_id}to camp ${camp_id}`,
+						),
+						old_data: '"{}"',
+						new_data: JSON.stringify(`{ learner_id: ${user_id} }`),
+						action: 'create',
+					}));
+
+				if (createAuditData?.length > 0) {
+					resultCreate = await this.hasuraServiceFromServices.qM(
+						'insert_audit_logs',
+						createAuditData,
+						[],
+						['id'],
 					);
 				}
 
@@ -962,14 +1246,42 @@ export class CampService {
 					);
 				}
 
-				// update active to inactive user
-				const deactivateIds = group_users
+				const activeIdsAuditData = group_users
 					.filter(
 						(item) =>
-							item.status === 'active' &&
-							!learner_ids.includes(item.user_id),
+							learner_ids.includes(item.user_id) &&
+							item.status === 'inactive',
 					)
-					.map((item) => item.id);
+					.map((item) => ({
+						user_id: facilitator_id,
+						user_type: 'Facilitator',
+						updated_by_user: facilitator_id,
+						context: 'campBeneficiaryActivated',
+						context_id: camp_id,
+						subject: 'beneficiary',
+						subject_id: item.user_id,
+						log_transaction_text: JSON.stringify(
+							`Facilitator ${facilitator_id} added beneficiary  ${item.user_id} back to camp ${camp_id}`,
+						),
+						old_data: JSON.stringify(
+							`{ learner_id: ${item.user_id},status:"inactive" }`,
+						),
+						new_data: JSON.stringify(
+							`{ learner_id: ${item.user_id},status:"active }`,
+						),
+						action: 'create',
+					}));
+
+				if (activeIdsAuditData?.length > 0) {
+					resultCreate = await this.hasuraServiceFromServices.qM(
+						'insert_audit_logs',
+						activeIdsAuditData,
+						[],
+						['id'],
+					);
+				}
+
+				// update active to inactive user
 
 				if (deactivateIds?.length > 0) {
 					resultInactive =
@@ -988,7 +1300,48 @@ export class CampService {
 						);
 				}
 
-				if (learner_ids?.length > 0) {
+				const deactiveLearnerIdsAuditData = group_users
+					.filter(
+						(item) =>
+							item.status === 'active' &&
+							!learner_ids.includes(item.user_id),
+					)
+					.map((item) => ({
+						user_id: facilitator_id,
+						user_type: 'Facilitator',
+						updated_by_user: facilitator_id,
+						context: 'campBeneficiariesRemoved',
+						context_id: camp_id,
+						subject: 'beneficiary',
+						subject_id: item.user_id,
+						log_transaction_text: JSON.stringify(
+							`Facilitator ${facilitator_id} removed beneficiary  ${item.user_id} from camp ${camp_id}`,
+						),
+						old_data: JSON.stringify(
+							`{ learner_id: ${item.user_id},status:"active" }`,
+						),
+						new_data: JSON.stringify(
+							`{ learner_id: ${item.user_id},status:"inactive" }`,
+						),
+						action: 'create',
+					}));
+
+				if (deactiveLearnerIdsAuditData?.length > 0) {
+					resultCreate = await this.hasuraServiceFromServices.qM(
+						'insert_audit_logs',
+						deactiveLearnerIdsAuditData,
+						[],
+						['id'],
+					);
+				}
+
+				if (
+					learner_ids?.length > 0 &&
+					(camp_status == 'registered' ||
+						camp_status == 'camp_ip_verified' ||
+						camp_status == 'change_required' ||
+						camp_status == 'inactive')
+				) {
 					let update_beneficiaries_array = [];
 					let status = 'enrolled_ip_verified';
 					body.program_id = program_id;
@@ -1012,6 +1365,32 @@ export class CampService {
 						update_body,
 					);
 				}
+
+				if (deactiveLearnerIds?.length > 0) {
+					let update_beneficiaries_array = [];
+					let status = 'registered_in_camp';
+					body.program_id = program_id;
+					body.academic_year_id = academic_year_id;
+					for (const deactivateId of deactiveLearnerIds) {
+						let result =
+							await this.beneficiariesCoreService.getBeneficiaryDetailsById(
+								deactivateId,
+								status,
+								body,
+							);
+						update_beneficiaries_array.push(result);
+					}
+
+					const update_body = {
+						status: 'enrolled_ip_verified',
+					};
+
+					await this.beneficiariesCoreService.updateBeneficiaryDetails(
+						update_beneficiaries_array,
+						update_body,
+					);
+				}
+
 				return {
 					status: 200,
 					success: true,
@@ -1095,7 +1474,7 @@ export class CampService {
 					};
 				} else if (group_id) {
 					let group_update_body = {
-						status: update_body.status,
+						status: update_body?.status,
 						updated_by: facilitator_id,
 					};
 					const group_update_array =
@@ -1111,6 +1490,78 @@ export class CampService {
 						[...this.returnFieldsGroups, 'id', 'status'],
 					);
 
+					if (update_body?.status == 'registered') {
+						//get all the active learners in that camp
+						let query = `query MyQuery {
+							camps(where: {id: {_eq:${camp_id}}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
+							  id
+							  group_users(where: {status: {_eq: "active"}, member_type: {_eq: "member"}}){
+								user {
+									program_beneficiaries {
+									  id
+									}
+								  }
+							  }
+							}
+						  }
+						  `;
+
+						const res =
+							await this.hasuraServiceFromServices.getData({
+								query: query,
+							});
+
+						let group_users_array =
+							res?.data?.camps?.[0]?.group_users;
+
+						let allUserIds = [];
+						if (group_users_array?.length > 0) {
+							// Mapping over the "groupusers" array and pushing user_id values into allUserIds array
+							group_users_array.forEach((item) => {
+								const programBeneficiaries =
+									item.user.program_beneficiaries;
+								programBeneficiaries.forEach((beneficiary) => {
+									allUserIds.push(beneficiary.id);
+								});
+							});
+						}
+
+						if (allUserIds?.length > 0) {
+							await this.hasuraServiceFromServices.update(
+								null,
+								'program_beneficiaries',
+								{
+									status: 'registered_in_camp',
+									updated_by: facilitator_id,
+								},
+								[],
+								['id', 'user_id', 'status'],
+								{ where: `{id:{_in:[${allUserIds}]}}` },
+							);
+						}
+					}
+
+					let old_camp_status = {
+						status: campData?.group?.status,
+					};
+					let auditData = {
+						userId: facilitator_id,
+						mw_userid: facilitator_id,
+						user_type: 'Facilitator',
+						context: 'camp.update.status',
+						context_id: camp_id,
+						subject: 'camp',
+						subject_id: camp_id,
+						log_transaction_text: `Facilitator ${facilitator_id} updated camp status of camp ${camp_id}`,
+						oldData: old_camp_status,
+						newData: group_update_body,
+						tempArray: ['status'],
+						action: 'update',
+					};
+
+					//add audit logs
+					await this.userService.addAuditLogAction(auditData);
+
 					return {
 						status: 200,
 						success: true,
@@ -1125,6 +1576,12 @@ export class CampService {
 						data: {},
 					};
 				}
+			}
+			default: {
+				return {
+					success: false,
+					message: 'please provide edit field',
+				};
 			}
 		}
 	}
@@ -1192,6 +1649,7 @@ export class CampService {
 		body: any,
 		update_array: any,
 		response: any,
+		auditData: any,
 	) {
 		await this.hasuraService.q(
 			'properties',
@@ -1203,6 +1661,8 @@ export class CampService {
 			true,
 			[...this.returnFieldsProperties, 'id'],
 		);
+
+		let audit = await this.userService.addAuditLogAction(auditData);
 
 		return response.json({
 			status: 200,
@@ -1216,6 +1676,7 @@ export class CampService {
 		camp_body: any,
 		update_arr: any,
 		response: any,
+		auditData: any,
 	) {
 		await this.hasuraService.q(
 			'camps',
@@ -1227,6 +1688,9 @@ export class CampService {
 			true,
 			[...this.returnFieldscamps, 'id'],
 		);
+
+		//add audit logs
+		await this.userService.addAuditLogAction(auditData);
 
 		return response.json({
 			status: 200,
@@ -1243,7 +1707,7 @@ export class CampService {
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
 		let document_id = body?.document_id;
-		body.status = 'active';
+
 		let response;
 
 		const tableName = 'consents';
@@ -1270,9 +1734,7 @@ export class CampService {
 			if (consent_document_name) {
 				try {
 					await this.s3Service.deletePhoto(consent_document_name);
-				} catch (e) {
-					console.log('s3 file not found', e.message);
-				}
+				} catch (e) {}
 			}
 			await this.hasuraService.delete('documents', {
 				id: consent_document_id,
@@ -1308,6 +1770,7 @@ export class CampService {
 					facilitator_id,
 					updated_by: facilitator_id,
 					created_by: facilitator_id,
+					status: 'active',
 				},
 				[
 					'user_id',
@@ -1318,10 +1781,12 @@ export class CampService {
 					'facilitator_id',
 					'created_by',
 					'updated_by',
+					'status',
 				],
 				['id', 'user_id', 'document_id', 'camp_id', 'facilitator_id'],
 			);
 		}
+
 		const consent_response = response?.consents;
 
 		if (!consent_response?.id) {
@@ -1875,7 +2340,7 @@ export class CampService {
 	async markCampAttendance(body: any, req: any, resp: any) {
 		const camp_attendance_body = {
 			...body,
-			context: 'camps',
+			context: 'camp_days_activities_tracker',
 		};
 
 		const response = await this.attendancesService.createAttendance(
@@ -2167,6 +2632,8 @@ export class CampService {
 		let camp_id = id;
 		let academic_year_id = body?.academic_year_id || 1;
 		let program_id = body?.program_id || 1;
+		let create_response;
+		let update_response;
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -2176,6 +2643,46 @@ export class CampService {
 			});
 		}
 		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		//validation to check beneficiary status and camp status
+
+		let validation_query = `query MyQuery {
+			camp_details:camps(where: {id: {_eq:${camp_id}}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
+			  id
+			  group {
+				status
+			  }
+			 
+			}
+			learner_details:program_beneficiaries(where:{user_id:{_eq:${body?.learner_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}){
+			  status
+			}
+		  }
+		  
+		  
+		  `;
+
+		const validation_hasura_response =
+			await this.hasuraServiceFromServices.getData({
+				query: validation_query,
+			});
+
+		let reassign_camp_status =
+			validation_hasura_response?.data?.camp_details?.[0]?.group?.status;
+		let reassign_learner_status =
+			validation_hasura_response?.data?.learner_details?.[0]?.status;
+
+		if (
+			reassign_camp_status == 'camp_initiated' ||
+			reassign_learner_status == 'enrolled_ip_verified'
+		) {
+			return resp.json({
+				status: 422,
+				success: false,
+				message: 'INVALID_REASSIGNMENT_REQUEST',
+				data: {},
+			});
+		}
 
 		//validation to check if camp already have the user to be assigned
 		let query = `query MyQuery {
@@ -2243,6 +2750,9 @@ export class CampService {
 				old_camp_details_repsonse?.data?.group_users?.[0]?.camps
 					?.consents?.[0]?.id;
 
+			let old_camp_id =
+				old_camp_details_repsonse?.data?.group_users?.[0]?.camps?.id;
+
 			let query = `query MyQuery {
 				group_users(where: {user_id: {_eq:${body?.learner_id}},member_type:{_eq:"member"},status:{_eq:"active"}}){
 				  id
@@ -2258,6 +2768,29 @@ export class CampService {
 				});
 
 			let id = hasura_response?.data?.group_users?.[0]?.id;
+
+			//get new camp's inactive data if present for the given beneficiary to be reassigned
+
+			let query4 = `query MyQuery {
+				camps(where: {id: {_eq: ${camp_id}}, group: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+				  group {
+					id
+					group_users(where: {user_id: {_eq:${body?.learner_id}}, member_type: {_eq: "member"}, status: {_eq: "inactive"}}) {
+					  id
+					  user_id
+					  status
+					}
+				  }
+				}
+			  }`;
+
+			const new_response = await this.hasuraServiceFromServices.getData({
+				query: query4,
+			});
+
+			//inactive record for the new camp with same beneficiary
+
+			let new_result = new_response?.data?.camps?.[0]?.group?.group_users;
 
 			let update_inactive_body = {
 				status: 'inactive',
@@ -2275,7 +2808,7 @@ export class CampService {
 
 			let update_array = ['status', 'updated_by'];
 
-			let update_response = await this.campcoreservice.updateCampUser(
+			update_response = await this.campcoreservice.updateCampUser(
 				id,
 				update_inactive_body,
 				update_array,
@@ -2284,12 +2817,30 @@ export class CampService {
 				resp,
 			);
 
-			let create_response = await this.campcoreservice.createCampUser(
-				create_active_body,
-				['id', 'status', 'updated_by'],
-				req,
-				resp,
-			);
+			if (new_result.length > 0) {
+				let group_user_id = new_result?.[0]?.id;
+				let update_array = ['status', 'updated_by'];
+				let update_active_body = {
+					status: 'active',
+					updated_by: ip_id,
+				};
+
+				create_response = await this.campcoreservice.updateCampUser(
+					group_user_id,
+					update_active_body,
+					update_array,
+					['id', 'status', 'updated_by'],
+					req,
+					resp,
+				);
+			} else {
+				create_response = await this.campcoreservice.createCampUser(
+					create_active_body,
+					['id', 'status', 'updated_by'],
+					req,
+					resp,
+				);
+			}
 
 			//get facilitator_id of new camp  to which beneficiary is to be assigned
 
@@ -2344,6 +2895,28 @@ export class CampService {
 				);
 			}
 
+			const auditData = {
+				userId: req?.mw_userid,
+				mw_userid: req?.mw_userid,
+				user_type: 'IP',
+				context: 'camp.beneficiary.reassign',
+				context_id: camp_id,
+				oldData: {
+					camp_id: old_camp_id,
+					learner_id: body?.learner_id,
+				},
+				newData: {
+					camp_id: camp_id,
+					learner_id: body?.learner_id,
+				},
+				subject: 'beneficiary',
+				subject_id: body?.learner_id,
+				log_transaction_text: `IP ${req.mw_userid} reassigned leaner  ${body?.learner_id} from camp ${old_camp_id} to new camp ${camp_id}`,
+				tempArray: ['learner_id', 'camp_id'],
+				action: 'create',
+			};
+
+			await this.userService.addAuditLogAction(auditData);
 			if (
 				update_response?.group_users?.id &&
 				create_response?.group_users?.id
@@ -2504,6 +3077,9 @@ export class CampService {
 				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0]
 					.group_id;
 
+			let old_facilitator_id =
+				hasura_response?.data?.camps?.[0]?.facilitator_data?.[0]
+					.user_id;
 			let beneficiaries_id = [];
 
 			let beneficiaries_data =
@@ -2565,6 +3141,28 @@ export class CampService {
 					unsuccessfulReassignmentIds.push(benId);
 			}
 
+			const auditData = {
+				userId: req?.mw_userid,
+				mw_userid: req?.mw_userid,
+				user_type: 'IP',
+				context: 'camp.facilitator.reassign',
+				context_id: camp_id,
+				oldData: {
+					camp_id: camp_id,
+					facilitator_id: old_facilitator_id,
+				},
+				newData: {
+					camp_id: camp_id,
+					facilitator_id: body?.facilitator_id,
+				},
+				subject: 'facilitator',
+				subject_id: body?.facilitator_id,
+				log_transaction_text: `IP ${req.mw_userid} reassigned facilitator  ${body?.facilitator_id} for camp ${camp_id}`,
+				tempArray: ['facilitator_id', 'camp_id'],
+				action: 'create',
+			};
+
+			await this.userService.addAuditLogAction(auditData);
 			if (
 				update_response?.group_users?.id &&
 				create_response?.group_users?.id
@@ -2655,5 +3253,275 @@ export class CampService {
 			}, 0);
 		}
 		return 0;
+	}
+
+	public async createCampDayActivity(body: any, req: any, res: any) {
+		let created_by = req?.mw_userid;
+		let updated_by = req?.mw_userid;
+		let camp_id = body.camp_id;
+		let camp_day_happening = body.camp_day_happening;
+		let camp_day_not_happening_reason = body.camp_day_not_happening_reason;
+		let misc_activities = body.misc_activities;
+
+		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+
+		const data = {
+			query: `mutation MyQuery($misc_activities: json) {
+			insert_camp_days_activities_tracker_one(object: {camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", misc_activities: $misc_activities, created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}) {
+				id
+				camp_id
+				updated_at
+				created_by
+				updated_by
+				camp_day_happening
+				camp_day_not_happening_reason
+				misc_activities
+				mood
+				start_date
+				end_date
+
+			}
+		}`,
+			variables: {
+				misc_activities,
+			},
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+
+		let createresponse = result?.data;
+
+		if (createresponse) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: createresponse,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
+			});
+		}
+	}
+
+	public async update_camp_day_activity(
+		id: any,
+		body: any,
+		req: any,
+		res: any,
+	) {
+		let misc_activities = body.misc_activities;
+		switch (body?.edit_page_type) {
+			case 'edit_mood': {
+				const data = {
+					query: `mutation MyQuery {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {mood:${body?.mood}}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
+
+																		}
+					}
+				}`,
+				};
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
+			case 'edit_misc_activities': {
+				const data = {
+					query: `mutation MyQuery($misc_activities: json) {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {misc_activities:$misc_activities}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
+
+																		}
+					}
+				}`,
+					variables: {
+						misc_activities,
+					},
+				};
+
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
+			case 'edit_end_date': {
+				const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+
+				const data = {
+					query: `mutation MyQuery {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}"}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
+
+																		}
+					}
+				}`,
+				};
+
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
+		}
+	}
+
+	public async getCampDayActivityById(
+		id: any,
+		body: any,
+		req: any,
+		res: any,
+	) {
+		const dateString = body?.start_date.split('T')[0];
+		let query = `query MyQuery {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:"${dateString}"},end_date:{_is_null:true}}) {
+			  id
+			  camp_id
+			  camp_day_happening
+			  camp_day_not_happening_reason
+			  created_by
+			  misc_activities
+			  mood
+			  start_date
+			  end_date
+			  updated_by
+			  updated_at
+			  
+			}
+		  }		  
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let result = hasura_response?.data;
+
+		if (result) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: result,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
+			});
+		}
+	}
+
+	async getCampSessions(req: any, id: number, res: any) {
+		const result = await this.campcoreservice.getCampSessions(id);
+		if (result) {
+			return res.status(200).send({
+				success: true,
+				message: 'Data found successfully',
+				data: result.data,
+			});
+		}
+	}
+
+	public async getPreviousCampAcitivityById(id, body, req, res) {
+		let query = `query MyQuery {
+			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq:${id}}, end_date: {_is_null: true}}, limit: 1) {
+			  id
+			  camp_id
+			  start_date
+			  end_date
+			  camp_day_happening
+			  camp_day_not_happening_reason
+			  misc_activities
+			  mood
+			  updated_at
+			  updated_by
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let result = hasura_response?.data;
+		console.log(result);
+
+		if (result) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: result?.camp_days_activities_tracker?.[0],
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				data: {},
+			});
+		}
 	}
 }

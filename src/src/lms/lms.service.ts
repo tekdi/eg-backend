@@ -1,65 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
-import { UserService } from 'src/user/user.service';
-import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { ConfigService } from '@nestjs/config';
 import { SearchLMSDto } from './dto/search-lms.dto';
+import { LMSCertificateDto } from './dto/lms-certificate.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class LMSService {
-	public table = 'events';
-	public fillable = [
-		'context',
-		'context_id',
-		'created_by',
-		'end_date',
-		'end_time',
-		'location',
-		'location_type',
-		'start_date',
-		'start_time',
-		'updated_by',
-		'user_id',
-	];
-	public returnFields = [
-		'id',
-		'name',
-		'context',
-		'context_id',
-		'created_by',
-		'end_date',
-		'end_time',
-		'type',
-		'location',
-		'master_trainer',
-		'location_type',
-		'start_date',
-		'start_time',
-		'updated_by',
-		'user_id',
-		'reminders',
-	];
-
-	public attendanceReturnFields = [
-		'id',
-		'user_id',
-		'context_id',
-		'created_by',
-		'context',
-		'status',
-		'lat',
-		'long',
-		'rsvp',
-		'photo_1',
-		'photo_2',
-		'date_time',
-		'updated_by',
-	];
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private readonly userService: UserService,
+		private configService: ConfigService,
 	) {}
 
 	public async getTestAllowStatus(req, response) {
@@ -419,5 +370,162 @@ export class LMSService {
 		}
 	}
 
-	//delete
+	//cron issue certificate run every 5 minutes
+	@Cron(CronExpression.EVERY_30_SECONDS)
+	async issueCertificate() {
+		console.log('hi cron');
+		//fetch all test tracking data which has certificate_status null
+		const userForIssueCertificate = await this.fetchTestTrackingData(
+			parseInt(
+				this.configService.get<string>(
+					'LMS_CERTIFICATE_ISSUE_BATCH_SIZE',
+				),
+			),
+		);
+		console.log('userForIssueCertificate', userForIssueCertificate);
+		if (userForIssueCertificate.length > 0) {
+			for (let i = 0; i < userForIssueCertificate.length; i++) {
+				let userTestData = userForIssueCertificate[i];
+				let issue_status = '';
+				let minPercentage = parseFloat(
+					this.configService.get<string>(
+						'LMS_CERTIFICATE_ISSUE_MIN_SCORE',
+					),
+				);
+				let context = userTestData?.context;
+				let context_id = userTestData?.context_id;
+				//get attendance status
+				let attendance_valid = false;
+
+				if (userTestData?.score >= minPercentage && attendance_valid) {
+					issue_status = 'true';
+				} else {
+					issue_status = 'false';
+				}
+				// Update in attendance data in database
+				await this.markCertificateStatus(
+					userTestData?.id,
+					issue_status,
+				);
+			}
+		}
+	}
+	async fetchTestTrackingData(limit: number) {
+		const query = `
+			query Getlms_test_tracking {
+				lms_test_tracking(
+				where:{
+					certificate_status:{
+						_is_null: true
+					}
+				}
+				){
+					id
+					user_id
+					test_id
+					score
+					context
+					context_id
+				}
+			}
+			`;
+		try {
+			const data_list = (await this.hasuraService.getData({ query }))
+				?.data?.lms_test_tracking;
+			//console.log('data_list cunt------>>>>>', data_list.length);
+			//console.log('data_list------>>>>>', data_list);
+			return data_list;
+		} catch (error) {
+			console.log('fetchTestTrackingData:', error, error.stack);
+			return [];
+		}
+	}
+	async markCertificateStatus(id, status) {
+		let updateQuery = `
+			mutation MyMutation {
+				update_lms_test_tracking_by_pk (
+					pk_columns: {
+						id: ${id}
+					},
+					_set: {
+						certificate_status: ${status}
+					}
+				) {
+					id
+				}
+			}
+		`;
+		try {
+			return (
+				(await this.hasuraService.getData({ query: updateQuery })).data
+					.update_lms_test_tracking_by_pk.id === id
+			);
+		} catch (error) {
+			console.log('markCertificateStatus:', error, error.stack);
+			return [];
+		}
+	}
+
+	//downloadCertificate
+	public async downloadCertificate(
+		lmsCertificateDto: LMSCertificateDto,
+		req,
+		response,
+	) {
+		try {
+			if (!req?.mw_userid) {
+				return response.status(400).send({
+					success: false,
+					message: 'Invalid User',
+					data: {},
+				});
+			}
+
+			const user_id = lmsCertificateDto.user_id;
+			const test_id = lmsCertificateDto.test_id;
+
+			let query_user_test = `query Getlms_training_certificate {
+			lms_training_certificate(
+			  where:{
+				user_id:{
+				  _eq: "${user_id}"
+				},
+				test_id:{
+				  _eq: "${test_id}"
+				}
+			  }
+			){
+				user_id
+				certificate_status
+				id
+				issuance_date
+				expiration_date
+				test_id
+				certificate_html
+			}
+		}`;
+			let data_list = await this.hasuraService.getData({
+				query: query_user_test,
+			});
+			if (data_list?.data?.lms_training_certificate.length > 0) {
+				return response.status(200).send({
+					success: true,
+					message: 'Certificate Found',
+					data: data_list?.data?.lms_training_certificate,
+				});
+			} else {
+				return response.status(200).send({
+					success: false,
+					message: 'No Certificate Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			return response.status(404).send({
+				success: false,
+				message: 'Error in Certificate Found!',
+				error: error,
+			});
+		}
+	}
 }

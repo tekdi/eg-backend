@@ -19,13 +19,12 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { SearchLMSDto } from './dto/search-lms.dto';
 import { LMSService } from './lms.service';
 import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
+import { LMSCertificateDto } from './dto/lms-certificate.dto';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('lms')
 export class LMSController {
 	constructor(private readonly lmsService: LMSService) {}
-
-	//test CRUD
 
 	//user test allow
 	@Get('/testTracking')
@@ -42,7 +41,11 @@ export class LMSController {
 		@Req() header: Request,
 		@Res() response: Response,
 	) {
-		return this.lmsService.createTestTracking(lmsTestTrackingDto, header, response);
+		return this.lmsService.createTestTracking(
+			lmsTestTrackingDto,
+			header,
+			response,
+		);
 	}
 
 	//get test tracking
@@ -64,5 +67,20 @@ export class LMSController {
 		@Res() response: Response,
 	) {
 		return this.lmsService.searchTestTracking(searchLMSDto, response);
+	}
+
+	//create certificate detail
+	@Post('/certificate/download')
+	@UseGuards(new AuthGuard())
+	public async issueCertificate(
+		@Body() lmsCertificateDto: LMSCertificateDto,
+		@Req() header: Request,
+		@Res() response: Response,
+	) {
+		return this.lmsService.downloadCertificate(
+			lmsCertificateDto,
+			header,
+			response,
+		);
 	}
 }

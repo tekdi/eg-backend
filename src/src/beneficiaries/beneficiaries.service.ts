@@ -556,7 +556,7 @@ export class BeneficiariesService {
 						  ]
 								.filter((e) => e)
 								.join(' ');
-				
+
 				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['facilitator_id'] =
 					data?.program_beneficiaries[0]?.facilitator_id;
@@ -1874,6 +1874,9 @@ export class BeneficiariesService {
 
 	async create(req: any, request, response, update = false) {
 		const user = await this.userService.ipUserInfo(request);
+		let academic_year_id = req?.academic_year_id || 1;
+		let program_id = req?.program_id || 1;
+
 		const { data: beneficiaryUser } =
 			await this.beneficiariesCoreService.userById(req.id);
 		if (!beneficiaryUser) {
@@ -2137,6 +2140,33 @@ export class BeneficiariesService {
 					});
 				}
 
+				// check beneficiary status
+
+				let query = `query MyQuery {
+					users(where: {_or: [{is_deactivated: {_is_null: true}}, {is_deactivated: {_eq: false}}], aadhar_no: {_eq:"${req?.aadhar_no}"}, program_beneficiaries: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, status: {_in: ["enrolled_ip_verified", "registered_in_camp", "10th_passed"]}}}) {
+					  id
+					  program_beneficiaries {
+						status
+					  }
+					}
+				  }
+				  
+				  `;
+
+				const hashura_response =
+					await this.hasuraServiceFromServices.getData({
+						query: query,
+					});
+
+				if (hashura_response?.data?.users?.length > 0) {
+					{
+						return response.status(422).json({
+							success: false,
+							message:
+								'Cannot update details for IP verified beneficiary !',
+						});
+					}
+				}
 				// Update Users table data
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.add_ag_duplication.users;

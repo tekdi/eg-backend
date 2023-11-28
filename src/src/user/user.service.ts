@@ -26,6 +26,8 @@ export class UserService {
 
 	public async update(userId: string, body: any, tableName: String) {
 		try {
+			let program_id = body?.program_id || 1;
+			let academic_year_id = body?.academic_year_id || 1;
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
@@ -39,6 +41,7 @@ export class UserService {
 				'selected_for_onboarding',
 				'selected_prerak',
 			];
+			const validationStatusArray = ['rusticate', 'quit', 'rejected'];
 			var axios = require('axios');
 			const userDataSchema = body;
 			let userData = body;
@@ -59,6 +62,34 @@ export class UserService {
 					query += `${e}: "${userData[e]}", `;
 				}
 			});
+
+			// validation to check if the facilitator is present in the camp
+
+			let validation_query = `query MyQuery {
+				users(where: {group_users: {user_id: {_eq:${userId}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+				  id
+				}
+			  }
+			  
+			  `;
+
+			const validation_data =
+				await this.hasuraServiceFromServices.getData({
+					query: validation_query,
+				});
+
+			let user_result = validation_data?.data?.users;
+
+			if (
+				user_result?.length > 0 &&
+				validationStatusArray.includes(body?.status)
+			) {
+				return {
+					statusCode: 401,
+					message: `CAMP_REGISTERED_USER_ACCESS_DENIED !`,
+					data: {},
+				};
+			}
 
 			var data = {
 				query: `mutation update($id:Int) {
@@ -1182,6 +1213,10 @@ export class UserService {
 			mw_userid,
 			context,
 			context_id,
+			subject,
+			subject_id,
+			log_transaction_text,
+			user_type,
 			oldData,
 			newData,
 			tempArray,
@@ -1201,6 +1236,9 @@ export class UserService {
 			storeNew = newData;
 		}
 
+		console.log('storeOld', storeOld);
+		console.log('storeNew', storeNew);
+
 		if (
 			Object.keys(storeOld).length !== 0 &&
 			Object.keys(storeNew).length !== 0
@@ -1213,6 +1251,10 @@ export class UserService {
 					user_id: userId,
 					context: context,
 					context_id: context_id,
+					subject_id: subject_id,
+					subject: subject,
+					user_type: user_type,
+					log_transaction_text: log_transaction_text,
 					updated_by_user: mw_userid,
 					action: action,
 				},
@@ -1223,6 +1265,10 @@ export class UserService {
 					'old_data',
 					'context',
 					'context_id',
+					'subject',
+					'subject_id',
+					'log_transaction_text',
+					'user_type',
 					'updated_at',
 					'created_at',
 					'updated_by_user',
@@ -1270,5 +1316,78 @@ export class UserService {
 				data: result,
 			});
 		}
+	}
+
+	public async userCampExist(user_id: any, body: any, req: any, res: any) {
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+
+		const user = await this.ipUserInfo(req);
+
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return res.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
+		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		// validation to check if user comes under specific IP
+
+		let validation_query = `query MyQuery {
+			users(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, user_id: {_eq:${user_id}}, academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+			  id
+			}
+		  }
+		  `;
+
+		const validation_response =
+			await this.hasuraServiceFromServices.getData({
+				query: validation_query,
+			});
+
+		let user_validation_result = validation_response?.data?.users;
+
+		if (user_validation_result?.length == 0) {
+			return res.json({
+				status: 401,
+				message: 'IP_ACCESS_DENIED',
+				data: [],
+				success: false,
+			});
+		}
+
+		//query to get camps list under specific user with respect to cohorts
+
+		let query = `query MyQuery {
+			users(where: {id:{_eq:${user_id}} ,program_faciltators: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
+			  facilitator_id: id
+			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}}) {
+				group {
+				  camp_name: name
+				  camp {
+					camp_id: id
+				  }
+				}
+			  }
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let { group_users, ...user_result } =
+			hasura_response?.data?.users[0] || {};
+
+		return res.json({
+			status: 200,
+			data: group_users,
+			success: true,
+			message: 'USER_CAMP_DETAILS_SUCCESS',
+		});
 	}
 }

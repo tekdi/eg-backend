@@ -678,8 +678,8 @@
 			"value": "fan"
 		},
 		{
-			"title": "CAMP_PROPERTY_FACILITIES_CLEAN_SEATING_AREA",
-			"value": "clean_seating_area"
+			"title": "CAMP_PROPERTY_FACILITIES_SUFFICIENT_AND_SUTABLE_SEATING_AREA",
+			"value": "sufficient_and_sutable_seating_area"
 		},
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_SHED",
@@ -692,6 +692,10 @@
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_PROPER_LIGHTINGS",
 			"value": "proper_lightings"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_DRINKING_WATER",
+			"value": "drinking_water"
 		}
 	],
 	"COMMUNITY_MEMBER_DESIGNATIONS": [
@@ -954,6 +958,202 @@
 		{
 			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_OTHER",
 			"value": "other"
+		}
+	],
+	"CAMP_ABSENT_REASONS": [
+		{
+			"title": "CAMP_ABSENT_REASONS_PERSONAL_LEAVE",
+			"value": "personal_leave"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_OTHER_WEEKLY_OFF",
+			"value": "other_weekly_off"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_FESTIVAL_HOLIDAY",
+			"value": "festival_holiday"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STACKHOLDER",
+			"value": "meeting_with_stackholder"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PCP",
+			"value": "pcp"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PRERAK_TRAINING",
+			"value": "prerak_training"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_LEARNER_EXPOSER_VISIT",
+			"value": "learner_exposer_visit"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_CAMP_FACILITY_RELATED_WORK",
+			"value": "camp_facility_related_work"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_EXAM",
+			"value": "exam"
+		}
+	],
+	"FACILITATOR_MOOD_LIST":[
+		{
+			"title": "FACILITATOR_MOOD_LIST_FULL_OF_COURAGE",
+			"value": "facilitator_mood_list_full_of_courage"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_CREATIVE",
+			"value": "facilitator_mood_list_creative"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_CARE_FOR_EACH_OTHER",
+			"value": "facilitator_mood_list_care_for_each_other"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_MUTUAL_SUPPORT",
+			"value": "facilitator_mood_list_mutual_support"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_FEEL_GOOD",
+			"value": "facilitator_mood_list_feel_good"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_ASPIRATIONAL",
+			"value": "facilitator_mood_list_aspirational"
+		}
+	],
+	"MISCELLANEOUS_ACTIVITIES":[
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
+			"value": "miscellaneous_activities_communication_skills"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
+			"value": "miscellaneous_activities_role_model_intervention"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
+			"value": "miscellaneous_activities_aspiration_mapping"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
+			"value": "miscellaneous_activities_digital_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
+			"value": "miscellaneous_activities_financial_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
+			"value": "miscellaneous_activities_linkages"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
+			"value": "miscellaneous_activities_family_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
+			"value": "miscellaneous_activities_role_model_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
+			"value": "miscellaneous_activities_school_teacher_visit"
+		}
+	],
+	"KIT_MATERIALS_CHECKLISTS": [
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_SATRA_YOJANA",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_SATRA_YOJANA_QUANTITY",
+			"value": "satra_yojana"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_MIND_MAPS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_MIND_MAPS_QUANTITY",
+			"value": "mind_maps"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_MOCK_TEST_QUESTION_PAPERS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_MOCK_TEST_QUESTION_PAPERS_QUANTITY",
+			"value": "mock_test_question_papers"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS_QUANTITY",
+			"value": "answer_keys"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER_QUANTITY",
+			"value": "ypp_cpp_posh_poster"
+			
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH_QUANTITY",
+			"value": "passbook_hindi_home_science_social_sciences_ich"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_ONE_WEEK_SERIES",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_ONE_WEEK_SERIES_QUANTITY",
+			"value": "one_week_series"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_BANNER_AND_POSTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_BANNER_AND_POSTER_QUANTITY",
+			"value": "banner_and_poster"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_PRERAK_HAND_BOOK",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRERAK_HAND_BOOK_QUANTITY",
+			"value": "prerak_hand_book"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_TEXT_BOOKS_HINDI",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_TEXT_BOOKS_HINDI_QUANTITY",
+			"value": "text_books_hindi"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_GOVERNMENT_CONSENT_LETTER_FOR_CAMP",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_GOVERNMENT_CONSENT_LETTER_FOR_CAMP_QUANTITY",
+			"value": "government_consent_letter_for_camp"
+		}
+	],
+	"SESSION_PARTIALLY_COMPLETE": [
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_COMPLEXITY_OF_CONCEPTS",
+			"value": "session_partially_complete_complexity_of_concepts"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_TIME_ALLOCATION",
+			"value": "session_partially_complete_time_allocation"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_LEARNING_ACTIVITIES",
+			"value": "session_partially_complete_learning_activites"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_OTHER",
+			"value": "session_partially_complete_other"
+		}
+	],
+	"SESSION_COMPLETED": [
+		{
+			"title": "SESSION_COMPLETED_THE_SESSION_COULD_NOT_BE_IMPLEMENTED_PROPERLY_DUE_TO_LACK_OF_UNDERSTANDING",
+			"value": "session_completed_the session_could_not_be_implemented_properly_due_to_lack_of_understanding"
+		},
+		{
+			"title": "SESSION_COMPLETED_MORE_WORK_NEEDED_TO_IMPLEMENT_THE_SESSION_WELL",
+			"value": "session_completed_more_work_needed_to_implement_the_session_well"
+		},
+		{
+			"title": "SESSION_COMPLETED_SESSION_SUCCESSFULLY_IMPLEMENTED",
+			"value": "session_completed_session_successfully_implemented"
 		}
 	]
 }
