@@ -2340,9 +2340,9 @@ export class CampService {
 	async markCampAttendance(body: any, req: any, resp: any) {
 		const camp_attendance_body = {
 			...body,
-			context: 'camps',
+			context: 'camp_days_activities_tracker',
 		};
-
+		
 		const response = await this.attendancesService.createAttendance(
 			camp_attendance_body,
 			req,

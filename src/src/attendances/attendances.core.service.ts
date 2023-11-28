@@ -45,8 +45,10 @@ export class AttendancesCoreService {
 	}
 
 	public async getByCampId(id: any, body: any, req: any, res: any) {
+		let context = body.context || 'camp_days_activities_tracker';
+
 		let query = `query MyQuery {
-			attendance(where: {context:{_eq:"camps"},context_id: {_eq:${id}}, date_time: {_gte:"${body?.start_date}", _lte:"${body?.end_date}"}}) {
+			attendance(where: {context:{_eq:${context}},context_id: {_eq:${id}}, date_time: {_gte:"${body?.start_date}", _lte:"${body?.end_date}"}}) {
 			  id
 			  lat
 			  long
@@ -82,7 +84,7 @@ export class AttendancesCoreService {
 		let variables = {};
 		let wherePagination = '';
 		let attendanceAggreage = '';
-		const filterWhere = [`context:{_eq:"${context || 'camps'}"}`];
+		const filterWhere = [`context:{_eq:"${context || 'camp_days_activities_tracker'}"}`];
 		if (start_date && end_date) {
 			filterWhere.push(
 				`date_time: {_gte:"${start_date}", _lte:"${end_date}"}`,
