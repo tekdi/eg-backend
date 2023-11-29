@@ -712,6 +712,12 @@ export class LMSService {
 						data_list?.data?.lms_training_certificate[i]
 							?.certificate_html,
 					);
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html =
+						data_list.data.lms_training_certificate[
+							i
+						].certificate_html.replaceAll(`\"`, "'");
 				}
 
 				return response.status(200).send({
