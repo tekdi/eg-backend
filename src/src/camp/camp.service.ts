@@ -3349,6 +3349,41 @@ export class CampService {
 					data: createresponse,
 				});
 			}
+			case 'edit_camp_day_happening': {
+				const data = {
+					query: `mutation MyQuery {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {camp_day_happening:${body?.camp_day_happening}}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
+
+																		}
+					}
+				}`,
+				};
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
 			case 'edit_misc_activities': {
 				const data = {
 					query: `mutation MyQuery($misc_activities: json) {
