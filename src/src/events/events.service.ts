@@ -239,6 +239,7 @@ export class EventsService {
 		context
 		end_time
 		id
+		params
 		location
 		location_type
 		start_date
