@@ -228,38 +228,3 @@ export class AttendancesCoreService {
 		return result;
 	}
 }
-/*
-SELECT
-			users.*,
-			(
-				SELECT json_agg(attendance.*)
-				FROM attendance
-				WHERE events.context = attendance.context
-				AND events.context_id = attendance.context_id
-			) AS attendance_list,
-			program_facilitators.*
-		FROM
-			events
-	
-		LEFT JOIN
-			attendance
-		ON
-			events.context = attendance.context
-			AND events.context_id = attendance.context_id
-	
-		LEFT JOIN
-			users
-		ON
-			events.user_id = users.user_id
-	
-		LEFT JOIN
-			attendances
-		ON
-			users.user_id = attendances.user_id
-	
-		LEFT JOIN
-			program_facilitators
-		ON
-			users.program_id = program_facilitators.program_id
-			AND users.academic_year_id = program_facilitators.academic_year_id;	
-*/

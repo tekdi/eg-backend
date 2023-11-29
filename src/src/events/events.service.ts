@@ -578,6 +578,16 @@ export class EventsService {
 				  start_time
 				  end_date
 				  end_time
+				  params
+				  master_trainer
+				  name
+				  reminders
+				  location
+				  location_type
+				  created_by
+				  updated_by
+				  created_at
+				  updated_at
 				}
 			  }
 			  `,

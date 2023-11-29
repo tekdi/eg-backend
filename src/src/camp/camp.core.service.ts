@@ -362,6 +362,7 @@ export class CampCoreService {
 				learning_lesson_plans_master(order_by:{ordering:asc}) {
 				  ordering
 				  id
+				  title
 				  session_tracks(where:{camp_id:{_eq:${id}}}) {
 					id
 					status
