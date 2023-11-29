@@ -1390,4 +1390,26 @@ export class UserService {
 			message: 'USER_CAMP_DETAILS_SUCCESS',
 		});
 	}
+
+	//get first_name and last_name from user_id
+	public async getUserName(user_id) {
+		const query = `query MyQuery {
+			users(where: {id: {_eq: ${user_id}}}) {
+					first_name
+					middle_name
+					last_name
+				  }
+			  }`;
+		try {
+			const data_list = (
+				await this.hasuraServiceFromServices.getData({ query })
+			)?.data?.users;
+			//console.log('data_list cunt------>>>>>', data_list.length);
+			//console.log('data_list------>>>>>', data_list);
+			return data_list;
+		} catch (error) {
+			console.log('getUserName:', error, error.stack);
+			return [];
+		}
+	}
 }
