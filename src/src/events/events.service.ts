@@ -569,15 +569,37 @@ export class EventsService {
 	}
 	async getParticipants(req, id, res) {
 		const data = {
-			query: `query searchById {
-				events(where:{attendances:{user_id:{_eq:${id}},context:{_eq:"events"}}}) {
+			query: `query MyQuery {
+				users(where: {attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}) {
 				  id
-				  type
-				  user_id
-				  start_date
-				  start_time
-				  end_date
-				  end_time
+				  first_name
+				  middle_name
+				  last_name
+				  profile_url
+				  aadhar_verified
+				  aadhaar_verification_mode
+				  program_faciltators {
+					documents_status
+					status
+				  }
+				  attendances(where: {context: {_eq: "events"}, context_id: {_eq: ${id}}}) {
+					id
+					context
+					context_id
+					status
+					user_id
+					created_by
+					updated_by
+					created_at
+					date_time
+					lat
+					long
+					user_id
+					rsvp
+					fa_is_processed
+					fa_similarity_percentage
+				}
+				
 				}
 			  }
 			  `,
