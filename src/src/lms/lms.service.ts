@@ -380,7 +380,7 @@ export class LMSService {
 	}
 
 	//cron issue certificate run every 5 minutes
-	@Cron(CronExpression.EVERY_10_SECONDS)
+	@Cron(CronExpression.EVERY_5_MINUTES)
 	async issueCertificate() {
 		console.log('cron job: issueCertificate started at time ' + new Date());
 		//fetch all test tracking data which has certificate_status null
@@ -453,7 +453,7 @@ export class LMSService {
 				}
 				//issue certificate
 				if (issue_status == 'true') {
-					let temp_html_code = html_code;
+					let certificateTemplate = html_code;
 					let issuance_date = moment().format('YYYY-MM-DD');
 					let issuance_date_tx = moment().format('DD MMM YYYY');
 					let expiration_date = moment(issuance_date)
@@ -473,15 +473,15 @@ export class LMSService {
 						let certificate_id = certificate_data?.id;
 						let uid = 'P-' + certificate_id + '-' + user_id;
 						//update html code
-						temp_html_code = temp_html_code.replace(
+						certificateTemplate = certificateTemplate.replace(
 							'{{name}}',
 							user_name,
 						);
-						temp_html_code = temp_html_code.replace(
+						certificateTemplate = certificateTemplate.replace(
 							'{{issue_date}}',
 							issuance_date_tx,
 						);
-						temp_html_code = temp_html_code.replace(
+						certificateTemplate = certificateTemplate.replace(
 							'{{user_id}}',
 							uid,
 						);
@@ -510,7 +510,7 @@ export class LMSService {
 												const newHtml = code;
 
 												const root =
-													parse(temp_html_code);
+													parse(certificateTemplate);
 
 												// Find the img tag with id "qrcode"
 												const qrcodeImg =
@@ -538,14 +538,14 @@ export class LMSService {
 								},
 							);
 							if (modifiedHtml != null) {
-								temp_html_code = modifiedHtml;
+								certificateTemplate = modifiedHtml;
 							}
 						} catch (e) {
 							console.log(e);
 						}
 						//update certificate html
 						const lmsCertificate = new LMSCertificateDto({
-							certificate_html: temp_html_code,
+							certificate_html: certificateTemplate,
 						});
 						await this.updateCertificateHtml(
 							lmsCertificate,
