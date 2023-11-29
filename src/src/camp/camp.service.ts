@@ -3441,7 +3441,7 @@ export class CampService {
 		const endDate = startDateObject.toISOString().split('T')[0];
 		
 		let query = `query MyQuery {
-			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lt:"${endDate}"},end_date:{_is_null:true}}) {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lt:"${endDate}"},end_date:{_is_null:true}, camp_day_happening: {_eq: "yes"}}) {
 			  id
 			  camp_id
 			  camp_day_happening
