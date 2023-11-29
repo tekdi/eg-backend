@@ -453,7 +453,7 @@ export class EventsService {
 			let checkStringResult = this.checkStrings({
 				lat: req.lat,
 				long: req.long,
-				photo_1: req.photo_1,
+				
 			});
 
 			if (!checkStringResult.success) {
