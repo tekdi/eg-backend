@@ -249,11 +249,8 @@ export class SessionsService {
 	public async getDetailData(body) {
 		let whereArr = [];
 
-		if (body.learning_lesson_plan_id) {
-			whereArr = [
-				...whereArr,
-				`{session_tracks:{learning_lesson_plan_id:{_eq:${body?.learning_lesson_plan_id}}}}`,
-			];
+		if (body.id) {
+			whereArr = [...whereArr, `{id:{_eq:${body?.id}}}`];
 		}
 
 		if (body.ordering) {
@@ -288,34 +285,27 @@ export class SessionsService {
 
 	public async getSessionDetailsById(
 		id: any,
-		body: any,
+		bodyData: any,
 		request: any,
 		response: any,
 	) {
+		const { id: sid, ...body } = bodyData || {};
 		const result = await this.getDetailData({
 			...body,
-			learning_lesson_plan_id: id,
+			id: id,
 		});
 		const currentData =
 			result?.data?.learning_lesson_plans_master?.[0] || {};
 		let data = [currentData];
+
 		if (!currentData?.ordering) {
-			const resultc = await this.getDetailData({
-				...body,
-				ordering: 1,
-			});
-			const datac = resultc.data?.learning_lesson_plans_master?.[0];
-			const resultN = await this.getDetailData({
-				...body,
-				ordering: 2,
-			});
-			const dataN = resultN.data?.learning_lesson_plans_master?.[0];
-			data = [datac, dataN];
+			data = [];
 		} else if (currentData?.ordering === 1) {
 			const resultN = await this.getDetailData({
 				...body,
 				ordering: 2,
 			});
+
 			const dataN = resultN.data?.learning_lesson_plans_master?.[0];
 			data = [...data, dataN];
 		} else if (currentData?.ordering > 1) {
