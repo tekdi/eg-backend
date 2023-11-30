@@ -3349,6 +3349,41 @@ export class CampService {
 					data: createresponse,
 				});
 			}
+			case 'edit_camp_day_happening': {
+				const data = {
+					query: `mutation MyQuery {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {camp_day_happening:${body?.camp_day_happening}}) {
+						
+																		affected_rows
+																		returning {
+																						id
+																						camp_id
+																						updated_at
+																						created_by
+																						updated_by
+																						camp_day_happening
+																						camp_day_not_happening_reason
+																						misc_activities
+																						mood
+																						start_date
+																						end_date
+
+																		}
+					}
+				}`,
+				};
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+
+				let createresponse = result?.data;
+
+				return res.json({
+					status: 200,
+					success: true,
+					data: createresponse,
+				});
+			}
 			case 'edit_misc_activities': {
 				const data = {
 					query: `mutation MyQuery($misc_activities: json) {
@@ -3436,8 +3471,12 @@ export class CampService {
 		res: any,
 	) {
 		const dateString = body?.start_date.split('T')[0];
+		const startDateObject = new Date(dateString);
+		startDateObject.setDate(startDateObject.getDate() + 1);
+		const endDate = startDateObject.toISOString().split('T')[0];
+		
 		let query = `query MyQuery {
-			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_eq:"${dateString}"},end_date:{_is_null:true}}) {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lt:"${endDate}"},end_date:{_is_null:true}}) {
 			  id
 			  camp_id
 			  camp_day_happening
@@ -3453,6 +3492,7 @@ export class CampService {
 			}
 		  }		  
 		  `;
+
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -3488,7 +3528,7 @@ export class CampService {
 
 	public async getPreviousCampAcitivityById(id, body, req, res) {
 		let query = `query MyQuery {
-			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq:${id}}, end_date: {_is_null: true}}, limit: 1) {
+			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq:${id}}, end_date: {_is_null: true}, camp_day_happening: {_eq: "yes"}}, limit: 1) {
 			  id
 			  camp_id
 			  start_date
@@ -3514,7 +3554,7 @@ export class CampService {
 			return res.json({
 				status: 200,
 				success: true,
-				data: result?.camp_days_activities_tracker?.[0],
+				data: result?.camp_days_activities_tracker?.[0] || {},
 			});
 		} else {
 			return res.json({

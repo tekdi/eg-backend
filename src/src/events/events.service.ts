@@ -239,6 +239,7 @@ export class EventsService {
 		context
 		end_time
 		id
+		params
 		location
 		location_type
 		start_date
@@ -453,7 +454,6 @@ export class EventsService {
 			let checkStringResult = this.checkStrings({
 				lat: req.lat,
 				long: req.long,
-				photo_1: req.photo_1,
 			});
 
 			if (!checkStringResult.success) {
@@ -569,15 +569,37 @@ export class EventsService {
 	}
 	async getParticipants(req, id, res) {
 		const data = {
-			query: `query searchById {
-				events(where:{attendances:{user_id:{_eq:${id}},context:{_eq:"events"}}}) {
+			query: `query MyQuery {
+				users(where: {attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}) {
 				  id
-				  type
-				  user_id
-				  start_date
-				  start_time
-				  end_date
-				  end_time
+				  first_name
+				  middle_name
+				  last_name
+				  profile_url
+				  aadhar_verified
+				  aadhaar_verification_mode
+				  program_faciltators {
+					documents_status
+					status
+				  }
+				  attendances(where: {context: {_eq: "events"}, context_id: {_eq: ${id}}}) {
+					id
+					context
+					context_id
+					status
+					user_id
+					created_by
+					updated_by
+					created_at
+					date_time
+					lat
+					long
+					user_id
+					rsvp
+					fa_is_processed
+					fa_similarity_percentage
+				}
+				
 				}
 			  }
 			  `,
@@ -590,5 +612,48 @@ export class EventsService {
 			message: 'Data found Successfully',
 			data: result.data,
 		});
+	}
+
+	public async createEventAttendance(body: any, req: any, res: any) {
+		(body.status = body?.status || null),
+			(body.context = body?.context || 'events'),
+			(body.created_by = req?.mw_userid),
+			(body.updated_by = req?.mw_userid);
+
+		let response = await this.hasuraService.q(
+			'attendance',
+			{
+				...body,
+			},
+			[],
+			false,
+			[
+				'id',
+				'context',
+				'context_id',
+				'user_id',
+				'created_by',
+				'updated_by',
+				'lat',
+				'long',
+				'photo_1',
+			],
+		);
+
+		if (response?.attendance?.id) {
+			return res.json({
+				status: 200,
+				success: true,
+				message: 'EVENT_ATTENDANCE_SUCCESS',
+				data: response,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				message: 'EVENT_ATTENDANCE_ERROR',
+				data: {},
+			});
+		}
 	}
 }
