@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { query } from 'express';
 
 @Injectable()
 export class EventsService {
@@ -163,49 +164,63 @@ export class EventsService {
 
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
-			query: `query MyQuery {
-		events(where: {created_by: {_in: ${JSON.stringify(allIpList)}}}) {
-		  id
-		  location
-		  location_type
-		  name
-		  context
-		  context_id
-		  master_trainer
-		  reminders
-		  end_date
-		  end_time
-		  start_date
-		  start_time
-		  type
-		  created_by
-		  updated_by
-		  user_id
-		  attendances {
-			context
-			context_id
-			created_by
-			date_time
-			id
-			lat
-			long
-			rsvp
-			status
-			updated_by
-			user_id
-			user{
-			  first_name
-			  id
-			  last_name
-			  middle_name
-			  profile_url
-			  aadhar_verified
-			  aadhaar_verification_mode
-			}
-		  }
-		}
-	  }`,
+			query: `query MyQuery4 {
+				events(where: {
+					_or: [
+						{
+							created_by: {
+								_in: ${JSON.stringify(allIpList)}
+							}
+						},
+						{
+							created_by: {
+								_is_null: true
+							}
+						}
+					]
+				}) {
+					id
+					location
+					location_type
+					name
+					context
+					context_id
+					master_trainer
+					reminders
+					end_date
+					end_time
+					start_date
+					start_time
+					type
+					created_by
+					updated_by
+					user_id
+					attendances {
+						context
+						context_id
+						created_by
+						date_time
+						id
+						lat
+						long
+						rsvp
+						status
+						updated_by
+						user_id
+						user {
+							first_name
+							id
+							last_name
+							middle_name
+							profile_url
+							aadhar_verified
+							aadhaar_verification_mode
+						}
+					}
+				}
+			}`,
 		};
+		
 		const eventsList = await this.hasuraService.postData(getQuery);
 		if (eventsList?.data?.events?.length > 0) {
 			return response.status(200).send({
@@ -454,7 +469,6 @@ export class EventsService {
 			let checkStringResult = this.checkStrings({
 				lat: req.lat,
 				long: req.long,
-				
 			});
 
 			if (!checkStringResult.success) {
