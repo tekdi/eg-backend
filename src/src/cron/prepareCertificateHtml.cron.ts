@@ -24,7 +24,7 @@ export class PrepareCertificateHtmlCron {
 	) {}
 
 	//cron issue certificate run every 5 minutes
-	@Cron(CronExpression.EVERY_10_SECONDS)
+	@Cron(CronExpression.EVERY_5_MINUTES)
 	async prepareCertificateHtml() {
 		console.log('cron job: issueCertificate started at time ' + new Date());
 		//fetch all test tracking data which has certificate_status null
@@ -51,12 +51,6 @@ export class PrepareCertificateHtmlCron {
 				let getUserList = await this.userService.getUserName(user_id);
 				let user_name = '';
 				if (getUserList.length > 0) {
-					/*let first_name = '';
-					let middle_name = '';
-					let last_name = '';
-					let temp = 'rushi gawali';
-					let temp_r = await this.CapitalizeEachWord(temp);*/
-
 					user_name += getUserList[0]?.first_name
 						? (await this.method.CapitalizeEachWord(
 								getUserList[0].first_name,
