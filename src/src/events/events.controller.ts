@@ -103,7 +103,7 @@ export class EventsController {
 	}
 	@Get('/:id/get-participants')
 	@UseGuards(new AuthGuard())
-	getParticipants(@Req() req: any, @Param('id') id: any, @Res() res: any) {
-		return this.eventsService.getParticipants(req, id, res);
+	getParticipants(@Req() req: any, @Param('id') id: any,@Body()body:any, @Res() res: any) {
+		return this.eventsService.getParticipants(req, id,body, res);
 	}
 }
