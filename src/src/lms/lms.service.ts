@@ -607,7 +607,7 @@ export class LMSService {
 			return res.status(400).json({
 				success: true,
 				message: 'Data found successfully',
-				data: {},
+				data: [],
 				error: result,
 			});
 		}
