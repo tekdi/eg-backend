@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { query } from 'express';
 
 @Injectable()
 export class EventsService {
@@ -164,7 +163,7 @@ export class EventsService {
 
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
-			query: `query MyQuery4 {
+			query: `query MyQuery {
 				events(where: {
 					_or: [
 						{
