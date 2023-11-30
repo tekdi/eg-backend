@@ -102,9 +102,10 @@ export class LMSController {
 	@UseGuards(new AuthGuard())
 	public async getList(
 		@Req() req: any,
+		@Body()body:any,
 		@Param('id') id: any,
 		@Res() res: any,
 	) {
-		return this.lmsService.getList(req, id, res);
+		return this.lmsService.getList(req,body, id, res);
 	}
 }

@@ -555,11 +555,21 @@ export class LMSService {
 			});
 		}
 	}
-	public async getList(req,user_id,res){
-		
+	public async getList(req, body, user_id, res) {
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let skip = page > 1 ? limit * (page - 1) : 0;
+
 		const data = {
-			query : `query MyQuery {
-				lms_test_tracking(where: {user_id: {_eq: ${user_id}}}) {
+			query: `query MyQuery($limit:Int, $offset:Int) {
+				lms_test_tracking_aggregate(where: {user_id: {_eq: ${user_id}}}) {
+					aggregate {
+					  count
+					}
+				}
+				lms_test_tracking(where: {user_id: {_eq: ${user_id}}}, limit: $limit,
+					offset: $offset,) {
 				  context
 				  context_id
 				  status
@@ -572,13 +582,34 @@ export class LMSService {
 				}
 			  }
 			  
-			  `
-		}
+			  `,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
 		const result = await this.hasuraService.getData(data);
-		return res.status(200).json({
-			success: true,
-			message:"Data found successfully",
-			data:result.data.lms_test_tracking
-		})
+		const count =
+			result?.data?.lms_test_tracking_aggregate?.aggregate?.count || 0;
+		const totalPages = Math.ceil(count / limit);
+
+		if (result?.data) {
+			return res.status(200).json({
+				success: true,
+				message: 'Data found successfully',
+				data: result?.data?.lms_test_tracking || [],
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
+			});
+		} else {
+			return res.status(400).json({
+				success: true,
+				message: 'Data found successfully',
+				data: {},
+				error: result,
+			});
+		}
 	}
 }
