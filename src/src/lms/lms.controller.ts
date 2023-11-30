@@ -98,7 +98,7 @@ export class LMSController {
 			response,
 		);
 	}
-	@Get('/:id/get-list')
+	@Get('/:id/get-certificates')
 	@UseGuards(new AuthGuard())
 	public async getList(
 		@Req() req: any,
