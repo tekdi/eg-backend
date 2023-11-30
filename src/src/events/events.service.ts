@@ -734,8 +734,15 @@ export class EventsService {
 					created_at
 					updated_at
 					start_date
+					start_time
 					end_date
+					end_time
 					name
+					location
+					location_type
+					type
+					params
+					master_trainer
 				}
 			}`,
 			variables: {
