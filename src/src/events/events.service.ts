@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { isNumber } from 'class-validator';
+import { query } from 'express';
 
 @Injectable()
 export class EventsService {
@@ -164,48 +166,62 @@ export class EventsService {
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
-		events(where: {created_by: {_in: ${JSON.stringify(allIpList)}}}) {
-		  id
-		  location
-		  location_type
-		  name
-		  context
-		  context_id
-		  master_trainer
-		  reminders
-		  end_date
-		  end_time
-		  start_date
-		  start_time
-		  type
-		  created_by
-		  updated_by
-		  user_id
-		  attendances {
-			context
-			context_id
-			created_by
-			date_time
-			id
-			lat
-			long
-			rsvp
-			status
-			updated_by
-			user_id
-			user{
-			  first_name
-			  id
-			  last_name
-			  middle_name
-			  profile_url
-			  aadhar_verified
-			  aadhaar_verification_mode
-			}
-		  }
-		}
-	  }`,
+				events(where: {
+					_or: [
+						{
+							created_by: {
+								_in: ${JSON.stringify(allIpList)}
+							}
+						},
+						{
+							created_by: {
+								_is_null: true
+							}
+						}
+					]
+				}) {
+					id
+					location
+					location_type
+					name
+					context
+					context_id
+					master_trainer
+					reminders
+					end_date
+					end_time
+					start_date
+					start_time
+					type
+					created_by
+					updated_by
+					user_id
+					attendances {
+						context
+						context_id
+						created_by
+						date_time
+						id
+						lat
+						long
+						rsvp
+						status
+						updated_by
+						user_id
+						user {
+							first_name
+							id
+							last_name
+							middle_name
+							profile_url
+							aadhar_verified
+							aadhaar_verification_mode
+						}
+					}
+				}
+			}`,
 		};
+		
 		const eventsList = await this.hasuraService.postData(getQuery);
 		if (eventsList?.data?.events?.length > 0) {
 			return response.status(200).send({
@@ -567,10 +583,36 @@ export class EventsService {
 			});
 		}
 	}
-	async getParticipants(req, id, res) {
+	async getParticipants(req, id, body, res) {
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
+		const offset = page > 1 ? limit * (page - 1) : 0;
+		let facilitator_id;
+		let searchQuery = '';
+		if (body.search && isNumber(body.search)) {
+			facilitator_id = body.search;
+			searchQuery = `id: {_eq: ${facilitator_id}}`;
+		} else if (body.search) {
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+				} else {
+					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+				}
+			}
+		}
 		const data = {
-			query: `query MyQuery {
-				users(where: {attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}) {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				users_aggregate(where: {attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+					aggregate {
+						count
+					}
+				}
+				users(where: {${searchQuery} attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit,
+				offset: $offset) {
 				  id
 				  first_name
 				  middle_name
@@ -588,29 +630,27 @@ export class EventsService {
 					context_id
 					status
 					user_id
-					created_by
-					updated_by
 					created_at
 					date_time
 					lat
 					long
 					user_id
 					rsvp
-					fa_is_processed
-					fa_similarity_percentage
 				}
-				
-				}
-			  }
-			  `,
+			}
+		}
+	`
 		};
-
 		const result = await this.hasuraServiceFromServices.getData(data);
-
+		const count = result?.data?.users_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
 		return res.status(200).send({
 			success: true,
 			message: 'Data found Successfully',
-			data: result.data,
+			data: result.data.users,
+			totalPages: totalPages,
+			currentPage: page,
+			limit,
 		});
 	}
 
