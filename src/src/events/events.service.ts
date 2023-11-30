@@ -648,15 +648,23 @@ export class EventsService {
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
-
-		return res.status(200).send({
-			success: true,
-			message: 'Data found Successfully',
-			data: result.data.users,
-			totalPages: totalPages,
-			currentPage: page,
-			limit,
-		});
+		
+		if (result?.data) {
+			return res.status(200).send({
+				success: true,
+				message: 'Data found Successfully',
+				data: result?.data?.users,
+				totalPages: totalPages,
+				currentPage: page,
+				limit,
+			});
+		} else {
+			return res.status(401).send({
+				success: true,
+				message: 'Data not found',
+				data: [],error:result
+			});
+		}
 	}
 
 	public async createEventAttendance(body: any, req: any, res: any) {
