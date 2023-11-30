@@ -639,20 +639,25 @@ export class EventsService {
 				}
 			}
 		}
-	`,
+	`,variables: {
+		limit: limit,
+		offset: offset,
+	},
 		};
-		
+
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
-		return res.status(200).send({
-			success: true,
-			message: 'Data found Successfully',
-			data: result.data.users,
-			totalPages: totalPages,
-			currentPage: page,
-			limit,
-		});
+		
+			return res.status(200).send({
+				success: true,
+				message: 'Data found Successfully',
+				data: result.data.users,
+				totalPages: totalPages,
+				currentPage: page,
+				limit,
+			});
+		
 	}
 
 	public async createEventAttendance(body: any, req: any, res: any) {
@@ -680,7 +685,7 @@ export class EventsService {
 				'photo_1',
 			],
 		);
-		
+
 		if (response?.attendance?.id) {
 			return res.json({
 				status: 200,
@@ -702,24 +707,9 @@ export class EventsService {
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
 		const offset = page > 1 ? limit * (page - 1) : 0;
-		let facilitator_id;
-		let searchQuery = '';
-		if (body.search && isNumber(body.search)) {
-			facilitator_id = body.search;
-			searchQuery = `id: {_eq: ${facilitator_id}}`;
-		} else if (body.search) {
-			if (body.search && body.search !== '') {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
 
-				if (last_name?.length > 0) {
-					searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
-				} else {
-					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
-				}
-			}
-		}
 		const todayDate = moment().format('YYYY-MM-DD');
+
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
 				users_aggregate(where: {attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
@@ -727,7 +717,7 @@ export class EventsService {
 						count
 					}
 				}
-				users(where: {${searchQuery} attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+				users(where: {attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					id
 					first_name
 					middle_name
@@ -753,19 +743,32 @@ export class EventsService {
 						name
 					}
 				}
-			}`,
+			}`,variables: {
+				limit: limit,
+				offset: offset,
+			},
 		};
-		
+
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
-		return res.status(200).send({
-			success: true,
-			message: 'Data found Successfully',
-			data: result.data.users,
-			totalPages: totalPages,
-			currentPage: page,
-			limit,
-		});
+
+		if (result?.data) {
+			return res.status(200).send({
+				success: true,
+				message: 'Data found Successfully',
+				data: result.data.users,
+				totalPages: totalPages,
+				currentPage: page,
+				limit,
+			});
+		} else {
+			return res.status(400).send({
+				success: false,
+				message: 'Data not found',
+				data: [],
+				error: result,
+			});
+		}
 	}
 }
