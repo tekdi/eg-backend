@@ -299,8 +299,19 @@ export class SessionsService {
 		const currentData =
 			result?.data?.learning_lesson_plans_master?.[0] || {};
 		let data = [currentData];
-
-		if (currentData?.ordering === 1) {
+		if (!currentData?.ordering) {
+			const resultc = await this.getDetailData({
+				...body,
+				ordering: 1,
+			});
+			const datac = resultc.data?.learning_lesson_plans_master?.[0];
+			const resultN = await this.getDetailData({
+				...body,
+				ordering: 2,
+			});
+			const dataN = resultN.data?.learning_lesson_plans_master?.[0];
+			data = [datac, dataN];
+		} else if (currentData?.ordering === 1) {
 			const resultN = await this.getDetailData({
 				...body,
 				ordering: 2,
