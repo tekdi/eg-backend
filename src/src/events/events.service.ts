@@ -3,7 +3,7 @@ import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { isNumber } from 'class-validator';
-import { query } from 'express';
+const moment = require('moment');
 
 @Injectable()
 export class EventsService {
@@ -221,7 +221,7 @@ export class EventsService {
 				}
 			}`,
 		};
-		
+
 		const eventsList = await this.hasuraService.postData(getQuery);
 		if (eventsList?.data?.events?.length > 0) {
 			return response.status(200).send({
@@ -639,19 +639,25 @@ export class EventsService {
 				}
 			}
 		}
-	`
+	`,variables: {
+		limit: limit,
+		offset: offset,
+	},
 		};
+
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
-		return res.status(200).send({
-			success: true,
-			message: 'Data found Successfully',
-			data: result.data.users,
-			totalPages: totalPages,
-			currentPage: page,
-			limit,
-		});
+		
+			return res.status(200).send({
+				success: true,
+				message: 'Data found Successfully',
+				data: result.data.users,
+				totalPages: totalPages,
+				currentPage: page,
+				limit,
+			});
+		
 	}
 
 	public async createEventAttendance(body: any, req: any, res: any) {
@@ -693,6 +699,75 @@ export class EventsService {
 				success: false,
 				message: 'EVENT_ATTENDANCE_ERROR',
 				data: {},
+			});
+		}
+	}
+
+	async getEventsListByUserId(req, id, body, res) {
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
+		const offset = page > 1 ? limit * (page - 1) : 0;
+
+		const todayDate = moment().format('YYYY-MM-DD');
+
+		const data = {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				users_aggregate(where: {attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+					aggregate {
+						count
+					}
+				}
+				users(where: {attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+					id
+					first_name
+					middle_name
+					last_name
+					profile_url
+					aadhar_verified
+					aadhaar_verification_mode
+					program_faciltators {
+						documents_status
+						status
+					}
+					events(where: {user_id:{_eq: ${id}},end_date:{_gte:"${todayDate}"}}) {
+						id
+						user_id
+						context
+						context_id
+						created_by
+						updated_by
+						created_at
+						updated_at
+						start_date
+						end_date
+						name
+					}
+				}
+			}`,variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+		const count = result?.data?.users_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
+
+		if (result?.data) {
+			return res.status(200).send({
+				success: true,
+				message: 'Data found Successfully',
+				data: result.data.users,
+				totalPages: totalPages,
+				currentPage: page,
+				limit,
+			});
+		} else {
+			return res.status(400).send({
+				success: false,
+				message: 'Data not found',
+				data: [],
+				error: result,
 			});
 		}
 	}
