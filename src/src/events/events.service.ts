@@ -634,30 +634,29 @@ export class EventsService {
 					date_time
 					lat
 					long
-					user_id
 					rsvp
 				}
 			}
 		}
-	`,variables: {
-		limit: limit,
-		offset: offset,
-	},
+	`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
 		};
 
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
-		
-			return res.status(200).send({
-				success: true,
-				message: 'Data found Successfully',
-				data: result.data.users,
-				totalPages: totalPages,
-				currentPage: page,
-				limit,
-			});
-		
+
+		return res.status(200).send({
+			success: true,
+			message: 'Data found Successfully',
+			data: result.data.users,
+			totalPages: totalPages,
+			currentPage: page,
+			limit,
+		});
 	}
 
 	public async createEventAttendance(body: any, req: any, res: any) {
@@ -712,52 +711,40 @@ export class EventsService {
 
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
-				users_aggregate(where: {attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+				events_aggregate(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}) {
 					aggregate {
 						count
 					}
 				}
-				users(where: {attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+				events(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					id
-					first_name
-					middle_name
-					last_name
-					profile_url
-					aadhar_verified
-					aadhaar_verification_mode
-					program_faciltators {
-						documents_status
-						status
-					}
-					events(where: {user_id:{_eq: ${id}},end_date:{_gte:"${todayDate}"}}) {
-						id
-						user_id
-						context
-						context_id
-						created_by
-						updated_by
-						created_at
-						updated_at
-						start_date
-						end_date
-						name
-					}
+					user_id
+					context
+					context_id
+					created_by
+					updated_by
+					created_at
+					updated_at
+					start_date
+					end_date
+					name
 				}
-			}`,variables: {
+			}`,
+			variables: {
 				limit: limit,
 				offset: offset,
 			},
 		};
 
 		const result = await this.hasuraServiceFromServices.getData(data);
-		const count = result?.data?.users_aggregate?.aggregate?.count;
+		const count = result?.data?.events_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
 
 		if (result?.data) {
 			return res.status(200).send({
 				success: true,
 				message: 'Data found Successfully',
-				data: result.data.users,
+				data: result.data.events,
 				totalPages: totalPages,
 				currentPage: page,
 				limit,
