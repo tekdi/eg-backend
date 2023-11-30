@@ -7,7 +7,6 @@ import { LMSCertificateDto } from './dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 
 const moment = require('moment');
-const qr = require('qrcode');
 const { parse, HTMLElement } = require('node-html-parser');
 
 @Injectable()
@@ -555,5 +554,31 @@ export class LMSService {
 				error: error,
 			});
 		}
+	}
+	public async getList(req,user_id,res){
+		
+		const data = {
+			query : `query MyQuery {
+				lms_test_tracking(where: {user_id: {_eq: ${user_id}}}) {
+				  context
+				  context_id
+				  status
+				  created_at
+				  updated_at
+				  id
+				  score
+				  user_id
+				  certificate_status
+				}
+			  }
+			  
+			  `
+		}
+		const result = await this.hasuraService.getData(data);
+		return res.status(200).json({
+			success: true,
+			message:"Data found successfully",
+			data:result.data.lms_test_tracking
+		})
 	}
 }
