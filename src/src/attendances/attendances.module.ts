@@ -9,6 +9,6 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 	imports: [HasuraModule, HasuraModuleFromServices],
 	controllers: [AttendancesController],
 	providers: [AttendancesService, AttendancesCoreService],
-	exports: [AttendancesService],
+	exports: [AttendancesService, AttendancesCoreService],
 })
 export class AttendancesModule {}

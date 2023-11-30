@@ -227,6 +227,27 @@ export class AttendancesCoreService {
 		const result = this.hasuraServiceFromServices.getData(data);
 		return result;
 	}
+
+	async getUserAttendancePresentList(user_id, context, context_id) {
+		const query = `query MyQuery {
+				attendance(where: {user_id: {_eq: ${user_id}}, context: {_eq: ${context}}, context_id: {_eq:${context_id}}, status: {_eq: "present"}}) {
+					id
+					status
+					context
+					context_id
+				  }
+			  }`;
+		try {
+			const data_list = (await this.hasuraServiceFromServices.getData({ query }))
+				?.data?.attendance;
+			//console.log('data_list cunt------>>>>>', data_list.length);
+			//console.log('data_list------>>>>>', data_list);
+			return data_list;
+		} catch (error) {
+			console.log('getUserAttendancePresentList:', error, error.stack);
+			return [];
+		}
+	}
 }
 /*
 SELECT
