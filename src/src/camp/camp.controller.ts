@@ -336,4 +336,20 @@ export class CampController {
 			response,
 		);
 	}
+
+	@Get('/random-attendance/:id')
+	@UseGuards(new AuthGuard())
+	getRandomAttendanceGeneration(
+		@Param('id') id: number,
+		@Req() request: any,
+
+		@Res() response: Response,
+	) {
+		return this.campService.getRandomAttendanceGeneration(
+			id,
+
+			request,
+			response,
+		);
+	}
 }
