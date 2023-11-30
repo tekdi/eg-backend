@@ -3474,7 +3474,7 @@ export class CampService {
 		const startDateObject = new Date(dateString);
 		startDateObject.setDate(startDateObject.getDate() + 1);
 		const endDate = startDateObject.toISOString().split('T')[0];
-		
+
 		let query = `query MyQuery {
 			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lt:"${endDate}"},end_date:{_is_null:true}}) {
 			  id
@@ -3492,7 +3492,6 @@ export class CampService {
 			}
 		  }		  
 		  `;
-
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -3563,5 +3562,85 @@ export class CampService {
 				data: {},
 			});
 		}
+	}
+
+	public async getRandomAttendanceGeneration(id: any, req: any, res: any) {
+		let camp_id = id;
+		const currentDate = new Date().toISOString().split('T')[0];
+		const currentDateObject = new Date(currentDate);
+
+		// Get the date 7 days before the current date
+		const sevenDaysLess = new Date(currentDateObject);
+		sevenDaysLess.setDate(currentDateObject.getDate() - 7);
+		const formattedSevenDaysLess = sevenDaysLess
+			.toISOString()
+			.split('T')[0]; // Format seven days less
+
+		// Get the date 1 day before the current date
+		const oneDayLess = new Date(currentDateObject);
+		oneDayLess.setDate(currentDateObject.getDate() - 1);
+		const formattedOneDayLess = oneDayLess.toISOString().split('T')[0];
+
+		const sql = `SELECT
+		gs.date AS date,
+		COUNT(a.id) AS count_of_data
+	  FROM
+		generate_series(
+		  '${formattedSevenDaysLess}'::timestamp,
+		  '${formattedOneDayLess}'::timestamp,
+		  '1 day'
+		) AS gs(date)
+	  LEFT JOIN
+		attendance a ON DATE_TRUNC('day', a.date_time) = gs.date AND a.photo_1 IS NOT NULL AND a.context_id = ${camp_id}
+	  WHERE
+		gs.date >= '${formattedSevenDaysLess}' AND gs.date <= '${currentDate}'
+	  GROUP BY
+		gs.date
+	  ORDER BY
+		gs.date;
+	  
+		;`;
+		const attendance_data = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		).result;
+
+		const filteredDates = attendance_data.reduce(
+			(filtered, entry, index) => {
+				if (index === 0 || parseInt(entry[1]) === 0) return filtered;
+				filtered.push(entry[0].split(' ')[0]);
+				return filtered;
+			},
+			[],
+		);
+
+		const dateObjects = filteredDates.map(
+			(dateString) => new Date(dateString),
+		);
+		const highestDate = new Date(Math.max(...dateObjects));
+
+		// Calculate the difference in days
+		const today = new Date();
+		const differenceInTime = Math.abs(
+			today.getTime() - highestDate.getTime(),
+		);
+		const differenceInDays = Math.floor(
+			differenceInTime / (1000 * 3600 * 24),
+		);
+
+		if (filteredDates.length == 0) {
+			return res.json({
+				learner_camp_attendance_data: 1,
+			});
+		}
+
+		if (filteredDates.length == 1 && differenceInDays == 7) {
+			return res.json({
+				learner_camp_attendance_data: 1,
+			});
+		}
+
+		return res.json({
+			learner_camp_attendance_data: 0,
+		});
 	}
 }
