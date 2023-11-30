@@ -20,6 +20,10 @@ export class LMSTestTrackingDto {
 	@Expose()
 	score: string;
 	@Expose()
+	marks_total: string;
+	@Expose()
+	marks_obtained: string;
+	@Expose()
 	status: string;
 	@Expose()
 	created_at: string;
@@ -27,6 +31,10 @@ export class LMSTestTrackingDto {
 	created_by: number;
 	@Expose()
 	score_details: any;
+	@Expose()
+	context: string;
+	@Expose()
+	context_id: number;
 
 	constructor(partial: Partial<LMSTestTrackingDto>) {
 		Object.assign(this, partial);

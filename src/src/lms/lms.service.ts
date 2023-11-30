@@ -1,65 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
-import { UserService } from 'src/user/user.service';
-import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { ConfigService } from '@nestjs/config';
 import { SearchLMSDto } from './dto/search-lms.dto';
+import { LMSCertificateDto } from './dto/lms-certificate.dto';
+import { UserService } from 'src/user/user.service';
+
+const moment = require('moment');
+const qr = require('qrcode');
+const { parse, HTMLElement } = require('node-html-parser');
 
 @Injectable()
 export class LMSService {
-	public table = 'events';
-	public fillable = [
-		'context',
-		'context_id',
-		'created_by',
-		'end_date',
-		'end_time',
-		'location',
-		'location_type',
-		'start_date',
-		'start_time',
-		'updated_by',
-		'user_id',
-	];
-	public returnFields = [
-		'id',
-		'name',
-		'context',
-		'context_id',
-		'created_by',
-		'end_date',
-		'end_time',
-		'type',
-		'location',
-		'master_trainer',
-		'location_type',
-		'start_date',
-		'start_time',
-		'updated_by',
-		'user_id',
-		'reminders',
-	];
-
-	public attendanceReturnFields = [
-		'id',
-		'user_id',
-		'context_id',
-		'created_by',
-		'context',
-		'status',
-		'lat',
-		'long',
-		'rsvp',
-		'photo_1',
-		'photo_2',
-		'date_time',
-		'updated_by',
-	];
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private readonly userService: UserService,
+		private configService: ConfigService,
+		private userService: UserService,
 	) {}
 
 	public async getTestAllowStatus(req, response) {
@@ -141,6 +97,28 @@ export class LMSService {
 				data: {},
 			});
 		}
+
+		//calculate marks total and score
+		let marks_obtained = parseInt(lmsTestTrackingDto.score);
+		let marks_total = 0;
+		//calculate marks
+		let score_detail = lmsTestTrackingDto['score_details'];
+		for (let i = 0; i < score_detail.length; i++) {
+			let section = score_detail[i];
+			let itemData = section?.data;
+			if (itemData) {
+				for (let j = 0; j < itemData.length; j++) {
+					let dataItem = itemData[j];
+					marks_total += parseInt(dataItem?.item?.maxscore);
+				}
+			}
+		}
+		//calculate score
+		let score = (marks_obtained / marks_total) * 100;
+		//set new values
+		lmsTestTrackingDto.score = score.toString();
+		lmsTestTrackingDto.marks_obtained = marks_obtained.toString();
+		lmsTestTrackingDto.marks_total = marks_total.toString();
 
 		let queryObj = '';
 		Object.keys(lmsTestTrackingDto).forEach((e) => {
@@ -419,5 +397,163 @@ export class LMSService {
 		}
 	}
 
-	//delete
+	//downloadCertificate
+	public async downloadCertificate(
+		lmsCertificateDto: LMSCertificateDto,
+		req,
+		response,
+	) {
+		try {
+			if (!req?.mw_userid) {
+				return response.status(400).send({
+					success: false,
+					message: 'Invalid User',
+					data: {},
+				});
+			}
+
+			const user_id = lmsCertificateDto.user_id;
+			const test_id = lmsCertificateDto.test_id;
+
+			let query_user_test = `query Getlms_training_certificate {
+			lms_training_certificate(
+			  where:{
+				user_id:{
+				  _eq: "${user_id}"
+				},
+				test_id:{
+				  _eq: "${test_id}"
+				}
+			  }
+			){
+				user_id
+				certificate_status
+				id
+				issuance_date
+				expiration_date
+				test_id
+				certificate_html
+			}
+		}`;
+			let data_list = await this.hasuraService.getData({
+				query: query_user_test,
+			});
+			if (data_list?.data?.lms_training_certificate.length > 0) {
+				for (
+					let i = 0;
+					i < data_list?.data?.lms_training_certificate.length;
+					i++
+				) {
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html = JSON.parse(
+						data_list?.data?.lms_training_certificate[i]
+							?.certificate_html,
+					);
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html =
+						data_list.data.lms_training_certificate[
+							i
+						].certificate_html.replaceAll(`\"`, "'");
+				}
+
+				return response.status(200).send({
+					success: true,
+					message: 'Certificate Found',
+					data: data_list?.data?.lms_training_certificate,
+				});
+			} else {
+				return response.status(200).send({
+					success: false,
+					message: 'No Certificate Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			return response.status(404).send({
+				success: false,
+				message: 'Error in Certificate Found!',
+				error: error,
+			});
+		}
+	}
+
+	//verifyCertificate
+	public async verifyCertificate(
+		lmsCertificateDto: LMSCertificateDto,
+		req,
+		response,
+	) {
+		try {
+			if (!req?.mw_userid) {
+				return response.status(400).send({
+					success: false,
+					message: 'Invalid User',
+					data: {},
+				});
+			}
+
+			const id = lmsCertificateDto.id;
+
+			let query_user_test = `query Getlms_training_certificate {
+			lms_training_certificate(
+			  where:{
+				id:{
+				  _eq: "${id}"
+				}
+			  }
+			){
+				user_id
+				certificate_status
+				id
+				issuance_date
+				expiration_date
+				test_id
+				certificate_html
+			}
+		}`;
+			let data_list = await this.hasuraService.getData({
+				query: query_user_test,
+			});
+			if (data_list?.data?.lms_training_certificate.length > 0) {
+				for (
+					let i = 0;
+					i < data_list?.data?.lms_training_certificate.length;
+					i++
+				) {
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html = JSON.parse(
+						data_list?.data?.lms_training_certificate[i]
+							?.certificate_html,
+					);
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html =
+						data_list.data.lms_training_certificate[
+							i
+						].certificate_html.replaceAll(`\"`, "'");
+				}
+
+				return response.status(200).send({
+					success: true,
+					message: 'Certificate Found',
+					data: data_list?.data?.lms_training_certificate,
+				});
+			} else {
+				return response.status(200).send({
+					success: false,
+					message: 'No Certificate Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			return response.status(404).send({
+				success: false,
+				message: 'Error in Certificate Found!',
+				error: error,
+			});
+		}
+	}
 }
