@@ -101,6 +101,7 @@ export class EventsController {
 	) {
 		return this.eventsService.remove(+id, header, response);
 	}
+
 	@Get('/:id/get-participants')
 	@UseGuards(new AuthGuard())
 	getParticipants(@Req() req: any, @Param('id') id: any,@Body()body:any, @Res() res: any) {
@@ -120,5 +121,11 @@ export class EventsController {
 			request,
 			response,
 		);
+	}
+
+	@Get('/:id/get-events-list')
+	@UseGuards(new AuthGuard())
+	getEventsListByUserId(@Req() req: any, @Param('id') id: any,@Body()body:any, @Res() res: any) {
+		return this.eventsService.getEventsListByUserId(req, id,body, res);
 	}
 }
