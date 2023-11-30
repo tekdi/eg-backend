@@ -4,9 +4,6 @@ import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { ConfigService } from '@nestjs/config';
 import { SearchLMSDto } from './dto/search-lms.dto';
 import { LMSCertificateDto } from './dto/lms-certificate.dto';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { html_code } from './certificate_html';
-import { AttendancesCoreService } from 'src/attendances/attendances.core.service';
 import { UserService } from 'src/user/user.service';
 
 const moment = require('moment');
@@ -18,7 +15,6 @@ export class LMSService {
 	constructor(
 		private readonly hasuraService: HasuraService,
 		private configService: ConfigService,
-		private readonly attendanceCoreService: AttendancesCoreService,
 		private userService: UserService,
 	) {}
 
@@ -101,6 +97,28 @@ export class LMSService {
 				data: {},
 			});
 		}
+
+		//calculate marks total and score
+		let marks_obtained = parseInt(lmsTestTrackingDto.score);
+		let marks_total = 0;
+		//calculate marks
+		let score_detail = lmsTestTrackingDto['score_details'];
+		for (let i = 0; i < score_detail.length; i++) {
+			let section = score_detail[i];
+			let itemData = section?.data;
+			if (itemData) {
+				for (let j = 0; j < itemData.length; j++) {
+					let dataItem = itemData[j];
+					marks_total += parseInt(dataItem?.item?.maxscore);
+				}
+			}
+		}
+		//calculate score
+		let score = (marks_obtained / marks_total) * 100;
+		//set new values
+		lmsTestTrackingDto.score = score.toString();
+		lmsTestTrackingDto.marks_obtained = marks_obtained.toString();
+		lmsTestTrackingDto.marks_total = marks_total.toString();
 
 		let queryObj = '';
 		Object.keys(lmsTestTrackingDto).forEach((e) => {
@@ -379,349 +397,6 @@ export class LMSService {
 		}
 	}
 
-	//cron issue certificate run every 5 minutes
-	@Cron(CronExpression.EVERY_5_MINUTES)
-	async issueCertificate() {
-		console.log('cron job: issueCertificate started at time ' + new Date());
-		//fetch all test tracking data which has certificate_status null
-		const userForIssueCertificate = await this.fetchTestTrackingData(
-			parseInt(
-				this.configService.get<string>(
-					'LMS_CERTIFICATE_ISSUE_BATCH_SIZE',
-				),
-			),
-		);
-		if (userForIssueCertificate.length > 0) {
-			for (let i = 0; i < userForIssueCertificate.length; i++) {
-				let userTestData = userForIssueCertificate[i];
-				let issue_status = '';
-				let minPercentage = parseFloat(
-					this.configService.get<string>(
-						'LMS_CERTIFICATE_ISSUE_MIN_SCORE',
-					),
-				);
-				let user_id = userTestData?.user_id;
-				let test_id = userTestData?.test_id;
-				let context = userTestData?.context;
-				let context_id = userTestData?.context_id;
-				let getUserList = await this.userService.getUserName(user_id);
-				let user_name = '';
-				if (getUserList.length > 0) {
-					/*let first_name = '';
-					let middle_name = '';
-					let last_name = '';
-					let temp = 'rushi gawali';
-					let temp_r = await this.CapitalizeEachWord(temp);*/
-
-					user_name += getUserList[0]?.first_name
-						? (await this.CapitalizeEachWord(
-								getUserList[0].first_name,
-						  )) + ' '
-						: '';
-					user_name += getUserList[0]?.middle_name
-						? (await this.CapitalizeEachWord(
-								getUserList[0].middle_name,
-						  )) + ' '
-						: '';
-					user_name += getUserList[0]?.last_name
-						? (await this.CapitalizeEachWord(
-								getUserList[0].last_name,
-						  )) + ' '
-						: '';
-				}
-				//get attendance status
-				let attendance_valid = false;
-				let usrAttendanceList =
-					await this.attendanceCoreService.getUserAttendancePresentList(
-						user_id,
-						context,
-						context_id,
-					);
-				let minAttendance = parseInt(
-					this.configService.get<string>(
-						'LMS_CERTIFICATE_ISSUE_MIN_ATTENDANCE',
-					),
-				);
-				if (usrAttendanceList.length >= minAttendance) {
-					attendance_valid = true;
-				}
-				//check certificate criteria
-				if (userTestData?.score >= minPercentage && attendance_valid) {
-					issue_status = 'true';
-				} else {
-					issue_status = 'false';
-				}
-				//issue certificate
-				if (issue_status == 'true') {
-					let certificateTemplate = html_code;
-					let issuance_date = moment().format('YYYY-MM-DD');
-					let issuance_date_tx = moment().format('DD MMM YYYY');
-					let expiration_date = moment(issuance_date)
-						.add(12, 'M')
-						.format('YYYY-MM-DD');
-					const lmsCertificate = new LMSCertificateDto({
-						user_id: user_id,
-						test_id: test_id,
-						certificate_status: 'Issued',
-						issuance_date: issuance_date,
-						expiration_date: expiration_date,
-					});
-					const certificate_data = await this.issueCertificateHtml(
-						lmsCertificate,
-					);
-					if (certificate_data != null) {
-						let certificate_id = certificate_data?.id;
-						let uid = 'P-' + certificate_id + '-' + user_id;
-						//update html code
-						certificateTemplate = certificateTemplate.replace(
-							'{{name}}',
-							user_name,
-						);
-						certificateTemplate = certificateTemplate.replace(
-							'{{issue_date}}',
-							issuance_date_tx,
-						);
-						certificateTemplate = certificateTemplate.replace(
-							'{{user_id}}',
-							uid,
-						);
-
-						//qr code
-						try {
-							let qr_code_verify_link =
-								this.configService.get<string>(
-									'LMS_CERTIFICATE_VERIFY_URL',
-								) +
-								'' +
-								certificate_id;
-
-							let modifiedHtml = null;
-							const modified = await new Promise(
-								(resolve, reject) => {
-									qr.toDataURL(
-										qr_code_verify_link,
-										function (err, code) {
-											if (err) {
-												resolve(null);
-												return;
-											}
-
-											if (code) {
-												const newHtml = code;
-
-												const root =
-													parse(certificateTemplate);
-
-												// Find the img tag with id "qrcode"
-												const qrcodeImg =
-													root.querySelector(
-														'#qr_certificate',
-													);
-
-												if (qrcodeImg) {
-													qrcodeImg.setAttribute(
-														'src',
-														newHtml,
-													);
-													modifiedHtml =
-														root.toString();
-
-													resolve(modifiedHtml);
-												} else {
-													resolve(null);
-												}
-											} else {
-												resolve(null);
-											}
-										},
-									);
-								},
-							);
-							if (modifiedHtml != null) {
-								certificateTemplate = modifiedHtml;
-							}
-						} catch (e) {
-							console.log(e);
-						}
-						//update certificate html
-						const lmsCertificate = new LMSCertificateDto({
-							certificate_html: certificateTemplate,
-						});
-						await this.updateCertificateHtml(
-							lmsCertificate,
-							certificate_id,
-						);
-					} else {
-						//error in create certificate
-					}
-				}
-				// Update in attendance data in database
-				await this.markCertificateStatus(
-					userTestData?.id,
-					issue_status,
-				);
-			}
-		}
-	}
-	async CapitalizeEachWord(sentence) {
-		if (sentence == null || sentence === '') {
-			return '';
-		} else {
-			const arr = sentence.split(' ');
-			for (var i = 0; i < arr.length; i++) {
-				arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
-			}
-			const c_sentence = arr.join(' ');
-			return c_sentence;
-		}
-	}
-	async fetchTestTrackingData(limit: number) {
-		const query = `
-			query Getlms_test_tracking {
-				lms_test_tracking(
-				where:{
-					certificate_status:{
-						_is_null: true
-					}
-				},
-				limit: ${limit}
-				){
-					id
-					user_id
-					test_id
-					score
-					context
-					context_id
-				}
-			}
-			`;
-		try {
-			const data_list = (await this.hasuraService.getData({ query }))
-				?.data?.lms_test_tracking;
-			//console.log('data_list cunt------>>>>>', data_list.length);
-			//console.log('data_list------>>>>>', data_list);
-			return data_list;
-		} catch (error) {
-			console.log('fetchTestTrackingData:', error, error.stack);
-			return [];
-		}
-	}
-
-	async issueCertificateHtml(lmsCertificateDto: LMSCertificateDto) {
-		let queryObj = '';
-		Object.keys(lmsCertificateDto).forEach((e) => {
-			if (lmsCertificateDto[e] && lmsCertificateDto[e] != '') {
-				if (e === 'certificate_html') {
-					queryObj += `${e}: ${JSON.stringify(
-						JSON.stringify(lmsCertificateDto[e]),
-					)}, `;
-				} else if (Array.isArray(lmsCertificateDto[e])) {
-					queryObj += `${e}: "${JSON.stringify(
-						lmsCertificateDto[e],
-					)}", `;
-				} else {
-					queryObj += `${e}: "${lmsCertificateDto[e]}", `;
-				}
-			}
-		});
-
-		let query = `mutation CreateTrainingCertificate {
-			  insert_lms_training_certificate_one(object: {${queryObj}}) {
-			   id
-			  }
-			}
-			`;
-
-		try {
-			let query_response = await this.hasuraService.getData({
-				query: query,
-			});
-			if (query_response?.data?.insert_lms_training_certificate_one) {
-				//success issueCertificateHtml
-				return query_response?.data
-					?.insert_lms_training_certificate_one;
-			} else {
-				//error in issueCertificateHtml
-				return null;
-			}
-		} catch (error) {
-			//error in issueCertificateHtml
-			return null;
-		}
-	}
-	async updateCertificateHtml(lmsCertificateDto: LMSCertificateDto, id) {
-		let queryObj = '';
-		Object.keys(lmsCertificateDto).forEach((e) => {
-			if (lmsCertificateDto[e] && lmsCertificateDto[e] != '') {
-				if (e === 'certificate_html') {
-					queryObj += `${e}: ${JSON.stringify(
-						JSON.stringify(lmsCertificateDto[e]),
-					)}, `;
-				} else if (Array.isArray(lmsCertificateDto[e])) {
-					queryObj += `${e}: "${JSON.stringify(
-						lmsCertificateDto[e],
-					)}", `;
-				} else {
-					queryObj += `${e}: "${lmsCertificateDto[e]}", `;
-				}
-			}
-		});
-
-		let query = `mutation UpdateTrainingCertificate {
-			  update_lms_training_certificate_by_pk(
-				pk_columns: {
-					id: "${id}"
-				},
-				_set: {${queryObj}}
-				) 
-			  {
-			   id
-			  }
-			}
-			`;
-		try {
-			let query_response = await this.hasuraService.getData({
-				query: query,
-			});
-			if (query_response?.data?.update_lms_training_certificate_by_pk) {
-				//success issueCertificateHtml
-				return query_response?.data
-					?.update_lms_training_certificate_by_pk;
-			} else {
-				//error in issueCertificateHtml
-				return null;
-			}
-		} catch (error) {
-			//error in issueCertificateHtml
-			return null;
-		}
-	}
-	async markCertificateStatus(id, status) {
-		let updateQuery = `
-			mutation MyMutation {
-				update_lms_test_tracking_by_pk (
-					pk_columns: {
-						id: "${id}"
-					},
-					_set: {
-						certificate_status: ${status}
-					}
-				) {
-					id
-				}
-			}
-		`;
-		try {
-			return (
-				(await this.hasuraService.getData({ query: updateQuery })).data
-					.update_lms_test_tracking_by_pk.id === id
-			);
-		} catch (error) {
-			console.log('markCertificateStatus:', error, error.stack);
-			return [];
-		}
-	}
-
 	//downloadCertificate
 	public async downloadCertificate(
 		lmsCertificateDto: LMSCertificateDto,
@@ -748,6 +423,84 @@ export class LMSService {
 				},
 				test_id:{
 				  _eq: "${test_id}"
+				}
+			  }
+			){
+				user_id
+				certificate_status
+				id
+				issuance_date
+				expiration_date
+				test_id
+				certificate_html
+			}
+		}`;
+			let data_list = await this.hasuraService.getData({
+				query: query_user_test,
+			});
+			if (data_list?.data?.lms_training_certificate.length > 0) {
+				for (
+					let i = 0;
+					i < data_list?.data?.lms_training_certificate.length;
+					i++
+				) {
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html = JSON.parse(
+						data_list?.data?.lms_training_certificate[i]
+							?.certificate_html,
+					);
+					data_list.data.lms_training_certificate[
+						i
+					].certificate_html =
+						data_list.data.lms_training_certificate[
+							i
+						].certificate_html.replaceAll(`\"`, "'");
+				}
+
+				return response.status(200).send({
+					success: true,
+					message: 'Certificate Found',
+					data: data_list?.data?.lms_training_certificate,
+				});
+			} else {
+				return response.status(200).send({
+					success: false,
+					message: 'No Certificate Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			return response.status(404).send({
+				success: false,
+				message: 'Error in Certificate Found!',
+				error: error,
+			});
+		}
+	}
+
+	//verifyCertificate
+	public async verifyCertificate(
+		lmsCertificateDto: LMSCertificateDto,
+		req,
+		response,
+	) {
+		try {
+			if (!req?.mw_userid) {
+				return response.status(400).send({
+					success: false,
+					message: 'Invalid User',
+					data: {},
+				});
+			}
+
+			const id = lmsCertificateDto.id;
+
+			let query_user_test = `query Getlms_training_certificate {
+			lms_training_certificate(
+			  where:{
+				id:{
+				  _eq: "${id}"
 				}
 			  }
 			){

@@ -69,15 +69,30 @@ export class LMSController {
 		return this.lmsService.searchTestTracking(searchLMSDto, response);
 	}
 
-	//create certificate detail
+	//download certificate detail
 	@Post('/certificate/download')
 	@UseGuards(new AuthGuard())
-	public async issueCertificate(
+	public async downloadCertificate(
 		@Body() lmsCertificateDto: LMSCertificateDto,
 		@Req() header: Request,
 		@Res() response: Response,
 	) {
 		return this.lmsService.downloadCertificate(
+			lmsCertificateDto,
+			header,
+			response,
+		);
+	}
+
+	//verify certificate detail
+	@Post('/certificate/verify')
+	@UseGuards(new AuthGuard())
+	public async verifyCertificate(
+		@Body() lmsCertificateDto: LMSCertificateDto,
+		@Req() header: Request,
+		@Res() response: Response,
+	) {
+		return this.lmsService.verifyCertificate(
 			lmsCertificateDto,
 			header,
 			response,

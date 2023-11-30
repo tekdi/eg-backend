@@ -20,6 +20,10 @@ export class LMSTestTrackingDto {
 	@Expose()
 	score: string;
 	@Expose()
+	marks_total: string;
+	@Expose()
+	marks_obtained: string;
+	@Expose()
 	status: string;
 	@Expose()
 	created_at: string;
