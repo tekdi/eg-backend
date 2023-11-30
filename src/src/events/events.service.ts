@@ -454,7 +454,6 @@ export class EventsService {
 			let checkStringResult = this.checkStrings({
 				lat: req.lat,
 				long: req.long,
-				
 			});
 
 			if (!checkStringResult.success) {
@@ -613,5 +612,48 @@ export class EventsService {
 			message: 'Data found Successfully',
 			data: result.data,
 		});
+	}
+
+	public async createEventAttendance(body: any, req: any, res: any) {
+		(body.status = body?.status || null),
+			(body.context = body?.context || 'events'),
+			(body.created_by = req?.mw_userid),
+			(body.updated_by = req?.mw_userid);
+
+		let response = await this.hasuraService.q(
+			'attendance',
+			{
+				...body,
+			},
+			[],
+			false,
+			[
+				'id',
+				'context',
+				'context_id',
+				'user_id',
+				'created_by',
+				'updated_by',
+				'lat',
+				'long',
+				'photo_1',
+			],
+		);
+
+		if (response?.attendance?.id) {
+			return res.json({
+				status: 200,
+				success: true,
+				message: 'EVENT_ATTENDANCE_SUCCESS',
+				data: response,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				message: 'EVENT_ATTENDANCE_ERROR',
+				data: {},
+			});
+		}
 	}
 }
