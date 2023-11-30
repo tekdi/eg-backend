@@ -123,7 +123,7 @@ export class EventsController {
 		);
 	}
 
-	@Get('/:id/get-events-list')
+	@Get('/:id/get-events-by-user_id')
 	@UseGuards(new AuthGuard())
 	getEventsListByUserId(@Req() req: any, @Param('id') id: any,@Body()body:any, @Res() res: any) {
 		return this.eventsService.getEventsListByUserId(req, id,body, res);
