@@ -7,7 +7,6 @@ import { LMSCertificateDto } from './dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 
 const moment = require('moment');
-const qr = require('qrcode');
 const { parse, HTMLElement } = require('node-html-parser');
 
 @Injectable()
@@ -553,6 +552,63 @@ export class LMSService {
 				success: false,
 				message: 'Error in Certificate Found!',
 				error: error,
+			});
+		}
+	}
+	public async getList(req, body, user_id, res) {
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let skip = page > 1 ? limit * (page - 1) : 0;
+
+		const data = {
+			query: `query MyQuery($limit:Int, $offset:Int) {
+				lms_test_tracking_aggregate(where: {user_id: {_eq: ${user_id}}}) {
+					aggregate {
+					  count
+					}
+				}
+				lms_test_tracking(where: {user_id: {_eq: ${user_id}}}, limit: $limit,
+					offset: $offset,) {
+				  context
+				  context_id
+				  status
+				  created_at
+				  updated_at
+				  id
+				  score
+				  user_id
+				  certificate_status
+				}
+			  }
+			  
+			  `,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const result = await this.hasuraService.getData(data);
+		const count =
+			result?.data?.lms_test_tracking_aggregate?.aggregate?.count || 0;
+		const totalPages = Math.ceil(count / limit);
+
+		if (result?.data) {
+			return res.status(200).json({
+				success: true,
+				message: 'Data found successfully',
+				data: result?.data?.lms_test_tracking || [],
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
+			});
+		} else {
+			return res.status(400).json({
+				success: true,
+				message: 'Data found successfully',
+				data: [],
+				error: result,
 			});
 		}
 	}
