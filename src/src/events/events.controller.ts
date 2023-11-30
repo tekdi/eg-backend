@@ -106,4 +106,19 @@ export class EventsController {
 	getParticipants(@Req() req: any, @Param('id') id: any, @Res() res: any) {
 		return this.eventsService.getParticipants(req, id, res);
 	}
+
+	@Post('/add/attendance')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	createEventAttendance(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: Response,
+	) {
+		return this.eventsService.createEventAttendance(
+			body,
+			request,
+			response,
+		);
+	}
 }
