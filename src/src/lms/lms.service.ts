@@ -576,6 +576,7 @@ export class LMSService {
 				  created_at
 				  updated_at
 				  id
+					test_id
 				  score
 				  user_id
 				  certificate_status
