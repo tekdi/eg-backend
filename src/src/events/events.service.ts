@@ -471,8 +471,7 @@ export class EventsService {
 		const tableName = 'attendance';
 		if (req?.status == 'present') {
 			let checkStringResult = this.checkStrings({
-				lat: req.lat,
-				long: req.long,
+				
 			});
 
 			if (!checkStringResult.success) {
