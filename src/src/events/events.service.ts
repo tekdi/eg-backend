@@ -636,6 +636,18 @@ export class EventsService {
 					long
 					rsvp
 				}
+				lms_test_trackings(where: {context: {_eq:"events"},context_id:{_eq:${id}}}) {
+					context
+					context_id
+					status
+					created_at
+					updated_at
+					id
+					test_id
+					score
+					user_id
+					certificate_status
+				}
 			}
 		}
 	`,
@@ -648,7 +660,7 @@ export class EventsService {
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
-		
+
 		if (result?.data) {
 			return res.status(200).send({
 				success: true,
@@ -662,7 +674,8 @@ export class EventsService {
 			return res.status(401).send({
 				success: true,
 				message: 'Data not found',
-				data: [],error:result
+				data: [],
+				error: result,
 			});
 		}
 	}
