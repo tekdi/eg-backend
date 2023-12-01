@@ -3,6 +3,8 @@ import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { isNumber } from 'class-validator';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom, map } from 'rxjs';
 const moment = require('moment');
 
 @Injectable()
@@ -56,6 +58,7 @@ export class EventsService {
 		'updated_by',
 	];
 	constructor(
+		private readonly httpService: HttpService,
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly userService: UserService,
@@ -784,6 +787,29 @@ export class EventsService {
 				data: [],
 				error: result,
 			});
+		}
+	}
+
+	public async campQuestionList(body: any, request: any, response: any) {
+		try {
+			const data = await lastValueFrom(
+				this.httpService
+					.post(
+						'https://sunbirdsaas.com/api/question/v1/list',
+						body,
+						{
+							headers: {
+								'x-hasura-admin-secret':
+									process.env.HASURA_ADMIN_SECRET,
+								'Content-Type': 'application/json',
+							},
+						},
+					)
+					.pipe(map((res) => res.data)),
+			);
+			return response.status(200).json(data);
+		} catch (e) {
+			return response.status(400).json({ message: e.message });
 		}
 	}
 }
