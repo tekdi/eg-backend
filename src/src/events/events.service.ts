@@ -730,17 +730,17 @@ export class EventsService {
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
 		const offset = page > 1 ? limit * (page - 1) : 0;
-
+		const context = body?.context || 'events';
 		const todayDate = moment().format('YYYY-MM-DD');
 
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
-				events_aggregate(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}) {
+				events_aggregate(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}) {
 					aggregate {
 						count
 					}
 				}
-				events(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: "events"}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+				events(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					id
 					user_id
 					context
@@ -759,7 +759,20 @@ export class EventsService {
 					type
 					params
 					master_trainer
+					lms_test_tracking(where: {user_id: {_eq: ${id}},context:{_eq:${context}}}) {
+						context
+						context_id
+						status
+						created_at
+						updated_at
+						id
+						test_id
+						score
+						user_id
+						certificate_status
+					}
 				}
+				
 			}`,
 			variables: {
 				limit: limit,
