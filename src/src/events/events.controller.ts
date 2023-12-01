@@ -104,8 +104,13 @@ export class EventsController {
 
 	@Get('/:id/get-participants')
 	@UseGuards(new AuthGuard())
-	getParticipants(@Req() req: any, @Param('id') id: any,@Body()body:any, @Res() res: any) {
-		return this.eventsService.getParticipants(req, id,body, res);
+	getParticipants(
+		@Req() req: any,
+		@Param('id') id: any,
+		@Body() body: any,
+		@Res() res: any,
+	) {
+		return this.eventsService.getParticipants(req, id, body, res);
 	}
 
 	@Post('/add/attendance')
@@ -125,7 +130,22 @@ export class EventsController {
 
 	@Get('/:id/get-events-by-user_id')
 	@UseGuards(new AuthGuard())
-	getEventsListByUserId(@Req() req: any, @Param('id') id: any,@Body()body:any, @Res() res: any) {
-		return this.eventsService.getEventsListByUserId(req, id,body, res);
+	getEventsListByUserId(
+		@Req() req: any,
+		@Param('id') id: any,
+		@Body() body: any,
+		@Res() res: any,
+	) {
+		return this.eventsService.getEventsListByUserId(req, id, body, res);
+	}
+
+	@Post('/camp-question-list')
+	@UseGuards(new AuthGuard())
+	campQuestionList(
+		@Body() body: string,
+		@Req() request: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.campQuestionList(body, request, response);
 	}
 }
