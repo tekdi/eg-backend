@@ -140,7 +140,6 @@ export class EventsController {
 	}
 
 	@Post('/camp-question-list')
-	@UseGuards(new AuthGuard())
 	campQuestionList(
 		@Body() body: string,
 		@Req() request: Request,
