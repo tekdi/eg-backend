@@ -586,13 +586,14 @@ export class EventsService {
 		}
 	}
 	async getParticipants(req, id, body, res) {
+		const auth_users = await this.userService.ipUserInfo(req);
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
 		const offset = page > 1 ? limit * (page - 1) : 0;
 		let facilitator_id;
 		let searchQuery = '';
-		if (body.search && isNumber(body.search)) {
-			facilitator_id = body.search;
+		if (body.search && !isNaN(body.search)) {
+			facilitator_id = parseInt(body.search);
 			searchQuery = `id: {_eq: ${facilitator_id}}`;
 		} else if (body.search) {
 			if (body.search && body.search !== '') {
@@ -606,6 +607,7 @@ export class EventsService {
 				}
 			}
 		}
+
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
 				users_aggregate(where: {attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {

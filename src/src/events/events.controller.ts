@@ -102,7 +102,7 @@ export class EventsController {
 		return this.eventsService.remove(+id, header, response);
 	}
 
-	@Get('/:id/get-participants')
+	@Post('/:id/get-participants')
 	@UseGuards(new AuthGuard())
 	getParticipants(
 		@Req() req: any,
