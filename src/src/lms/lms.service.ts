@@ -592,7 +592,6 @@ export class LMSService {
 				offset: offset,
 			},
 		};
-console.log("ss",data.query);
 
 		const result = await this.hasuraService.getData(data);
 		const count =
