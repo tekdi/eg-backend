@@ -586,7 +586,7 @@ export class EventsService {
 		}
 	}
 	async getParticipants(req, id, body, res) {
-		
+
 		const auth_users = await this.userService.ipUserInfo(req,"staff");
 				
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
@@ -663,7 +663,6 @@ export class EventsService {
 				offset: offset,
 			},
 		};
-console.log("aaa",data.query);
 
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
