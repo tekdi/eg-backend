@@ -586,12 +586,15 @@ export class EventsService {
 		}
 	}
 	async getParticipants(req, id, body, res) {
-		const auth_users = await this.userService.ipUserInfo(req);
+
+		const auth_users = await this.userService.ipUserInfo(req,"staff");
+				
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
 		const offset = page > 1 ? limit * (page - 1) : 0;
 		let facilitator_id;
 		let searchQuery = '';
+
 		if (body.search && !isNaN(body.search)) {
 			facilitator_id = parseInt(body.search);
 			searchQuery = `id: {_eq: ${facilitator_id}}`;
@@ -610,12 +613,12 @@ export class EventsService {
 
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
-				users_aggregate(where: {attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+				users_aggregate(where: {program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}},attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					aggregate {
 						count
 					}
 				}
-				users(where: {${searchQuery} attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit,
+				users(where: {${searchQuery}program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}}, attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit,
 				offset: $offset) {
 				  id
 				  first_name
