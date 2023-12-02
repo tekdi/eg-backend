@@ -470,9 +470,7 @@ export class EventsService {
 	public async updateAttendanceDetail(id: number, req: any, response: any) {
 		const tableName = 'attendance';
 		if (req?.status == 'present') {
-			let checkStringResult = this.checkStrings({
-				
-			});
+			let checkStringResult = this.checkStrings({});
 
 			if (!checkStringResult.success) {
 				return response.status(400).send({
@@ -683,6 +681,33 @@ export class EventsService {
 	}
 
 	public async createEventAttendance(body: any, req: any, res: any) {
+		let facilitator_id = req?.mw_userid;
+
+		//check validation if provided learner comes under given facilitator
+
+		let validation_query = `query MyQuery {
+		program_beneficiaries(where: {user_id: {_eq:${body?.user_id}}}){
+		  facilitator_id
+		}
+	  }
+	  `;
+
+		const result = await this.hasuraServiceFromServices.getData({
+			query: validation_query,
+		});
+
+		let result_facilitator_id =
+			result?.data?.program_beneficiaries?.[0]?.facilitator_id;
+
+		if (facilitator_id != result_facilitator_id) {
+			return res.json({
+				status: 422,
+				success: false,
+				message: 'INVALID_FACILITATOR_ACCESS_DENIED',
+				data: {},
+			});
+		}
+
 		(body.status = body?.status || null),
 			(body.context = body?.context || 'events'),
 			(body.created_by = req?.mw_userid),
@@ -771,7 +796,6 @@ export class EventsService {
 						certificate_status
 					}
 				}
-				
 			}`,
 			variables: {
 				limit: limit,
