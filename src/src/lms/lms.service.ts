@@ -580,6 +580,9 @@ export class LMSService {
 				  score
 				  user_id
 				  certificate_status
+					events(where: {context: {_eq: "events"}}) {
+						name
+					}
 				}
 			  }
 			  
@@ -589,6 +592,7 @@ export class LMSService {
 				offset: offset,
 			},
 		};
+console.log("ss",data.query);
 
 		const result = await this.hasuraService.getData(data);
 		const count =
