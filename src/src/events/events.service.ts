@@ -637,6 +637,13 @@ export class EventsService {
 					lat
 					long
 					rsvp
+					event{
+						id
+						name
+						user_id
+						start_date
+						end_date
+					}
 				}
 				lms_test_trackings(where: {context: {_eq:"events"},context_id:{_eq:${id}}}) {
 					context
