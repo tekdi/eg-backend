@@ -580,6 +580,9 @@ export class LMSService {
 				  score
 				  user_id
 				  certificate_status
+					events(where: {context: {_eq: "events"}}) {
+						name
+					}
 				}
 			  }
 			  
