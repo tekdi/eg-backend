@@ -94,6 +94,31 @@ export class CampService {
 				});
 			}
 
+			//check if the learers are active in another camp
+
+			let learner_validation_query = `query MyQuery {
+				group_users(where: {user_id: {_in:[${learner_ids}]}, status: {_eq: "active"}}) {
+				  user_id
+				  group_id
+				}
+			  }
+				  
+			  `;
+
+			const hasura_validation_response =
+				await this.hasuraServiceFromServices.getData({
+					query: learner_validation_query,
+				});
+
+			if (hasura_validation_response?.data?.group_users?.length > 0) {
+				return response.json({
+					status: 422,
+					data: {},
+					success: false,
+					message: 'DUPLICATE_ACTIVE_CAMP_LEARNER_ERROR',
+				});
+			}
+
 			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
 
 			let query = `query MyQuery {
@@ -1030,7 +1055,28 @@ export class CampService {
 				let resultCreate = [];
 				let resultActive = [];
 				let resultInactive = [];
-				let qury = `query MyQuery {
+
+				let learner_validation_query = `query MyQuery2 {
+					camps(where: {id: {_neq:${camp_id}}, group_users: {user_id: {_in: [${learner_ids}]}, status: {_eq: "active"}}}) {
+					  id
+					}
+				  }
+				  `;
+				const hasura_validation_response =
+					await this.hasuraServiceFromServices.getData({
+						query: learner_validation_query,
+					});
+
+				if (hasura_validation_response?.data?.camps?.length > 0) {
+					return {
+						status: 422,
+						data: {},
+						success: false,
+						message: 'DUPLICATE_ACTIVE_CAMP_LEARNER_ERROR',
+					};
+				}
+
+				let qury = `query MyQuery {	
 					camps_by_pk(id:${camp_id})  {
 					group_id
 					group {
