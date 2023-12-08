@@ -1643,82 +1643,10 @@ export class BeneficiariesService {
 				request,
 			);
 
-		if (body?.status == 'dropout') {
-			//check if the learner is active in any camp
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			//check if the learner is active in any camp and update the status to inactive
 
-			body.user_id = parseInt(body?.user_id);
-			let query = `query MyQuery {
-						group_users(where: {user_id: {_eq:${body?.user_id}}, status: {_eq:"active"}}){
-						  user_id
-						  status
-						  id
-						}
-					  }
-					  `;
-
-			const result = await this.hasuraServiceFromServices.getData({
-				query: query,
-			});
-
-			let group_users_data = result?.data?.group_users;
-
-			//if active learner in a camp then update its status to inactive
-
-			if (group_users_data?.length > 0) {
-				let update_body = {
-					status: 'inactive',
-				};
-
-				let group_user_id = group_users_data?.[0].id;
-				await this.hasuraService.q(
-					'group_users',
-					{
-						...update_body,
-						id: group_user_id,
-					},
-					['status'],
-					true,
-					['id', 'status'],
-				);
-			}
-		}
-
-		if (body?.status == 'rejected') {
-			//query to check if the learner is registered in a camp
-
-			let query = `query MyQuery {
-					group_users(where: {user_id: {_eq:${body?.user_id}}, status: {_eq: "active"}}) {
-					  user_id
-					  status
-					  id
-					}
-				  }
-				  `;
-			const result = await this.hasuraServiceFromServices.getData({
-				query: query,
-			});
-
-			let group_users_data = result?.data?.group_users;
-
-			//if active learner in a camp then update its status to inactive
-
-			if (group_users_data?.length > 0) {
-				let update_body = {
-					status: 'inactive',
-				};
-
-				let group_user_id = group_users_data?.[0].id;
-				await this.hasuraService.q(
-					'group_users',
-					{
-						...update_body,
-						id: group_user_id,
-					},
-					['status'],
-					true,
-					['id', 'status'],
-				);
-			}
+			await this.beneficiaryCampUpdate(body?.user_id);
 		}
 
 		return {
@@ -1768,82 +1696,10 @@ export class BeneficiariesService {
 		const status_response =
 			await this.beneficiariesCoreService.statusUpdate(body, request);
 
-		if (body?.status == 'dropout') {
-			//check if the learner is active in any camp
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			//check if the learner is active in any camp and update the status to inactive
 
-			body.user_id = parseInt(body?.user_id);
-			let query = `query MyQuery {
-					group_users(where: {user_id: {_eq:${body?.user_id}}, status: {_eq:"active"}}){
-					  user_id
-					  status
-					  id
-					}
-				  }
-				  `;
-
-			const result = await this.hasuraServiceFromServices.getData({
-				query: query,
-			});
-
-			let group_users_data = result?.data?.group_users;
-
-			//if active learner in a camp then update its status to inactive
-
-			if (group_users_data?.length > 0) {
-				let update_body = {
-					status: 'inactive',
-				};
-
-				let group_user_id = group_users_data?.[0].id;
-				await this.hasuraService.q(
-					'group_users',
-					{
-						...update_body,
-						id: group_user_id,
-					},
-					['status'],
-					true,
-					['id', 'status'],
-				);
-			}
-		}
-
-		if (body?.status == 'rejected') {
-			//query to check if the learner is registered in a camp
-
-			let query = `query MyQuery {
-					group_users(where: {user_id: {_eq:${body?.user_id}}, status: {_eq: "active"}}) {
-					  user_id
-					  status
-					  id
-					}
-				  }
-				  `;
-			const result = await this.hasuraServiceFromServices.getData({
-				query: query,
-			});
-
-			let group_users_data = result?.data?.group_users;
-
-			//if active learner in a camp then update its status to inactive
-
-			if (group_users_data?.length > 0) {
-				let update_body = {
-					status: 'inactive',
-				};
-
-				let group_user_id = group_users_data?.[0].id;
-				await this.hasuraService.q(
-					'group_users',
-					{
-						...update_body,
-						id: group_user_id,
-					},
-					['status'],
-					true,
-					['id', 'status'],
-				);
-			}
+			await this.beneficiaryCampUpdate(body?.user_id);
 		}
 
 		return {
@@ -1856,6 +1712,46 @@ export class BeneficiariesService {
 				)
 			).data,
 		};
+	}
+
+	public async beneficiaryCampUpdate(id) {
+		const user_id = parseInt(id);
+		let query = `query MyQuery {
+					group_users(where: {user_id: {_eq:${user_id}}, status: {_eq:"active"}}){
+					  user_id
+					  status
+					  id
+					}
+				  }
+				  `;
+
+		const result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let group_users_data = result?.data?.group_users;
+
+		//if active learner in a camp then update its status to inactive
+
+		if (group_users_data?.length > 0) {
+			let update_body = {
+				status: 'inactive',
+			};
+
+			let group_user_id = group_users_data?.[0].id;
+			await this.hasuraService.q(
+				'group_users',
+				{
+					...update_body,
+					id: group_user_id,
+				},
+				['status'],
+				true,
+				['id', 'status'],
+			);
+		}
+
+		return;
 	}
 
 	public async setEnrollmentStatus(body: any, request: any) {
