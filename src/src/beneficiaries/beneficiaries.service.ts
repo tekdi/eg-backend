@@ -1646,7 +1646,12 @@ export class BeneficiariesService {
 		if (body?.status == 'dropout' || body?.status == 'rejected') {
 			//check if the learner is active in any camp and update the status to inactive
 
-			await this.beneficiaryCampUpdate(body?.user_id);
+			let status = 'inactive'; // learner status to be updated in camp
+
+			await this.updateGroupMembershipStatusForUser(
+				body?.user_id,
+				status,
+			);
 		}
 
 		return {
@@ -1699,7 +1704,12 @@ export class BeneficiariesService {
 		if (body?.status == 'dropout' || body?.status == 'rejected') {
 			//check if the learner is active in any camp and update the status to inactive
 
-			await this.beneficiaryCampUpdate(body?.user_id);
+			let status = 'inactive'; // learner status to be updated in camp
+
+			await this.updateGroupMembershipStatusForUser(
+				body?.user_id,
+				status,
+			);
 		}
 
 		return {
@@ -1714,7 +1724,7 @@ export class BeneficiariesService {
 		};
 	}
 
-	public async beneficiaryCampUpdate(id) {
+	public async updateGroupMembershipStatusForUser(id, status) {
 		const user_id = parseInt(id);
 		let query = `query MyQuery {
 					group_users(where: {user_id: {_eq:${user_id}}, status: {_eq:"active"}}){
@@ -1735,7 +1745,7 @@ export class BeneficiariesService {
 
 		if (group_users_data?.length > 0) {
 			let update_body = {
-				status: 'inactive',
+				status: status,
 			};
 
 			let group_user_id = group_users_data?.[0].id;
