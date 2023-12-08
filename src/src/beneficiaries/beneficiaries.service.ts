@@ -1744,7 +1744,7 @@ export class BeneficiariesService {
 
 		let group_id = result?.data?.group_users?.[0]?.group_id;
 
-		//if active learner in a camp then update its status to inactive
+		//if active learner in a camp then update the camp status to inactive
 
 		if (group_users_data?.length > 0) {
 			let update_body = {
