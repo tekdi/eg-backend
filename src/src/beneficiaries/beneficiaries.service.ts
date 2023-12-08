@@ -1728,6 +1728,7 @@ export class BeneficiariesService {
 		const user_id = parseInt(id);
 		let query = `query MyQuery {
 					group_users(where: {user_id: {_eq:${user_id}}, status: {_eq:"active"}}){
+				     group_id
 					  user_id
 					  status
 					  id
@@ -1741,7 +1742,9 @@ export class BeneficiariesService {
 
 		let group_users_data = result?.data?.group_users;
 
-		//if active learner in a camp then update its status to inactive
+		let group_id = result?.data?.group_users?.[0]?.group_id;
+
+		//if active learner in a camp then update the camp status to inactive
 
 		if (group_users_data?.length > 0) {
 			let update_body = {
@@ -1754,6 +1757,35 @@ export class BeneficiariesService {
 				{
 					...update_body,
 					id: group_user_id,
+				},
+				['status'],
+				true,
+				['id', 'status'],
+			);
+		}
+
+		//check if after status update camp have learners
+
+		let group_validation_query = `query MyQuery {
+			groups(where: {id: {_eq: ${group_id}}, group_users: {status: {_eq: "active"}, member_type: {_eq: "member"}}}){
+			  id
+			}
+		  }
+		  `;
+		let group_validation_response =
+			await this.hasuraServiceFromServices.getData({
+				query: group_validation_query,
+			});
+
+		if (group_validation_response?.data?.groups?.length == 0) {
+			let update_body = {
+				status: 'inactive',
+			};
+			await this.hasuraService.q(
+				'groups',
+				{
+					...update_body,
+					id: group_id,
 				},
 				['status'],
 				true,
