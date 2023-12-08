@@ -2868,7 +2868,6 @@ export class CampService {
 			}
 
 			if (reassign_camp_status == 'inactive') {
-				console.log('herer 123');
 				let response = await this.campcoreservice.updateCampGroup(
 					reassign_camp_group_id,
 					{
@@ -2882,7 +2881,6 @@ export class CampService {
 
 				if (response) {
 					//query to get beneficiary id of the learner
-
 					let query = `query MyQuery {
 						program_beneficiaries(where: {user_id: {_eq:${body?.learner_id}}}){
 						  id
@@ -2890,6 +2888,7 @@ export class CampService {
 						}
 					  }
 					  `;
+
 					const new_hasura_response =
 						await this.hasuraServiceFromServices.getData({
 							query: query,
@@ -2898,6 +2897,7 @@ export class CampService {
 					const beneficiary_id =
 						new_hasura_response?.data?.program_beneficiaries?.[0]
 							?.id;
+
 					await this.hasuraService.q(
 						'program_beneficiaries',
 						{
