@@ -175,10 +175,6 @@ export class CampService {
 				false,
 				[...this.returnFieldsgroups, 'id', 'name', 'type', 'status'],
 			);
-			let create_property_object = {
-				created_by: facilitator_id,
-				updated_by: facilitator_id,
-			};
 
 			let group_id = createresponse?.groups?.id;
 			if (group_id) {
@@ -3594,7 +3590,6 @@ export class CampService {
 			}
 		  }		  
 		  `;
-		
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
