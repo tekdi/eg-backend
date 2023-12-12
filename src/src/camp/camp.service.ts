@@ -3622,8 +3622,10 @@ export class CampService {
 	}
 
 	public async getPreviousCampAcitivityById(id, body, req, res) {
+		const today = moment().format('YYYY-MM-DD');
+
 		let query = `query MyQuery {
-			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq:${id}}, end_date: {_is_null: true}, camp_day_happening: {_eq: "yes"}}, limit: 1) {
+			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq: ${id}}, end_date: {_is_null: true}, camp_day_happening: {_eq: "yes"}, start_date: {_lt: "${today}"}}, limit: 1) {
 			  id
 			  camp_id
 			  start_date
@@ -3636,6 +3638,7 @@ export class CampService {
 			  updated_by
 			}
 		  }
+		  
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
