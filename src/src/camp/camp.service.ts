@@ -2433,7 +2433,7 @@ export class CampService {
 
 		if (!response?.attendance?.id) {
 			return resp.json({
-				status: 500,
+				status: 404,
 				message: 'CAMP_ATTENDANCE_ERROR',
 				data: {},
 			});
@@ -3566,7 +3566,13 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
-		const dateString = body?.start_date.split('T')[0];
+		if (!body?.start_date || body?.start_date === '') {
+			return res.status(422).json({
+				success: false,
+				message: 'Start Date is required',
+			});
+		}
+		const dateString = body?.start_date?.split('T')[0];
 		const startDateObject = new Date(dateString);
 		startDateObject.setDate(startDateObject.getDate() + 1);
 		const endDate = startDateObject.toISOString().split('T')[0];
@@ -3588,6 +3594,7 @@ export class CampService {
 			}
 		  }		  
 		  `;
+		
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -3596,14 +3603,12 @@ export class CampService {
 		let result = hasura_response?.data;
 
 		if (result) {
-			return res.json({
-				status: 200,
+			return res.status(200).json({
 				success: true,
 				data: result,
 			});
 		} else {
-			return res.json({
-				status: 500,
+			return res.status(500).json({
 				success: false,
 				data: {},
 			});
