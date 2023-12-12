@@ -85,7 +85,9 @@ export class AttendancesCoreService {
 		let variables = {};
 		let wherePagination = '';
 		let attendanceAggreage = '';
-		const filterWhere = [`context:{_eq:"${context || 'camp_days_activities_tracker'}"}`];
+		const filterWhere = [
+			`context:{_eq:"${context || 'camp_days_activities_tracker'}"}`,
+		];
 		if (start_date && end_date) {
 			filterWhere.push(
 				`date_time: {_gte:"${start_date}", _lte:"${end_date}"}`,
@@ -239,10 +241,9 @@ export class AttendancesCoreService {
 				  }
 			  }`;
 		try {
-			const data_list = (await this.hasuraServiceFromServices.getData({ query }))
-				?.data?.attendance;
-			//console.log('data_list cunt------>>>>>', data_list.length);
-			//console.log('data_list------>>>>>', data_list);
+			const data_list = (
+				await this.hasuraServiceFromServices.getData({ query })
+			)?.data?.attendance;
 			return data_list;
 		} catch (error) {
 			console.log('getUserAttendancePresentList:', error, error.stack);
