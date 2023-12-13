@@ -175,10 +175,6 @@ export class CampService {
 				false,
 				[...this.returnFieldsgroups, 'id', 'name', 'type', 'status'],
 			);
-			let create_property_object = {
-				created_by: facilitator_id,
-				updated_by: facilitator_id,
-			};
 
 			let group_id = createresponse?.groups?.id;
 			if (group_id) {
@@ -2433,7 +2429,7 @@ export class CampService {
 
 		if (!response?.attendance?.id) {
 			return resp.json({
-				status: 500,
+				status: 404,
 				message: 'CAMP_ATTENDANCE_ERROR',
 				data: {},
 			});
@@ -3566,7 +3562,13 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
-		const dateString = body?.start_date.split('T')[0];
+		if (!body?.start_date || body?.start_date === '') {
+			return res.status(422).json({
+				success: false,
+				message: 'Start Date is required',
+			});
+		}
+		const dateString = body?.start_date?.split('T')[0];
 		const startDateObject = new Date(dateString);
 		startDateObject.setDate(startDateObject.getDate() + 1);
 		const endDate = startDateObject.toISOString().split('T')[0];
@@ -3596,14 +3598,12 @@ export class CampService {
 		let result = hasura_response?.data;
 
 		if (result) {
-			return res.json({
-				status: 200,
+			return res.status(200).json({
 				success: true,
 				data: result,
 			});
 		} else {
-			return res.json({
-				status: 500,
+			return res.status(500).json({
 				success: false,
 				data: {},
 			});
@@ -3622,8 +3622,10 @@ export class CampService {
 	}
 
 	public async getPreviousCampAcitivityById(id, body, req, res) {
+		const today = moment().format('YYYY-MM-DD');
+
 		let query = `query MyQuery {
-			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq:${id}}, end_date: {_is_null: true}, camp_day_happening: {_eq: "yes"}}, limit: 1) {
+			camp_days_activities_tracker(order_by: {start_date: desc}, where: {camp_id: {_eq: ${id}}, end_date: {_is_null: true}, camp_day_happening: {_eq: "yes"}, start_date: {_lt: "${today}"}}, limit: 1) {
 			  id
 			  camp_id
 			  start_date
@@ -3636,6 +3638,7 @@ export class CampService {
 			  updated_by
 			}
 		  }
+		  
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({

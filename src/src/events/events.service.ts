@@ -470,9 +470,7 @@ export class EventsService {
 	public async updateAttendanceDetail(id: number, req: any, response: any) {
 		const tableName = 'attendance';
 		if (req?.status == 'present') {
-			let checkStringResult = this.checkStrings({
-				
-			});
+			let checkStringResult = this.checkStrings({});
 
 			if (!checkStringResult.success) {
 				return response.status(400).send({
@@ -586,9 +584,8 @@ export class EventsService {
 		}
 	}
 	async getParticipants(req, id, body, res) {
+		const auth_users = await this.userService.ipUserInfo(req, 'staff');
 
-		const auth_users = await this.userService.ipUserInfo(req,"staff");
-				
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
 		const offset = page > 1 ? limit * (page - 1) : 0;
@@ -826,6 +823,37 @@ export class EventsService {
 			);
 			return response.status(200).json(data);
 		} catch (e) {
+			return response.status(400).json({ message: e.message });
+		}
+	}
+
+	public async campParamsCross(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		
+		try {
+			const data = await lastValueFrom(
+				this.httpService
+					.get(
+						`https://sunbirdsaas.com/learner/questionset/v1/hierarchy/${id}`,
+						{
+							params: body,
+							headers: {
+								'x-hasura-admin-secret':
+									process.env.HASURA_ADMIN_SECRET,
+								'Content-Type': 'application/json',
+							},
+						},
+					)
+					.pipe(map((res) => res.data)),
+			);
+		
+			return response.status(200).json(data);
+		} catch (e) {
+			console.log(e);
 			return response.status(400).json({ message: e.message });
 		}
 	}
