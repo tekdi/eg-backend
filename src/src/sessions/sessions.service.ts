@@ -349,4 +349,34 @@ export class SessionsService {
 			});
 		}
 	}
+
+	public async getSessionDetailsByIdGetOne(
+		id: any,
+		bodyData: any,
+		request: any,
+		response: any,
+	) {
+		const { id: sid, ...body } = bodyData || {};
+		const result = await this.getDetailData({
+			...body,
+			id: id,
+		});
+		const currentData =
+			result?.data?.learning_lesson_plans_master?.[0] || {};
+		if (result?.data) {
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Successfully retrieved data',
+				data: currentData,
+			});
+		} else {
+			return response.json({
+				status: 500,
+				success: false,
+				message: 'Error retrieving data',
+				data: {},
+			});
+		}
+	}
 }
