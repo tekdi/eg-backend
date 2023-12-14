@@ -3701,7 +3701,13 @@ export class CampService {
 		;`;
 		const attendance_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
-		).result;
+		)?.result;
+
+		if (attendance_data == undefined) {
+			return res.json({
+				learner_camp_attendance_data: 1,
+			});
+		}
 
 		const filteredDates = attendance_data.reduce(
 			(filtered, entry, index) => {
