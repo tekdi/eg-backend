@@ -6,7 +6,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
-
+const moment = require('moment');
 @Injectable()
 export class CampCoreService {
 	constructor(
@@ -356,9 +356,9 @@ export class CampCoreService {
 
 		return response;
 	}
-	public async getCampSessions(id){
+	public async getCampSessions(id) {
 		let data = {
-			query:`query MyQuery {
+			query: `query MyQuery {
 				learning_lesson_plans_master(order_by:{ordering:asc}) {
 				  ordering
 				  id
@@ -375,9 +375,36 @@ export class CampCoreService {
 					lesson_plan_incomplete_feedback
 				  }
 				}
-			}`
-		}
+			}`,
+		};
 		const result = await this.hasuraServiceFromServices.getData(data);
 		return result;
+	}
+
+	public async getCampDayActivity(id: any) {
+		const dateString = moment().startOf('day').format();
+		const endDate = moment().endOf('day').format();
+
+		let query = `query MyQuery {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lte:"${endDate}"}, _or:[{end_date:{_is_null:true}},{camp_day_happening:{_eq:"no"}}]}) {
+			  id
+			  camp_id
+			  camp_day_happening
+			  camp_day_not_happening_reason
+			  created_by
+			  misc_activities
+			  mood
+			  start_date
+			  end_date
+			  updated_by
+			  updated_at
+			  
+			}
+		  }		  
+		  `;
+
+		return await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
 	}
 }
