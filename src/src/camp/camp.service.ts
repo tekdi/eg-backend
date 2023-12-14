@@ -3520,7 +3520,7 @@ export class CampService {
 
 				const data = {
 					query: `mutation MyQuery {
-					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}"}) {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}", end_camp_marked_by: "user"}) {
 						
 																		affected_rows
 																		returning {
