@@ -3362,7 +3362,7 @@ export class CampService {
 		);
 		let result1 = hasura_response?.data;
 
-		if (result1) {
+		if (result1?.length > 0) {
 			return res.status(401).json({
 				success: false,
 				message: 'Camp Day Activity is Allready Created',
