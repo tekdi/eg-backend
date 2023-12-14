@@ -386,7 +386,7 @@ export class CampCoreService {
 		const endDate = moment().endOf('day').format();
 
 		let query = `query MyQuery {
-			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lte:"${endDate}"}, _or:[{end_date:{_is_null:true}},{camp_day_happening:{_eq:"no"}}]}) {
+			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lte:"${endDate}"}}) {
 			  id
 			  camp_id
 			  camp_day_happening

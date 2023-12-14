@@ -610,7 +610,7 @@ export class EventsService {
 
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
-				users_aggregate(where: {program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}},attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+				users_aggregate(where: {program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}},attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}) {
 					aggregate {
 						count
 					}
@@ -672,6 +672,7 @@ export class EventsService {
 				data: result?.data?.users,
 				totalPages: totalPages,
 				currentPage: page,
+				totalCount: count,
 				limit,
 			});
 		} else {
@@ -833,7 +834,6 @@ export class EventsService {
 		request: any,
 		response: any,
 	) {
-		
 		try {
 			const data = await lastValueFrom(
 				this.httpService
@@ -850,7 +850,7 @@ export class EventsService {
 					)
 					.pipe(map((res) => res.data)),
 			);
-		
+
 			return response.status(200).json(data);
 		} catch (e) {
 			console.log(e);
