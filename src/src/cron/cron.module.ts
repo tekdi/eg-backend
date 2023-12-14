@@ -5,6 +5,7 @@ import { FaAttendanceProcessingCron } from './faAttendanceProcessing.cron';
 import { AwsRekognitionModule } from '../services/aws-rekognition/aws-rekognition.module';
 import { HasuraModule } from '../services/hasura/hasura.module';
 import { PrepareCertificateHtmlCron } from './prepareCertificateHtml.cron';
+import { CampEndCron } from './campEnd.cron';
 import { AttendancesModule } from 'src/attendances/attendances.module';
 import { UserModule } from 'src/user/user.module';
 import { Method } from 'src/common/method/method';
@@ -20,6 +21,7 @@ import { Method } from 'src/common/method/method';
 		FaFaceIndexingCron,
 		FaAttendanceProcessingCron,
 		PrepareCertificateHtmlCron,
+		CampEndCron,
 		Method,
 	],
 })
