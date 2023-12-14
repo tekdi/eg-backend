@@ -1082,7 +1082,7 @@ export class CampService {
 						? JSON.stringify(
 								update_body.property_facilities,
 						  ).replace(/"/g, '\\"')
-						: '',
+						: null,
 				};
 				const facilities_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities.properties;
