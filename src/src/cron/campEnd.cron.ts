@@ -12,7 +12,7 @@ export class CampEndCron {
 	@Cron('0 00 * * * ')
 	async updateEndCamp() {
 		// Get today's date
-		const today = moment().format('YYYY-MM-DD');
+		const today = moment().format('YYYY-MM-DDTHH:mm:ss');
 
 		const yesterday = moment().subtract(1, 'day');
 
