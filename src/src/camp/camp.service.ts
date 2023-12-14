@@ -3360,7 +3360,7 @@ export class CampService {
 		const hasura_response = await this.campcoreservice.getCampDayActivity(
 			camp_id,
 		);
-		let result1 = hasura_response?.data;
+		let result1 = hasura_response?.data?.camp_days_activities_tracker;
 
 		if (result1?.length > 0) {
 			return res.status(401).json({
