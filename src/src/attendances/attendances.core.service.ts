@@ -45,8 +45,10 @@ export class AttendancesCoreService {
 	}
 
 	public async getByCampId(id: any, body: any, req: any, res: any) {
+		let context = body.context || 'camp_days_activities_tracker';
+
 		let query = `query MyQuery {
-			attendance(where: {context:{_eq:"camps"},context_id: {_eq:${id}}, date_time: {_gte:"${body?.start_date}", _lte:"${body?.end_date}"}}) {
+			attendance(where: {context:{_eq:${context}},context_id: {_eq:${id}}, date_time: {_gte:"${body?.start_date}", _lte:"${body?.end_date}"}}) {
 			  id
 			  lat
 			  long
@@ -56,6 +58,7 @@ export class AttendancesCoreService {
 			  status
 			  fa_is_processed
 			  fa_similarity_percentage
+				photo_1
 			  user_id
 			  created_by
 			  updated_by
@@ -82,7 +85,9 @@ export class AttendancesCoreService {
 		let variables = {};
 		let wherePagination = '';
 		let attendanceAggreage = '';
-		const filterWhere = [`context:{_eq:"${context || 'camps'}"}`];
+		const filterWhere = [
+			`context:{_eq:"${context || 'camp_days_activities_tracker'}"}`,
+		];
 		if (start_date && end_date) {
 			filterWhere.push(
 				`date_time: {_gte:"${start_date}", _lte:"${end_date}"}`,
@@ -202,4 +207,82 @@ export class AttendancesCoreService {
 	// 		this.returnFields,
 	// 	);
 	// }
+	getUserAttendanceList(body) {
+		let context = body?.context || 'events';
+		let context_id = body.context_id;
+		const data = {
+			query: `query MyQuery {
+				users(where: {attendances: {context: {_eq: ${context}}, context_id: {_eq: ${context_id}}}}) {
+				  id
+				  first_name
+				  middle_name
+				  last_name
+				  attendances(where: {context: {_eq: ${context}}, context_id: {_eq:${context_id}}}) {
+					id
+					status
+					context
+					context_id
+				  }
+				}
+			  }`,
+		};
+
+		const result = this.hasuraServiceFromServices.getData(data);
+		return result;
+	}
+
+	async getUserAttendancePresentList(user_id, context, context_id) {
+		const query = `query MyQuery {
+				attendance(where: {user_id: {_eq: ${user_id}}, context: {_eq: ${context}}, context_id: {_eq:${context_id}}, status: {_eq: "present"}}) {
+					id
+					status
+					context
+					context_id
+				  }
+			  }`;
+		try {
+			const data_list = (
+				await this.hasuraServiceFromServices.getData({ query })
+			)?.data?.attendance;
+			return data_list;
+		} catch (error) {
+			console.log('getUserAttendancePresentList:', error, error.stack);
+			return [];
+		}
+	}
 }
+/*
+SELECT
+			users.*,
+			(
+				SELECT json_agg(attendance.*)
+				FROM attendance
+				WHERE events.context = attendance.context
+				AND events.context_id = attendance.context_id
+			) AS attendance_list,
+			program_facilitators.*
+		FROM
+			events
+	
+		LEFT JOIN
+			attendance
+		ON
+			events.context = attendance.context
+			AND events.context_id = attendance.context_id
+	
+		LEFT JOIN
+			users
+		ON
+			events.user_id = users.user_id
+	
+		LEFT JOIN
+			attendances
+		ON
+			users.user_id = attendances.user_id
+	
+		LEFT JOIN
+			program_facilitators
+		ON
+			users.program_id = program_facilitators.program_id
+			AND users.academic_year_id = program_facilitators.academic_year_id;	
+*/

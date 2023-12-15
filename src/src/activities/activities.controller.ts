@@ -24,7 +24,7 @@ export class ActivitiesController {
 		return this.activitiesService.create(request, body, response);
 	}
 
-	@Get('/list')
+	@Post('/list')
 	@UseGuards(new AuthGuard())
 	list(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.activitiesService.List(body, request, response);

@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { isNumber } from 'class-validator';
+import { HttpService } from '@nestjs/axios';
+import { lastValueFrom, map } from 'rxjs';
+const moment = require('moment');
 
 @Injectable()
 export class EventsService {
@@ -54,6 +58,7 @@ export class EventsService {
 		'updated_by',
 	];
 	constructor(
+		private readonly httpService: HttpService,
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly userService: UserService,
@@ -136,79 +141,90 @@ export class EventsService {
 		}
 	}
 
-	public async getEventsList( header, response) {
-		const userDetail:any = await this.userService.ipUserInfo(header);		
-		if(!userDetail?.data?.id){
+	public async getEventsList(header, response) {
+		const userDetail: any = await this.userService.ipUserInfo(header);
+		if (!userDetail?.data?.id) {
 			return response.status(400).send({
 				success: false,
 				message: 'Invalid User',
 				data: {},
 			});
 		}
-		const data={
-			query:`query MyQuery {
+		const data = {
+			query: `query MyQuery {
 				users(where: {program_users: {organisation_id: {_eq: "${userDetail?.data?.program_users[0]?.organisation_id}"}}}){
 				  id
 				}
-			  }`
-		}
+			  }`,
+		};
 		const getIps = await this.hasuraServiceFromServices.getData(data);
 
-		if(!getIps?.data?.users){
+		if (!getIps?.data?.users) {
 			return response.status(500).send({
 				success: false,
-				message: 'Hasura Error!'
-				
+				message: 'Hasura Error!',
 			});
 		}
-		
+
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
-		events(where: {created_by: {_in: ${JSON.stringify(
-			allIpList,
-		)}}}) {
-		  id
-		  location
-		  location_type
-		  name
-		  context
-		  context_id
-		  master_trainer
-		  reminders
-		  end_date
-		  end_time
-		  start_date
-		  start_time
-		  type
-		  created_by
-		  updated_by
-		  user_id
-		  attendances {
-			context
-			context_id
-			created_by
-			date_time
-			id
-			lat
-			long
-			rsvp
-			status
-			updated_by
-			user_id
-			user{
-			  first_name
-			  id
-			  last_name
-			  middle_name
-			  profile_url
-			  aadhar_verified
-			  aadhaar_verification_mode
-			}
-		  }
-		}
-	  }`,
+				events(where: {
+					_or: [
+						{
+							created_by: {
+								_in: ${JSON.stringify(allIpList)}
+							}
+						},
+						{
+							created_by: {
+								_is_null: true
+							}
+						}
+					]
+				}) {
+					id
+					location
+					location_type
+					name
+					context
+					context_id
+					master_trainer
+					reminders
+					end_date
+					end_time
+					start_date
+					start_time
+					type
+					created_by
+					updated_by
+					user_id
+					attendances {
+						context
+						context_id
+						created_by
+						date_time
+						id
+						lat
+						long
+						rsvp
+						status
+						updated_by
+						user_id
+						user {
+							first_name
+							id
+							last_name
+							middle_name
+							profile_url
+							aadhar_verified
+							aadhaar_verification_mode
+						}
+					}
+				}
+			}`,
 		};
+
 		const eventsList = await this.hasuraService.postData(getQuery);
 		if (eventsList?.data?.events?.length > 0) {
 			return response.status(200).send({
@@ -242,6 +258,7 @@ export class EventsService {
 		context
 		end_time
 		id
+		params
 		location
 		location_type
 		start_date
@@ -453,11 +470,7 @@ export class EventsService {
 	public async updateAttendanceDetail(id: number, req: any, response: any) {
 		const tableName = 'attendance';
 		if (req?.status == 'present') {
-			let checkStringResult = this.checkStrings({
-				lat: req.lat,
-				long: req.long,
-				photo_1: req.photo_1,
-			});
+			let checkStringResult = this.checkStrings({});
 
 			if (!checkStringResult.success) {
 				return response.status(400).send({
@@ -524,8 +537,11 @@ export class EventsService {
 				}
 			  }`,
 			};
-			const eventcreatedUserResponse = await this.hasuraServiceFromServices.getData(EventUserdata);
-			const eventUserOrganizationId =eventcreatedUserResponse?.data?.users_by_pk?.program_users[0]?.organisation_id;
+			const eventcreatedUserResponse =
+				await this.hasuraServiceFromServices.getData(EventUserdata);
+			const eventUserOrganizationId =
+				eventcreatedUserResponse?.data?.users_by_pk?.program_users[0]
+					?.organisation_id;
 			//if logged user and event created user organization id is same then only perform delete operation
 			if (organizationId == eventUserOrganizationId) {
 				const deletePromise = [];
@@ -565,6 +581,280 @@ export class EventsService {
 				message: error.message,
 				data: {},
 			});
+		}
+	}
+	async getParticipants(req, id, body, res) {
+		const auth_users = await this.userService.ipUserInfo(req, 'staff');
+
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
+		const offset = page > 1 ? limit * (page - 1) : 0;
+		let facilitator_id;
+		let searchQuery = '';
+
+		if (body.search && !isNaN(body.search)) {
+			facilitator_id = parseInt(body.search);
+			searchQuery = `id: {_eq: ${facilitator_id}}`;
+		} else if (body.search) {
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+				} else {
+					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+				}
+			}
+		}
+
+		const data = {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				users_aggregate(where: {program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}},attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}) {
+					aggregate {
+						count
+					}
+				}
+				users(where: {${searchQuery}program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}}, attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit,
+				offset: $offset) {
+				  id
+				  first_name
+				  middle_name
+				  last_name
+				  profile_url
+				  aadhar_verified
+				  aadhaar_verification_mode
+				  program_faciltators {
+					documents_status
+					status
+				  }
+				  attendances(where: {context: {_eq: "events"}, context_id: {_eq: ${id}}}) {
+					id
+					context
+					context_id
+					status
+					user_id
+					created_at
+					date_time
+					lat
+					long
+					rsvp
+				}
+				lms_test_trackings(where: {context: {_eq:"events"},context_id:{_eq:${id}}}) {
+					context
+					context_id
+					status
+					created_at
+					updated_at
+					id
+					test_id
+					score
+					user_id
+					certificate_status
+				}
+			}
+		}
+	`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+		const count = result?.data?.users_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
+
+		if (result?.data) {
+			return res.status(200).send({
+				success: true,
+				message: 'Data found Successfully',
+				data: result?.data?.users,
+				totalPages: totalPages,
+				currentPage: page,
+				totalCount: count,
+				limit,
+			});
+		} else {
+			return res.status(401).send({
+				success: true,
+				message: 'Data not found',
+				data: [],
+				error: result,
+			});
+		}
+	}
+
+	public async createEventAttendance(body: any, req: any, res: any) {
+		(body.status = body?.status || null),
+			(body.context = body?.context || 'events'),
+			(body.created_by = req?.mw_userid),
+			(body.updated_by = req?.mw_userid);
+
+		let response = await this.hasuraService.q(
+			'attendance',
+			{
+				...body,
+			},
+			[],
+			false,
+			[
+				'id',
+				'context',
+				'context_id',
+				'user_id',
+				'created_by',
+				'updated_by',
+				'lat',
+				'long',
+				'photo_1',
+			],
+		);
+
+		if (response?.attendance?.id) {
+			return res.json({
+				status: 200,
+				success: true,
+				message: 'EVENT_ATTENDANCE_SUCCESS',
+				data: response,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				success: false,
+				message: 'EVENT_ATTENDANCE_ERROR',
+				data: {},
+			});
+		}
+	}
+
+	async getEventsListByUserId(req, id, body, res) {
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
+		const offset = page > 1 ? limit * (page - 1) : 0;
+		const context = body?.context || 'events';
+		const todayDate = moment().format('YYYY-MM-DD');
+
+		const data = {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				events_aggregate(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}) {
+					aggregate {
+						count
+					}
+				}
+				events(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+					id
+					user_id
+					context
+					context_id
+					created_by
+					updated_by
+					created_at
+					updated_at
+					start_date
+					start_time
+					end_date
+					end_time
+					name
+					location
+					location_type
+					type
+					params
+					master_trainer
+					lms_test_tracking(where: {user_id: {_eq: ${id}},context:{_eq:${context}}}) {
+						context
+						context_id
+						status
+						created_at
+						updated_at
+						id
+						test_id
+						score
+						user_id
+						certificate_status
+					}
+				}
+				
+			}`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+		const count = result?.data?.events_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
+
+		if (result?.data) {
+			return res.status(200).send({
+				success: true,
+				message: 'Data found Successfully',
+				data: result.data.events,
+				totalPages: totalPages,
+				currentPage: page,
+				limit,
+			});
+		} else {
+			return res.status(400).send({
+				success: false,
+				message: 'Data not found',
+				data: [],
+				error: result,
+			});
+		}
+	}
+
+	public async campQuestionList(body: any, request: any, response: any) {
+		try {
+			const data = await lastValueFrom(
+				this.httpService
+					.post(
+						'https://sunbirdsaas.com/api/question/v1/list',
+						body,
+						{
+							headers: {
+								'x-hasura-admin-secret':
+									process.env.HASURA_ADMIN_SECRET,
+								'Content-Type': 'application/json',
+							},
+						},
+					)
+					.pipe(map((res) => res.data)),
+			);
+			return response.status(200).json(data);
+		} catch (e) {
+			return response.status(400).json({ message: e.message });
+		}
+	}
+
+	public async campParamsCross(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		try {
+			const data = await lastValueFrom(
+				this.httpService
+					.get(
+						`https://sunbirdsaas.com/learner/questionset/v1/hierarchy/${id}`,
+						{
+							params: body,
+							headers: {
+								'x-hasura-admin-secret':
+									process.env.HASURA_ADMIN_SECRET,
+								'Content-Type': 'application/json',
+							},
+						},
+					)
+					.pipe(map((res) => res.data)),
+			);
+
+			return response.status(200).json(data);
+		} catch (e) {
+			console.log(e);
+			return response.status(400).json({ message: e.message });
 		}
 	}
 }

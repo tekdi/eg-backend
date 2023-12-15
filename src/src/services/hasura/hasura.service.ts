@@ -63,6 +63,30 @@ export class HasuraService {
 		}
 	}
 
+	public async queryWithVariable(query: any) {
+		try {
+			let axios = require('axios');
+			let url = this.configService.get<string>('HASURA_BASE_URL');
+			let admin_secret = this.configService.get<string>(
+				'HASURA_ADMIN_SECRET',
+			);
+			var config = {
+				method: 'post',
+				url: url,
+				headers: {
+					'x-hasura-admin-secret': admin_secret,
+					'Content-Type': 'application/json',
+				},
+				data: query,
+			};
+
+			return await axios(config);
+		} catch (e) {
+			console.log('query data error', e.message);
+			return { error: e.message };
+		}
+	}
+
 	public async executeRawSql(sql: string) {
 		try {
 			let url = this.configService.get<string>('HASURA_SQL_BASE_URL');
