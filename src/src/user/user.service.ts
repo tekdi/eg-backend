@@ -1406,7 +1406,11 @@ export class UserService {
 			)?.data?.users;
 			//console.log('data_list cunt------>>>>>', data_list.length);
 			//console.log('data_list------>>>>>', data_list);
-			return data_list;
+			if (data_list) {
+				return data_list;
+			} else {
+				return [];
+			}
 		} catch (error) {
 			console.log('getUserName:', error, error.stack);
 			return [];
