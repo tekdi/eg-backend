@@ -24,7 +24,7 @@ export class PrepareCertificateHtmlCron {
 	) {}
 
 	//cron issue certificate run every 5 minutes
-	@Cron(CronExpression.EVERY_30_SECONDS)
+	@Cron(CronExpression.EVERY_5_MINUTES)
 	async prepareCertificateHtml() {
 		console.log('cron job: issueCertificate started at time ' + new Date());
 		//fetch all test tracking data which has certificate_status null
