@@ -72,4 +72,21 @@ export class SessionsController {
 			response,
 		);
 	}
+
+	@Post('/get-one/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	getSessionDetailsByIdGetOne(
+		@Req() request: any,
+		@Res() response: Response,
+		@Param('id') id: number,
+		@Body() body: any,
+	) {
+		return this.sessionService.getSessionDetailsByIdGetOne(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }

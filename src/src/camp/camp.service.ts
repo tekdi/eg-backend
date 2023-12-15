@@ -3353,13 +3353,35 @@ export class CampService {
 		let camp_id = body.camp_id;
 		let camp_day_happening = body.camp_day_happening;
 		let camp_day_not_happening_reason = body.camp_day_not_happening_reason;
-		let misc_activities = body.misc_activities;
-
+		let object;
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
+		// check camp day activity is created or not
+		const hasura_response = await this.campcoreservice.getCampDayActivity(
+			camp_id,
+		);
+		let result1 = hasura_response?.data?.camp_days_activities_tracker;
+
+		if (result1?.length > 0) {
+			return res.status(401).json({
+				success: false,
+				message: 'Camp Day Activity is Allready Created',
+				data: {},
+			});
+		}
+
+		if (
+			camp_day_happening === 'no' &&
+			camp_day_not_happening_reason != ''
+		) {
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
+		} else {
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}`;
+		}
+
 		const data = {
-			query: `mutation MyQuery($misc_activities: json) {
-			insert_camp_days_activities_tracker_one(object: {camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", misc_activities: $misc_activities, created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}) {
+			query: `mutation MyQuery {
+			insert_camp_days_activities_tracker_one(object: ${object}) {
 				id
 				camp_id
 				updated_at
@@ -3367,16 +3389,12 @@ export class CampService {
 				updated_by
 				camp_day_happening
 				camp_day_not_happening_reason
-				misc_activities
 				mood
 				start_date
 				end_date
 
 			}
 		}`,
-			variables: {
-				misc_activities,
-			},
 		};
 
 		const result = await this.hasuraServiceFromServices.getData(data);
@@ -3384,14 +3402,12 @@ export class CampService {
 		let createresponse = result?.data;
 
 		if (createresponse) {
-			return res.json({
-				status: 200,
+			return res.status(200).json({
 				success: true,
 				data: createresponse,
 			});
 		} else {
-			return res.json({
-				status: 500,
+			return res.status(500).json({
 				success: false,
 				data: {},
 			});
@@ -3562,39 +3578,9 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
-		if (!body?.start_date || body?.start_date === '') {
-			return res.status(422).json({
-				success: false,
-				message: 'Start Date is required',
-			});
-		}
-		const dateString = body?.start_date?.split('T')[0];
-		const startDateObject = new Date(dateString);
-		startDateObject.setDate(startDateObject.getDate() + 1);
-		const endDate = startDateObject.toISOString().split('T')[0];
-
-		let query = `query MyQuery {
-			camp_days_activities_tracker(where: {camp_id: {_eq:${id}}, start_date: {_gte:"${dateString}", _lt:"${endDate}"},end_date:{_is_null:true}}) {
-			  id
-			  camp_id
-			  camp_day_happening
-			  camp_day_not_happening_reason
-			  created_by
-			  misc_activities
-			  mood
-			  start_date
-			  end_date
-			  updated_by
-			  updated_at
-			  
-			}
-		  }		  
-		  `;
-
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
+		const hasura_response = await this.campcoreservice.getCampDayActivity(
+			id,
+		);
 		let result = hasura_response?.data;
 
 		if (result) {
@@ -3701,7 +3687,13 @@ export class CampService {
 		;`;
 		const attendance_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
-		).result;
+		)?.result;
+
+		if (attendance_data == undefined) {
+			return res.json({
+				learner_camp_attendance_data: 1,
+			});
+		}
 
 		const filteredDates = attendance_data.reduce(
 			(filtered, entry, index) => {

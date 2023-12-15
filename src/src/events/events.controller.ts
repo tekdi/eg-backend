@@ -147,4 +147,14 @@ export class EventsController {
 	) {
 		return this.eventsService.campQuestionList(body, request, response);
 	}
+
+	@Post('/questionset/hierarchy/:id')
+	campParamsCross(
+		@Param('id') id: any,
+		@Body() body: string,
+		@Req() request: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.campParamsCross(id, body, request, response);
+	}
 }
