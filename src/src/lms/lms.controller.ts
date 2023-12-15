@@ -98,4 +98,14 @@ export class LMSController {
 			response,
 		);
 	}
+	@Get('/:id/get-certificates')
+	@UseGuards(new AuthGuard())
+	public async getList(
+		@Req() req: any,
+		@Body()body:any,
+		@Param('id') id: any,
+		@Res() res: any,
+	) {
+		return this.lmsService.getList(req,body, id, res);
+	}
 }

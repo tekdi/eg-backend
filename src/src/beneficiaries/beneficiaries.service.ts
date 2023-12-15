@@ -1643,6 +1643,17 @@ export class BeneficiariesService {
 				request,
 			);
 
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			//check if the learner is active in any camp and update the status to inactive
+
+			let status = 'inactive'; // learner status to be updated in camp
+
+			await this.updateGroupMembershipStatusForUser(
+				body?.user_id,
+				status,
+			);
+		}
+
 		return {
 			status: 200,
 			success: true,
@@ -1690,6 +1701,17 @@ export class BeneficiariesService {
 		const status_response =
 			await this.beneficiariesCoreService.statusUpdate(body, request);
 
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			//check if the learner is active in any camp and update the status to inactive
+
+			let status = 'inactive'; // learner status to be updated in camp
+
+			await this.updateGroupMembershipStatusForUser(
+				body?.user_id,
+				status,
+			);
+		}
+
 		return {
 			status: 200,
 			success: true,
@@ -1700,6 +1722,78 @@ export class BeneficiariesService {
 				)
 			).data,
 		};
+	}
+
+	public async updateGroupMembershipStatusForUser(id, status) {
+		const user_id = parseInt(id);
+		let query = `query MyQuery {
+					group_users(where: {user_id: {_eq:${user_id}}, status: {_eq:"active"}}){
+				     group_id
+					  user_id
+					  status
+					  id
+					}
+				  }
+				  `;
+
+		const result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let group_users_data = result?.data?.group_users;
+
+		let group_id = result?.data?.group_users?.[0]?.group_id;
+
+		//if active learner in a camp then update the camp status to inactive
+
+		if (group_users_data?.length > 0) {
+			let update_body = {
+				status: status,
+			};
+
+			let group_user_id = group_users_data?.[0].id;
+			await this.hasuraService.q(
+				'group_users',
+				{
+					...update_body,
+					id: group_user_id,
+				},
+				['status'],
+				true,
+				['id', 'status'],
+			);
+		}
+
+		//check if after status update camp have learners
+
+		let group_validation_query = `query MyQuery {
+			groups(where: {id: {_eq: ${group_id}}, group_users: {status: {_eq: "active"}, member_type: {_eq: "member"}}}){
+			  id
+			}
+		  }
+		  `;
+		let group_validation_response =
+			await this.hasuraServiceFromServices.getData({
+				query: group_validation_query,
+			});
+
+		if (group_validation_response?.data?.groups?.length == 0) {
+			let update_body = {
+				status: 'inactive',
+			};
+			await this.hasuraService.q(
+				'groups',
+				{
+					...update_body,
+					id: group_id,
+				},
+				['status'],
+				true,
+				['id', 'status'],
+			);
+		}
+
+		return;
 	}
 
 	public async setEnrollmentStatus(body: any, request: any) {

@@ -101,10 +101,16 @@ export class EventsController {
 	) {
 		return this.eventsService.remove(+id, header, response);
 	}
-	@Get('/:id/get-participants')
+
+	@Post('/:id/get-participants')
 	@UseGuards(new AuthGuard())
-	getParticipants(@Req() req: any, @Param('id') id: any, @Res() res: any) {
-		return this.eventsService.getParticipants(req, id, res);
+	getParticipants(
+		@Req() req: any,
+		@Param('id') id: any,
+		@Body() body: any,
+		@Res() res: any,
+	) {
+		return this.eventsService.getParticipants(req, id, body, res);
 	}
 
 	@Post('/add/attendance')
@@ -120,5 +126,35 @@ export class EventsController {
 			request,
 			response,
 		);
+	}
+
+	@Get('/:id/get-events-by-user_id')
+	@UseGuards(new AuthGuard())
+	getEventsListByUserId(
+		@Req() req: any,
+		@Param('id') id: any,
+		@Body() body: any,
+		@Res() res: any,
+	) {
+		return this.eventsService.getEventsListByUserId(req, id, body, res);
+	}
+
+	@Post('/camp-question-list')
+	campQuestionList(
+		@Body() body: string,
+		@Req() request: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.campQuestionList(body, request, response);
+	}
+
+	@Post('/questionset/hierarchy/:id')
+	campParamsCross(
+		@Param('id') id: any,
+		@Body() body: string,
+		@Req() request: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.campParamsCross(id, body, request, response);
 	}
 }

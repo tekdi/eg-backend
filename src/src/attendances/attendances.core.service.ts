@@ -58,6 +58,7 @@ export class AttendancesCoreService {
 			  status
 			  fa_is_processed
 			  fa_similarity_percentage
+				photo_1
 			  user_id
 			  created_by
 			  updated_by
