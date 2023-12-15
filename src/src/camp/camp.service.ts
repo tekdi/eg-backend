@@ -3369,14 +3369,23 @@ export class CampService {
 				data: {},
 			});
 		}
-
+		// Set camp_day_not_happening_reason to NULL if not present in the body
 		if (
 			camp_day_happening === 'no' &&
-			camp_day_not_happening_reason != ''
+			!camp_day_not_happening_reason &&
+			camp_day_not_happening_reason === ''
 		) {
+			return res.status(401).json({
+				success: false,
+				message: 'Please send Reason',
+				data: {},
+			});
+		}
+
+		if (camp_day_happening === 'no') {
 			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
 		} else {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}`;
 		}
 
 		const data = {
