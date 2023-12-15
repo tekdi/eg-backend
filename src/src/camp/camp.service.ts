@@ -1082,7 +1082,7 @@ export class CampService {
 						? JSON.stringify(
 								update_body.property_facilities,
 						  ).replace(/"/g, '\\"')
-						: '',
+						: null,
 				};
 				const facilities_arr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_facilities.properties;
@@ -3361,7 +3361,6 @@ export class CampService {
 			camp_id,
 		);
 		let result1 = hasura_response?.data?.camp_days_activities_tracker;
-
 		if (result1?.length > 0) {
 			return res.status(401).json({
 				success: false,
@@ -3369,6 +3368,7 @@ export class CampService {
 				data: {},
 			});
 		}
+    
 		// Set camp_day_not_happening_reason to NULL if not present in the body
 		if (
 			camp_day_happening === 'no' &&
@@ -3545,7 +3545,7 @@ export class CampService {
 
 				const data = {
 					query: `mutation MyQuery {
-					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}"}) {
+					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}", end_camp_marked_by: "user"}) {
 						
 																		affected_rows
 																		returning {
