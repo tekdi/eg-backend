@@ -200,7 +200,7 @@ export class FaFaceIndexingCron {
 		// We need to skip processing records wch were processed in past X hours
 		let dt = new Date();
 		let filterTimestamp = new Date(
-			dt.setHours(dt.getHours() - 2),
+			dt.setHours(dt.getHours() - 4),
 		).toISOString();
 
 		const query = `

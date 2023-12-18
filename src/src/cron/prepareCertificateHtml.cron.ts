@@ -215,7 +215,7 @@ export class PrepareCertificateHtmlCron {
 		// We need to skip processing records wch were processed in past X hours
 		let dt = new Date();
 		let filterTimestamp = new Date(
-			dt.setHours(dt.getHours() - 4),
+			dt.setHours(dt.getHours() - 2),
 		).toISOString();
 		const query = `
 			query Getlms_test_tracking {
