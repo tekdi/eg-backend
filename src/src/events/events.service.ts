@@ -481,6 +481,14 @@ export class EventsService {
 			}
 		}
 		try {
+			//add timestamp to the date_time .
+
+			const currentDateTime = moment().format('YYYY-MM-DD HH:mm:ss');
+			const currentTimeForDate = moment(
+				`${req?.date_time} ${currentDateTime.split(' ')[1]}`,
+			).format('YYYY-MM-DD HH:mm:ss');
+
+			req.date_time = currentTimeForDate;
 			let result = await this.hasuraService.update(
 				+id,
 				tableName,
@@ -690,6 +698,12 @@ export class EventsService {
 			(body.context = body?.context || 'events'),
 			(body.created_by = req?.mw_userid),
 			(body.updated_by = req?.mw_userid);
+		const currentDateTime = moment().format('YYYY-MM-DD HH:mm:ss');
+		const currentTimeForDate = moment(
+			`${body?.date_time} ${currentDateTime.split(' ')[1]}`,
+		).format('YYYY-MM-DD HH:mm:ss');
+
+		body.date_time = currentTimeForDate;
 
 		let response = await this.hasuraService.q(
 			'attendance',
