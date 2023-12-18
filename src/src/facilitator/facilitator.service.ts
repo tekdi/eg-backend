@@ -87,7 +87,7 @@ export class FacilitatorService {
 							_and: [
 								{
 									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" }
+										parent_ip: { _eq: "${user?.data?.program_users?.[0]?.organisation_id}" }
 										status: { _eq: "shortlisted_for_orientation" }
 									}
 								},
@@ -448,7 +448,7 @@ export class FacilitatorService {
 
 		let query = `query MyQuery {
 			all:program_faciltators_aggregate(where: {
-				parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
+				parent_ip: {_eq: "${user?.data?.program_users?.[0]?.organisation_id}"},
 				user: {id: {_is_null: false}}
 			}) 
 			{
@@ -459,7 +459,7 @@ export class FacilitatorService {
 			
 			applied: program_faciltators_aggregate(
 				where: {
-					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, 
+					parent_ip: {_eq: "${user?.data?.program_users?.[0]?.organisation_id}"}, 
 					user: {id: {_is_null: false}},
 					_or: [
 						{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
@@ -475,7 +475,7 @@ export class FacilitatorService {
 				.filter((item) => item != 'applied')
 				.map(
 					(item) => `${item}:program_faciltators_aggregate(where: {
-							parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, user: {id: {_is_null: false}}, status: {_eq: "${item}"}
+							parent_ip: {_eq: "${user?.data?.program_users?.[0]?.organisation_id}"}, user: {id: {_is_null: false}}, status: {_eq: "${item}"}
 						}) {
 						aggregate {
 							count
@@ -2401,11 +2401,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
-		if(!id){
+		if (!id) {
 			return res.json({
 				status: 422,
 				success: false,
-				message: "Id is required",})
+				message: 'Id is required',
+			});
 		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {
