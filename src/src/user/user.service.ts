@@ -180,7 +180,7 @@ export class UserService {
 		}
 	}
 
-	public async ipUserInfo(request: any,role:any="") {
+	public async ipUserInfo(request: any, role: any = '') {
 		let userData = null;
 		let bearerToken = null;
 		let bearerTokenTemp = null;
@@ -241,16 +241,15 @@ export class UserService {
 		const response = await axios(configData);
 
 		if (response?.data?.data?.users[0]) {
-			if(role === "staff"){
-				userData = (
-					await this.getIpRoleUserById(+response?.data?.data?.users[0]?.id)
-				)
-			}else{
+			if (role === 'staff') {
+				userData = await this.getIpRoleUserById(
+					+response?.data?.data?.users[0]?.id,
+				);
+			} else {
 				userData = (
 					await this.userById(+response?.data?.data?.users[0]?.id)
 				).data;
 			}
-			
 		}
 
 		return {
@@ -259,9 +258,13 @@ export class UserService {
 		};
 	}
 
-	public async getIpRoleUserById(id:any){
-		const data = await this.hasuraServiceFromServices.getOne(id,"users",["id","program_users{organisation_id}","first_name"])
-		return data?.users
+	public async getIpRoleUserById(id: any) {
+		const data = await this.hasuraServiceFromServices.getOne(id, 'users', [
+			'id',
+			'program_users{organisation_id}',
+			'first_name',
+		]);
+		return data?.users;
 	}
 
 	public async register(body: any, request: any) {
