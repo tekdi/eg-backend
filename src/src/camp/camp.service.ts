@@ -1454,6 +1454,10 @@ export class CampService {
 				query MyQuery {
 					camps(where: {id: {_eq:${camp_id}}, group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
 					  kit_received
+					  group{
+						id
+						status
+					  }
 					  properties {
 						lat
 						long
@@ -1476,6 +1480,19 @@ export class CampService {
 						status: 400,
 						success: false,
 						message: 'INVALID_CAMP_ERROR',
+						data: {},
+					};
+				}
+
+				if (
+					res?.data?.camps?.[0]?.group?.status ==
+						'camp_ip_verified' &&
+					update_body?.status == 'registered'
+				) {
+					return {
+						status: 422,
+						success: false,
+						message: 'CAMP_IP_VERIFIED_ACTION_DENIED',
 						data: {},
 					};
 				}
@@ -3368,7 +3385,7 @@ export class CampService {
 				data: {},
 			});
 		}
-    
+
 		// Set camp_day_not_happening_reason to NULL if not present in the body
 		if (
 			camp_day_happening === 'no' &&
