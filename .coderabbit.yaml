@@ -1,0 +1,39 @@
+settings:
+  # Enables automatic reviewing of draft pull requests.
+  enable_draft_pr_reviews: true
+  
+  # Specifies additional base/target branches to be reviewed. Accept regex pattern.
+  additional_branches_to_be_reviewed:
+    - "master"
+    - "dev"
+    - "feat/*"
+    - "feat-*"
+    - "release-*"
+    
+  # Disables generation of release notes.
+  disable_high_level_summary: false
+  
+  # Specific review instructions for certain file paths. File paths accept glob pattern
+  path_based_instructions:
+    - path: "**/*.ts"
+      instructions: 
+        "Review the JAVASCRIPT code against the google javascript style guide and point out any mismatches. Ensure that:
+        - The code adheres to best practices associated with nodejs.
+        - The code adheres to best practices associated with nestjs framework.
+        - The code adheres to best practices recommended for performance.
+        - The code adheres to similar naming conventions for controllers, models, services, methods, variables.
+        
+  # Comma separated list of keywords in the title that should be ignored.
+  ignored_pr_titles: "WIP"
+  
+  # ISO Code for the review language.
+  review_language: "en"
+  
+  # Disables review and other status comments.
+  disable_review_status: false
+  
+  # Add walkthrough comment in a collapsible section.
+  collapse_walkthrough_comment: true
+  
+  # Disable automatic code reviews for this repository.
+  disable_review: false
