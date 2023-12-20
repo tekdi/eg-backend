@@ -247,11 +247,7 @@ export class AttendancesCoreService {
 			const data_list = result_response?.data?.attendance;
 			//console.log('data_list cunt------>>>>>', data_list.length);
 			//console.log('data_list------>>>>>', data_list);
-			if (data_list) {
-				return data_list;
-			} else {
-				return [];
-			}
+			return data_list || [];
 		} catch (error) {
 			console.log('getUserAttendancePresentList:', error, error.stack);
 			return [];
