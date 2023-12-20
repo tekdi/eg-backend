@@ -268,14 +268,21 @@ export class LMSService {
 					id
 					user_id
 					test_id
-					spent_time
-					score
 					status
 					created_at
 					created_by
 					score_details
 					updated_at
 					updated_by
+					certificate_status
+					context
+					context_id
+					spent_time
+					marks_total
+					marks_obtained
+					score
+					cron_last_processed_at
+					attendance_count
 				}
 			}`;
 			let data_list = await this.hasuraService.getData({ query });
@@ -347,14 +354,21 @@ export class LMSService {
 				id
 				user_id
 				test_id
-				spent_time
-				score
 				status
 				created_at
 				created_by
 				score_details
 				updated_at
 				updated_by
+				certificate_status
+				context
+				context_id
+				spent_time
+				marks_total
+				marks_obtained
+				score
+				cron_last_processed_at
+				attendance_count
 				}
 			  }`,
 			variables: {
@@ -570,16 +584,24 @@ export class LMSService {
 				}
 				lms_test_tracking(where: {user_id: {_eq: ${user_id}}}, limit: $limit,
 					offset: $offset,) {
-				  context
-				  context_id
-				  status
-				  created_at
-				  updated_at
-				  id
+					id
+					user_id
 					test_id
-				  score
-				  user_id
-				  certificate_status
+					status
+					created_at
+					created_by
+					score_details
+					updated_at
+					updated_by
+					certificate_status
+					context
+					context_id
+					spent_time
+					marks_total
+					marks_obtained
+					score
+					cron_last_processed_at
+					attendance_count
 					events(where: {context: {_eq: "events"}}) {
 						name
 					}
