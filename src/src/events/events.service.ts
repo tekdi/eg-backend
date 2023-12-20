@@ -607,6 +607,12 @@ export class EventsService {
 				}
 			}
 		}
+		
+		let order_by = "";
+		if (body?.order_by) {
+			const order = JSON.stringify(body?.order_by).replace(/"/g, "");
+			order_by = `, order_by:${order}`;
+		}
 
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
@@ -616,7 +622,7 @@ export class EventsService {
 					}
 				}
 				users(where: {${searchQuery}program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}}, attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit,
-				offset: $offset) {
+				offset: $offset${order_by}) {
 				  id
 				  first_name
 				  middle_name
@@ -660,7 +666,6 @@ export class EventsService {
 				offset: offset,
 			},
 		};
-
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);

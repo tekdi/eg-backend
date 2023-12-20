@@ -35,6 +35,7 @@ export class PrepareCertificateHtmlCron {
 				),
 			),
 		);
+		console.log('userForIssueCertificate list', userForIssueCertificate);
 		if (userForIssueCertificate.length > 0) {
 			for (let i = 0; i < userForIssueCertificate.length; i++) {
 				let userTestData = userForIssueCertificate[i];
@@ -75,6 +76,7 @@ export class PrepareCertificateHtmlCron {
 						context,
 						context_id,
 					);
+				console.log('usrAttendanceList list', usrAttendanceList);
 				let minAttendance = parseInt(
 					this.configService.get<string>(
 						'LMS_CERTIFICATE_ISSUE_MIN_ATTENDANCE',
@@ -191,22 +193,52 @@ export class PrepareCertificateHtmlCron {
 						//error in create certificate
 					}
 				}
-				// Update in attendance data in database
-				await this.markCertificateStatus(
+				// Update in certificate data in database
+				//update values
+				let testTrackingUpdateData = new Object();
+				testTrackingUpdateData['cron_last_processed_at'] = new Date(
+					Date.now(),
+				).toISOString();
+				testTrackingUpdateData['attendance_count'] =
+					usrAttendanceList.length;
+				if (issue_status == 'true') {
+					testTrackingUpdateData['certificate_status'] = issue_status;
+				}
+				await this.updateTestTrackingData(
 					userTestData?.id,
-					issue_status,
+					testTrackingUpdateData,
 				);
 			}
 		}
 	}
 	async fetchTestTrackingData(limit: number) {
+		// We need to skip processing records wch were processed in past X hours
+		let dt = new Date();
+		let LMS_CERTIFICATE_LAST_PROCESS_HOURS = parseInt(
+			this.configService.get<string>(
+				'LMS_CERTIFICATE_LAST_PROCESS_HOURS',
+			),
+		);
+		let filterTimestamp = new Date(
+			dt.setHours(dt.getHours() - LMS_CERTIFICATE_LAST_PROCESS_HOURS),
+		).toISOString();
 		const query = `
 			query Getlms_test_tracking {
 				lms_test_tracking(
 				where:{
-					certificate_status:{
-						_is_null: true
-					}
+					_and : [
+						{
+							certificate_status:{
+								_is_null: true
+							}
+						},
+						{_or: 
+							[
+								{cron_last_processed_at: {_is_null: true}},
+								{cron_last_processed_at: {_lte: "${filterTimestamp}"}}
+							]
+						}
+					]
 				},
 				limit: ${limit}
 				){
@@ -219,10 +251,16 @@ export class PrepareCertificateHtmlCron {
 				}
 			}
 			`;
+		console.log('fetchTestTrackingData query', query);
 		try {
-			const data_list = (await this.hasuraService.getData({ query }))
-				?.data?.lms_test_tracking;
-			return data_list;
+			const result_query = await this.hasuraService.getData({ query });
+			console.log('result_query', result_query);
+			const data_list = result_query?.data?.lms_test_tracking;
+			if (data_list) {
+				return data_list;
+			} else {
+				return [];
+			}
 		} catch (error) {
 			return [];
 		}
@@ -316,7 +354,17 @@ export class PrepareCertificateHtmlCron {
 			return null;
 		}
 	}
-	async markCertificateStatus(id, status) {
+	async updateTestTrackingData(id, testTrackingUpdateData) {
+		console.log('id', id);
+		console.log('testTrackingUpdateData', testTrackingUpdateData);
+		let setQuery = ``;
+		if (testTrackingUpdateData?.certificate_status) {
+			setQuery += `certificate_status: ${testTrackingUpdateData.certificate_status}`;
+		}
+		setQuery += `
+			cron_last_processed_at : "${testTrackingUpdateData.cron_last_processed_at}",
+			attendance_count : "${testTrackingUpdateData.attendance_count}"
+		`;
 		let updateQuery = `
 			mutation MyMutation {
 				update_lms_test_tracking_by_pk (
@@ -324,7 +372,7 @@ export class PrepareCertificateHtmlCron {
 						id: "${id}"
 					},
 					_set: {
-						certificate_status: ${status}
+						${setQuery}
 					}
 				) {
 					id

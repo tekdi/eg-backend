@@ -199,8 +199,11 @@ export class FaFaceIndexingCron {
 
 		// We need to skip processing records wch were processed in past X hours
 		let dt = new Date();
+		let AWS_FACE_INDEX_LAST_PROCESS_HOURS = parseInt(
+			this.configService.get<string>('AWS_FACE_INDEX_LAST_PROCESS_HOURS'),
+		);
 		let filterTimestamp = new Date(
-			dt.setHours(dt.getHours() - 4),
+			dt.setHours(dt.getHours() - AWS_FACE_INDEX_LAST_PROCESS_HOURS),
 		).toISOString();
 
 		const query = `
