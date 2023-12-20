@@ -214,8 +214,13 @@ export class PrepareCertificateHtmlCron {
 	async fetchTestTrackingData(limit: number) {
 		// We need to skip processing records wch were processed in past X hours
 		let dt = new Date();
+		let LMS_CERTIFICATE_LAST_PROCESS_HOURS = parseInt(
+			this.configService.get<string>(
+				'LMS_CERTIFICATE_LAST_PROCESS_HOURS',
+			),
+		);
 		let filterTimestamp = new Date(
-			dt.setHours(dt.getHours() - 2),
+			dt.setHours(dt.getHours() - LMS_CERTIFICATE_LAST_PROCESS_HOURS),
 		).toISOString();
 		const query = `
 			query Getlms_test_tracking {
