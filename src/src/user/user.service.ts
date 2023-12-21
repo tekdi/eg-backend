@@ -180,7 +180,7 @@ export class UserService {
 		}
 	}
 
-	public async ipUserInfo(request: any) {
+	public async ipUserInfo(request: any, role: any = '') {
 		let userData = null;
 		let bearerToken = null;
 		let bearerTokenTemp = null;
@@ -241,15 +241,30 @@ export class UserService {
 		const response = await axios(configData);
 
 		if (response?.data?.data?.users[0]) {
-			userData = (
-				await this.userById(+response?.data?.data?.users[0]?.id)
-			).data;
+			if (role === 'staff') {
+				userData = await this.getIpRoleUserById(
+					+response?.data?.data?.users[0]?.id,
+				);
+			} else {
+				userData = (
+					await this.userById(+response?.data?.data?.users[0]?.id)
+				).data;
+			}
 		}
 
 		return {
 			status: response?.status,
 			data: userData,
 		};
+	}
+
+	public async getIpRoleUserById(id: any) {
+		const data = await this.hasuraServiceFromServices.getOne(id, 'users', [
+			'id',
+			'program_users{organisation_id}',
+			'first_name',
+		]);
+		return data?.users;
 	}
 
 	public async register(body: any, request: any) {
@@ -1213,6 +1228,10 @@ export class UserService {
 			mw_userid,
 			context,
 			context_id,
+			subject,
+			subject_id,
+			log_transaction_text,
+			user_type,
 			oldData,
 			newData,
 			tempArray,
@@ -1232,6 +1251,9 @@ export class UserService {
 			storeNew = newData;
 		}
 
+		console.log('storeOld', storeOld);
+		console.log('storeNew', storeNew);
+
 		if (
 			Object.keys(storeOld).length !== 0 &&
 			Object.keys(storeNew).length !== 0
@@ -1244,6 +1266,10 @@ export class UserService {
 					user_id: userId,
 					context: context,
 					context_id: context_id,
+					subject_id: subject_id,
+					subject: subject,
+					user_type: user_type,
+					log_transaction_text: log_transaction_text,
 					updated_by_user: mw_userid,
 					action: action,
 				},
@@ -1254,6 +1280,10 @@ export class UserService {
 					'old_data',
 					'context',
 					'context_id',
+					'subject',
+					'subject_id',
+					'log_transaction_text',
+					'user_type',
 					'updated_at',
 					'created_at',
 					'updated_by_user',
@@ -1374,5 +1404,27 @@ export class UserService {
 			success: true,
 			message: 'USER_CAMP_DETAILS_SUCCESS',
 		});
+	}
+
+	//get first_name and last_name from user_id
+	public async getUserName(user_id) {
+		const query = `query MyQuery {
+			users(where: {id: {_eq: ${user_id}}}) {
+					first_name
+					middle_name
+					last_name
+				  }
+			  }`;
+		try {
+			const data_list = (
+				await this.hasuraServiceFromServices.getData({ query })
+			)?.data?.users;
+			//console.log('data_list cunt------>>>>>', data_list.length);
+			//console.log('data_list------>>>>>', data_list);
+			return data_list || [];
+		} catch (error) {
+			console.log('getUserName:', error, error.stack);
+			return [];
+		}
 	}
 }

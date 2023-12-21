@@ -117,4 +117,14 @@ export class AttendancesService {
 			this.returnFields,
 		);
 	}
+	public async getUserAttendanceList(req: any, body: any, res: any) {
+		const result = await this.attendanceCoreService.getUserAttendanceList(
+			body,
+		);
+		return res.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: result.data,
+		});
+	}
 }

@@ -556,7 +556,7 @@ export class BeneficiariesService {
 						  ]
 								.filter((e) => e)
 								.join(' ');
-				
+
 				dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
 				dataObject['facilitator_id'] =
 					data?.program_beneficiaries[0]?.facilitator_id;
@@ -1643,6 +1643,17 @@ export class BeneficiariesService {
 				request,
 			);
 
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			//check if the learner is active in any camp and update the status to inactive
+
+			let status = 'inactive'; // learner status to be updated in camp
+
+			await this.updateGroupMembershipStatusForUser(
+				body?.user_id,
+				status,
+			);
+		}
+
 		return {
 			status: 200,
 			success: true,
@@ -1690,6 +1701,17 @@ export class BeneficiariesService {
 		const status_response =
 			await this.beneficiariesCoreService.statusUpdate(body, request);
 
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			//check if the learner is active in any camp and update the status to inactive
+
+			let status = 'inactive'; // learner status to be updated in camp
+
+			await this.updateGroupMembershipStatusForUser(
+				body?.user_id,
+				status,
+			);
+		}
+
 		return {
 			status: 200,
 			success: true,
@@ -1700,6 +1722,78 @@ export class BeneficiariesService {
 				)
 			).data,
 		};
+	}
+
+	public async updateGroupMembershipStatusForUser(id, status) {
+		const user_id = parseInt(id);
+		let query = `query MyQuery {
+					group_users(where: {user_id: {_eq:${user_id}}, status: {_eq:"active"}}){
+				     group_id
+					  user_id
+					  status
+					  id
+					}
+				  }
+				  `;
+
+		const result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let group_users_data = result?.data?.group_users;
+
+		let group_id = result?.data?.group_users?.[0]?.group_id;
+
+		//if active learner in a camp then update the camp status to inactive
+
+		if (group_users_data?.length > 0) {
+			let update_body = {
+				status: status,
+			};
+
+			let group_user_id = group_users_data?.[0].id;
+			await this.hasuraService.q(
+				'group_users',
+				{
+					...update_body,
+					id: group_user_id,
+				},
+				['status'],
+				true,
+				['id', 'status'],
+			);
+		}
+
+		//check if after status update camp have learners
+
+		let group_validation_query = `query MyQuery {
+			groups(where: {id: {_eq: ${group_id}}, group_users: {status: {_eq: "active"}, member_type: {_eq: "member"}}}){
+			  id
+			}
+		  }
+		  `;
+		let group_validation_response =
+			await this.hasuraServiceFromServices.getData({
+				query: group_validation_query,
+			});
+
+		if (group_validation_response?.data?.groups?.length == 0) {
+			let update_body = {
+				status: 'inactive',
+			};
+			await this.hasuraService.q(
+				'groups',
+				{
+					...update_body,
+					id: group_id,
+				},
+				['status'],
+				true,
+				['id', 'status'],
+			);
+		}
+
+		return;
 	}
 
 	public async setEnrollmentStatus(body: any, request: any) {
@@ -1874,6 +1968,9 @@ export class BeneficiariesService {
 
 	async create(req: any, request, response, update = false) {
 		const user = await this.userService.ipUserInfo(request);
+		let academic_year_id = req?.academic_year_id || 1;
+		let program_id = req?.program_id || 1;
+
 		const { data: beneficiaryUser } =
 			await this.beneficiariesCoreService.userById(req.id);
 		if (!beneficiaryUser) {
@@ -2137,6 +2234,33 @@ export class BeneficiariesService {
 					});
 				}
 
+				// check beneficiary status
+
+				let query = `query MyQuery {
+					users(where: {_or: [{is_deactivated: {_is_null: true}}, {is_deactivated: {_eq: false}}], aadhar_no: {_eq:"${req?.aadhar_no}"}, program_beneficiaries: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, status: {_in: ["enrolled_ip_verified", "registered_in_camp", "10th_passed"]}}}) {
+					  id
+					  program_beneficiaries {
+						status
+					  }
+					}
+				  }
+				  
+				  `;
+
+				const hashura_response =
+					await this.hasuraServiceFromServices.getData({
+						query: query,
+					});
+
+				if (hashura_response?.data?.users?.length > 0) {
+					{
+						return response.status(422).json({
+							success: false,
+							message:
+								'Cannot update details for IP verified beneficiary !',
+						});
+					}
+				}
 				// Update Users table data
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.add_ag_duplication.users;
