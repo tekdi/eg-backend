@@ -1427,4 +1427,54 @@ export class UserService {
 			return [];
 		}
 	}
+	public async ifEntryExist(role: any, body: any, response: any) {
+		const hasura_response =await this.ifUserExist(role,body);
+		if (hasura_response && hasura_response.data.users.length > 0) {
+			return response.json({
+				status: true,
+				message: `${role} found`,
+			});
+		} else {
+			return response.json({
+				status: false,
+				message: `${role} not found`,
+			});
+		}
+	}
+	public async ifUserExist(role,body){
+		//set table name according to the role
+		const tableName =
+			role === 'facilitators'
+				? 'program_faciltators'
+				: 'program_beneficiaries';
+		const fields = [];
+
+		for (const fieldName in body) {
+			const fieldValue = body[fieldName];
+			fields.push(fieldName, fieldValue);
+		}
+
+		//hasura query
+		const data = {
+			query: `query MyQuery {
+				users(where: 
+					{
+						${fields[0]}: 
+						{
+							_eq: "${fields[1]}"
+						},
+						${tableName}:{}
+					}
+					) {
+						id
+				}
+			  }`,
+		};
+
+		//fetch data
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+		return hasura_response;
+	}
 }
