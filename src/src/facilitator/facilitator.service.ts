@@ -1588,7 +1588,25 @@ export class FacilitatorService {
 
 	async getFacilitators(req: any, body: any, resp: any) {
 		const user: any = await this.userService.ipUserInfo(req);
-
+		const user_id = req.mw_userid;
+		const roles = req.mw_roles;
+		const cohort_id = req.mw_cohort_id;
+		
+		// const data1 = {
+		// 	query: `query MyQuery {
+		// 	program_faciltators(where: {academic_year_id: {_eq: ${cohort_id}},user_id: {_eq: ${user_id}}}) {
+		// 	  id
+		// 	}
+		//   }`
+		// }
+		// const query_response =  await this.hasuraService.getData(data1);		  
+		// if(query_response.data.program_faciltators.length ){
+		// 	return resp.status(403).send({
+		// 		success: false,
+		// 		message: 'facilitators dont have entries under this academic_year_id',
+		// 		data: {},
+		// 	})
+		// }
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(400).send({
 				success: false,
@@ -1648,7 +1666,7 @@ export class FacilitatorService {
 		}
 
 		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, academic_year_id: {_eq: ${cohort_id}}}}`,
 		);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';

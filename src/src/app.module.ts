@@ -1,5 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
-import { Module } from '@nestjs/common';
+import { Module,MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -31,6 +31,8 @@ import { MasterDataModule } from './master_data/master_data.module';
 import { LMSModule } from './lms/lms.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { KitMaterialsModule } from './kit-materials/kit-materials.module';
+import { AuthMiddleware } from './common/middlewares/authmiddleware';
+import { CohortMiddleware } from './common/middlewares/cohort_middleware/cohort_middleware.middleware';
 
 @Module({
 	imports: [
@@ -72,4 +74,9 @@ import { KitMaterialsModule } from './kit-materials/kit-materials.module';
 	controllers: [],
 	providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule{
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer.apply(CohortMiddleware).forRoutes('*');
+	}
+}

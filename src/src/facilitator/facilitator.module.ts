@@ -12,6 +12,7 @@ import { FacilitatorController } from './facilitator.controller';
 import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { FacilitatorCoreService } from './facilitator.core.service';
+import { CohortMiddleware } from 'src/common/middlewares/cohort_middleware/cohort_middleware.middleware'; 
 
 @Module({
 	imports: [
@@ -27,8 +28,10 @@ import { FacilitatorCoreService } from './facilitator.core.service';
 	controllers: [FacilitatorController],
 	//exports: [FacilitatorCoreService,FacilitatorService],
 })
-export class FacilitatorModule implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes('*');
-	}
-}
+// export class FacilitatorModule implements NestModule {
+// 	configure(consumer: MiddlewareConsumer) {
+// 		consumer.apply(AuthMiddleware).forRoutes('*');
+// 		consumer.apply(CohortMiddleware).forRoutes('*');
+// 	}
+// }
+export class FacilitatorModule{}

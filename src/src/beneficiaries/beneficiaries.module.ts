@@ -31,8 +31,12 @@ import { BeneficiariesCoreService } from './beneficiaries.core.service';
 	providers: [BeneficiariesService, BeneficiariesCoreService],
 	exports: [BeneficiariesService, BeneficiariesCoreService],
 })
-export class BeneficiariesModule implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes('*');
-	}
-}
+// export class BeneficiariesModule implements NestModule {
+// 	configure(consumer: MiddlewareConsumer) {
+// 		consumer.apply(AuthMiddleware).forRoutes('*');
+		
+// 	
+//}
+//}
+export class BeneficiariesModule{}
+

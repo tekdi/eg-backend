@@ -11,8 +11,9 @@ import { CommentsService } from './comments.service';
   controllers: [CommentsController],
   providers: [CommentsService]
 })
-export class CommentsModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes(CommentsController);
-	}
-}
+// export class CommentsModule implements NestModule {
+//   configure(consumer: MiddlewareConsumer) {
+// 		consumer.apply(AuthMiddleware).forRoutes(CommentsController);
+// 	}
+// }
+export class CommentsModule{}
