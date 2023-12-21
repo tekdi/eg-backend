@@ -27,7 +27,7 @@ settings:
   ignored_pr_titles: "WIP"
   
   # ISO Code for the review language.
-  review_language: "en"
+  # review_language: "en"
   
   # Disables review and other status comments.
   disable_review_status: false
