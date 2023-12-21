@@ -8,10 +8,8 @@ export class AuthMiddleware implements NestMiddleware {
 	constructor(private userService: UserService) {}
 	async use(req: any, res: Response, next: NextFunction) {
 		if (req.headers.authorization) {
-			console.log("inside userid1");
 			
 			const user = await this.userService.ipUserInfo(req);
-			console.log("inside userid2");
 
 			req.mw_userid = user?.data?.id;
 			req.mw_roles = [];
