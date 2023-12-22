@@ -1,5 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
-import { Module,MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -7,32 +7,32 @@ import { AadhaarKycModule } from 'src/modules/aadhaar_kyc/aadhaar_kyc.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { GeolocationModule } from 'src/modules/geolocation/geolocation.module';
 
+import { ActivitiesModule } from './activities/activities.module';
 import { AttendancesModule } from './attendances/attendances.module';
 import { BeneficiariesModule } from './beneficiaries/beneficiaries.module';
+import { CampModule } from './camp/camp.module';
+import { CommentsModule } from './comments/comments.module';
+import { AuthMiddleware } from './common/middlewares/auth.middleware';
+import { CohortMiddleware } from './common/middlewares/cohort.middleware';
+import { CronModule } from './cron/cron.module';
 import { EnumModule } from './enum/enum.module';
 import { EventsModule } from './events/events.module';
 import { FacilitatorModule } from './facilitator/facilitator.module';
 import { HasuraModule } from './hasura/hasura.module';
 import { HelperModule } from './helper/helper.module';
 import { InterviewModule } from './interview/interview.module';
+import { KitMaterialsModule } from './kit-materials/kit-materials.module';
+import { LMSModule } from './lms/lms.module';
+import { MasterDataModule } from './master_data/master_data.module';
+import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
+import { PcrscoresModule } from './pcrscores/pcrscores.module';
+import { ReferencesModule } from './references/references.module';
 import { KeycloakModule } from './services/keycloak/keycloak.module';
 import { S3Module } from './services/s3/s3.module';
+import { SessionsModule } from './sessions/sessions.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
-import { CronModule } from './cron/cron.module';
-import { CommentsModule } from './comments/comments.module';
-import { CampModule } from './camp/camp.module';
-import { ReferencesModule } from './references/references.module';
-import { PcrscoresModule } from './pcrscores/pcrscores.module';
-import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
-import { ActivitiesModule } from './activities/activities.module';
-import { MasterDataModule } from './master_data/master_data.module';
-import { LMSModule } from './lms/lms.module';
-import { SessionsModule } from './sessions/sessions.module';
-import { KitMaterialsModule } from './kit-materials/kit-materials.module';
-import { AuthMiddleware } from './common/middlewares/authmiddleware';
-import { CohortMiddleware } from './common/middlewares/cohort_middleware/cohort_middleware.middleware';
 
 @Module({
 	imports: [
@@ -74,7 +74,8 @@ import { CohortMiddleware } from './common/middlewares/cohort_middleware/cohort_
 	controllers: [],
 	providers: [],
 })
-export class AppModule implements NestModule{
+
+export class AppModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 		consumer.apply(CohortMiddleware).forRoutes('*');

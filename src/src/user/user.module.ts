@@ -5,7 +5,7 @@ import { HelperModule } from '../helper/helper.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { AuthMiddleware } from '../common/middlewares/authmiddleware';
+import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 @Module({
 	imports: [
