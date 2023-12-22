@@ -3,14 +3,14 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createObjectCsvStringifier } from 'csv-writer';
 import jwt_decode from 'jwt-decode';
 import { AuthService } from 'src/modules/auth/auth.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
 import {
-	HasuraService,
-	HasuraService as HasuraServiceFromServices,
+    HasuraService,
+    HasuraService as HasuraServiceFromServices
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
-import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
 @Injectable()
 export class FacilitatorService {
@@ -106,7 +106,7 @@ export class FacilitatorService {
 						  count
 						}
 					}
-					
+
 					users(
 						where: {
 							_and: [
@@ -450,16 +450,16 @@ export class FacilitatorService {
 			all:program_faciltators_aggregate(where: {
 				parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
 				user: {id: {_is_null: false}}
-			}) 
+			})
 			{
 				aggregate {
 					count
 				}
 			},
-			
+
 			applied: program_faciltators_aggregate(
 				where: {
-					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, 
+					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
 					user: {id: {_is_null: false}},
 					_or: [
 						{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
@@ -1433,7 +1433,7 @@ export class FacilitatorService {
 				}},{
 					program_beneficiaries: {
 						facilitator_user: {
-						program_faciltators: {					
+						program_faciltators: {
 							parent_ip: {
 								 _eq: "${user?.data?.program_users[0]?.organisation_id}"
 							}
@@ -1588,6 +1588,7 @@ export class FacilitatorService {
 
 	async getFacilitators(req: any, body: any, resp: any) {
 		const user: any = await this.userService.ipUserInfo(req);
+		const academic_year_id = req.mw_academic_year_id;
 
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(400).send({
@@ -1648,7 +1649,7 @@ export class FacilitatorService {
 		}
 
 		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}`,
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}}}}`,
 		);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
@@ -1975,8 +1976,8 @@ export class FacilitatorService {
 
 			if (last_name?.length > 0) {
 				filterQueryArray.push(`{_and: [
-				{first_name: { _ilike: "%${first_name}%" } } 
-				{ last_name: { _ilike: "%${last_name}%" } } 
+				{first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
 				 ]} `);
 			} else {
 				filterQueryArray.push(
@@ -2028,7 +2029,7 @@ export class FacilitatorService {
 			}
 		users(limit: $limit,
 			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
-		  
+
 			first_name
 			last_name
 			middle_name
@@ -2068,15 +2069,15 @@ export class FacilitatorService {
 				  status: {_eq: "${item}"}
 				},
 					{ user:	{ id: { _is_null: false } } }
-				
+
 										 ]
 		    	}
-			) 
+			)
 			{
 				aggregate {
 				  count
 				}
-			} 
+			}
 			`,
 					)}
 			}
@@ -2401,11 +2402,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
-		if(!id){
+		if (!id) {
 			return res.json({
 				status: 422,
 				success: false,
-				message: "Id is required",})
+				message: 'Id is required',
+			});
 		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {

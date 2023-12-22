@@ -8,6 +8,7 @@ export class AuthMiddleware implements NestMiddleware {
 	constructor(private userService: UserService) {}
 	async use(req: any, res: Response, next: NextFunction) {
 		if (req.headers.authorization) {
+			
 			const user = await this.userService.ipUserInfo(req);
 
 			req.mw_userid = user?.data?.id;
