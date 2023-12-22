@@ -1427,4 +1427,48 @@ export class UserService {
 			return [];
 		}
 	}
+
+	public async getIpCohorts(req: any, res: any) {
+		const user = await this.ipUserInfo(req);
+		const user_id = req?.mw_userid;
+
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return res.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
+		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		const sql = `SELECT  ay.name as academic_year_name,ay.id,ay.program_id,ay.id as academic_year_id
+		FROM program_users pu
+		LEFT JOIN program_organisation po ON pu.program_id = po.program_id
+		left JOIN academic_years ay ON po.program_id = ay.program_id
+		WHERE po.status = 'active' AND po.organisation_id = ${parent_ip_id} and pu.user_id = ${user_id}
+		group by ay.id
+				
+		`;
+		const cohort_data = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		).result;
+
+		if (cohort_data != undefined) {
+			return res.json({
+				status: 200,
+				message: 'Successfully retrieved data',
+				data: this.hasuraServiceFromServices.getFormattedData(
+					cohort_data,
+					[5],
+				),
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'Successfully retrieved data',
+				data: [],
+			});
+		}
+	}
 }
