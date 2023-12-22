@@ -810,7 +810,6 @@ export class BeneficiariesService {
 						name
 						doument_type
 						document_sub_type
-						path
 					}
 				}
 			}`,
@@ -968,16 +967,10 @@ export class BeneficiariesService {
 					address_line_2
 					alternative_mobile_number
 					block
-					block_id
-					block_village_id
-					created_at
-					created_by
 					district
-					district_id
 					dob
 					duplicate_reason
 					email_id
-					email_verified
 					first_name
 					gender
 					grampanchayat
@@ -990,48 +983,32 @@ export class BeneficiariesService {
 					long
 					middle_name
 					mobile
-					mobile_no_verified
-					password
-					pincode
 					profile_photo_1: documents (where: { document_sub_type: {_eq: "profile_photo_1"}}) {
 						id
 						name
 						doument_type
 						document_sub_type
-						path
 					}
 					profile_photo_2: documents (where: { document_sub_type: {_eq: "profile_photo_2"}}) {
 						id
 						name
 						doument_type
 						document_sub_type
-						path
 					}
 					profile_photo_3: documents (where: { document_sub_type: {_eq: "profile_photo_3"}}) {
 						id
 						name
 						doument_type
 						document_sub_type
-						path
 					}
-					profile_url
 					state
-					state_id
-					updated_at
-					updated_by
 					village
 					username
 					documents{
-					context
-					context_id
-					created_by
 					document_sub_type
 					doument_type
 					id
 					name
-					path
-					provider
-					updated_by
 					user_id
 						}
 					program_beneficiaries{
@@ -1048,10 +1025,8 @@ export class BeneficiariesService {
 						reason_for_status_update
 						documents_status
 						document_checklist
-						updated_by
 						user_id
 						facilitator_id
-						created_by
 						beneficiaries_found_at
 						enrollment_date
 						enrollment_first_name
@@ -1063,22 +1038,15 @@ export class BeneficiariesService {
 						enrollment_verification_status
 						enrollment_verification_reason
 						document {
-							context
-							context_id
-							created_by
 							document_sub_type
 							doument_type
 							id
 							name
-							path
-							provider
-							updated_by
 							user_id
 						}
 					}
 					core_beneficiaries {
 						career_aspiration
-						updated_by
 						mark_as_whatsapp_number
 						alternative_device_ownership
 						alternative_device_type
@@ -1089,34 +1057,21 @@ export class BeneficiariesService {
 						mother_last_name
 						mother_middle_name
 						career_aspiration_details
-						enrollment_number
 						type_of_learner
-						status
 						reason_of_leaving_education
 						previous_school_type
-						mobile_ownership
 						learner_wish_to_pursue_education
 						last_standard_of_education_year
 						last_standard_of_education
-						last_school_type
 						id
-						connect_via_refrence
-						created_by
 						device_ownership
 						device_type
-						document_id
-						enrolled_for_board
-						enrollement_status
 					}
 					extended_users {
 						marital_status
-						designation
-						created_by
 						id
 						user_id
-						updated_by
 						social_category
-						qualification_id
 					}
 
 				}
@@ -1214,16 +1169,10 @@ export class BeneficiariesService {
 				address_line_2
 				alternative_mobile_number
 				block
-				block_id
-				block_village_id
-				created_at
-				created_by
 				district
-				district_id
 				dob
 				duplicate_reason
 				email_id
-				email_verified
 				first_name
 				gender
 				grampanchayat
@@ -1236,62 +1185,44 @@ export class BeneficiariesService {
 				long
 				middle_name
 				mobile
-				mobile_no_verified
-				password
-				pincode
 				aadhaar_front: documents(where: {document_sub_type: {_eq: "aadhaar_front"}}) {
 					id
 					name
 					doument_type
 					document_sub_type
-					path
 					}
 				aadhaar_back: documents(where: {document_sub_type: {_eq: "aadhaar_back"}}) {
 					id
 					name
 					doument_type
 					document_sub_type
-					path
 					}
 				profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 					id
 					name
 					doument_type
 					document_sub_type
-					path
 					}
 					profile_photo_2: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
 					id
 					name
 					doument_type
 					document_sub_type
-					path
 					}
 					profile_photo_3: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
 					id
 					name
 					doument_type
 					document_sub_type
-					path
 					}
-				profile_url
 				state
-				state_id
-				updated_at
-				updated_by
 				village
 				username
 				documents{
-				context
-				context_id
-				created_by
 				document_sub_type
 				doument_type
 				id
 				name
-				path
-				provider
-				updated_by
 				user_id
 				  }
                 program_beneficiaries {
@@ -1323,16 +1254,10 @@ export class BeneficiariesService {
 				enrollment_verification_status
 				enrollment_verification_reason
 				document {
-					context
-					context_id
-					created_by
 					document_sub_type
 					doument_type
 					id
 					name
-					path
-					provider
-					updated_by
 					user_id
 				  }
                 type_of_support_needed
@@ -1341,7 +1266,6 @@ export class BeneficiariesService {
               }
               core_beneficiaries {
                 career_aspiration
-                updated_by
                 mark_as_whatsapp_number
                 alternative_device_ownership
                 alternative_device_type
@@ -1353,24 +1277,15 @@ export class BeneficiariesService {
                 mother_last_name
                 mother_middle_name
                 career_aspiration_details
-                enrollment_number
                 type_of_learner
-                status
                 reason_of_leaving_education
                 previous_school_type
-                mobile_ownership
                 learner_wish_to_pursue_education
                 last_standard_of_education_year
                 last_standard_of_education
-                last_school_type
                 id
-                connect_via_refrence
-                created_by
                 device_ownership
                 device_type
-                document_id
-                enrolled_for_board
-                enrollement_status
               }
               program_users {
                 organisation_id
@@ -1391,13 +1306,9 @@ export class BeneficiariesService {
               }
               extended_users {
                 marital_status
-                designation
-                created_by
                 id
                 user_id
-                updated_by
                 social_category
-                qualification_id
               }
             }
           }

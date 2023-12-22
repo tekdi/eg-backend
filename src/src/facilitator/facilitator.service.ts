@@ -137,41 +137,21 @@ export class FacilitatorService {
 						dob
 						aadhar_token
 						address
-						block_id
-						block_village_id
-						created_by
-						district_id
 						email_id
 						gender
 						lat
 						long
 						mobile
-						state_id
-						updated_by
-						profile_url
 						state
 						district
 						block
 						village
 						grampanchayat
-						program_users {
-							id
-							organisation_id
-							academic_year_id
-							program_id
-							role_id
-							status
-							user_id
-						}
 						core_faciltator {
-							created_by
 							device_ownership
 							device_type
 							id
-							pan_no
-							refreere
 							sourcing_channel
-							updated_by
 							user_id
 						}
 						experience {
@@ -188,36 +168,26 @@ export class FacilitatorService {
 						program_faciltators {
 							parent_ip
 							availability
-							has_social_work_exp
 							id
-							police_verification_done
 							program_id
-							social_background_verified_by_neighbours
 							user_id
-							village_knowledge_test
 							status
 							form_step_number
-							created_by
-							updated_by
 							academic_year_id
 						}
 						qualifications {
-							created_by
 							end_year
 							id
 							institution
 							qualification_master_id
 							start_year
-							updated_by
 							user_id
 							qualification_master {
 							context
 							context_id
-							created_by
 							id
 							name
 							type
-							updated_by
 							}
 						}
 						interviews {
@@ -230,15 +200,10 @@ export class FacilitatorService {
 							end_time
 							interviewer_name
 							status
-							comment
 							reminder
 							rsvp
 							location_type
 							location
-							created_at
-							created_by
-							updated_at
-							updated_by
 							owner {
 							  first_name
 							  last_name
@@ -248,7 +213,6 @@ export class FacilitatorService {
 						events {
 							context
 							context_id
-							created_by
 							end_date
 							end_time
 							id
@@ -256,7 +220,6 @@ export class FacilitatorService {
 							location_type
 							start_date
 							start_time
-							updated_by
 							user_id
 						}
 						documents(order_by: {id: desc}){
@@ -1555,7 +1518,6 @@ export class FacilitatorService {
 					offset: offset,
 				},
 			};
-			console.log(data?.query);
 			const result = await this.hasuraService.getData(data);
 			const extractedData = result?.data?.users;
 			const count = result?.data?.users_aggregate?.aggregate?.count;
@@ -1719,18 +1681,11 @@ export class FacilitatorService {
           aadhar_token
           address
           aadhar_verified
-          block_id
-          block_village_id
-          created_by
-          district_id
           email_id
           gender
           lat
           long
           mobile
-          state_id
-          updated_by
-          profile_url
           state
           district
           block
@@ -1741,26 +1696,12 @@ export class FacilitatorService {
             name
             doument_type
             document_sub_type
-            path
-          }
-          program_users {
-            id
-            organisation_id
-            academic_year_id
-            program_id
-            role_id
-            status
-            user_id
           }
           core_faciltator {
-            created_by
             device_ownership
             device_type
             id
-            pan_no
-            refreere
             sourcing_channel
-            updated_by
             user_id
           }
           experience {
@@ -1777,36 +1718,24 @@ export class FacilitatorService {
           program_faciltators {
             parent_ip
             availability
-            has_social_work_exp
             id
-            police_verification_done
             program_id
-            social_background_verified_by_neighbours
             user_id
-            village_knowledge_test
             status
             form_step_number
-            created_by
-            updated_by
             academic_year_id
           }
           qualifications {
-            created_by
             end_year
             id
             institution
             qualification_master_id
             start_year
-            updated_by
             user_id
             qualification_master {
-              context
-              context_id
-              created_by
               id
               name
               type
-              updated_by
             }
           }
 		  interviews {
@@ -1819,15 +1748,10 @@ export class FacilitatorService {
 			end_time
 			interviewer_name
 			status
-			comment
 			reminder
 			rsvp
 			location_type
 			location
-			created_at
-			created_by
-			updated_at
-			updated_by
 			owner {
 			  first_name
 			  last_name
@@ -1837,7 +1761,6 @@ export class FacilitatorService {
           events {
             context
             context_id
-            created_by
             end_date
             end_time
             id
@@ -1845,7 +1768,6 @@ export class FacilitatorService {
             location_type
             start_date
             start_time
-            updated_by
             user_id
           }
         }
@@ -2193,10 +2115,10 @@ export class FacilitatorService {
 			  mobile
 			  aadhar_no
 			  address
-              address_line_1
-              address_line_2
+        address_line_1
+        address_line_2
 			  district
-			  block
+			  block	
 			  program_beneficiaries{
 				id
 				program_id
@@ -2401,11 +2323,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
-		if(!id){
+		if (!id) {
 			return res.json({
 				status: 422,
 				success: false,
-				message: "Id is required",})
+				message: 'Id is required',
+			});
 		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {

@@ -174,7 +174,6 @@ export class CampCoreService {
 							name
 							doument_type
 							document_sub_type
-							path
 						}
 					}
 				}

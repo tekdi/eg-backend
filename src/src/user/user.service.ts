@@ -180,7 +180,7 @@ export class UserService {
 		}
 	}
 
-	public async ipUserInfo(request: any,role:any="") {
+	public async ipUserInfo(request: any, role: any = '') {
 		let userData = null;
 		let bearerToken = null;
 		let bearerTokenTemp = null;
@@ -241,16 +241,15 @@ export class UserService {
 		const response = await axios(configData);
 
 		if (response?.data?.data?.users[0]) {
-			if(role === "staff"){
-				userData = (
-					await this.getIpRoleUserById(+response?.data?.data?.users[0]?.id)
-				)
-			}else{
+			if (role === 'staff') {
+				userData = await this.getIpRoleUserById(
+					+response?.data?.data?.users[0]?.id,
+				);
+			} else {
 				userData = (
 					await this.userById(+response?.data?.data?.users[0]?.id)
 				).data;
 			}
-			
 		}
 
 		return {
@@ -259,9 +258,13 @@ export class UserService {
 		};
 	}
 
-	public async getIpRoleUserById(id:any){
-		const data = await this.hasuraServiceFromServices.getOne(id,"users",["id","program_users{organisation_id}","first_name"])
-		return data?.users
+	public async getIpRoleUserById(id: any) {
+		const data = await this.hasuraServiceFromServices.getOne(id, 'users', [
+			'id',
+			'program_users{organisation_id}',
+			'first_name',
+		]);
+		return data?.users;
 	}
 
 	public async register(body: any, request: any) {
@@ -620,16 +623,10 @@ export class UserService {
 		  address_line_2
 		  alternative_mobile_number
 		  block
-		  block_id
-		  block_village_id
-		  created_at
-		  created_by
 		  district
-		  district_id
 		  dob
 		  duplicate_reason
 		  email_id
-		  email_verified
 		  first_name
 		  gender
 		  grampanchayat
@@ -642,13 +639,7 @@ export class UserService {
 		  long
 		  middle_name
 		  mobile
-		  mobile_no_verified
-		  pincode
-		  profile_url
 		  state
-		  state_id
-		  updated_at
-		  updated_by
 		  village
 		  username
 		  aadhaar_front: documents(where: {document_sub_type: {_eq: "aadhaar_front"}}) {
@@ -656,35 +647,30 @@ export class UserService {
 			name
 			doument_type
 			document_sub_type
-			path
 		  }
 		  aadhaar_back: documents(where: {document_sub_type: {_eq: "aadhaar_back"}}) {
 			id
 			name
 			doument_type
 			document_sub_type
-			path
 		  }
 		  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 			id
 			name
 			doument_type
 			document_sub_type
-			path
 		  }
 		  profile_photo_2: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
 			id
 			name
 			doument_type
 			document_sub_type
-			path
 		  }
 		  profile_photo_3: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
 			id
 			name
 			doument_type
 			document_sub_type
-			path
 		  }
 		  program_users {
 			id
@@ -692,28 +678,20 @@ export class UserService {
 			academic_year_id
 			program_id
 			role_id
-			status
 			user_id
 		  }
 		  extended_users{
 			id
 			user_id
 			marital_status
-			qualification_id
 			designation
 			social_category
-			created_by
-			updated_by
 		  }
 		  core_faciltator {
-			created_by
 			device_ownership
 			device_type
 			id
-			pan_no
-			refreere
 			sourcing_channel
-			updated_by
 			user_id
 		  }
 		  experience {
@@ -743,8 +721,6 @@ export class UserService {
 				name
 				doument_type
 				document_sub_type
-				provider
-				path
 			  }
 			}
 		  }
@@ -752,13 +728,9 @@ export class UserService {
 			parent_ip
 			documents_status
 			availability
-			has_social_work_exp
 			id
-			police_verification_done
 			program_id
-			social_background_verified_by_neighbours
 			user_id
-			village_knowledge_test
 			status
 			form_step_number
 			created_by
@@ -768,59 +740,23 @@ export class UserService {
 			okyc_response
 		  }
 		  qualifications {
-			created_by
 			end_year
 			id
-			institution
 			qualification_master_id
 			start_year
-			updated_by
 			user_id
 			qualification_reference_document_id
 			qualification_master {
-			  context
-			  context_id
-			  created_by
 			  id
 			  name
 			  type
-			  updated_by
 			}
 			document_reference {
 			  id
 			  user_id
 			  name
-			  context
-			  context_id
 			  doument_type
 			  document_sub_type
-			  provider
-			  path
-			}
-		  }
-		  interviews {
-			id
-			title
-			user_id
-			owner_user_id
-			date
-			start_time
-			end_time
-			interviewer_name
-			status
-			comment
-			reminder
-			rsvp
-			location_type
-			location
-			created_at
-			created_by
-			updated_at
-			updated_by
-			owner {
-			  first_name
-			  last_name
-			  id
 			}
 		  }
 		  events {
@@ -840,16 +776,12 @@ export class UserService {
 		  documents(order_by: {id: desc}) {
 			id
 			created_by
-			path
-			provider
 			updated_by
 			user_id
 			name
 			doument_type
 			document_sub_type
-			context
-			context_id
-		  }
+		  } 
 		  references {
 			id
 			name

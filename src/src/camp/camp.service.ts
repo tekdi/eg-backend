@@ -2194,7 +2194,6 @@ export class CampService {
 								name
 								doument_type
 								document_sub_type
-								path
 							}
 						}
 					}
@@ -2216,7 +2215,6 @@ export class CampService {
 								name
 								doument_type
 								document_sub_type
-								path
 							}
 							program_beneficiaries{
 								enrollment_number

@@ -110,16 +110,10 @@ export class BeneficiariesCoreService {
 			address_line_2
 			alternative_mobile_number
 			block
-			block_id
-			block_village_id
-			created_at
-			created_by
 			district
-			district_id
 			dob
 			duplicate_reason
 			email_id
-			email_verified
 			first_name
 			gender
 			grampanchayat
@@ -131,21 +125,14 @@ export class BeneficiariesCoreService {
 			long
 			middle_name
 			mobile
-			mobile_no_verified
-			pincode
 			profile_photo_1
 			profile_photo_2
 			profile_photo_3
-			profile_url
 			state
-			state_id
-			updated_at
-			updated_by
 			village
 			username
             program_beneficiaries {
             beneficiaries_found_at
-            created_by
             facilitator_id
 			original_facilitator_id
             id
@@ -160,7 +147,6 @@ export class BeneficiariesCoreService {
             subjects
             payment_receipt_document_id
             program_id
-            updated_by
             documents_status
             learning_motivation
             type_of_support_needed
@@ -175,40 +161,25 @@ export class BeneficiariesCoreService {
 			enrollment_verification_reason
 			enrollment_verification_status
 			document {
-				context
-				context_id
-				created_by
 				document_sub_type
 				doument_type
 				id
 				name
-				path
-				provider
-				updated_by
 				user_id
 			  }
           }
             core_beneficiaries {
             career_aspiration
-            updated_by
             type_of_learner
-            status
 			type_of_enrollement
             reason_of_leaving_education
             previous_school_type
-            mobile_ownership
             learner_wish_to_pursue_education
             last_standard_of_education_year
             last_standard_of_education
-            last_school_type
             id
-            connect_via_refrence
-            created_by
             device_ownership
             device_type
-            document_id
-            enrolled_for_board
-            enrollement_status
             father_first_name
             father_middle_name
             father_last_name
@@ -236,13 +207,9 @@ export class BeneficiariesCoreService {
           }
           extended_users {
             marital_status
-            designation
-            created_by
             id
             user_id
-            updated_by
             social_category
-            qualification_id
           }
         }}`,
 		};
