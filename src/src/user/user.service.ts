@@ -1462,7 +1462,12 @@ export class UserService {
 				query: query,
 			});
 
-			parent_ip_id = result?.data?.program_faciltators?.[0]?.parent_ip;
+			let program_faciltators = result?.data?.program_faciltators;
+
+			const parentIPs = program_faciltators.map((item) =>
+				parseInt(item?.parent_ip),
+			);
+			parent_ip_id = parentIPs.toString();
 
 			primary_table = 'program_faciltators';
 		}
@@ -1471,12 +1476,12 @@ export class UserService {
 			FROM ${primary_table} pu
 			LEFT JOIN program_organisation po ON pu.program_id = po.program_id
 			left JOIN academic_years ay ON po.program_id = ay.program_id
-			WHERE po.status = 'active' AND po.organisation_id = ${parent_ip_id} and pu.user_id = ${user_id}
+			WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) and pu.user_id = ${user_id}
 			group by ay.id`;
 
 		const cohort_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
-		).result;
+		)?.result;
 
 		if (cohort_data != undefined) {
 			return res.json({
