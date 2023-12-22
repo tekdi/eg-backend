@@ -241,10 +241,13 @@ export class AttendancesCoreService {
 				  }
 			  }`;
 		try {
-			const data_list = (
-				await this.hasuraServiceFromServices.getData({ query })
-			)?.data?.attendance;
-			return data_list;
+			const result_response =
+				await this.hasuraServiceFromServices.getData({ query });
+			console.log('result_response', result_response);
+			const data_list = result_response?.data?.attendance;
+			//console.log('data_list cunt------>>>>>', data_list.length);
+			//console.log('data_list------>>>>>', data_list);
+			return data_list || [];
 		} catch (error) {
 			console.log('getUserAttendancePresentList:', error, error.stack);
 			return [];

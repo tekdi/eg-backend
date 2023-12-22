@@ -200,8 +200,9 @@ export class SessionsService {
 	}
 
 	public async getSessionsListByCampId(id: any, request: any, response: any) {
+		
 		let query = `query MyQuery {
-            learning_lesson_plans_master{
+            learning_lesson_plans_master(order_by: {ordering: asc}){
               ordering
               id
 							title
@@ -224,7 +225,6 @@ export class SessionsService {
           }
           
           `;
-
 		const res = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});

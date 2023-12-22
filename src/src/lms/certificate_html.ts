@@ -15,7 +15,6 @@ export const html_code = `<html lang="en">
             padding: 0;
             box-sizing: border-box;
         }
-        .align-item-baseline{align-items: baseline;}
         .d-flex {
             display: flex;
             flex-wrap: wrap;
@@ -117,6 +116,9 @@ export const html_code = `<html lang="en">
         .align-item-end{
             align-items:end; 
         }
+        .align-item-baseline{
+            align-items:baseline; 
+        }
         .pt-60{
             padding-top: 60px;
         }
@@ -161,7 +163,7 @@ export const html_code = `<html lang="en">
 
             <div class="pt-20 d-flex text-left pl-30"><div>श्री / सुश्री&nbsp; &nbsp; </div><div class="bb-dotted w-80">{{name}}</div> </div>
             <div class="pt-30">ने प्रोजेक्ट प्रगति शिविर के संचालन हेतु आयोजित प्रशिक्षण में पूरे उत्साह और प्रतिबद्धता से </div><div>भाग लेकर आवश्यक ज्ञान एवं कौशल अर्जित किया है| </div>
-            <div>आपको प्रगति शिविर संचालन के लिए प्रेरक के रूप में प्रमाणित करते हुए हमें असीम हर्ष का अनुभा हो रहा है</div>
+            <div>आपको प्रगति शिविर संचालन के लिए प्रेरक के रूप में प्रमाणित करते हुए हमें असीम हर्ष का अनुभव हो रहा है</div>
             <div class="red pt-30">प्रशिक्षण में अर्जित किए गए कौशल:
             </div>
             <div class="d-flex pt-10">
