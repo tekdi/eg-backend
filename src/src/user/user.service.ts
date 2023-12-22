@@ -1427,4 +1427,77 @@ export class UserService {
 			return [];
 		}
 	}
+
+	public async getUserCohorts(req: any, res: any) {
+		const user_id = req?.mw_userid;
+
+		const role = req?.mw_roles;
+
+		let sql;
+		let primary_table;
+		let parent_ip_id;
+
+		if (role.includes('staff')) {
+			const user = await this.ipUserInfo(req);
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return res.status(404).send({
+					success: false,
+					message: 'Invalid Ip',
+					data: {},
+				});
+			}
+
+			parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+			primary_table = 'program_users';
+		}
+
+		if (role.includes('facilitator')) {
+			let query = `query MyQuery {
+				program_faciltators(where: {user_id: {_eq:${user_id}}}){
+				  parent_ip
+				}
+			  }
+			  `;
+			let result = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+
+			let program_faciltators = result?.data?.program_faciltators;
+
+			const parentIPs = program_faciltators.map((item) =>
+				parseInt(item?.parent_ip),
+			);
+			parent_ip_id = parentIPs.toString();
+
+			primary_table = 'program_faciltators';
+		}
+
+		sql = `SELECT  ay.name as academic_year_name,ay.id as academic_year_id,ay.program_id
+			FROM ${primary_table} pu
+			LEFT JOIN program_organisation po ON pu.program_id = po.program_id
+			left JOIN academic_years ay ON po.program_id = ay.program_id
+			WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) and pu.user_id = ${user_id}
+			group by ay.id`;
+
+		const cohort_data = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
+
+		if (cohort_data != undefined) {
+			return res.json({
+				status: 200,
+				message: 'Successfully retrieved data',
+				data: this.hasuraServiceFromServices.getFormattedData(
+					cohort_data,
+					[5],
+				),
+			});
+		} else {
+			return res.json({
+				status: 200,
+				message: 'Successfully retrieved data',
+				data: [],
+			});
+		}
+	}
 }

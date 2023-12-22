@@ -189,4 +189,10 @@ export class UserController {
 	) {
 		return this.userService.userCampExist(id, body, request, response);
 	}
+
+	@Get('cohorts/my')
+	@UseGuards(new AuthGuard())
+	public async getUserCohorts(@Req() request: any, @Res() response: any) {
+		return this.userService.getUserCohorts(request, response);
+	}
 }
