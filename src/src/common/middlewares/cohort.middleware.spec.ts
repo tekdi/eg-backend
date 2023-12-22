@@ -1,4 +1,4 @@
-import { CohortMiddleware } from './cohort_middleware.middleware';
+import { CohortMiddleware } from './cohort.middleware';
 
 describe('CohortMiddleware', () => {
   it('should be defined', () => {
