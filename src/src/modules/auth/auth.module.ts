@@ -20,6 +20,7 @@ import { AuthMiddleware } from 'src/common/middlewares/auth.middleware';
 	providers: [AuthService],
 	exports: [AuthService],
 })
+
 export class AuthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
