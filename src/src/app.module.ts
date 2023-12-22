@@ -1,5 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -12,8 +12,6 @@ import { AttendancesModule } from './attendances/attendances.module';
 import { BeneficiariesModule } from './beneficiaries/beneficiaries.module';
 import { CampModule } from './camp/camp.module';
 import { CommentsModule } from './comments/comments.module';
-import { AuthMiddleware } from './common/middlewares/auth.middleware';
-import { CohortMiddleware } from './common/middlewares/cohort.middleware';
 import { CronModule } from './cron/cron.module';
 import { EnumModule } from './enum/enum.module';
 import { EventsModule } from './events/events.module';
@@ -75,9 +73,4 @@ import { UserModule } from './user/user.module';
 	providers: [],
 })
 
-export class AppModule implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes('*');
-		consumer.apply(CohortMiddleware).forRoutes('*');
-	}
-}
+export class AppModule {}
