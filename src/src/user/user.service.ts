@@ -1428,28 +1428,52 @@ export class UserService {
 		}
 	}
 
-	public async getIpCohorts(req: any, res: any) {
-		const user = await this.ipUserInfo(req);
+	public async getUserCohorts(req: any, res: any) {
 		const user_id = req?.mw_userid;
 
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
-			return res.status(404).send({
-				success: false,
-				message: 'Invalid Ip',
-				data: {},
-			});
+		const role = req?.mw_roles;
+
+		let sql;
+		let primary_table;
+		let parent_ip_id;
+
+		if (role.includes('staff')) {
+			const user = await this.ipUserInfo(req);
+			if (!user?.data?.program_users?.[0]?.organisation_id) {
+				return res.status(404).send({
+					success: false,
+					message: 'Invalid Ip',
+					data: {},
+				});
+			}
+
+			parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+			primary_table = 'program_users';
 		}
 
-		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		if (role.includes('facilitator')) {
+			let query = `query MyQuery {
+				program_faciltators(where: {user_id: {_eq:${user_id}}}){
+				  parent_ip
+				}
+			  }
+			  `;
+			let result = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
 
-		const sql = `SELECT  ay.name as academic_year_name,ay.id,ay.program_id,ay.id as academic_year_id
-		FROM program_users pu
-		LEFT JOIN program_organisation po ON pu.program_id = po.program_id
-		left JOIN academic_years ay ON po.program_id = ay.program_id
-		WHERE po.status = 'active' AND po.organisation_id = ${parent_ip_id} and pu.user_id = ${user_id}
-		group by ay.id
-				
-		`;
+			parent_ip_id = result?.data?.program_faciltators?.[0]?.parent_ip;
+
+			primary_table = 'program_faciltators';
+		}
+
+		sql = `SELECT  ay.name as academic_year_name,ay.id as academic_year_id,ay.program_id
+			FROM ${primary_table} pu
+			LEFT JOIN program_organisation po ON pu.program_id = po.program_id
+			left JOIN academic_years ay ON po.program_id = ay.program_id
+			WHERE po.status = 'active' AND po.organisation_id = ${parent_ip_id} and pu.user_id = ${user_id}
+			group by ay.id`;
+
 		const cohort_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
