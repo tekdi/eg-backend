@@ -189,12 +189,12 @@ export class UserController {
 	) {
 		return this.userService.userCampExist(id, body, request, response);
 	}
-	@Post('/is_user_exist/:role')
+	@Post('/v2/is_user_exist/:role')
 	public async ifEntryExist(
 		@Param('role')role:any,
 		@Res()response:any,
 		@Body()body:any
 	){
-		return this.userService.ifEntryExist(role,body,response);
+		return this.userService.v2_ifUserExist(role,body,response);
 	}
 }
