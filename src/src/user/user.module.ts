@@ -7,6 +7,7 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
+import { CohortMiddleware } from '../common/middlewares/cohort.middleware';
 @Module({
 	imports: [
 		HelperModule,
@@ -21,5 +22,15 @@ import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 export class UserModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer
+			.apply(CohortMiddleware)
+			/*.exclude(
+            '/auth/login',
+            '/auth/otp-send',
+            '/auth/otp-verify',
+            '/auth/register',
+            '/auth/register',
+        )*/
+			.forRoutes(UserController);
 	}
 }
