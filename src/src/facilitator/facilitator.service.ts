@@ -2456,7 +2456,7 @@ export class FacilitatorService {
 	public async createProgramFaciltator(body: any, request: any, res: any) {
 		let user_id = request?.mw_userid;
 		let academic_year_id = request?.mw_academic_year_id;
-		console.log('academic_year_id-->>', academic_year_id);
+
 		let { parent_ip, program_id } = body;
 
 		let query = `query MyQuery {
