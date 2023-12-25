@@ -5,38 +5,51 @@ import { Injectable } from '@nestjs/common';
 export class UserV2Service {
 	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
 	public async isUserExist(role: any, body: any, response: any) {
-		const tableName =
-			role === 'facilitators'
-				? 'program_faciltators'
-				: 'program_beneficiaries';
 		const hasura_response = await this.ifUserExist(role, body);
-		if (
-			hasura_response &&
-			hasura_response.data &&
-			hasura_response.data.users
-		) {
-			const beneficiariesArray = hasura_response.data.users.flatMap(
-				(user) => user[tableName] || [],
-			);
+		if (hasura_response && hasura_response.data.users.length > 0) {
 
-			if (beneficiariesArray.length > 0) {
+			const users = hasura_response.data.users;
+			const facilitators_data = users.flatMap(user => user.program_faciltators);
+
+
+			const beneficiaries_data = users.flatMap(user => user.program_beneficiaries);
+
+
+			// 1. both roles found
+			if (facilitators_data.length > 0 && beneficiaries_data.length > 0) {
 				return response.json({
 					status: true,
-					message: `${role} found`,
-					data: beneficiariesArray,
+					message: 'Facilitators and Beneficiaries found',
+					data: hasura_response.data.users,
 				});
-			} else {
+			}
+			// 2. pf found,pb empty
+			else if (
+				facilitators_data.length > 0 &&
+				beneficiaries_data.length == 0
+			) {
 				return response.json({
-					status: false,
-					message: `${role} not found`,
-					data: [],
+					status: true,
+					message: 'Facilitators found',
+					data: hasura_response.data.users,
+				});
+			}
+			// 3. pf empty,pb found
+			else if (
+				beneficiaries_data.length > 0 &&
+				facilitators_data.length == 0
+			) {
+				return response.json({
+					status: true,
+					message: 'Beneficiaries found',
+					data: hasura_response.data.users,
 				});
 			}
 		} else {
-			// 'users' array is either undefined or empty
+			// 4. both empty
 			return response.json({
 				status: false,
-				message: `${role} not found`,
+				message: 'Facilitators and Beneficiaries not found',
 				data: [],
 			});
 		}
@@ -57,13 +70,16 @@ export class UserV2Service {
 		const data = {
 			query: `query MyQuery {
 				users(where: {${fields[0]}: {_eq: "${fields[1]}"}}){
-				  ${tableName}{
-					user_id
-					id
-					academic_year_id
-					program_id
-				  }
-				  
+					program_faciltators {
+						user_id
+						academic_year_id
+						program_id
+					  }
+					  program_beneficiaries{
+						user_id
+						academic_year_id
+						program_id
+					}
 				}
 			}`,
 		};
