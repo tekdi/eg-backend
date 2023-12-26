@@ -1505,4 +1505,36 @@ export class UserService {
 			});
 		}
 	}
+
+	public async getAcademicData(request: any, res: any) {
+		let academic_year_id = request?.mw_academic_year_id;
+
+		let query = `query MyQuery {
+			academic_years_by_pk(id:${academic_year_id}){
+			  id,
+			  name
+			}
+		  }
+		  `;
+
+		let result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let academic_data = result?.data?.academic_years_by_pk;
+
+		if (academic_data != null) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: academic_data,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				data: {},
+				success: false,
+			});
+		}
+	}
 }
