@@ -70,7 +70,7 @@ export class UserService {
 				  id
 				}
 			  }
-			  
+
 			  `;
 
 			const validation_data =
@@ -1480,8 +1480,8 @@ export class UserService {
 		LEFT JOIN program_organisation po ON pu.program_id = po.program_id
 		WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) AND pu.user_id = ${user_id}
 		GROUP BY ay.id ,p.id
-		
-		
+
+
 		`;
 
 		const cohort_data = (
@@ -1502,38 +1502,6 @@ export class UserService {
 				status: 200,
 				message: 'Successfully retrieved data',
 				data: [],
-			});
-		}
-	}
-
-	public async getProgramData(body: any, request: any, res: any) {
-		let program_id = body?.program_id;
-
-		let query = `query MyQuery {
-			programs_by_pk(id:${program_id}){
-			  id,
-			  name
-			}
-		  }
-		  `;
-
-		let result = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
-		let program_data = result?.data?.programs_by_pk;
-
-		if (program_data != null) {
-			return res.json({
-				status: 200,
-				success: true,
-				data: program_data,
-			});
-		} else {
-			return res.json({
-				status: 500,
-				data: {},
-				success: false,
 			});
 		}
 	}

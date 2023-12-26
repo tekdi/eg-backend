@@ -195,14 +195,4 @@ export class UserController {
 	public async getUserCohorts(@Req() request: any, @Res() response: any) {
 		return this.userService.getUserCohorts(request, response);
 	}
-
-	@Post('/programdata')
-	@UseGuards(new AuthGuard())
-	public async getProgramData(
-		@Body() body: any,
-		@Req() request: any,
-		@Res() response: any,
-	) {
-		return this.userService.getProgramData(body, request, response);
-	}
 }
