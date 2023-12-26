@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AttendancesService } from './attendances.service';
 import { AttendancesCoreService } from './attendances.core.service';
 import { AttendancesController } from './attendances.controller';

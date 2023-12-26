@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { CampService } from './camp.service';
 import { CampController } from './camp.controller';
 import { UserModule } from 'src/user/user.module';
