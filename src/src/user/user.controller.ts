@@ -14,6 +14,7 @@ import {
 	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
+	Version,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { lastValueFrom, map } from 'rxjs';
@@ -23,7 +24,6 @@ import { HasuraService } from '../hasura/hasura.service';
 import { CreateUserDto } from '../helper/dto/create-user.dto';
 import { RegisterFacilitatorDto } from '../helper/dto/register-facilitator.dto';
 import { UserService } from './user.service';
-import { UserV2Service } from './user.v2.service';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/users')
@@ -33,7 +33,6 @@ export class UserController {
 		private readonly httpService: HttpService,
 		public hasuraService: HasuraService,
 		public userService: UserService,
-		public userV2Service: UserV2Service,
 	) {}
 
 	@Get('/qualification')
@@ -191,12 +190,17 @@ export class UserController {
 	) {
 		return this.userService.userCampExist(id, body, request, response);
 	}
-	@Post('/v2/is_user_exist/:role')
-	public async ifEntryExist(
-		@Param('role')role:any,
-		@Res()response:any,
-		@Body()body:any
-	){
-		return this.userV2Service.isUserExist(role,body,response);
+
+	/**************************************************************************/
+	/******************************* V2 APIs **********************************/
+	/**************************************************************************/
+	@Version('2')
+	@Post('/is_user_exist/:role')
+	public async checkUserExistsV2(
+		@Param('role') role: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.userService.checkUserExistsV2(role, body, response);
 	}
 }
