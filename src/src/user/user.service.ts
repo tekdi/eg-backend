@@ -1472,7 +1472,8 @@ export class UserService {
 			primary_table = 'program_faciltators';
 		}
 
-		sql = `SELECT ay.name as academic_year_name, ay.id as academic_year_id,p.name,p.id as program_id
+		sql = `SELECT ay.id as academic_year_id, ay.name as academic_year_name,
+		p.id as program_id, p.name as program_name
 		FROM ${primary_table} pu
 		LEFT JOIN programs p  ON pu.program_id = p.id
 		LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
