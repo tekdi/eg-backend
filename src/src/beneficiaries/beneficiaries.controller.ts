@@ -18,10 +18,10 @@ import {
 import { Response } from 'express';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { UserService } from 'src/user/user.service';
 import { BeneficiariesService } from './beneficiaries.service';
 import { RegisterBeneficiaryDto } from './dto/register-beneficiary.dto';
 import { StatusUpdateDTO } from './dto/status-update.dto';
-import { UserService } from 'src/user/user.service';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('beneficiaries')

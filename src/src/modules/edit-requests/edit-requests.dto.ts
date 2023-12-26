@@ -1,7 +1,7 @@
-import { IsArray, ArrayNotEmpty } from 'class-validator';
+import { ArrayNotEmpty, IsArray } from 'class-validator';
 
-export class EditRequestDto{
-    @IsArray()
-    @ArrayNotEmpty()
-    fields: string;
+export class EditRequestDto {
+	@IsArray()
+	@ArrayNotEmpty()
+	fields: string;
 }

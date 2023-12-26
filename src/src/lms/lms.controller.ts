@@ -1,25 +1,21 @@
 import {
 	Body,
 	Controller,
-	Delete,
 	Get,
 	Param,
-	Patch,
 	Post,
 	Req,
 	Res,
 	UseGuards,
 	UseInterceptors,
-	UsePipes,
-	ValidationPipe,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { LMSCertificateDto } from './dto/lms-certificate.dto';
+import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { SearchLMSDto } from './dto/search-lms.dto';
 import { LMSService } from './lms.service';
-import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
-import { LMSCertificateDto } from './dto/lms-certificate.dto';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('lms')
@@ -98,14 +94,15 @@ export class LMSController {
 			response,
 		);
 	}
+
 	@Get('/:id/get-certificates')
 	@UseGuards(new AuthGuard())
 	public async getList(
 		@Req() req: any,
-		@Body()body:any,
+		@Body() body: any,
 		@Param('id') id: any,
 		@Res() res: any,
 	) {
-		return this.lmsService.getList(req,body, id, res);
+		return this.lmsService.getList(req, body, id, res);
 	}
 }

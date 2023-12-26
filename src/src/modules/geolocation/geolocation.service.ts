@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
-import { lastValueFrom, map } from 'rxjs';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 
 @Injectable()
@@ -124,7 +123,7 @@ export class GeolocationService {
 
 		return await this.hasuraService.postData(data);
 	}
-	
+
 	async getBlocksFromDistricts(body: any, resp: any) {
 		let data = {
 			query: `query MyQuery {

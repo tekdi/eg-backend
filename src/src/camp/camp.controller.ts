@@ -1,21 +1,19 @@
-// camp.controller.ts
-
 import {
+	Body,
 	Controller,
+	Get,
+	Param,
+	Patch,
 	Post,
+	Req,
+	Res,
+	Response,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
-	Body,
-	Req,
-	UseGuards,
-	Res,
-	Param,
-	Response,
-	Patch,
-	Get,
 } from '@nestjs/common';
-import { CampService } from './camp.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { CampService } from './camp.service';
 
 @Controller('camp')
 export class CampController {

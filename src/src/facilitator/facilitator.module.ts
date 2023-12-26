@@ -28,20 +28,25 @@ import { FacilitatorService } from './facilitator.service';
 	controllers: [FacilitatorController],
 	//exports: [FacilitatorCoreService,FacilitatorService],
 })
-
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 
 		consumer
-        .apply(CohortMiddleware)
-        /*.exclude(
-            '/auth/login',
-            '/auth/otp-send',
-            '/auth/otp-verify',
-            '/auth/register',
-            '/auth/register',
-        )*/
-        .forRoutes(FacilitatorController);
+			.apply(CohortMiddleware)
+			.exclude(
+				'/facilitators/getStatuswiseCount',
+				'/facilitators/forOrientation',
+				'/facilitators/experience/:id',
+				'/facilitators/:id',
+				'/facilitators/admin/okyc_details_override',
+				'/facilitators/admin/search-by-ids',
+				'/facilitators/admin/filter-by-beneficiaries',
+				'/facilitators/exportCsv',
+				'/facilitators/update-facilitator-aadhar/:id',
+				'/facilitators/admin/learner-status-distribution',
+				'/facilitators/admin/prerak-learner-list/:id',
+			)
+			.forRoutes(FacilitatorController);
 	}
 }

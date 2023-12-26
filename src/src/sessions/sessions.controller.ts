@@ -1,19 +1,20 @@
 import {
+	Body,
 	Controller,
+	Get,
+	Param,
+	Patch,
 	Post,
+	Req,
+	Res,
+	Response,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
-	Body,
-	Req,
-	UseGuards,
-	Res,
-	Param,
-	Response,
-	Patch,
-	Get,
 } from '@nestjs/common';
-import { SessionsService } from './sessions.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { SessionsService } from './sessions.service';
+
 @Controller('sessions')
 export class SessionsController {
 	constructor(private sessionService: SessionsService) {}
