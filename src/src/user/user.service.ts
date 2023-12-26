@@ -1478,8 +1478,8 @@ export class UserService {
 		LEFT JOIN program_organisation po ON pu.program_id = po.program_id
 		WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) AND pu.user_id = ${user_id}
 		GROUP BY ay.id ,p.id
-		
-		
+
+
 		`;
 
 		const cohort_data = (
