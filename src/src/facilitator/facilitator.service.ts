@@ -7,8 +7,8 @@ import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
 import {
-    HasuraService,
-    HasuraService as HasuraServiceFromServices
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
@@ -2448,5 +2448,97 @@ export class FacilitatorService {
 			message,
 			data: okyc_response || {},
 		});
+	}
+
+	public async createProgramFaciltator(body: any, request: any, res: any) {
+		let user_id = request?.mw_userid;
+		let academic_year_id = request?.mw_academic_year_id;
+
+		let { parent_ip, program_id } = body;
+
+		//validation to check if th faciltator is getting registered for the same program
+
+		let validation_query = `query MyQuery {
+			program_faciltators(where: {user_id: {_eq:${user_id}}}){
+			  program_id
+			}
+		  }
+		  `;
+
+		const validation_result = await this.hasuraService.getData({
+			query: validation_query,
+		});
+
+		let program_faciltators = validation_result?.data?.program_faciltators;
+
+		const ids = program_faciltators.map(
+			(facilitator) => facilitator.program_id,
+		);
+
+		if (!ids.includes(body?.program_id)) {
+			return res.json({
+				status: 422,
+				success: false,
+				data: {},
+				message: 'Cannot add faciltator for another program',
+			});
+		}
+
+		//validation to check if the same faciltator data is present previously.
+		let query = `query MyQuery {
+			program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${parseInt(
+			program_id,
+		)}}, user_id: {_eq: ${user_id}}}){
+			  id
+			  program_id
+			}
+		  }
+		  `;
+
+		const result = await this.hasuraService.getData({
+			query: query,
+		});
+
+		if (result?.data?.program_faciltators?.length > 0) {
+			return res.json({
+				status: 422,
+				message: 'Faciltator data already exists',
+				success: false,
+				data: {},
+			});
+		}
+
+		let program_faciltator_create = {
+			...body,
+			user_id: user_id,
+			academic_year_id: academic_year_id,
+			parent_ip: parent_ip,
+		};
+
+		let createresponse = await this.hasuraService.q(
+			'program_faciltators',
+			{
+				...program_faciltator_create,
+			},
+			[],
+			false,
+			['id', 'user_id', 'program_id', 'academic_year_id'],
+		);
+
+		if (createresponse?.program_faciltators?.id) {
+			return res.json({
+				status: 200,
+				message: 'Successfully added data',
+				success: true,
+				data: createresponse?.program_faciltator?.id,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				message: 'Failed  adding data',
+				success: true,
+				data: {},
+			});
+		}
 	}
 }
