@@ -5,14 +5,12 @@ import { HasuraModule } from '../hasura/hasura.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
+import { ProgramIdMiddleware } from 'src/common/middlewares/programId.middleware';
+import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 @Module({
 	imports: [HasuraModule, HasuraModuleFromServices, UserModule],
 	controllers: [CommentsController],
 	providers: [CommentsService],
 })
 
-export class CommentsModule implements NestModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AuthMiddleware).forRoutes(CommentsController);
-	}
-}
+export class CommentsModule {}

@@ -7,6 +7,8 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
+import { ProgramIdMiddleware } from 'src/common/middlewares/programId.middleware';
+import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 @Module({
 	imports: [
 		HelperModule,
@@ -21,5 +23,37 @@ import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 export class UserModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer.apply(ProgramIdMiddleware)
+		.exclude(
+			'/users/qualification',
+			'/users/create',
+			'/users/update/:id',
+			'/users/list',
+			'/users/info/:id',
+			'/users/is_user_exist',
+			'/users/login',
+			'/users/ip_user_info',
+			'/users/organization/:id',
+			'/users/register',
+			'/users/aadhaarDetails/:userId',
+			'/users/audit/:context/:context_id',
+			'/users/cohorts/my'
+		).forRoutes(UserController);
+		consumer.apply(CohortMiddleware)
+		.exclude(
+			'/users/qualification',
+			'/users/create',
+			'/users/update/:id',
+			'/users/list',
+			'/users/info/:id',
+			'/users/is_user_exist',
+			'/users/login',
+			'/users/ip_user_info',
+			'/users/organization/:id',
+			'/users/register',
+			'/users/aadhaarDetails/:userId',
+			'/users/audit/:context/:context_id',
+			'/users/cohorts/my'
+		).forRoutes(UserController);
 	}
 }

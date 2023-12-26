@@ -84,12 +84,12 @@ export class ActivitiesService {
 	public async List(body: any, req: any, resp: any) {
 		try {
 			let academic_year_id = body?.academic_year_id || 1;
-			let program_id = body?.program_id || 1;
+			let program_id = req.mw_program_id;
 			let context_id = req.mw_userid;
 			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 			let offset = page > 1 ? limit * (page - 1) : 0;
-
+			
 			let newQdata = await this.activitiesCoreService.list(
 				academic_year_id,
 				program_id,
@@ -99,7 +99,6 @@ export class ActivitiesService {
 				offset,
 			);
 			
-
 			if (newQdata.activities.length > 0) {
 				return resp.status(200).json({
 					success: true,

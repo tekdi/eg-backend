@@ -13,6 +13,7 @@ import { CohortMiddleware } from '../common/middlewares/cohort.middleware';
 import { FacilitatorController } from './facilitator.controller';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { FacilitatorService } from './facilitator.service';
+import { ProgramIdMiddleware } from 'src/common/middlewares/programId.middleware';
 
 @Module({
 	imports: [
@@ -35,13 +36,35 @@ export class FacilitatorModule implements NestModule {
 
 		consumer
         .apply(CohortMiddleware)
-        /*.exclude(
-            '/auth/login',
-            '/auth/otp-send',
-            '/auth/otp-verify',
-            '/auth/register',
-            '/auth/register',
-        )*/
+        .exclude(
+            '/facilitators/getStatuswiseCount',
+			'/facilitators/forOrientation',
+			'/facilitators/experience/:id',
+			'/facilitators/:id',
+			'/facilitators/admin/okyc_details_override',
+			'/facilitators/admin/search-by-ids',
+			'/facilitators/admin/filter-by-beneficiaries',
+			'/facilitators/exportCsv',
+			'/facilitators/update-facilitator-aadhar/:id',
+			'/facilitators/admin/learner-status-distribution',
+			'/facilitators/admin/prerak-learner-list/:id'
+        )
+        .forRoutes(FacilitatorController);
+		consumer
+        .apply(ProgramIdMiddleware)
+        .exclude(
+            '/facilitators/getStatuswiseCount',
+			'/facilitators/forOrientation',
+			'/facilitators/experience/:id',
+			'/facilitators/:id',
+			'/facilitators/admin/okyc_details_override',
+			'/facilitators/admin/search-by-ids',
+			'/facilitators/admin/filter-by-beneficiaries',
+			'/facilitators/exportCsv',
+			'/facilitators/update-facilitator-aadhar/:id',
+			'/facilitators/admin/learner-status-distribution',
+			'/facilitators/admin/prerak-learner-list/:id'
+        )
         .forRoutes(FacilitatorController);
 	}
 }
