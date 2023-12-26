@@ -1472,12 +1472,17 @@ export class UserService {
 			primary_table = 'program_faciltators';
 		}
 
-		sql = `SELECT  ay.name as academic_year_name,ay.id as academic_year_id,ay.program_id
-			FROM ${primary_table} pu
-			LEFT JOIN program_organisation po ON pu.program_id = po.program_id
-			left JOIN academic_years ay ON po.program_id = ay.program_id
-			WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) and pu.user_id = ${user_id}
-			group by ay.id`;
+		sql = `SELECT ay.id as academic_year_id, ay.name as academic_year_name,
+		p.id as program_id, p.name as program_name
+		FROM ${primary_table} pu
+		LEFT JOIN programs p  ON pu.program_id = p.id
+		LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
+		LEFT JOIN program_organisation po ON pu.program_id = po.program_id
+		WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) AND pu.user_id = ${user_id}
+		GROUP BY ay.id ,p.id
+		
+		
+		`;
 
 		const cohort_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
