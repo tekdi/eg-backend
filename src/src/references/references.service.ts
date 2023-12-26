@@ -5,6 +5,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 @Injectable()
 export class ReferencesService {
 	public table = 'references';
+
 	public fillable = [
 		'name',
 		'contact_number',
@@ -18,6 +19,7 @@ export class ReferencesService {
 		'last_name',
 		'relation',
 	];
+
 	public returnFields = [
 		'id',
 		'name',
@@ -32,10 +34,12 @@ export class ReferencesService {
 		'last_name',
 		'relation',
 	];
+
 	constructor(
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
+
 	async create(body: any, request: any, resp: any) {
 		let facilitator_id = request.mw_userid;
 		let context = 'community.user';

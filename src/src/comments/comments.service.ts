@@ -8,6 +8,7 @@ export class CommentsService {
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
+
 	returnFields = [
 		'id',
 		'parent_id',
@@ -69,7 +70,7 @@ export class CommentsService {
 					user_details{
 						first_name
 						last_name
-						id  
+						id
 					}
 				}
 			}`,
@@ -109,7 +110,7 @@ export class CommentsService {
 					user_details{
 						first_name
 						last_name
-						id  
+						id
 					}
 				}
 			}`,
@@ -118,12 +119,7 @@ export class CommentsService {
 		return result;
 	}
 
-	async update(
-		id: number,
-		body: any,
-		request: any,
-		response: any,
-	) {
+	async update(id: number, body: any, request: any, response: any) {
 		const user_Id = request.mw_userid;
 		let updatedComment = {};
 		const tableName = 'comments';
@@ -162,11 +158,7 @@ export class CommentsService {
 		}
 	}
 
-	async remove(
-		id: number,
-		request: any,
-		response: any,
-	) {
+	async remove(id: number, request: any, response: any) {
 		const user_Id = request.mw_userid;
 		let deleteComment = {};
 		const tableName = 'comments';

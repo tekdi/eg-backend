@@ -42,12 +42,12 @@ export class UserController {
 					this.url,
 					{
 						query: `query MyQuery {
-              qualification_masters {
-                id
-                name
-                type
-              }
-            }`,
+			  qualification_masters {
+				id
+				name
+				type
+			  }
+			}`,
 					},
 					{
 						headers: {

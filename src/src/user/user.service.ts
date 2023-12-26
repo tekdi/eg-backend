@@ -8,10 +8,10 @@ import {
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
-import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { KeycloakService } from '../services/keycloak/keycloak.service';
 
 @Injectable()
 export class UserService {
@@ -70,7 +70,7 @@ export class UserService {
 				  id
 				}
 			  }
-			  
+
 			  `;
 
 			const validation_data =

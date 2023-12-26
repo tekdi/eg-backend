@@ -23,15 +23,15 @@ export class HasuraService {
 
 		var data = {
 			query: `query SearchUser {
-        ${tableName}_aggregate(where:{${query}}) {
-          aggregate {
-            count
-          }
-        }
-        ${tableName}(where:{${query}}) {
-          mobile
-          aadhar_token
-        }}`,
+		${tableName}_aggregate(where:{${query}}) {
+		  aggregate {
+			count
+		  }
+		}
+		${tableName}(where:{${query}}) {
+		  mobile
+		  aadhar_token
+		}}`,
 		};
 
 		return await lastValueFrom(

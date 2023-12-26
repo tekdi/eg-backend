@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from 'src/user/user.service';
+import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
-import { EnumService } from '../enum/enum.service';
 const moment = require('moment');
 @Injectable()
 export class CampCoreService {
@@ -32,23 +32,23 @@ export class CampCoreService {
 		variables: any,
 	) {
 		let query = `query MyQuery {
-        all:camps_aggregate(where:${filterQuery}) {
-          aggregate {
-            count
-          }
-        },
+		all:camps_aggregate(where:${filterQuery}) {
+		  aggregate {
+			count
+		  }
+		},
 		camp_initiated: camps_aggregate(where:{ _and: [${filterQueryArray.join(
 			',',
 		)}, {group:{_or: [
-            {status: {_nin: ${JSON.stringify(
+			{status: {_nin: ${JSON.stringify(
 				status.filter((item) => item != 'camp_initiated'),
 			)}}},
-            { status: { _is_null: true } }
-         ]}}] } ) {
-            aggregate {
-                count
-            }},
-        ${status
+			{ status: { _is_null: true } }
+		 ]}}] } ) {
+			aggregate {
+				count
+			}},
+		${status
 			.filter((item) => item != 'camp_initiated')
 			.map(
 				(
@@ -56,11 +56,11 @@ export class CampCoreService {
 				) => `${item}:camps_aggregate(where:{ _and: [${filterQueryArray.join(
 					',',
 				)},{group: {status: {_eq: ${item}}}}] } ) {
-                    aggregate {
-                        count
-                    }}`,
+					aggregate {
+						count
+					}}`,
 			)}
-    }`;
+	}`;
 
 		const response = await this.hasuraServiceFromServices.getData({
 			query,
@@ -156,7 +156,7 @@ export class CampCoreService {
 					  middle_name
 					  last_name
 					}
-					
+
 				  }
 				  beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 					user {
@@ -179,7 +179,7 @@ export class CampCoreService {
 					}
 				}
 				}
-				
+
 			  }
 			  `,
 			variables: {
@@ -257,7 +257,7 @@ export class CampCoreService {
 				  }
 				}
 			  }
-			  
+
 			`,
 			variables: {
 				limit: limit,
@@ -398,9 +398,9 @@ export class CampCoreService {
 			  end_date
 			  updated_by
 			  updated_at
-			  
+
 			}
-		  }		  
+		  }
 		  `;
 
 		return await this.hasuraServiceFromServices.getData({

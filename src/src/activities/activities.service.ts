@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ActivitiesCoreService } from './activities.core.service';
 import { EnumService } from 'src/enum/enum.service';
+import { ActivitiesCoreService } from './activities.core.service';
 
 @Injectable()
 export class ActivitiesService {
@@ -89,7 +89,7 @@ export class ActivitiesService {
 			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 			let offset = page > 1 ? limit * (page - 1) : 0;
-			
+
 			let newQdata = await this.activitiesCoreService.list(
 				academic_year_id,
 				program_id,
@@ -98,7 +98,7 @@ export class ActivitiesService {
 				limit,
 				offset,
 			);
-			
+
 			if (newQdata.activities.length > 0) {
 				return resp.status(200).json({
 					success: true,

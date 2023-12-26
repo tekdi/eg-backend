@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 
@@ -214,7 +214,7 @@ export class FaFaceIndexingCron {
 						  _or: [
 							{fa_user_indexed: {_is_null: true}},
 							{fa_user_indexed: {_eq: false}}
-						]}, 
+						]},
 						  {_or: [{fa_photos_last_processed_at: {_is_null: true}},
 							{fa_photos_last_processed_at: {_lte: "${filterTimestamp}"}}]},
 						  {documents: {document_sub_type: {_eq: "profile_photo_1"}}}]}
@@ -348,20 +348,20 @@ export class FaFaceIndexingCron {
 		);*/
 
 		let updateQuery = `
-            mutation MyMutation {
-                update_users_by_pk(
-                    pk_columns: {
-                        id: ${userId}
-                    },
-                    _set: {
-                        fa_photos_last_processed_at: "${fa_photos_last_processed_at}",
-                    }
-                ) {
-                    id
-                    fa_photos_last_processed_at
-                }
-            }
-        `;
+			mutation MyMutation {
+				update_users_by_pk(
+					pk_columns: {
+						id: ${userId}
+					},
+					_set: {
+						fa_photos_last_processed_at: "${fa_photos_last_processed_at}",
+					}
+				) {
+					id
+					fa_photos_last_processed_at
+				}
+			}
+		`;
 
 		try {
 			return (await this.hasuraService.getData({ query: updateQuery }))
@@ -398,7 +398,7 @@ export class FaFaceIndexingCron {
 						fa_user_indexed
 						fa_photos_indexed
 						fa_face_ids
-                        fa_photos_last_processed_at
+						fa_photos_last_processed_at
 					}
 				}
 			`;
