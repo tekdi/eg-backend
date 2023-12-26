@@ -1505,4 +1505,36 @@ export class UserService {
 			});
 		}
 	}
+
+	public async getProgramData(body: any, request: any, res: any) {
+		let program_id = body?.program_id;
+
+		let query = `query MyQuery {
+			programs_by_pk(id:${program_id}){
+			  id,
+			  name
+			}
+		  }
+		  `;
+
+		let result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let program_data = result?.data?.programs_by_pk;
+
+		if (program_data != null) {
+			return res.json({
+				status: 200,
+				success: true,
+				data: program_data,
+			});
+		} else {
+			return res.json({
+				status: 500,
+				data: {},
+				success: false,
+			});
+		}
+	}
 }
