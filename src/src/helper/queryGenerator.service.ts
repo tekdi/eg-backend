@@ -41,17 +41,17 @@ export class QueryGeneratorService {
 		};
 
 		return `mutation MyQuery {
-      ${tableName}(${getObjStr(item)}) {
-        ${this.getParam(
+	  ${tableName}(${getObjStr(item)}) {
+		${this.getParam(
 			fields && fields.length > 0
 				? fields
 				: onlyFields
 				? onlyFields
 				: keys,
 		)}
-      }
-    }
-    `;
+	  }
+	}
+	`;
 	}
 
 	// update
@@ -99,8 +99,8 @@ export class QueryGeneratorService {
 			return coreQuery;
 		}
 		return `mutation MyQuery {
-      		${coreQuery}
-    	}`;
+	  		${coreQuery}
+		}`;
 	}
 
 	//mutation
@@ -164,11 +164,11 @@ export class QueryGeneratorService {
 		}
 
 		return `mutation MyQuery {
-      ${tableName}(${getObjStr(item, 'obj')}) {
-        ${returnFieldsQuery}
-      }
-    }
-    `;
+	  ${tableName}(${getObjStr(item, 'obj')}) {
+		${returnFieldsQuery}
+	  }
+	}
+	`;
 	}
 
 	query(
@@ -228,25 +228,25 @@ export class QueryGeneratorService {
 		};
 
 		return `query MyQuery {
-      ${tableName}_aggregate${getObjStr(request)} {
-        aggregate {
-          count
-        }
-      }
-      ${tableName}${getObjStr(request)} {
-        ${this.getParam(onlyFields)}
-      }
-    }
-    `;
+	  ${tableName}_aggregate${getObjStr(request)} {
+		aggregate {
+		  count
+		}
+	  }
+	  ${tableName}${getObjStr(request)} {
+		${this.getParam(onlyFields)}
+	  }
+	}
+	`;
 	}
 
 	findOne(id: number, tName: String, onlyFields: any = []) {
 		return `query MyQuery {
-        ${tName}_by_pk(id: ${id}) {
-            ${this.getParam(onlyFields)}
-      }
-    }
-    `;
+		${tName}_by_pk(id: ${id}) {
+			${this.getParam(onlyFields)}
+	  }
+	}
+	`;
 	}
 
 	queryMulti(
@@ -296,9 +296,9 @@ export class QueryGeneratorService {
 		}
 
 		return `mutation MyQuery {
-			
-      		${coreQuery}
-    	}`;
+
+	  		${coreQuery}
+		}`;
 	}
 
 	deleteQuery(
@@ -331,16 +331,16 @@ export class QueryGeneratorService {
 			returnFields.length > 0
 		) {
 			returnFieldsQuery = `returning {
-        ${returnFields.join(',')}
-      }`;
+		${returnFields.join(',')}
+	  }`;
 		}
 
 		return `mutation DeleteQuery {
-      ${tableName}(where: {${getObjStr(item, 'obj')}}) {
-         affected_rows
-         ${returnFieldsQuery}
-      }
-    }
-    `;
+	  ${tableName}(where: {${getObjStr(item, 'obj')}}) {
+		 affected_rows
+		 ${returnFieldsQuery}
+	  }
+	}
+	`;
 	}
 }

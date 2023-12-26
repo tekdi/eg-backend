@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ActivitiesCoreService } from './activities.core.service';
 import { EnumService } from 'src/enum/enum.service';
+import { ActivitiesCoreService } from './activities.core.service';
 
 @Injectable()
 export class ActivitiesService {
@@ -98,7 +98,6 @@ export class ActivitiesService {
 				limit,
 				offset,
 			);
-			
 
 			if (newQdata.activities.length > 0) {
 				return resp.status(200).json({

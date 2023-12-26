@@ -1,14 +1,14 @@
 // camp.service.ts
 import { Injectable } from '@nestjs/common';
 
-import { UserService } from 'src/user/user.service';
-import { HasuraService } from '../hasura/hasura.service';
-import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
-import { S3Service } from '../services/s3/s3.service';
+import { UserService } from 'src/user/user.service';
 import { AttendancesService } from '../attendances/attendances.service';
 import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
-import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.service';
+import { HasuraService } from '../hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { S3Service } from '../services/s3/s3.service';
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
@@ -102,7 +102,7 @@ export class CampService {
 				  group_id
 				}
 			  }
-				  
+
 			  `;
 
 			const hasura_validation_response =
@@ -330,9 +330,9 @@ export class CampService {
 			  }
 			}
 		  }
-		  
-          
-          `;
+
+
+		  `;
 		const data = { query: query };
 		const res = await this.hasuraServiceFromServices.getData(data);
 		return res;
@@ -349,14 +349,14 @@ export class CampService {
 		let status = ['selected_prerak', 'selected_for_onboarding'];
 
 		let query = `query MyQuery {
-      users_aggregate(where: {id: {_eq: ${facilitator_id}}, program_faciltators: {status: {_in:${status}}, program_id: {_eq:${facilitator_id_program_id}}, academic_year_id: {_eq:${facilitator_id_academic_id}}}}) {
-        aggregate {
-          count
-        }
-      }
-    }
-    
-      `;
+	  users_aggregate(where: {id: {_eq: ${facilitator_id}}, program_faciltators: {status: {_in:${status}}, program_id: {_eq:${facilitator_id_program_id}}, academic_year_id: {_eq:${facilitator_id_academic_id}}}}) {
+		aggregate {
+		  count
+		}
+	  }
+	}
+
+	  `;
 
 		const data = { query: query };
 		const res = await this.hasuraServiceFromServices.getData(data);
@@ -382,12 +382,12 @@ export class CampService {
 				description
 				status
 			  }
-			  
+
 			  group_users(where: {member_type: {_neq: "owner"}}) {
 				user_id
 				status
 				member_type
-				
+
 			  }
 			}
 		  }`;
@@ -469,11 +469,11 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id 
+					id
 					name
 				  }
 			  }
-			  
+
 			  group_users(where: {member_type: {_neq: "owner"}, status: {_eq: "active"}}) {
 				user {
 				  id
@@ -499,8 +499,8 @@ export class CampService {
 			  }
 			}
 		  }
-		  
-		  
+
+
 		  `;
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -674,7 +674,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -769,7 +769,7 @@ export class CampService {
 			  group_id
 			  property_id
 			  kit_received
-              kit_was_sufficient
+			  kit_was_sufficient
 			  kit_ratings
 			  kit_feedback
 			  preferred_start_time
@@ -792,7 +792,7 @@ export class CampService {
 			  group_users(where: {user_id: {_eq:${facilitator_id}}, member_type: {_eq:${member_type}}, status: {_eq:${status}}}) {
 				id
 				user_id
-				
+
 			  }
 			  group{
 				id
@@ -800,7 +800,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const data = { query: query };
@@ -1146,7 +1146,7 @@ export class CampService {
 					};
 				}
 
-				let qury = `query MyQuery {	
+				let qury = `query MyQuery {
 					camps_by_pk(id:${camp_id})  {
 					group_id
 					group {
@@ -1873,7 +1873,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -1987,7 +1987,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -2224,7 +2224,7 @@ export class CampService {
 								enrollment_middle_name
 								enrollment_last_name
 							}
-							
+
 						}
 					}
 					properties {
@@ -2559,10 +2559,10 @@ export class CampService {
 
 		if (body.search && body.search !== '') {
 			filterQueryArray.push(`{_or: [
-        { first_name: { _ilike: "%${body.search}%" } },
-        { last_name: { _ilike: "%${body.search}%" } },
-        { email_id: { _ilike: "%${body.search}%" } }
-      ]} `);
+		{ first_name: { _ilike: "%${body.search}%" } },
+		{ last_name: { _ilike: "%${body.search}%" } },
+		{ email_id: { _ilike: "%${body.search}%" } }
+	  ]} `);
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -2695,14 +2695,14 @@ export class CampService {
 				id
 				status
 			  }
-			 
+
 			}
 			learner_details:program_beneficiaries(where:{user_id:{_eq:${body?.learner_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}){
 			  status
 			}
 		  }
-		  
-		  
+
+
 		  `;
 
 		const validation_hasura_response =
@@ -2744,7 +2744,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3123,7 +3123,7 @@ export class CampService {
 			  id
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3152,10 +3152,10 @@ export class CampService {
 				  beneficiaries_data: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 					user_id
 				  }
-					
+
 				}
 			  }
-			  
+
 			 `;
 
 			const hasura_response =
@@ -3368,7 +3368,7 @@ export class CampService {
 				data: {},
 			});
 		}
-    
+
 		// Set camp_day_not_happening_reason to NULL if not present in the body
 		if (
 			camp_day_happening === 'no' &&
@@ -3435,7 +3435,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {mood:${body?.mood}}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3470,7 +3470,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {camp_day_happening:${body?.camp_day_happening}}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3505,7 +3505,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery($misc_activities: json) {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {misc_activities:$misc_activities}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3546,7 +3546,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}", end_camp_marked_by: "user"}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3633,7 +3633,7 @@ export class CampService {
 			  updated_by
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3692,7 +3692,7 @@ export class CampService {
 		gs.date
 	  ORDER BY
 		gs.date;
-	  
+
 		;`;
 		const attendance_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)

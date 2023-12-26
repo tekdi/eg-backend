@@ -15,10 +15,10 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
-import { CreateInterviewDto } from './dto/create-interview.dto';
-import { InterviewService } from './interview.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { AcceptInterviewDto } from './dto/accept-interview.dto';
+import { CreateInterviewDto } from './dto/create-interview.dto';
+import { InterviewService } from './interview.service';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('interview')

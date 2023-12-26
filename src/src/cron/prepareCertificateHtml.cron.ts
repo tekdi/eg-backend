@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
-import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
-import { HasuraService } from '../services/hasura/hasura.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { AttendancesCoreService } from 'src/attendances/attendances.core.service';
-import { UserService } from 'src/user/user.service';
+import { Method } from 'src/common/method/method';
 import { html_code } from 'src/lms/certificate_html';
 import { LMSCertificateDto } from 'src/lms/dto/lms-certificate.dto';
-import { Method } from 'src/common/method/method';
+import { UserService } from 'src/user/user.service';
+import { HasuraService } from '../services/hasura/hasura.service';
 
 const moment = require('moment');
 const qr = require('qrcode');
@@ -232,7 +231,7 @@ export class PrepareCertificateHtmlCron {
 								_is_null: true
 							}
 						},
-						{_or: 
+						{_or:
 							[
 								{cron_last_processed_at: {_is_null: true}},
 								{cron_last_processed_at: {_lte: "${filterTimestamp}"}}
@@ -331,7 +330,7 @@ export class PrepareCertificateHtmlCron {
 					id: "${id}"
 				},
 				_set: {${queryObj}}
-				) 
+				)
 			  {
 			   id
 			  }

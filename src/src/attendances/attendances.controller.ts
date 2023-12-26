@@ -1,10 +1,10 @@
 import {
+	Body,
 	Controller,
 	Get,
-	Post,
-	Body,
-	Patch,
 	Param,
+	Patch,
+	Post,
 	Request,
 	Response,
 } from '@nestjs/common';
@@ -37,6 +37,7 @@ export class AttendancesController {
 	update(@Param('id') id: string, @Body() request: Record<string, any>) {
 		return this.attendancesService.update(+id, request);
 	}
+
 	@Get('/get/user-attendance-list')
 	getUserAttendanceList(
 		@Request() req: any,

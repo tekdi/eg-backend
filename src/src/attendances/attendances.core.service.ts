@@ -115,7 +115,7 @@ export class AttendancesCoreService {
 		}
 		const data = {
 			query: `query MyQuery${pagination} {
-				${attendanceAggreage}	
+				${attendanceAggreage}
 				attendance(${wherePagination}, where: {${filterWhere.join(',')}}) {
 			  id
 			  lat
@@ -245,8 +245,6 @@ export class AttendancesCoreService {
 				await this.hasuraServiceFromServices.getData({ query });
 			console.log('result_response', result_response);
 			const data_list = result_response?.data?.attendance;
-			//console.log('data_list cunt------>>>>>', data_list.length);
-			//console.log('data_list------>>>>>', data_list);
 			return data_list || [];
 		} catch (error) {
 			console.log('getUserAttendancePresentList:', error, error.stack);
@@ -254,6 +252,7 @@ export class AttendancesCoreService {
 		}
 	}
 }
+
 /*
 SELECT
 			users.*,
@@ -266,26 +265,26 @@ SELECT
 			program_facilitators.*
 		FROM
 			events
-	
+
 		LEFT JOIN
 			attendance
 		ON
 			events.context = attendance.context
 			AND events.context_id = attendance.context_id
-	
+
 		LEFT JOIN
 			users
 		ON
 			events.user_id = users.user_id
-	
+
 		LEFT JOIN
 			attendances
 		ON
 			users.user_id = attendances.user_id
-	
+
 		LEFT JOIN
 			program_facilitators
 		ON
 			users.program_id = program_facilitators.program_id
-			AND users.academic_year_id = program_facilitators.academic_year_id;	
+			AND users.academic_year_id = program_facilitators.academic_year_id;
 */

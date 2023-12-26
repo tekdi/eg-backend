@@ -1,18 +1,18 @@
 import {
-	Controller,
-	Post,
-	Get,
 	Body,
-	Patch,
+	Controller,
+	Get,
 	Param,
-	Res,
+	Patch,
+	Post,
 	Req,
+	Res,
 	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
-import { PcrscoresService } from './pcrscores.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { PcrscoresService } from './pcrscores.service';
 
 @Controller('pcrscores')
 @UseGuards(new AuthGuard())

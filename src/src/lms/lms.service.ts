@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { HasuraService } from 'src/services/hasura/hasura.service';
-import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { ConfigService } from '@nestjs/config';
-import { SearchLMSDto } from './dto/search-lms.dto';
-import { LMSCertificateDto } from './dto/lms-certificate.dto';
+import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
+import { LMSCertificateDto } from './dto/lms-certificate.dto';
+import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
+import { SearchLMSDto } from './dto/search-lms.dto';
 
 const moment = require('moment');
 const { parse, HTMLElement } = require('node-html-parser');
@@ -607,7 +607,7 @@ export class LMSService {
 					}
 				}
 			  }
-			  
+
 			  `,
 			variables: {
 				limit: limit,
