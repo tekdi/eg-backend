@@ -73,7 +73,6 @@ export class FacilitatorService {
 		response: any,
 	) {
 		const user = await this.userService.ipUserInfo(request);
-
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
@@ -441,7 +440,7 @@ export class FacilitatorService {
 
 	//status count
 	public async getStatuswiseCount(req: any, resp: any) {
-		const user = await this.userService.ipUserInfo(req);
+		const user = await this.userService.ipUserInfo(req);		
 		const status = (
 			await this.enumService.getEnumValue('FACILITATOR_STATUS')
 		).data.map((item) => item.value);
@@ -481,7 +480,7 @@ export class FacilitatorService {
 							count
 						}}`,
 				)}
-		}`;
+		}`;		
 		const response = await this.hasuraServiceFromServices.getData({
 			query,
 		});
@@ -2364,9 +2363,8 @@ export class FacilitatorService {
 	}
 	public async updateOkycResponse(req: any, body: any, res: any) {
 		const user_id = req?.mw_userid;
-		const program_id = body?.program_id || 1;
-		const academic_year_id = body?.academic_year_id || 1;
-
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
 				body,
@@ -2393,7 +2391,6 @@ export class FacilitatorService {
 		const id = body.id;
 
 		const user = await this.userService.ipUserInfo(request);
-
 		let organisation_id = user?.data?.program_users?.[0]?.organisation_id;
 		if (!organisation_id) {
 			return res.json({
