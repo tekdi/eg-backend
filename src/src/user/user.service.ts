@@ -8,10 +8,10 @@ import {
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
-import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { KeycloakService } from '../services/keycloak/keycloak.service';
 
 @Injectable()
 export class UserService {
@@ -70,7 +70,7 @@ export class UserService {
 				  id
 				}
 			  }
-			  
+
 			  `;
 
 			const validation_data =
@@ -1419,8 +1419,6 @@ export class UserService {
 			const data_list = (
 				await this.hasuraServiceFromServices.getData({ query })
 			)?.data?.users;
-			//console.log('data_list cunt------>>>>>', data_list.length);
-			//console.log('data_list------>>>>>', data_list);
 			return data_list || [];
 		} catch (error) {
 			console.log('getUserName:', error, error.stack);
@@ -1505,4 +1503,74 @@ export class UserService {
 			});
 		}
 	}
+
+  /**************************************************************************/
+	/******************************* V2 APIs **********************************/
+	/**************************************************************************/
+	public async checkUserExistsV2(role: any, body: any, response: any) {
+		const hasura_response = await this.findUsersByFields(body);
+
+		if (hasura_response && hasura_response.data.users.length > 0) {
+			const users = hasura_response.data.users;
+
+			const facilitators_data = users.flatMap(
+				(user) => user.program_faciltators,
+			);
+
+			const beneficiaries_data = users.flatMap(
+				(user) => user.program_beneficiaries,
+			);
+
+			let usersFound = false;
+			if (facilitators_data.length > 0 || beneficiaries_data.length > 0) {
+				usersFound = true;
+			}
+
+			return response.status(200).send({
+				success: usersFound,
+				data: {
+					program_faciltators: facilitators_data,
+					program_beneficiaries: beneficiaries_data,
+				},
+			});
+		} else {
+			return response.status(200).send({
+				success: false,
+				message: 'Matching users not found',
+				data: [],
+			});
+		}
+	}
+
+	public async findUsersByFields(body) {
+		const fields = [];
+		for (const fieldName in body) {
+			const fieldValue = body[fieldName];
+			fields.push(fieldName, fieldValue);
+		}
+
+		const data = {
+			query: `query MyQuery {
+				users(where: {${fields[0]}: {_eq: "${fields[1]}"}}){
+					program_faciltators {
+						user_id
+						academic_year_id
+						program_id
+					  }
+					  program_beneficiaries{
+						user_id
+						academic_year_id
+						program_id
+					}
+				}
+			}`,
+		};
+
+		// Fetch data
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		return hasura_response;
+  }
 }
