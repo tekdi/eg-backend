@@ -440,7 +440,7 @@ export class FacilitatorService {
 
 	//status count
 	public async getStatuswiseCount(req: any, resp: any) {
-		const user = await this.userService.ipUserInfo(req);	
+		const user = await this.userService.ipUserInfo(req);
 		const status = (
 			await this.enumService.getEnumValue('FACILITATOR_STATUS')
 		).data.map((item) => item.value);
