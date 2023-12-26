@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ActivitiesCoreService } from './activities.core.service';
 import { EnumService } from 'src/enum/enum.service';
+import { ActivitiesCoreService } from './activities.core.service';
 
 @Injectable()
 export class ActivitiesService {
@@ -84,7 +84,7 @@ export class ActivitiesService {
 	public async List(body: any, req: any, resp: any) {
 		try {
 			let academic_year_id = body?.academic_year_id || 1;
-			let program_id = body?.program_id || 1;
+			let program_id = req.mw_program_id;
 			let context_id = req.mw_userid;
 			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
@@ -98,7 +98,6 @@ export class ActivitiesService {
 				limit,
 				offset,
 			);
-			
 
 			if (newQdata.activities.length > 0) {
 				return resp.status(200).json({

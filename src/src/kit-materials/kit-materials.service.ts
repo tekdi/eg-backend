@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/hasura/hasura.service';
-import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KitMaterialsCoreService } from '../kit-materials/kit-materials.core.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 const moment = require('moment');
 
 @Injectable()
@@ -77,7 +77,7 @@ export class KitMaterialsService {
 			});
 
 			const kit = result?.data?.kit_materials_checklist?.[0];
-			
+
 			if (
 				kit?.date &&
 				moment().format('YYYY-MM') ===
@@ -103,8 +103,12 @@ export class KitMaterialsService {
 					},
 				};
 
-				const result = await this.hasuraServiceFromServices.getData(data);
-				response = result?.data?.update_kit_materials_checklist?.returning?.[0]
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+				response =
+					result?.data?.update_kit_materials_checklist
+						?.returning?.[0];
 
 				return resp.status(200).json({
 					success: true,
@@ -136,8 +140,12 @@ export class KitMaterialsService {
 					},
 				};
 
-				const result = await this.hasuraServiceFromServices.getData(data);
-				response = result?.data?.insert_kit_materials_checklist?.returning?.[0]
+				const result = await this.hasuraServiceFromServices.getData(
+					data,
+				);
+				response =
+					result?.data?.insert_kit_materials_checklist
+						?.returning?.[0];
 			}
 
 			return resp.status(200).json({
@@ -148,9 +156,12 @@ export class KitMaterialsService {
 		}
 	}
 
-	public async List(body: any, req: any, resp: any,camp_id:any) {
+	public async List(body: any, req: any, resp: any, camp_id: any) {
 		try {
-			let kit_data = await this.KitMaterialsCoreService.list(body,camp_id);
+			let kit_data = await this.KitMaterialsCoreService.list(
+				body,
+				camp_id,
+			);
 
 			if (kit_data) {
 				return resp.status(200).json({

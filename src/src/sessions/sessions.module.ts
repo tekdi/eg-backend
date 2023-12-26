@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { SessionsController } from './sessions.controller';
-import { SessionsService } from './sessions.service';
 import { UserModule } from 'src/user/user.module';
 import { HasuraModule } from '../hasura/hasura.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
+import { SessionsController } from './sessions.controller';
+import { SessionsService } from './sessions.service';
 
 @Module({
 	imports: [UserModule, HasuraModuleFromServices, HasuraModule],

@@ -4,17 +4,16 @@ import {
 	Get,
 	Param,
 	Post,
-	Query,
 	Res,
 	UseGuards,
 	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
-import { GeolocationService } from './geolocation.service';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
-import { MultipleBlocksDto } from '../geolocation/dto/multipleblock.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { MultipleBlocksDto } from '../geolocation/dto/multipleblock.dto';
+import { GeolocationService } from './geolocation.service';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/locationmaster')

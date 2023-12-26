@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { EnumService } from 'src/enum/enum.service';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { EnumService } from 'src/enum/enum.service';
 
 @Injectable()
 export class ActivitiesCoreService {
@@ -202,7 +202,7 @@ export class ActivitiesCoreService {
 
 			filterConditions += `, date: {
 	  _gte: "${dateString}",
-	  _lt: "${dateString} 24:00:00" 
+	  _lt: "${dateString} 24:00:00"
 	}`;
 		}
 
@@ -224,7 +224,7 @@ export class ActivitiesCoreService {
 					program_id: {_eq: ${program_id}},
 					academic_year_id: {_eq: ${academic_year_id}}${filterConditions}
 				},
-				
+
 			) {
 				id
 				user_id

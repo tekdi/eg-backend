@@ -1,10 +1,9 @@
+import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { lastValueFrom, map } from 'rxjs';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { isNumber } from 'class-validator';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom, map } from 'rxjs';
 const moment = require('moment');
 
 @Injectable()
@@ -23,6 +22,7 @@ export class EventsService {
 		'updated_by',
 		'user_id',
 	];
+
 	public returnFields = [
 		'id',
 		'name',
@@ -57,6 +57,7 @@ export class EventsService {
 		'date_time',
 		'updated_by',
 	];
+
 	constructor(
 		private readonly httpService: HttpService,
 		private readonly hasuraService: HasuraService,
@@ -510,7 +511,7 @@ export class EventsService {
 		try {
 			const data = {
 				query: `query MyQuery {
-			    events(where: {id: {_eq: ${id}}}){
+				events(where: {id: {_eq: ${id}}}){
 				id
 				user_id
 				name
@@ -607,10 +608,10 @@ export class EventsService {
 				}
 			}
 		}
-		
-		let order_by = "";
+
+		let order_by = '';
 		if (body?.order_by) {
-			const order = JSON.stringify(body?.order_by).replace(/"/g, "");
+			const order = JSON.stringify(body?.order_by).replace(/"/g, '');
 			order_by = `, order_by:${order}`;
 		}
 
@@ -779,7 +780,7 @@ export class EventsService {
 						certificate_status
 					}
 				}
-				
+
 			}`,
 			variables: {
 				limit: limit,

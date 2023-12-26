@@ -32,15 +32,15 @@ export class EditRequestCoreService {
 			query: `query MyQuery {
 				edit_requests(where: {edit_req_for_context_id: {_eq: ${edit_req_for_context_id}}, edit_req_for_context: {_eq: ${edit_req_for_context}}, program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}}) {
 				  id
-                  edit_req_for_context
-                  edit_req_for_context_id
-                  fields
-                  req_date
-                  req_approved_date
-                  program_id
-                  academic_year_id
-                  status
-                  edit_req_approved_by
+				  edit_req_for_context
+				  edit_req_for_context_id
+				  fields
+				  req_date
+				  req_approved_date
+				  program_id
+				  academic_year_id
+				  status
+				  edit_req_approved_by
 				  edit_req_by
 				}
 			  }`,
@@ -104,7 +104,7 @@ export class EditRequestCoreService {
 		}
 		const data = {
 			query: `query MyQuery {
-                    edit_requests(where: {${filterQueryArray}}) {
+					edit_requests(where: {${filterQueryArray}}) {
 						id
 						edit_req_for_context
 						edit_req_for_context_id
@@ -116,8 +116,8 @@ export class EditRequestCoreService {
 						status
 						edit_req_approved_by
 						edit_req_by
-                    }
-            }`,
+					}
+			}`,
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -152,7 +152,7 @@ export class EditRequestCoreService {
 		}
 		const data = {
 			query: `query MyQuery {
-                    edit_requests(where: {${filterQueryArray}}) {
+					edit_requests(where: {${filterQueryArray}}) {
 						id
 						edit_req_for_context
 						edit_req_for_context_id
@@ -164,8 +164,8 @@ export class EditRequestCoreService {
 						status
 						edit_req_approved_by
 						edit_req_by
-                    }
-            }`,
+					}
+			}`,
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
