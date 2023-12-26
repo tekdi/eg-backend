@@ -24,10 +24,10 @@ export class UserService {
 		private readonly keycloakService: KeycloakService,
 	) {}
 
-	public async update(userId: string, body: any, tableName: String) {
+	public async update(userId: string, body: any, tableName: String,req:any) {
 		try {
-			let program_id = body?.program_id || 1;
-			let academic_year_id = body?.academic_year_id || 1;
+			const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
@@ -1334,8 +1334,8 @@ export class UserService {
 	}
 
 	public async userCampExist(user_id: any, body: any, req: any, res: any) {
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const user = await this.ipUserInfo(req);
 
@@ -1357,6 +1357,7 @@ export class UserService {
 			}
 		  }
 		  `;
+console.log("vccc",validation_query);
 
 		const validation_response =
 			await this.hasuraServiceFromServices.getData({

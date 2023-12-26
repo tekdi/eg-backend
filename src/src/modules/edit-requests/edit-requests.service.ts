@@ -52,8 +52,8 @@ export class EditRequestService {
 			});
 		}
 
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const response = await this.editRequestCoreService.getEditRequest(
 			body.edit_req_for_context_id,
@@ -90,12 +90,14 @@ export class EditRequestService {
 
 	public async getEditRequestList(req, body, res) {
 		const edit_req_by = req.mw_userid;
-		body.academic_year_id = body?.academic_year_id || 1;
-		body.program_id = body?.program_id || 1;
-
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		
 		const response = await this.editRequestCoreService.getEditRequestList(
 			body,
 			edit_req_by,
+			program_id,
+			academic_year_id,
 		);
 		return res.status(200).json({
 			success: true,
@@ -115,11 +117,12 @@ export class EditRequestService {
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		body.academic_year_id = body?.academic_year_id || 1;
-		body.program_id = body?.program_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const response =
-			await this.editRequestCoreService.getEditRequestListAdmin(body);
+			await this.editRequestCoreService.getEditRequestListAdmin(body,program_id,
+				academic_year_id);
 		return res.status(200).json({
 			success: true,
 			message: 'success',

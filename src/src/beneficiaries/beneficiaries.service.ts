@@ -1968,8 +1968,8 @@ export class BeneficiariesService {
 
 	async create(req: any, request, response, update = false) {
 		const user = await this.userService.ipUserInfo(request);
-		let academic_year_id = req?.academic_year_id || 1;
-		let program_id = req?.program_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const { data: beneficiaryUser } =
 			await this.beneficiariesCoreService.userById(req.id);
@@ -3239,7 +3239,7 @@ export class BeneficiariesService {
 		ipId: number,
 		programId?: number,
 	) {
-		if (!programId) programId = 1;
+		if (!programId) programId = programId;
 
 		const ipUser = (await this.userService.userById(ipId)).data;
 
@@ -3581,8 +3581,8 @@ export class BeneficiariesService {
 	}
 	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
 		const facilitator_id = req.mw_userid;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let status = 'enrolled_ip_verified';
 
 		// Get users which are not present in the camps or whose status is inactive

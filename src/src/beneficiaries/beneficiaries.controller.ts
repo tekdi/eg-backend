@@ -380,7 +380,7 @@ export class BeneficiariesController {
 			body.facilitatorId,
 			'facilitator',
 			request.mw_userid,
-			body.programId,
+			request.mw_program_id,
 		);
 		if (!isValidFacilitator.isVerified) isInvalidParams = true;
 
@@ -393,7 +393,7 @@ export class BeneficiariesController {
 						benId,
 						'beneficiary',
 						request.mw_userid,
-						body.programId,
+						request.mw_program_id,
 					);
 				if (!isValidBeneficiary.isVerified) {
 					isInvalidParams = true;
