@@ -6,6 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AadhaarKycModule } from 'src/modules/aadhaar_kyc/aadhaar_kyc.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { GeolocationModule } from 'src/modules/geolocation/geolocation.module';
+import { TaxonomyModule } from 'src/modules/taxonomy/taxonomy.module';
 
 import { ActivitiesModule } from './activities/activities.module';
 import { AttendancesModule } from './attendances/attendances.module';
@@ -41,9 +42,14 @@ import { UserModule } from './user/user.module';
 			global: true,
 		},
 		AadhaarKycModule,
+		ActivitiesModule,
 		AttendancesModule,
 		AuthModule,
 		BeneficiariesModule,
+		CampModule,
+		CommentsModule,
+		CronModule,
+		EditRequestModule,
 		EnumModule,
 		EventsModule,
 		FacilitatorModule,
@@ -53,24 +59,19 @@ import { UserModule } from './user/user.module';
 		InterviewModule,
 		KeycloakModule,
 		KeycloakModule,
+		KitMaterialsModule,
+		LMSModule,
+		MasterDataModule,
+		PcrscoresModule,
+		ReferencesModule,
 		S3Module,
+		SessionsModule,
 		SubjectsModule,
+		TaxonomyModule,
 		UploadFileModule,
 		UserModule,
-		CronModule,
-		CommentsModule,
-		CampModule,
-		ReferencesModule,
-		PcrscoresModule,
-		EditRequestModule,
-		ActivitiesModule,
-		MasterDataModule,
-		LMSModule,
-		SessionsModule,
-		KitMaterialsModule,
 	],
 	controllers: [],
 	providers: [],
 })
-
 export class AppModule {}

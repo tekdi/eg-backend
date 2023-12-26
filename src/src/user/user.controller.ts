@@ -14,6 +14,7 @@ import {
 	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
+	Version,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { lastValueFrom, map } from 'rxjs';
@@ -195,5 +196,18 @@ export class UserController {
 	@UseGuards(new AuthGuard())
 	public async getUserCohorts(@Req() request: any, @Res() response: any) {
 		return this.userService.getUserCohorts(request, response);
+	}
+
+	/**************************************************************************/
+	/******************************* V2 APIs **********************************/
+	/**************************************************************************/
+	@Version('2')
+	@Post('/is_user_exist/:role')
+	public async checkUserExistsV2(
+		@Param('role') role: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.userService.checkUserExistsV2(role, body, response);
 	}
 }
