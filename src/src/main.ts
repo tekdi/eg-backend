@@ -1,3 +1,4 @@
+import { VersioningType, VERSION_NEUTRAL } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 const Sentry = require('@sentry/node');
@@ -13,6 +14,11 @@ async function bootstrap() {
 		// of transactions for performance monitoring.
 		// We recommend adjusting this value in production
 		tracesSampleRate: 0.1,
+	});
+
+	app.enableVersioning({
+		type: VersioningType.URI,
+		defaultVersion: VERSION_NEUTRAL,
 	});
 
 	await app.listen(5000);

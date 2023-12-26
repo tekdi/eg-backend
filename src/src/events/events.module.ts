@@ -6,8 +6,8 @@ import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 
 @Module({
-  imports: [UserModule,HasuraModule,HasuraModuleFromServices],
-  controllers: [EventsController],
-  providers: [EventsService],
+	imports: [UserModule, HasuraModule, HasuraModuleFromServices],
+	controllers: [EventsController],
+	providers: [EventsService],
 })
 export class EventsModule {}

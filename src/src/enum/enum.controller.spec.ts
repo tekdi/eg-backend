@@ -3,18 +3,18 @@ import { EnumController } from './enum.controller';
 import { EnumService } from './enum.service';
 
 describe('EnumController', () => {
-  let controller: EnumController;
+	let controller: EnumController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [EnumController],
-      providers: [EnumService],
-    }).compile();
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			controllers: [EnumController],
+			providers: [EnumService],
+		}).compile();
 
-    controller = module.get<EnumController>(EnumController);
-  });
+		controller = module.get<EnumController>(EnumController);
+	});
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+	it('should be defined', () => {
+		expect(controller).toBeDefined();
+	});
 });

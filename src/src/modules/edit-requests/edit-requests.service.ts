@@ -1,8 +1,8 @@
-import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
-import { HasuraService } from '../../hasura/hasura.service';
 import { Injectable } from '@nestjs/common';
-import { EditRequestCoreService } from './edit-requests.core.service';
+import { HasuraService } from '../../hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 import { UserService } from '../../user/user.service';
+import { EditRequestCoreService } from './edit-requests.core.service';
 @Injectable()
 export class EditRequestService {
 	constructor(

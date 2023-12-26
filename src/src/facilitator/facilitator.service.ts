@@ -7,8 +7,8 @@ import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
 import {
-    HasuraService,
-    HasuraService as HasuraServiceFromServices
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
@@ -73,7 +73,6 @@ export class FacilitatorService {
 		response: any,
 	) {
 		const user = await this.userService.ipUserInfo(request);
-
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
@@ -1187,10 +1186,10 @@ export class FacilitatorService {
 			}
 			if (body.search && body.search !== '') {
 				filterQueryArray.push(`{_or: [
-        { first_name: { _ilike: "%${body.search}%" } },
-        { last_name: { _ilike: "%${body.search}%" } },
-        { email_id: { _ilike: "%${body.search}%" } }
-      ]} `);
+		{ first_name: { _ilike: "%${body.search}%" } },
+		{ last_name: { _ilike: "%${body.search}%" } },
+		{ email_id: { _ilike: "%${body.search}%" } }
+	  ]} `);
 			}
 			if (
 				body.hasOwnProperty('status') &&
@@ -1239,7 +1238,7 @@ export class FacilitatorService {
 						block
 						gender
 						district
-					    program_faciltators{
+						program_faciltators{
 						status
 					  }
 					  experience {
@@ -1619,10 +1618,10 @@ export class FacilitatorService {
 		}
 		if (body.search && body.search !== '') {
 			filterQueryArray.push(`{_or: [
-        { first_name: { _ilike: "%${body.search}%" } },
-        { last_name: { _ilike: "%${body.search}%" } },
-        { email_id: { _ilike: "%${body.search}%" } }
-      ]} `);
+		{ first_name: { _ilike: "%${body.search}%" } },
+		{ last_name: { _ilike: "%${body.search}%" } },
+		{ email_id: { _ilike: "%${body.search}%" } }
+	  ]} `);
 		}
 		if (
 			body.hasOwnProperty('status') &&
@@ -1705,111 +1704,111 @@ export class FacilitatorService {
 
 		const data = {
 			query: `query MyQuery ${paramsQuery} {
-        users_aggregate (where: ${filterQuery}) {
-          aggregate {
-            count
-          }
-        }
+		users_aggregate (where: ${filterQuery}) {
+		  aggregate {
+			count
+		  }
+		}
 
-        users ( where: ${filterQuery}, order_by: ${sortQuery} ) {
-          first_name
-          id
-          last_name
-          middle_name
-          dob
-          aadhar_token
-          address
-          aadhar_verified
-          block_id
-          block_village_id
-          created_by
-          district_id
-          email_id
-          gender
-          lat
-          long
-          mobile
-          state_id
-          updated_by
-          profile_url
-          state
-          district
-          block
-          village
-          grampanchayat
-          profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
-            id
-            name
-            doument_type
-            document_sub_type
-            path
-          }
-          program_users {
-            id
-            organisation_id
-            academic_year_id
-            program_id
-            role_id
-            status
-            user_id
-          }
-          core_faciltator {
-            created_by
-            device_ownership
-            device_type
-            id
-            pan_no
-            refreere
-            sourcing_channel
-            updated_by
-            user_id
-          }
-          experience {
-            description
-            end_year
-            experience_in_years
-            institution
-            start_year
-            organization
-            role_title
-            user_id
-            type
-          }
-          program_faciltators {
-            parent_ip
-            availability
-            has_social_work_exp
-            id
-            police_verification_done
-            program_id
-            social_background_verified_by_neighbours
-            user_id
-            village_knowledge_test
-            status
-            form_step_number
-            created_by
-            updated_by
-            academic_year_id
-          }
-          qualifications {
-            created_by
-            end_year
-            id
-            institution
-            qualification_master_id
-            start_year
-            updated_by
-            user_id
-            qualification_master {
-              context
-              context_id
-              created_by
-              id
-              name
-              type
-              updated_by
-            }
-          }
+		users ( where: ${filterQuery}, order_by: ${sortQuery} ) {
+		  first_name
+		  id
+		  last_name
+		  middle_name
+		  dob
+		  aadhar_token
+		  address
+		  aadhar_verified
+		  block_id
+		  block_village_id
+		  created_by
+		  district_id
+		  email_id
+		  gender
+		  lat
+		  long
+		  mobile
+		  state_id
+		  updated_by
+		  profile_url
+		  state
+		  district
+		  block
+		  village
+		  grampanchayat
+		  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+			id
+			name
+			doument_type
+			document_sub_type
+			path
+		  }
+		  program_users {
+			id
+			organisation_id
+			academic_year_id
+			program_id
+			role_id
+			status
+			user_id
+		  }
+		  core_faciltator {
+			created_by
+			device_ownership
+			device_type
+			id
+			pan_no
+			refreere
+			sourcing_channel
+			updated_by
+			user_id
+		  }
+		  experience {
+			description
+			end_year
+			experience_in_years
+			institution
+			start_year
+			organization
+			role_title
+			user_id
+			type
+		  }
+		  program_faciltators {
+			parent_ip
+			availability
+			has_social_work_exp
+			id
+			police_verification_done
+			program_id
+			social_background_verified_by_neighbours
+			user_id
+			village_knowledge_test
+			status
+			form_step_number
+			created_by
+			updated_by
+			academic_year_id
+		  }
+		  qualifications {
+			created_by
+			end_year
+			id
+			institution
+			qualification_master_id
+			start_year
+			updated_by
+			user_id
+			qualification_master {
+			  context
+			  context_id
+			  created_by
+			  id
+			  name
+			  type
+			  updated_by
+			}
+		  }
 		  interviews {
 			id
 			title
@@ -1835,22 +1834,22 @@ export class FacilitatorService {
 			  id
 			}
 		  }
-          events {
-            context
-            context_id
-            created_by
-            end_date
-            end_time
-            id
-            location
-            location_type
-            start_date
-            start_time
-            updated_by
-            user_id
-          }
-        }
-      }`,
+		  events {
+			context
+			context_id
+			created_by
+			end_date
+			end_time
+			id
+			location
+			location_type
+			start_date
+			start_time
+			updated_by
+			user_id
+		  }
+		}
+	  }`,
 			variables: variables,
 		};
 
@@ -2042,14 +2041,14 @@ export class FacilitatorService {
 					}
 				  },
 				  identified_and_ready_to_enroll:beneficiaries_aggregate(
-                    where: {
-                        user: {id: {_is_null: false}},
-                        _or: [
+					where: {
+						user: {id: {_is_null: false}},
+						_or: [
 							{ status: { _in: ["identified", "ready_to_enroll"] } },
-                            { status: { _is_null: true } }
-                     ]
-                    }
-                )
+							{ status: { _is_null: true } }
+					 ]
+					}
+				)
 				{
 					aggregate {
 					  count
@@ -2071,7 +2070,7 @@ export class FacilitatorService {
 					{ user:	{ id: { _is_null: false } } }
 
 										 ]
-		    	}
+				}
 			)
 			{
 				aggregate {
@@ -2194,8 +2193,8 @@ export class FacilitatorService {
 			  mobile
 			  aadhar_no
 			  address
-              address_line_1
-              address_line_2
+			  address_line_1
+			  address_line_2
 			  district
 			  block
 			  program_beneficiaries{
@@ -2364,9 +2363,8 @@ export class FacilitatorService {
 	}
 	public async updateOkycResponse(req: any, body: any, res: any) {
 		const user_id = req?.mw_userid;
-		const program_id = body?.program_id || 1;
-		const academic_year_id = body?.academic_year_id || 1;
-
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
 				body,
@@ -2393,7 +2391,6 @@ export class FacilitatorService {
 		const id = body.id;
 
 		const user = await this.userService.ipUserInfo(request);
-
 		let organisation_id = user?.data?.program_users?.[0]?.organisation_id;
 		if (!organisation_id) {
 			return res.json({
