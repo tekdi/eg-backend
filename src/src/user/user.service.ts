@@ -1419,8 +1419,6 @@ export class UserService {
 			const data_list = (
 				await this.hasuraServiceFromServices.getData({ query })
 			)?.data?.users;
-			//console.log('data_list cunt------>>>>>', data_list.length);
-			//console.log('data_list------>>>>>', data_list);
 			return data_list || [];
 		} catch (error) {
 			console.log('getUserName:', error, error.stack);
@@ -1472,12 +1470,17 @@ export class UserService {
 			primary_table = 'program_faciltators';
 		}
 
-		sql = `SELECT  ay.name as academic_year_name,ay.id as academic_year_id,ay.program_id
-			FROM ${primary_table} pu
-			LEFT JOIN program_organisation po ON pu.program_id = po.program_id
-			left JOIN academic_years ay ON po.program_id = ay.program_id
-			WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) and pu.user_id = ${user_id}
-			group by ay.id`;
+		sql = `SELECT ay.id as academic_year_id, ay.name as academic_year_name,
+		p.id as program_id, p.name as program_name
+		FROM ${primary_table} pu
+		LEFT JOIN programs p  ON pu.program_id = p.id
+		LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
+		LEFT JOIN program_organisation po ON pu.program_id = po.program_id
+		WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) AND pu.user_id = ${user_id}
+		GROUP BY ay.id ,p.id
+
+
+		`;
 
 		const cohort_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
@@ -1500,4 +1503,74 @@ export class UserService {
 			});
 		}
 	}
+
+  /**************************************************************************/
+	/******************************* V2 APIs **********************************/
+	/**************************************************************************/
+	public async checkUserExistsV2(role: any, body: any, response: any) {
+		const hasura_response = await this.findUsersByFields(body);
+
+		if (hasura_response && hasura_response.data.users.length > 0) {
+			const users = hasura_response.data.users;
+
+			const facilitators_data = users.flatMap(
+				(user) => user.program_faciltators,
+			);
+
+			const beneficiaries_data = users.flatMap(
+				(user) => user.program_beneficiaries,
+			);
+
+			let usersFound = false;
+			if (facilitators_data.length > 0 || beneficiaries_data.length > 0) {
+				usersFound = true;
+			}
+
+			return response.status(200).send({
+				success: usersFound,
+				data: {
+					program_faciltators: facilitators_data,
+					program_beneficiaries: beneficiaries_data,
+				},
+			});
+		} else {
+			return response.status(200).send({
+				success: false,
+				message: 'Matching users not found',
+				data: [],
+			});
+		}
+	}
+
+	public async findUsersByFields(body) {
+		const fields = [];
+		for (const fieldName in body) {
+			const fieldValue = body[fieldName];
+			fields.push(fieldName, fieldValue);
+		}
+
+		const data = {
+			query: `query MyQuery {
+				users(where: {${fields[0]}: {_eq: "${fields[1]}"}}){
+					program_faciltators {
+						user_id
+						academic_year_id
+						program_id
+					  }
+					  program_beneficiaries{
+						user_id
+						academic_year_id
+						program_id
+					}
+				}
+			}`,
+		};
+
+		// Fetch data
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		return hasura_response;
+  }
 }

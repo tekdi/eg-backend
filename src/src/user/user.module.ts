@@ -15,7 +15,7 @@ import { UserService } from './user.service';
 		HasuraModuleFromServices,
 		KeycloakModule,
 	],
-	providers: [UserService, AuthMiddleware],
+	providers: [AuthMiddleware, UserService],
 	controllers: [UserController],
 	exports: [UserService],
 })
