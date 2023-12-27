@@ -120,7 +120,7 @@ export class UserController {
 		@Body() body: Record<string, any>,
 		@Req() req:any,
 	) {
-		return this.userService.update(id, body,req, 'program_faciltators');
+		return this.userService.update(id, body, req, 'program_faciltators');
 	}
 
 	// users/login by username and password.

@@ -78,11 +78,13 @@ export class EditRequestCoreService {
 		return result;
 	}
 	public async getEditRequestList(
+		req,
 		body,
 		edit_req_by,
-		program_id,
-		academic_year_id,
+		
 	) {
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let { edit_req_for_context, edit_req_for_context_id } = body;
 
 		let filterQueryArray = [];

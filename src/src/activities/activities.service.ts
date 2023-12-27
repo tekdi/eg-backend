@@ -29,7 +29,7 @@ export class ActivitiesService {
 			);
 
 			if (response) {
-				return resp.json({
+				return resp.status(response.status).json({
 					status: response.status,
 					message: response.message,
 					data: response.data,
