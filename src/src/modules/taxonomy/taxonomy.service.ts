@@ -52,12 +52,12 @@ export class TaxonomyService {
 		let academic_year_data = result?.data?.academic_years_by_pk;
 
 		if (academic_year_data != null) {
-			return response.status(200).send({
+			return response.status(200).json({
 				success: true,
 				data: academic_year_data,
 			});
 		} else {
-			return response.status(404).send({
+			return response.status(404).json({
 				success: false,
 				data: {},
 			});
