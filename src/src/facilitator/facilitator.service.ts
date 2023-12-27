@@ -2450,7 +2450,7 @@ export class FacilitatorService {
 		});
 	}
 
-	public async createProgramFacilitator(body: any, request: any, res: any) {
+	public async createProgramFacilitator(request: any, body: any, res: any) {
 		let user_id = request?.mw_userid;
 		let academic_year_id = request?.mw_academic_year_id;
 
