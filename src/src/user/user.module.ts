@@ -1,8 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-<<<<<<< HEAD
-=======
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
->>>>>>> upstream/release-1.7.0
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { HasuraModule } from '../hasura/hasura.module';
