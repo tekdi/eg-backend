@@ -39,7 +39,7 @@ export class UserModule implements NestModule {
 				'/users/register',
 				'/users/aadhaarDetails/:userId',
 				'/users/audit/:context/:context_id',
-				'/users/cohorts/my',
+				'/users/cohorts/my/:type',
 			)
 			.forRoutes(UserController);
 	}
