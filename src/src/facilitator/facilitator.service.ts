@@ -2449,4 +2449,111 @@ export class FacilitatorService {
 			data: okyc_response || {},
 		});
 	}
+
+	public async createProgramFacilitator(request: any, body: any, res: any) {
+		let user_id = request?.mw_userid;
+		let academic_year_id = request?.mw_academic_year_id;
+
+		let { parent_ip, program_id } = body;
+
+		//validation to check if th faciltator is getting registered for the same program
+
+		let validation_query = `query MyQuery {
+			program_faciltators(where: {user_id: {_eq:${user_id}}}){
+			  program_id
+			  has_social_work_exp
+			  availability
+			  created_by
+			  documents_status
+			  eligibility_details
+			  eligibility_percentage
+			  form_step_number
+			  has_social_work_exp
+			  okyc_response
+			  police_verification_done
+			  qualification_ids
+			  status
+			  status_reason
+			  social_background_verified_by_neighbours
+			  village_knowledge_test
+			}
+		  }
+		  `;
+
+		const validation_result = await this.hasuraService.getData({
+			query: validation_query,
+		});
+
+		let program_faciltators = validation_result?.data?.program_faciltators;
+
+		const ids = program_faciltators.map(
+			(facilitator) => facilitator.program_id,
+		);
+
+		if (!ids.includes(body?.program_id)) {
+			return res.status(422).json({
+				success: false,
+				data: {},
+				message: 'Cannot add faciltator for another program',
+			});
+		}
+
+		// Validation to check if the same faciltator data is present previously.
+		let query = `query MyQuery {
+			program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${parseInt(
+			program_id,
+		)}}, user_id: {_eq: ${user_id}}}){
+			  id
+			  program_id
+			}
+		  }
+		  `;
+
+		const result = await this.hasuraService.getData({
+			query: query,
+		});
+
+		if (result?.data?.program_faciltators?.length > 0) {
+			return res.status(422).json({
+				message: 'Faciltator data already exists',
+				success: false,
+				data: {},
+			});
+		}
+
+		let program_faciltator_create = {
+			...program_faciltators[0],
+			user_id: user_id,
+			academic_year_id: academic_year_id,
+			parent_ip: parent_ip,
+			program_id: program_id,
+			qualification_ids: JSON.stringify(
+				JSON.parse(program_faciltators[0].qualification_ids),
+			).replace(/"/g, '\\"'),
+		};
+
+		let createresponse = await this.hasuraService.q(
+			'program_faciltators',
+			{
+				...program_faciltator_create,
+			},
+			[],
+			false,
+			['id', 'user_id', 'program_id', 'academic_year_id'],
+		);
+
+		if (createresponse?.program_faciltators?.id) {
+			return res.status(200).json({
+				message: 'Successfully added data',
+				success: true,
+				data: createresponse?.program_faciltator?.id,
+			});
+		} else {
+			return res.status(200).json({
+				message: 'Failed  adding data',
+				success: true,
+				data: {},
+			});
+		}
+	}
 }
