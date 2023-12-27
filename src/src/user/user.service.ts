@@ -1426,69 +1426,86 @@ export class UserService {
 		}
 	}
 
-	public async getUserCohorts(req: any, res: any) {
+	public async getUserCohorts(type: any, req: any, res: any) {
 		const user_id = req?.mw_userid;
+		const cohort_type = type;
 
 		const role = req?.mw_roles;
 
 		let sql;
 		let primary_table;
-		let parent_ip_id;
+		let cohort_data;
+		let program_organisation_condition;
 
-		if (role.includes('staff')) {
-			const user = await this.ipUserInfo(req);
-			if (!user?.data?.program_users?.[0]?.organisation_id) {
-				return res.status(404).send({
-					success: false,
-					message: 'Invalid Ip',
-					data: {},
-				});
+		if (cohort_type == 'academic_year') {
+			if (role.includes('staff')) {
+				const user = await this.ipUserInfo(req);
+				if (!user?.data?.program_users?.[0]?.organisation_id) {
+					return res.status(404).send({
+						success: false,
+						message: 'Invalid Ip',
+						data: {},
+					});
+				}
+
+				primary_table = 'program_users';
+
+				program_organisation_condition =
+					'pu.organisation_id = po.organisation_id';
 			}
 
-			parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-			primary_table = 'program_users';
-		}
+			if (role.includes('facilitator')) {
+				primary_table = 'program_faciltators';
 
-		if (role.includes('facilitator')) {
-			let query = `query MyQuery {
-				program_faciltators(where: {user_id: {_eq:${user_id}}}){
-				  parent_ip
-				}
-			  }
-			  `;
-			let result = await this.hasuraServiceFromServices.getData({
-				query: query,
-			});
+				program_organisation_condition =
+					'CAST(pu.parent_ip as Int) = po.organisation_id';
+			}
 
-			let program_faciltators = result?.data?.program_faciltators;
-
-			const parentIPs = program_faciltators.map((item) =>
-				parseInt(item?.parent_ip),
-			);
-			parent_ip_id = parentIPs.toString();
-
-			primary_table = 'program_faciltators';
-		}
-
-		sql = `SELECT ay.id as academic_year_id, ay.name as academic_year_name,
-		p.id as program_id, p.name as program_name
-		FROM ${primary_table} pu
-		LEFT JOIN programs p  ON pu.program_id = p.id
-		LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
-		LEFT JOIN program_organisation po ON pu.program_id = po.program_id
-		WHERE po.status = 'active' AND po.organisation_id IN (${parent_ip_id}) AND pu.user_id = ${user_id}
-		GROUP BY ay.id ,p.id
-
-
+			sql = `SELECT ay.id as academic_year_id, ay.name as academic_year_name
+		           FROM ${primary_table} pu
+		    	   LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
+				   LEFT JOIN program_organisation po ON ${program_organisation_condition}
+				   WHERE po.status = 'active'  AND pu.user_id = ${user_id}
+				   GROUP BY ay.id
 		`;
 
-		const cohort_data = (
-			await this.hasuraServiceFromServices.executeRawSql(sql)
-		)?.result;
+			cohort_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+		}
 
-		if (cohort_data != undefined) {
-			return res.json({
-				status: 200,
+		if (cohort_type == 'program') {
+			if (role.includes('staff')) {
+				const user = await this.ipUserInfo(req);
+				if (!user?.data?.program_users?.[0]?.organisation_id) {
+					return res.status(404).send({
+						success: false,
+						message: 'Invalid Ip',
+						data: {},
+					});
+				}
+
+				primary_table = 'program_users';
+
+				program_organisation_condition =
+					'pu.organisation_id = po.organisation_id';
+			}
+
+			sql = `SELECT p.id as program_id, p.name as program_name,p.state_id,
+		           (SELECT state_name from address where state_cd = p.state_id limit  1) AS state_name
+                   FROM ${primary_table} pu
+    			   LEFT JOIN program_organisation po ON ${program_organisation_condition}
+			       LEFT JOIN programs p ON po.program_id = p.id
+	 			   WHERE po.status = 'active'  AND pu.user_id = ${user_id}
+	     		   GROUP BY p.id
+		`;
+
+			cohort_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+		}
+		if (cohort_data && cohort_data.length > 0) {
+			return res.status(200).json({
 				message: 'Successfully retrieved data',
 				data: this.hasuraServiceFromServices.getFormattedData(
 					cohort_data,
@@ -1496,15 +1513,14 @@ export class UserService {
 				),
 			});
 		} else {
-			return res.json({
-				status: 200,
+			return res.status(404).json({
 				message: 'Successfully retrieved data',
 				data: [],
 			});
 		}
 	}
 
-  /**************************************************************************/
+	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
 	public async checkUserExistsV2(role: any, body: any, response: any) {
@@ -1572,5 +1588,5 @@ export class UserService {
 		);
 
 		return hasura_response;
-  }
+	}
 }
