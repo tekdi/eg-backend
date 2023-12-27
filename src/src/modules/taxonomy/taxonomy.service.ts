@@ -32,8 +32,8 @@ export class TaxonomyService {
 				),
 			});
 		} else {
-			return response.json({
-				status: 200,
+			return response.status(404).json({
+				status: 404,
 				message: 'Successfully retrieved data',
 				data: [],
 			});
