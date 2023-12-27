@@ -2498,7 +2498,7 @@ export class FacilitatorService {
 			});
 		}
 
-		//validation to check if the same faciltator data is present previously.
+		// Validation to check if the same faciltator data is present previously.
 		let query = `query MyQuery {
 			program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${parseInt(
 			program_id,
