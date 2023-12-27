@@ -1357,7 +1357,6 @@ export class UserService {
 			}
 		  }
 		  `;
-console.log("vccc",validation_query);
 
 		const validation_response =
 			await this.hasuraServiceFromServices.getData({
