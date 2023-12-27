@@ -191,6 +191,7 @@ export class FacilitatorController {
 			response,
 		);
 	}
+
 	@Post('/update-okyc-response')
 	@UseGuards(new AuthGuard())
 	updateOkycResponse(@Req() req: any, @Body() body: any, @Res() res: any) {
@@ -204,6 +205,6 @@ export class FacilitatorController {
 		@Body() body: any,
 		@Res() res: any,
 	) {
-		return this.facilitatorService.createProgramFacilitator(body, req, res);
+		return this.facilitatorService.createProgramFacilitator(req, body, res);
 	}
 }
