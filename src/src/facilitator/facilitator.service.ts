@@ -2461,6 +2461,21 @@ export class FacilitatorService {
 		let validation_query = `query MyQuery {
 			program_faciltators(where: {user_id: {_eq:${user_id}}}){
 			  program_id
+			  has_social_work_exp
+			  availability
+			  created_by
+			  documents_status
+			  eligibility_details
+			  eligibility_percentage
+			  form_step_number
+			  has_social_work_exp
+			  okyc_response
+			  police_verification_done
+			  qualification_ids
+			  status
+			  status_reason
+			  social_background_verified_by_neighbours
+			  village_knowledge_test
 			}
 		  }
 		  `;
@@ -2509,10 +2524,14 @@ export class FacilitatorService {
 		}
 
 		let program_faciltator_create = {
-			...body,
+			...program_faciltators[0],
 			user_id: user_id,
 			academic_year_id: academic_year_id,
 			parent_ip: parent_ip,
+			program_id: program_id,
+			qualification_ids: JSON.stringify(
+				JSON.parse(program_faciltators[0].qualification_ids),
+			).replace(/"/g, '\\"'),
 		};
 
 		let createresponse = await this.hasuraService.q(
