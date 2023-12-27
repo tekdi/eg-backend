@@ -42,7 +42,7 @@ export class UserService {
 				'selected_prerak',
 			];
 			const validationStatusArray = ['rusticate', 'quit', 'rejected'];
-			var axios = require('axios');
+			const axios = require('axios');
 			const userDataSchema = body;
 			let userData = body;
 			let query = '';
@@ -141,7 +141,7 @@ export class UserService {
 	}
 
 	public async login(username: string, password: string, response: Response) {
-		var axios = require('axios');
+		const axios = require('axios');
 		var loginData = {
 			username: username,
 			password: password,
@@ -215,7 +215,7 @@ export class UserService {
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
 
-		var axios = require('axios');
+		const axios = require('axios');
 		// Set query for getting data info
 		var queryData = {
 			query: `
