@@ -9,7 +9,7 @@ export class TaxonomyService {
 	public async getProgramDetails(id: any, response: any) {
 		let program_id = id;
 
-		let sql = `select p.id, p.name, p.state_id as state_id,
+		let sql = `select p.id as program_id, p.name as program_name, p.state_id as state_id,
 		(SELECT state_name from address where state_cd = p.state_id limit 1) AS state_name
 		from programs p
 		left join address ad on p.state_id = ad.state_cd
@@ -20,8 +20,8 @@ export class TaxonomyService {
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		)?.result;
 
-		if (cohort_data != undefined) {
-			return response.status(200)({
+		if (cohort_data && cohort_data.length > 0) {
+			return response.status(200).json({
 				data: this.hasuraServiceFromServices.getFormattedData(
 					cohort_data,
 					[5],
@@ -40,8 +40,8 @@ export class TaxonomyService {
 
 		let query = `query MyQuery {
 			academic_years_by_pk(id:${academic_year_id}){
-				id,
-				name
+				academic_year_id:id,
+				academic_year_name:name
 			}
 		}`;
 
