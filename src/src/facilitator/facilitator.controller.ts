@@ -197,13 +197,13 @@ export class FacilitatorController {
 		return this.facilitatorService.updateOkycResponse(req, body, res);
 	}
 
-	@Post('/add/program-faciltator')
+	@Post('/program-facilitator/add')
 	@UseGuards(new AuthGuard())
-	createProgramFaciltator(
+	createProgramFacilitator(
 		@Req() req: any,
 		@Body() body: any,
 		@Res() res: any,
 	) {
-		return this.facilitatorService.createProgramFaciltator(body, req, res);
+		return this.facilitatorService.createProgramFacilitator(body, req, res);
 	}
 }

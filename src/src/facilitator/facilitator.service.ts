@@ -2450,7 +2450,7 @@ export class FacilitatorService {
 		});
 	}
 
-	public async createProgramFaciltator(body: any, request: any, res: any) {
+	public async createProgramFacilitator(body: any, request: any, res: any) {
 		let user_id = request?.mw_userid;
 		let academic_year_id = request?.mw_academic_year_id;
 
@@ -2491,8 +2491,7 @@ export class FacilitatorService {
 		);
 
 		if (!ids.includes(body?.program_id)) {
-			return res.json({
-				status: 422,
+			return res.status(422).json({
 				success: false,
 				data: {},
 				message: 'Cannot add faciltator for another program',
@@ -2515,8 +2514,7 @@ export class FacilitatorService {
 		});
 
 		if (result?.data?.program_faciltators?.length > 0) {
-			return res.json({
-				status: 422,
+			return res.status(422).json({
 				message: 'Faciltator data already exists',
 				success: false,
 				data: {},
@@ -2545,15 +2543,13 @@ export class FacilitatorService {
 		);
 
 		if (createresponse?.program_faciltators?.id) {
-			return res.json({
-				status: 200,
+			return res.status(200).json({
 				message: 'Successfully added data',
 				success: true,
 				data: createresponse?.program_faciltator?.id,
 			});
 		} else {
-			return res.json({
-				status: 500,
+			return res.status(200).json({
 				message: 'Failed  adding data',
 				success: true,
 				data: {},
