@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { BadRequestException, Injectable, NestMiddleware } from '@nestjs/common';
 import { Response } from 'express';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class CohortMiddleware implements NestMiddleware {
 				message: 'Program Id is required',
 			});
 		}
-
+		const program_id = parseInt(req.mw_program_id, 10);
 		if (req?.headers && req?.headers?.['x-academic-year-id']) {
 			// @TODO Sanitize, validate x-academic-year-id
 			req.mw_academic_year_id = req.headers['x-academic-year-id'];
@@ -25,6 +25,10 @@ export class CohortMiddleware implements NestMiddleware {
 				success: false,
 				message: 'Academic year ID / Cohort ID is required',
 			});
+		}
+		const academic_year_id = parseInt(req.mw_academic_year_id, 10);
+		if (isNaN(program_id) || isNaN(academic_year_id)) {
+			throw new BadRequestException('Invalid program_id or academic_year_id');
 		}
 
 		if (goToNextMw) {
