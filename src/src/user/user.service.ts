@@ -24,10 +24,10 @@ export class UserService {
 		private readonly keycloakService: KeycloakService,
 	) {}
 
-	public async update(userId: string, body: any, tableName: String) {
+	public async update(userId: string, body: any, tableName: String, req:any) {
 		try {
-			let program_id = body?.program_id || 1;
-			let academic_year_id = body?.academic_year_id || 1;
+			const program_id = req.mw_program_id;
+			const academic_year_id = req.mw_academic_year_id;
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
@@ -42,7 +42,7 @@ export class UserService {
 				'selected_prerak',
 			];
 			const validationStatusArray = ['rusticate', 'quit', 'rejected'];
-			var axios = require('axios');
+			const axios = require('axios');
 			const userDataSchema = body;
 			let userData = body;
 			let query = '';
@@ -141,7 +141,7 @@ export class UserService {
 	}
 
 	public async login(username: string, password: string, response: Response) {
-		var axios = require('axios');
+		const axios = require('axios');
 		var loginData = {
 			username: username,
 			password: password,
@@ -215,7 +215,7 @@ export class UserService {
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
 
-		var axios = require('axios');
+		const axios = require('axios');
 		// Set query for getting data info
 		var queryData = {
 			query: `
@@ -1334,8 +1334,8 @@ export class UserService {
 	}
 
 	public async userCampExist(user_id: any, body: any, req: any, res: any) {
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const user = await this.ipUserInfo(req);
 

@@ -77,13 +77,15 @@ export class EditRequestCoreService {
 
 		return result;
 	}
-	public async getEditRequestList(body, edit_req_by) {
-		let {
-			program_id,
-			academic_year_id,
-			edit_req_for_context,
-			edit_req_for_context_id,
-		} = body;
+	public async getEditRequestList(
+		req,
+		body,
+		edit_req_by,
+		
+	) {
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		let { edit_req_for_context, edit_req_for_context_id } = body;
 
 		let filterQueryArray = [];
 
@@ -124,10 +126,9 @@ export class EditRequestCoreService {
 		return response;
 	}
 
-	public async getEditRequestListAdmin(body) {
+	public async getEditRequestListAdmin(body,program_id,
+		academic_year_id) {
 		let {
-			program_id,
-			academic_year_id,
 			edit_req_for_context,
 			edit_req_for_context_id,
 			parent_ip_id,
