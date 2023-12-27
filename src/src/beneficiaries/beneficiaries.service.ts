@@ -272,6 +272,12 @@ export class BeneficiariesService {
 				}
 			}
 
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{state: { _in: $state }}');
+				variables.state = body.state;
+			}
+
 			if (body.hasOwnProperty('district') && body.district.length) {
 				paramsQueryArray.push('$district: [String!]');
 				filterQueryArray.push('{district: { _in: $district }}');
@@ -434,6 +440,13 @@ export class BeneficiariesService {
 			filterQueryArray.push(
 				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
 			);
+
+			if (body?.state && body?.state.length > 0) {
+				filterQueryArray.push(
+					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+				);
+			}
+
 			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
 					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
@@ -725,6 +738,12 @@ export class BeneficiariesService {
 			filterQueryArray.push(`{is_duplicate:{_eq:${body?.is_duplicate}}}`);
 		}
 
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+			);
+		}
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
@@ -781,6 +800,7 @@ export class BeneficiariesService {
 					id
 					first_name
 					last_name
+					state
 					district
 					block
 					mobile
