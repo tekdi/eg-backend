@@ -3,36 +3,33 @@ import { HasuraService as HasuraServiceFromServices } from '../../services/hasur
 
 @Injectable()
 export class TaxonomyService {
-	constructor(
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-	) {}
+	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
 
 	/***************************** PROGRAMS ***********************************/
 	public async getProgramDetails(id: any, response: any) {
 		let program_id = id;
 
-		let query = `query MyQuery {
-			programs_by_pk(id:${program_id}){
-				id,
-				name
-			}
-		}`;
+		let sql = `select p.id, p.name, p.state_id as state_id,
+		(SELECT state_name from address where state_cd = p.state_id limit 1) AS state_name
+		from programs p
+		left join address ad on p.state_id = ad.state_cd
+		where p.id = ${program_id}
+		group by p.state_id, p.id`;
 
-		let result = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
+		let cohort_data = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
 
-		let program_data = result?.data?.programs_by_pk;
-
-		if (program_data != null) {
-			return response.status(200).send({
-				success: true,
-				data: program_data,
+		if (cohort_data != undefined) {
+			return response.status(200)({
+				data: this.hasuraServiceFromServices.getFormattedData(
+					cohort_data,
+					[5],
+				),
 			});
 		} else {
-			return response.status(404).send({
-				success: false,
-				data: {},
+			return response.status(404).json({
+				data: [],
 			});
 		}
 	}
