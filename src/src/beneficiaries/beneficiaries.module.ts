@@ -59,7 +59,6 @@ export class BeneficiariesModule implements NestModule {
 				'beneficiaries/admin/export-subjects-csv',
 				'/beneficiaries/admin/verify-enrollment',
 				'/beneficaries/update-Beneficiaires-aadhar/:id',
-				'/beneficiaries/admin/reassign',
 			)
 			.forRoutes(BeneficiariesController);
 	}

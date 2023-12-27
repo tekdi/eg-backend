@@ -24,10 +24,10 @@ export class UserService {
 		private readonly keycloakService: KeycloakService,
 	) {}
 
-	public async update(userId: string, body: any, tableName: String,req:any) {
+	public async update(userId: string, body: any, tableName: String, req:any) {
 		try {
 			const program_id = req.mw_program_id;
-		const academic_year_id = req.mw_academic_year_id;
+			const academic_year_id = req.mw_academic_year_id;
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
