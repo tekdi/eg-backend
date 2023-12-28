@@ -35,7 +35,7 @@ import { BeneficiariesService } from './beneficiaries.service';
 		UploadFileModule,
 	],
 	controllers: [BeneficiariesController],
-	providers: [BeneficiariesService, BeneficiariesCoreService,Method],
+	providers: [BeneficiariesService, BeneficiariesCoreService, Method],
 	exports: [BeneficiariesService, BeneficiariesCoreService],
 })
 export class BeneficiariesModule implements NestModule {
@@ -47,7 +47,7 @@ export class BeneficiariesModule implements NestModule {
 				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
 				'/beneficiaries/beneficiaries-for-camp',
 			);
-			consumer
+		consumer
 			.apply(ProgramMiddleware)
 			.forRoutes(
 				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },

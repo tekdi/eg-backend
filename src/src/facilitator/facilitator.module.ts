@@ -26,14 +26,14 @@ import { FacilitatorService } from './facilitator.service';
 		S3Module,
 		UploadFileModule,
 	],
-	providers: [FacilitatorService, FacilitatorCoreService,Method],
+	providers: [FacilitatorService, FacilitatorCoreService, Method],
 	controllers: [FacilitatorController],
 	//exports: [FacilitatorCoreService,FacilitatorService],
 })
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
-		
+
 		consumer
 			.apply(AcademicYearIdMiddleware)
 			.exclude(
@@ -50,7 +50,7 @@ export class FacilitatorModule implements NestModule {
 				'/facilitators/admin/prerak-learner-list/:id',
 			)
 			.forRoutes(FacilitatorController);
-			consumer
+		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
 				'/facilitators/getStatuswiseCount',
@@ -64,9 +64,8 @@ export class FacilitatorModule implements NestModule {
 				'/facilitators/update-facilitator-aadhar/:id',
 				'/facilitators/admin/learner-status-distribution',
 				'/facilitators/admin/prerak-learner-list/:id',
-				'/facilitators/'
+				'/facilitators/',
 			)
 			.forRoutes(FacilitatorController);
 	}
 }
-

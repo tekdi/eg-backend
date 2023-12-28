@@ -12,14 +12,14 @@ import { ActivitiesService } from './activities.service';
 @Module({
 	imports: [HasuraModule, HasuraModuleFromServices, EnumModule],
 	controllers: [ActivitiesController],
-	providers: [ActivitiesService, ActivitiesCoreService, EnumService,Method],
+	providers: [ActivitiesService, ActivitiesCoreService, EnumService, Method],
 	exports: [ActivitiesModule, ActivitiesCoreService],
 })
-export class ActivitiesModule 
-implements NestModule {
+export class ActivitiesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(AcademicYearIdMiddleware).forRoutes(ActivitiesController);
+		consumer
+			.apply(AcademicYearIdMiddleware)
+			.forRoutes(ActivitiesController);
 		consumer.apply(ProgramMiddleware).forRoutes(ActivitiesController);
 	}
 }
-

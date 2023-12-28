@@ -1,5 +1,10 @@
 import { HttpModule } from '@nestjs/axios';
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+} from '@nestjs/common';
 import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
 import { Method } from 'src/common/method/method';
 import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
@@ -32,7 +37,7 @@ import { CampService } from './camp.service';
 		BeneficiariesModule,
 	],
 
-	providers: [CampService, CampCoreService,Method],
+	providers: [CampService, CampCoreService, Method],
 	controllers: [CampController],
 })
 export class CampModule implements NestModule {
@@ -48,16 +53,21 @@ export class CampModule implements NestModule {
 				'/camp/admin/facilitators',
 				'/camp/admin/facilitator-reassign/:id',
 				'/camp/add/campdayactivity',
-				{ path: '/camp/camp-day-activity/:id', method: RequestMethod.PATCH },
-				{ path: '/camp/camp-day-activity/:id', method: RequestMethod.POST },
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.PATCH,
+				},
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.POST,
+				},
 				'/camp/:id/get-camp-sessions',
 				'/camp/incomplete/camp-day-activity/:id',
 				'/camp/random-attendance/:id',
-				'/camp/admin/:id'
-				
+				'/camp/admin/:id',
 			)
 			.forRoutes(CampController);
-			consumer
+		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
 				'/camp/attendance/add',
@@ -68,12 +78,18 @@ export class CampModule implements NestModule {
 				'/camp/admin/facilitators',
 				'/camp/admin/facilitator-reassign/:id',
 				'/camp/add/campdayactivity',
-				{ path: '/camp/camp-day-activity/:id', method: RequestMethod.PATCH },
-				{ path: '/camp/camp-day-activity/:id', method: RequestMethod.POST },
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.PATCH,
+				},
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.POST,
+				},
 				'/camp/:id/get-camp-sessions',
 				'/camp/incomplete/camp-day-activity/:id',
 				'/camp/random-attendance/:id',
-				'/camp/admin/:id'
+				'/camp/admin/:id',
 			)
 			.forRoutes(CampController);
 	}
