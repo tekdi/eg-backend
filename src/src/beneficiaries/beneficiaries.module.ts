@@ -41,12 +41,14 @@ import { BeneficiariesService } from './beneficiaries.service';
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+
 		consumer
 			.apply(AcademicYearIdMiddleware)
 			.forRoutes(
 				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
 				'/beneficiaries/beneficiaries-for-camp',
 			);
+
 		consumer
 			.apply(ProgramMiddleware)
 			.forRoutes(
