@@ -1,7 +1,9 @@
 import { HttpModule } from '@nestjs/axios';
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
-import { AcademicYearIdMIddleware } from 'src/common/middlewares/academic_year_id.middleware';
+import { Method } from 'src/common/method/method';
+import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
+import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 import { S3Module } from 'src/services/s3/s3.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { UserModule } from 'src/user/user.module';
@@ -14,8 +16,6 @@ import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { CampController } from './camp.controller';
 import { CampCoreService } from './camp.core.service';
 import { CampService } from './camp.service';
-import { Method } from 'src/common/method/method';
-import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 
 @Module({
 	imports: [
@@ -38,7 +38,7 @@ import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 export class CampModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
-			.apply(AcademicYearIdMIddleware)
+			.apply(AcademicYearIdMiddleware)
 			.exclude(
 				'/camp/attendance/add',
 				'/camp/attendance/update/:id',

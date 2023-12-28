@@ -1,5 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { AcademicYearIdMIddleware } from 'src/common/middlewares/academic_year_id.middleware'; 
+import { Method } from 'src/common/method/method';
+import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
+import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { HasuraModule } from '../hasura/hasura.module';
@@ -7,8 +9,6 @@ import { HelperModule } from '../helper/helper.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { Method } from 'src/common/method/method';
-import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 
 @Module({
 	imports: [
@@ -27,7 +27,7 @@ export class UserModule implements NestModule {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 
 		consumer
-			.apply(AcademicYearIdMIddleware)
+			.apply(AcademicYearIdMiddleware)
 			.exclude(
 				'/users/qualification',
 				'/users/create',

@@ -8,7 +8,9 @@ import { UserModule } from 'src/user/user.module';
 import { BeneficiariesController } from './beneficiaries.controller';
 
 import { HttpModule } from '@nestjs/axios';
-import { AcademicYearIdMIddleware } from 'src/common/middlewares/academic_year_id.middleware'; 
+import { Method } from 'src/common/method/method';
+import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
+import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 import { S3Module } from 'src/services/s3/s3.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
@@ -19,8 +21,6 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import { BeneficiariesService } from './beneficiaries.service';
-import { Method } from 'src/common/method/method';
-import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 @Module({
 	imports: [
 		UserModule,
@@ -42,7 +42,7 @@ export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 		consumer
-			.apply(AcademicYearIdMIddleware)
+			.apply(AcademicYearIdMiddleware)
 			.forRoutes(
 				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
 				'/beneficiaries/beneficiaries-for-camp',

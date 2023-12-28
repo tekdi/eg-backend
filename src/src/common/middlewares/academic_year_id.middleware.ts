@@ -7,7 +7,7 @@ import { Response } from 'express';
 import { Method } from '../method/method';
 
 @Injectable()
-export class AcademicYearIdMIddleware implements NestMiddleware {
+export class AcademicYearIdMiddleware implements NestMiddleware {
 	constructor(
 		private method:Method,
 	){}

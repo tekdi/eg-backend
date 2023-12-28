@@ -7,14 +7,14 @@ import { AuthModule } from '../modules/auth/auth.module';
 import { HasuraModule } from '../services/hasura/hasura.module';
 import { S3Module } from '../services/s3/s3.module';
 
+import { Method } from 'src/common/method/method';
+import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
+import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
-import { AcademicYearIdMIddleware } from 'src/common/middlewares/academic_year_id.middleware'; 
 import { FacilitatorController } from './facilitator.controller';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { FacilitatorService } from './facilitator.service';
-import { Method } from 'src/common/method/method';
-import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 
 @Module({
 	imports: [
@@ -35,7 +35,7 @@ export class FacilitatorModule implements NestModule {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 		
 		consumer
-			.apply(AcademicYearIdMIddleware)
+			.apply(AcademicYearIdMiddleware)
 			.exclude(
 				'/facilitators/getStatuswiseCount',
 				'/facilitators/forOrientation',
