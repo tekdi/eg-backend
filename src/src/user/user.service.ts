@@ -24,7 +24,12 @@ export class UserService {
 		private readonly keycloakService: KeycloakService,
 	) {}
 
-	public async update(userId: string, body: any, tableName: String, req:any) {
+	public async update(
+		userId: string,
+		body: any,
+		tableName: String,
+		req: any,
+	) {
 		try {
 			const program_id = req.mw_program_id;
 			const academic_year_id = req.mw_academic_year_id;
@@ -1513,7 +1518,7 @@ export class UserService {
 				),
 			});
 		} else {
-			return res.status(404).json({
+			return res.status(200).json({
 				message: 'Successfully retrieved data',
 				data: [],
 			});

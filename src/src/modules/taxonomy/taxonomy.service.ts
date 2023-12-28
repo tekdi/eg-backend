@@ -28,7 +28,7 @@ export class TaxonomyService {
 				),
 			});
 		} else {
-			return response.status(404).json({
+			return response.status(200).json({
 				data: [],
 			});
 		}
@@ -57,7 +57,7 @@ export class TaxonomyService {
 				data: academic_year_data,
 			});
 		} else {
-			return response.status(404).json({
+			return response.status(200).json({
 				success: false,
 				data: {},
 			});
