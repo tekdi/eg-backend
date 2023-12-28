@@ -24,7 +24,7 @@ export class ProgramMiddleware implements NestMiddleware {
 			if(!hasAccess){
 				return res.json({
 					success:false,
-					message:'User does not access',
+					message:'User does not have access',
 				})
 			}
 			next();
