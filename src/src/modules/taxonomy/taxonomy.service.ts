@@ -22,6 +22,7 @@ export class TaxonomyService {
 
 		if (cohort_data && cohort_data.length > 0) {
 			return response.status(200).json({
+				success: true,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					cohort_data,
 					[5],
@@ -29,6 +30,7 @@ export class TaxonomyService {
 			});
 		} else {
 			return response.status(200).json({
+				success: false,
 				data: [],
 			});
 		}
@@ -59,7 +61,7 @@ export class TaxonomyService {
 		} else {
 			return response.status(200).json({
 				success: false,
-				data: {},
+				data: [],
 			});
 		}
 	}

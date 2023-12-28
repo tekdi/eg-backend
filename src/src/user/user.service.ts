@@ -1511,7 +1511,7 @@ export class UserService {
 		}
 		if (cohort_data && cohort_data.length > 0) {
 			return res.status(200).json({
-				message: 'Successfully retrieved data',
+				success: true,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					cohort_data,
 					[5],
@@ -1519,7 +1519,7 @@ export class UserService {
 			});
 		} else {
 			return res.status(200).json({
-				message: 'Successfully retrieved data',
+				success: false,
 				data: [],
 			});
 		}
