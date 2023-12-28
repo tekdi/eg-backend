@@ -12,9 +12,9 @@ export class ActivitiesService {
 	public async create(request: any, body: any, resp: any) {
 		try {
 			let facilitator_id = request.mw_userid;
-			let user_id = body?.user_id;
-			const program_id = request.mw_program_id;
-			const academic_year_id = request.mw_academic_year_id;
+			let user_id = request.mw_userid;
+			let academic_year_id = request.mw_academic_year_id;
+			let program_id = request.mw_program_id;
 			let created_by = request.mw_userid;
 			let updated_by = request.mw_userid;
 

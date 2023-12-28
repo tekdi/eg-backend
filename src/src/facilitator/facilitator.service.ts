@@ -1204,6 +1204,12 @@ export class FacilitatorService {
 				variables.status = body.status;
 			}
 
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{state: { _in: $state }}');
+				variables.state = body.state;
+			}
+
 			if (body.hasOwnProperty('district') && body.district.length) {
 				paramsQueryArray.push('$district: [String!]');
 				filterQueryArray.push('{district: { _in: $district }}');
@@ -1636,6 +1642,12 @@ export class FacilitatorService {
 			variables.status = body.status;
 		}
 
+		if (body.hasOwnProperty('state') && body.state.length) {
+			paramsQueryArray.push('$state: [String!]');
+			filterQueryArray.push('{state: { _in: $state }}');
+			variables.state = body.state;
+		}
+
 		if (body.hasOwnProperty('district') && body.district.length) {
 			paramsQueryArray.push('$district: [String!]');
 			filterQueryArray.push('{district: { _in: $district }}');
@@ -1984,6 +1996,12 @@ export class FacilitatorService {
 					`{ first_name: { _ilike: "%${first_name}%" } }`,
 				);
 			}
+		}
+
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+			);
 		}
 
 		if (body?.district && body?.district.length > 0) {

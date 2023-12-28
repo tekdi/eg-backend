@@ -1,7 +1,14 @@
 import { HttpModule } from '@nestjs/axios';
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+} from '@nestjs/common';
 import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
-import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
+import { Method } from 'src/common/method/method';
+import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
+import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 import { S3Module } from 'src/services/s3/s3.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { UserModule } from 'src/user/user.module';
@@ -30,16 +37,15 @@ import { CampService } from './camp.service';
 		BeneficiariesModule,
 	],
 
-	providers: [CampService, CampCoreService],
+	providers: [CampService, CampCoreService, Method],
 	controllers: [CampController],
 })
 export class CampModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
-			.apply(CohortMiddleware)
+			.apply(AcademicYearIdMiddleware)
 			.exclude(
 				'/camp/attendance/add',
-				'/camp/attendance/update/:id',
 				'/camp/attendance/update/:id',
 				'/camp/attendances/list',
 				'/camp/attendance/:id',
@@ -47,8 +53,40 @@ export class CampModule implements NestModule {
 				'/camp/admin/facilitators',
 				'/camp/admin/facilitator-reassign/:id',
 				'/camp/add/campdayactivity',
-				'/camp/camp-day-activity/:id',
-				'/camp/camp-day-activity/:id',
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.PATCH,
+				},
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.POST,
+				},
+				'/camp/:id/get-camp-sessions',
+				'/camp/incomplete/camp-day-activity/:id',
+				'/camp/random-attendance/:id',
+				'/camp/admin/:id',
+			)
+			.forRoutes(CampController);
+
+		consumer
+			.apply(ProgramMiddleware)
+			.exclude(
+				'/camp/attendance/add',
+				'/camp/attendance/update/:id',
+				'/camp/attendances/list',
+				'/camp/attendance/:id',
+				'/camp/getStatusWiseCount',
+				'/camp/admin/facilitators',
+				'/camp/admin/facilitator-reassign/:id',
+				'/camp/add/campdayactivity',
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.PATCH,
+				},
+				{
+					path: '/camp/camp-day-activity/:id',
+					method: RequestMethod.POST,
+				},
 				'/camp/:id/get-camp-sessions',
 				'/camp/incomplete/camp-day-activity/:id',
 				'/camp/random-attendance/:id',

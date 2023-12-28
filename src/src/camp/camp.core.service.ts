@@ -97,6 +97,12 @@ export class CampCoreService {
 			);
 		}
 
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{properties:{state:{_in: ${JSON.stringify(body?.state)}}}}`,
+			);
+		}
+
 		if (body?.block && body?.block.length > 0) {
 			filterQueryArray.push(
 				`{properties:{block:{_in: ${JSON.stringify(body?.block)}}}}`,
