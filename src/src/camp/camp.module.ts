@@ -41,7 +41,7 @@ export class CampModule implements NestModule {
 				'/camp/attendance/add',
 				'/camp/attendance/update/:id',
 				'/camp/attendance/update/:id',
-				'/camp/attendance/list',
+				'/camp/attendances/list',
 				'/camp/attendance/:id',
 				'/camp/getStatusWiseCount',
 				'/camp/admin/facilitators',
@@ -52,7 +52,7 @@ export class CampModule implements NestModule {
 				'/camp/:id/get-camp-sessions',
 				'/camp/incomplete/camp-day-activity/:id',
 				'/camp/random-attendance/:id',
-				'/camp/:id',
+				'/camp/admin/:id',
 			)
 			.forRoutes(CampController);
 	}

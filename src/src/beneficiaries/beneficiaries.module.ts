@@ -55,8 +55,6 @@ export class BeneficiariesModule implements NestModule {
 				'/beneficiaries/register',
 				'/beneficiaries/statusUpdate',
 				'/beneficiaries/admin/statusUpdate',
-				'/beneficiaries/admin/export-csv',
-				'beneficiaries/admin/export-subjects-csv',
 				'/beneficiaries/admin/verify-enrollment',
 				'/beneficaries/update-Beneficiaires-aadhar/:id',
 			)

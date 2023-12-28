@@ -70,7 +70,7 @@ export class CampCoreService {
 		return response;
 	}
 
-	public async list(body: any) {
+	public async list(body: any, req: any) {
 		let filterQueryArray = [];
 
 		const status_array = this.enumService
@@ -80,8 +80,8 @@ export class CampCoreService {
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let parent_ip_id = body?.parent_ip_id;
 		let status = body?.status;
 

@@ -36,7 +36,6 @@ export class FacilitatorModule implements NestModule {
 			.apply(CohortMiddleware)
 			.exclude(
 				'/facilitators/getStatuswiseCount',
-				'/facilitators/forOrientation',
 				'/facilitators/experience/:id',
 				'/facilitators/:id',
 				'/facilitators/admin/okyc_details_override',

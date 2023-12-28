@@ -230,14 +230,15 @@ export class BeneficiariesService {
 	async exportCsv(req: any, body: any, resp: any) {
 		try {
 			const user = await this.userService.ipUserInfo(req);
-
+			const program_id = req.mw_program_id;
+			const academic_year_id = req.mw_academic_year_id;
 			const variables: any = {};
 
 			let filterQueryArray = [];
 			let paramsQueryArray = [];
 
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
 
 			if (body.search && body.search !== '') {
@@ -419,7 +420,8 @@ export class BeneficiariesService {
 	async exportSubjectCsv(req: any, body: any, resp: any) {
 		try {
 			const user = await this.userService.ipUserInfo(req);
-
+			const program_id = req.mw_program_id;
+			const academic_year_id = req.mw_academic_year_id;
 			if (!user?.data?.program_users?.[0]?.organisation_id) {
 				return resp.status(404).send({
 					success: false,
@@ -432,7 +434,7 @@ export class BeneficiariesService {
 			let status = body?.status;
 			let filterQueryArray = [];
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
 			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
