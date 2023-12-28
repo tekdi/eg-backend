@@ -84,7 +84,7 @@ export class ActivitiesService {
 	public async List(body: any, req: any, resp: any) {
 		try {
 			const program_id = req.mw_program_id;
-            const academic_year_id = req.mw_academic_year_id;
+			const academic_year_id = req.mw_academic_year_id;
 			let context_id = req.mw_userid;
 			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);

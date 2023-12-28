@@ -1462,8 +1462,8 @@ export class UserService {
 			}
 
 			sql = `SELECT ay.id as academic_year_id, ay.name as academic_year_name
-		           FROM ${primary_table} pu
-		    	   LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
+				   FROM ${primary_table} pu
+				   LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
 				   LEFT JOIN program_organisation po ON ${program_organisation_condition}
 				   WHERE po.status = 'active'  AND pu.user_id = ${user_id}
 				   GROUP BY ay.id
@@ -1492,12 +1492,12 @@ export class UserService {
 			}
 
 			sql = `SELECT p.id as program_id, p.name as program_name,p.state_id,
-		           (SELECT state_name from address where state_cd = p.state_id limit  1) AS state_name
-                   FROM ${primary_table} pu
-    			   LEFT JOIN program_organisation po ON ${program_organisation_condition}
-			       LEFT JOIN programs p ON po.program_id = p.id
+				   (SELECT state_name from address where state_cd = p.state_id limit  1) AS state_name
+				   FROM ${primary_table} pu
+				   LEFT JOIN program_organisation po ON ${program_organisation_condition}
+				   LEFT JOIN programs p ON po.program_id = p.id
 	 			   WHERE po.status = 'active'  AND pu.user_id = ${user_id}
-	     		   GROUP BY p.id
+		 		   GROUP BY p.id
 		`;
 
 			cohort_data = (
