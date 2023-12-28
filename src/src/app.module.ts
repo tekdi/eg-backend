@@ -1,5 +1,5 @@
 import { HttpModule } from '@nestjs/axios';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -32,6 +32,7 @@ import { SessionsModule } from './sessions/sessions.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
+import { AuthMiddleware } from './common/middlewares/auth.middleware';
 
 @Module({
 	imports: [
@@ -74,4 +75,8 @@ import { UserModule } from './user/user.module';
 	controllers: [],
 	providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule{
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(AuthMiddleware).forRoutes('*');
+	}
+}

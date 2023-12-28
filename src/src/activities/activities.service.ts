@@ -12,9 +12,9 @@ export class ActivitiesService {
 	public async create(request: any, body: any, resp: any) {
 		try {
 			let facilitator_id = request.mw_userid;
-			let user_id = body?.user_id;
-			const program_id = request.mw_program_id;
-			const academic_year_id = request.mw_academic_year_id;
+			let user_id = request.mw_userid;
+			let academic_year_id = request.mw_academic_year_id;
+			let program_id = request.mw_program_id;
 			let created_by = request.mw_userid;
 			let updated_by = request.mw_userid;
 
@@ -84,7 +84,7 @@ export class ActivitiesService {
 	public async List(body: any, req: any, resp: any) {
 		try {
 			const program_id = req.mw_program_id;
-			const academic_year_id = req.mw_academic_year_id;
+            const academic_year_id = req.mw_academic_year_id;
 			let context_id = req.mw_userid;
 			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
