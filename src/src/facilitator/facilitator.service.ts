@@ -2515,7 +2515,7 @@ export class FacilitatorService {
 		);
 
 		if (!ids.includes(body?.program_id)) {
-			return res.status(422).json({
+			return res.status(200).json({
 				success: false,
 				data: {},
 				message: 'Cannot add faciltator for another program',
@@ -2538,7 +2538,7 @@ export class FacilitatorService {
 		});
 
 		if (result?.data?.program_faciltators?.length > 0) {
-			return res.status(422).json({
+			return res.status(200).json({
 				message: 'Faciltator data already exists',
 				success: false,
 				data: {},
