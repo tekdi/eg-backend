@@ -11,9 +11,9 @@ export class ProgramMiddleware implements NestMiddleware {
 	constructor(private method: Method) {}
 	async use(req: any, res: Response, next: () => void) {
 		if (req?.headers && req?.headers?.['x-program-id']) {
-			// @TODO Ensure that the program_id obtained from the headers is validated or sanitized before being used to prevent potential security issues such as header injection attacks.
 			req.mw_program_id = req.headers['x-program-id'];
 
+			// Validate format
 			const program_id = parseInt(req.mw_program_id, 10);
 			if (isNaN(program_id)) {
 				throw new BadRequestException('Invalid program_id');

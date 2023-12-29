@@ -68,6 +68,7 @@ export class CampModule implements NestModule {
 				//'camp/admin/camp-list'
 			)
 			.forRoutes(CampController);
+
 		consumer
 			.apply(ProgramMiddleware)
 			.exclude(

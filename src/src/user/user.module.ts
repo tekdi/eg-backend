@@ -17,7 +17,7 @@ import { UserService } from './user.service';
 		HasuraModuleFromServices,
 		KeycloakModule,
 	],
-	providers: [AuthMiddleware, UserService,Method],
+	providers: [AuthMiddleware, UserService, Method],
 	controllers: [UserController],
 	exports: [UserService],
 })
@@ -45,7 +45,8 @@ export class UserModule implements NestModule {
 				'/v2/users/is_user_exist/:role',
 			)
 			.forRoutes(UserController);
-			consumer
+
+		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
 				'/users/qualification',

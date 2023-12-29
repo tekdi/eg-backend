@@ -4,6 +4,7 @@ import { HasuraService as HasuraServiceFromServices } from '../../services/hasur
 @Injectable()
 export class Method {
 	constructor(private hasuraServiceFromService: HasuraServiceFromServices) {}
+
 	async CapitalizeEachWord(sentence) {
 		if (sentence == null || sentence === '') {
 			return '';
@@ -16,6 +17,7 @@ export class Method {
 			return c_sentence;
 		}
 	}
+
 	public async isUserHasAccessForProgram(req: any) {
 		//set a table name
 		const tableName =
@@ -49,6 +51,7 @@ export class Method {
 			return false;
 		}
 	}
+
 	public async isUserHasAccessForAcademicYearId(req: any) {
 		//set a table name
 		const tableName =

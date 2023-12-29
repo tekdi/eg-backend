@@ -41,6 +41,7 @@ import { BeneficiariesService } from './beneficiaries.service';
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+
 		consumer
 			.apply(AcademicYearIdMiddleware)
 			.exclude(

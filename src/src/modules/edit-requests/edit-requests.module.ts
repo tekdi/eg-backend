@@ -11,7 +11,7 @@ import { EditRequestService } from './edit-requests.service';
 
 @Module({
 	imports: [HasuraModuleFromServices, HasuraModule, UserModule],
-	providers: [EditRequestService, EditRequestCoreService,Method],
+	providers: [EditRequestService, EditRequestCoreService, Method],
 	controllers: [EditRequestController],
 })
 export class EditRequestModule implements NestModule {
