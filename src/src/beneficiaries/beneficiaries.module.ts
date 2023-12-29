@@ -58,7 +58,7 @@ export class BeneficiariesModule implements NestModule {
 				'/beneficiaries/statusUpdate',
 				'/beneficiaries/admin/statusUpdate',
 				'/beneficiaries/admin/verify-enrollment',
-				'/beneficaries/update-Beneficiaires-aadhar/:id',
+				'/beneficiaries/update-Beneficiaires-aadhar/:id',
 				'/beneficiaries/admin/reassign',
 			)
 			.forRoutes(BeneficiariesController);
