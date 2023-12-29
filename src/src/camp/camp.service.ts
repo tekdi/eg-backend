@@ -54,8 +54,8 @@ export class CampService {
 		try {
 			let facilitator_id = request.mw_userid;
 			let learner_ids = body?.learner_ids;
-			let program_id = body?.program_id || 1;
-			let academic_year_id = body?.academic_year_id || 1;
+			const program_id = request.mw_program_id;
+			const academic_year_id = request.mw_academic_year_id;
 			let beneficiary_status = 'enrolled_ip_verified';
 			let createcampResponse: any;
 			let creategroupwoner: any;
@@ -365,8 +365,8 @@ export class CampService {
 
 	public async campList(body: any, req: any, resp) {
 		const facilitator_id = req.mw_userid;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let member_type = 'owner';
 		let status = 'active';
 
@@ -406,8 +406,8 @@ export class CampService {
 	public async campById(id: any, body: any, req: any, resp) {
 		const camp_id = id;
 		const facilitator_id = req.mw_userid;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let member_type = 'owner';
 		let status = 'active';
 
@@ -720,8 +720,8 @@ export class CampService {
 		let status = 'active';
 		let member_type = 'owner';
 		let update_body = body;
-		let academic_year_id = body?.academic_year_id || 1;
-		let program_id = body?.program_id || 1;
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 
 		let PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -1746,8 +1746,8 @@ export class CampService {
 		let user_id = body?.user_id;
 		let camp_id = body?.camp_id;
 		let facilitator_id = body?.facilitator_id;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 		let document_id = body?.document_id;
 
 		let response;
@@ -1917,8 +1917,8 @@ export class CampService {
 	async getConsentBenficiaries(body: any, request: any, resp: any) {
 		let camp_id = body?.camp_id;
 		let facilitator_id = body?.facilitator_id;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 
 		let query = `query MyQuery {
 			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
@@ -2130,7 +2130,7 @@ export class CampService {
 			});
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const data = await this.campcoreservice.list(body);
+		const data = await this.campcoreservice.list(body, req);
 
 		if (data) {
 			return resp.json({
@@ -2620,7 +2620,7 @@ export class CampService {
 			});
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const data = await this.campcoreservice.list(body);
+		const data = await this.campcoreservice.list(body, req);
 
 		const faciltatorIds = new Set();
 		data?.camps?.forEach((item) => {
@@ -2672,8 +2672,8 @@ export class CampService {
 
 	async reassignBeneficiarytoCamp(id: any, body: any, req: any, resp: any) {
 		let camp_id = id;
-		let academic_year_id = body?.academic_year_id || 1;
-		let program_id = body?.program_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let create_response;
 		let update_response;
 		const user = await this.userService.ipUserInfo(req);

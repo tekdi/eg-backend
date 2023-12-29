@@ -230,14 +230,14 @@ export class BeneficiariesService {
 	async exportCsv(req: any, body: any, resp: any) {
 		try {
 			const user = await this.userService.ipUserInfo(req);
-
+			const academic_year_id = req.mw_academic_year_id;
 			const variables: any = {};
 
 			let filterQueryArray = [];
 			let paramsQueryArray = [];
 
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}} } } } }`,
 			);
 
 			if (body.search && body.search !== '') {
@@ -425,7 +425,7 @@ export class BeneficiariesService {
 	async exportSubjectCsv(req: any, body: any, resp: any) {
 		try {
 			const user = await this.userService.ipUserInfo(req);
-
+			const academic_year_id = req.mw_academic_year_id;
 			if (!user?.data?.program_users?.[0]?.organisation_id) {
 				return resp.status(404).send({
 					success: false,
@@ -433,12 +433,11 @@ export class BeneficiariesService {
 					data: {},
 				});
 			}
-
 			const sortType = body?.sortType ? body?.sortType : 'desc';
 			let status = body?.status;
 			let filterQueryArray = [];
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}} } } } }`,
 			);
 
 			if (body?.state && body?.state.length > 0) {

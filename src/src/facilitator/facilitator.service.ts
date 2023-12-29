@@ -73,6 +73,8 @@ export class FacilitatorService {
 		response: any,
 	) {
 		const user = await this.userService.ipUserInfo(request);
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
@@ -86,7 +88,7 @@ export class FacilitatorService {
 							_and: [
 								{
 									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" }
+										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
 										status: { _eq: "shortlisted_for_orientation" }
 									}
 								},
@@ -111,7 +113,7 @@ export class FacilitatorService {
 							_and: [
 								{
 									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" }
+										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
 										status: { _eq: "shortlisted_for_orientation" }
 									}
 								},
@@ -273,7 +275,6 @@ export class FacilitatorService {
 				offset: skip,
 			},
 		};
-
 		const hasuraResponse = await this.hasuraService.getData(data);
 
 		let usersList = hasuraResponse?.data?.users;
