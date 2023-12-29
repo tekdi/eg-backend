@@ -8,9 +8,7 @@ import { Method } from '../method/method';
 
 @Injectable()
 export class ProgramMiddleware implements NestMiddleware {
-	constructor(
-		private method : Method,
-	){}
+	constructor(private method: Method) {}
 	async use(req: any, res: Response, next: () => void) {
 		if (req?.headers && req?.headers?.['x-program-id']) {
 			// @TODO Ensure that the program_id obtained from the headers is validated or sanitized before being used to prevent potential security issues such as header injection attacks.
@@ -20,12 +18,12 @@ export class ProgramMiddleware implements NestMiddleware {
 			if (isNaN(program_id)) {
 				throw new BadRequestException('Invalid program_id');
 			}
-			const hasAccess =await this.method.isUserHasAccessForProgram(req);
-			if(!hasAccess){
+			const hasAccess = await this.method.isUserHasAccessForProgram(req);
+			if (!hasAccess) {
 				return res.json({
-					success:false,
-					message:'User does not have access',
-				})
+					success: false,
+					message: 'User does not have access for this Program',
+				});
 			}
 			next();
 		} else {

@@ -43,16 +43,49 @@ export class BeneficiariesModule implements NestModule {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 		consumer
 			.apply(AcademicYearIdMiddleware)
-			.forRoutes(
-				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
-				'/beneficiaries/beneficiaries-for-camp',
-			);
+			.exclude(
+				'/beneficiaries',
+				'/beneficiaries/admin/list/duplicates-by-aadhaar',
+				'/beneficiaries/admin/list/deactivate-duplicates',
+				'/beneficiaries/admin/list',
+				'/beneficiaries/:id/is_enrollment_exists',
+				'/beneficiaries/getStatusWiseCount',
+				'/beneficiaries/admin/list/duplicate-count-by-aadhar',
+				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
+				'/beneficiaries/register',
+				'/beneficiaries/statusUpdate',
+				'/beneficiaries/admin/statusUpdate',
+				'/beneficiaries/admin/export-csv',
+				'beneficiaries/admin/export-subjects-csv',
+				'/beneficiaries/admin/verify-enrollment',
+				'/beneficaries/update-Beneficiaires-aadhar/:id',
+				'/beneficiaries/admin/reassign',
+			)
+			.forRoutes(BeneficiariesController);
+
 		consumer
 			.apply(ProgramMiddleware)
-			.forRoutes(
-				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
+			.exclude(
+				'/beneficiaries',
+				'/beneficiaries/admin/list/duplicates-by-aadhaar',
+				'/beneficiaries/admin/list/deactivate-duplicates',
+				'/beneficiaries/:id/is_enrollment_exists',
+				'/beneficiaries/getStatusWiseCount',
+				'/beneficiaries/admin/list/duplicate-count-by-aadhar',
+				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
+				'/beneficiaries/register',
+				'/beneficiaries/statusUpdate',
+				'/beneficiaries/admin/statusUpdate',
+				'/beneficiaries/admin/export-csv',
+				'beneficiaries/admin/export-subjects-csv',
+				'/beneficiaries/admin/verify-enrollment',
+				'/beneficaries/update-Beneficiaires-aadhar/:id',
 				'/beneficiaries/admin/reassign',
-				'/beneficiaries/beneficiaries-for-camp',
-			);
+				'/beneficiaries/admin/list',
+				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
+			)
+			.forRoutes(BeneficiariesController);
 	}
 }
