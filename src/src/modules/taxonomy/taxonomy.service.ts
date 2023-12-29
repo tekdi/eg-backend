@@ -22,13 +22,15 @@ export class TaxonomyService {
 
 		if (cohort_data && cohort_data.length > 0) {
 			return response.status(200).json({
+				success: true,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					cohort_data,
 					[5],
 				),
 			});
 		} else {
-			return response.status(404).json({
+			return response.status(200).json({
+				success: false,
 				data: [],
 			});
 		}
@@ -57,9 +59,9 @@ export class TaxonomyService {
 				data: academic_year_data,
 			});
 		} else {
-			return response.status(404).json({
+			return response.status(200).json({
 				success: false,
-				data: {},
+				data: [],
 			});
 		}
 	}

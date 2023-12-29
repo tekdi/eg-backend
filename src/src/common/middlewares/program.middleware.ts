@@ -8,7 +8,9 @@ import { Method } from '../method/method';
 
 @Injectable()
 export class ProgramMiddleware implements NestMiddleware {
-	constructor(private method: Method) {}
+	constructor(
+		private method : Method,
+	){}
 	async use(req: any, res: Response, next: () => void) {
 		if (req?.headers && req?.headers?.['x-program-id']) {
 			req.mw_program_id = req.headers['x-program-id'];
@@ -16,14 +18,16 @@ export class ProgramMiddleware implements NestMiddleware {
 			// Validate format
 			const program_id = parseInt(req.mw_program_id, 10);
 			if (isNaN(program_id)) {
-				throw new BadRequestException('Invalid program_id');
+				throw new BadRequestException('Invalid Program Id');
 			}
-			const hasAccess = await this.method.isUserHasAccessForProgram(req);
-			if (!hasAccess) {
+
+			// Validate access
+			const hasAccess =await this.method.isUserHasAccessForProgram(req);
+			if(!hasAccess){
 				return res.json({
-					success: false,
-					message: 'User does not have access for this Program',
-				});
+					success:false,
+					message:'User does not have access to this Program Id',
+				})
 			}
 			next();
 		} else {

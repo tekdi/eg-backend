@@ -24,7 +24,12 @@ export class UserService {
 		private readonly keycloakService: KeycloakService,
 	) {}
 
-	public async update(userId: string, body: any, tableName: String, req:any) {
+	public async update(
+		userId: string,
+		body: any,
+		tableName: String,
+		req: any,
+	) {
 		try {
 			const program_id = req.mw_program_id;
 			const academic_year_id = req.mw_academic_year_id;
@@ -1506,15 +1511,15 @@ export class UserService {
 		}
 		if (cohort_data && cohort_data.length > 0) {
 			return res.status(200).json({
-				message: 'Successfully retrieved data',
+				success: true,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					cohort_data,
 					[5],
 				),
 			});
 		} else {
-			return res.status(404).json({
-				message: 'Successfully retrieved data',
+			return res.status(200).json({
+				success: false,
 				data: [],
 			});
 		}

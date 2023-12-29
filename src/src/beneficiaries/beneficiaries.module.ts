@@ -45,7 +45,7 @@ export class BeneficiariesModule implements NestModule {
 		consumer
 			.apply(AcademicYearIdMiddleware)
 			.exclude(
-				'/beneficiaries',
+				//'/beneficiaries',
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/admin/list/deactivate-duplicates',
 				'/beneficiaries/admin/list',

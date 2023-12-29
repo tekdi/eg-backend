@@ -1203,6 +1203,12 @@ export class FacilitatorService {
 				variables.status = body.status;
 			}
 
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{state: { _in: $state }}');
+				variables.state = body.state;
+			}
+
 			if (body.hasOwnProperty('district') && body.district.length) {
 				paramsQueryArray.push('$district: [String!]');
 				filterQueryArray.push('{district: { _in: $district }}');
@@ -1462,6 +1468,12 @@ export class FacilitatorService {
 				);
 			}
 
+			if (body?.state && body?.state.length > 0) {
+				filterQueryArray.push(
+					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+				);
+			}
+
 			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
 					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
@@ -1633,6 +1645,12 @@ export class FacilitatorService {
 				'{program_faciltators: {status: {_eq: $status}}}',
 			);
 			variables.status = body.status;
+		}
+
+		if (body.hasOwnProperty('state') && body.state.length) {
+			paramsQueryArray.push('$state: [String!]');
+			filterQueryArray.push('{state: { _in: $state }}');
+			variables.state = body.state;
 		}
 
 		if (body.hasOwnProperty('district') && body.district.length) {
@@ -1983,6 +2001,12 @@ export class FacilitatorService {
 					`{ first_name: { _ilike: "%${first_name}%" } }`,
 				);
 			}
+		}
+
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+			);
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -2452,9 +2476,8 @@ export class FacilitatorService {
 
 	public async createProgramFacilitator(request: any, body: any, res: any) {
 		let user_id = request?.mw_userid;
-		let academic_year_id = request?.mw_academic_year_id;
 
-		let { parent_ip, program_id } = body;
+		let { parent_ip, program_id, academic_year_id } = body;
 
 		//validation to check if th faciltator is getting registered for the same program
 
@@ -2491,7 +2514,7 @@ export class FacilitatorService {
 		);
 
 		if (!ids.includes(body?.program_id)) {
-			return res.status(422).json({
+			return res.status(200).json({
 				success: false,
 				data: {},
 				message: 'Cannot add faciltator for another program',
@@ -2514,7 +2537,7 @@ export class FacilitatorService {
 		});
 
 		if (result?.data?.program_faciltators?.length > 0) {
-			return res.status(422).json({
+			return res.status(200).json({
 				message: 'Faciltator data already exists',
 				success: false,
 				data: {},

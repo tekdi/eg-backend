@@ -45,24 +45,27 @@ export class FacilitatorModule implements NestModule {
 				'/facilitators/admin/search-by-ids',
 				'/facilitators/admin/filter-by-beneficiaries',
 				'/facilitators/exportCsv',
+				'/facilitators/program-facilitator/add',
 				'/facilitators/update-facilitator-aadhar/:id',
 				'/facilitators/admin/learner-status-distribution',
 				'/facilitators/admin/prerak-learner-list/:id',
 			)
 			.forRoutes(FacilitatorController);
-
 		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
+				'/facilitators/getStatuswiseCount',
 				'/facilitators/forOrientation',
 				'/facilitators/experience/:id',
 				'/facilitators/:id',
+				'/facilitators/program-facilitator/add',
 				'/facilitators/admin/okyc_details_override',
+				'/facilitators/admin/search-by-ids',
 				'/facilitators/admin/filter-by-beneficiaries',
 				'/facilitators/exportCsv',
 				'/facilitators/update-facilitator-aadhar/:id',
 				'/facilitators/admin/learner-status-distribution',
-				'/facilitators',
+				'/facilitators/',
 				'/facilitators/admin/prerak-learner-list/:id',
 				'/facilitators/getStatuswiseCount',
 			)
