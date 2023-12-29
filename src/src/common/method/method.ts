@@ -19,16 +19,26 @@ export class Method {
 	}
 
 	public async isUserHasAccessForProgram(req: any) {
-		//set a table name
-		const tableName =
-			req.mw_roles === 'staff' ? 'program_users' : 'program_faciltators';
+		// Set a table name
+		let tableName;
+		if (req.mw_roles.includes('staff')) {
+			tableName = 'program_users';
+		} else if (req.mw_roles.includes('facilitator')) {
+			tableName = 'program_faciltators';
+		}
+
+		if (typeof tableName == 'undefined') {
+			return false;
+		}
+
 		let data;
+
 		if (tableName === 'program_users') {
 			data = {
 				query: `query MyQuery {
 				${tableName}(where: {user_id: {_eq: ${req.mw_userid}}, program_id: {_eq: ${req.mw_program_id}}, program_organisation: {status: {_eq: "active"}}}){
 				  id
-				  
+
 				}
 			}`,
 			};
@@ -38,12 +48,12 @@ export class Method {
 				${tableName}(where: {user_id: {_eq:${req.mw_userid}}, program_id: {_eq: ${req.mw_program_id}}, program_organisation: {status: {_eq: "active"}}}){
 				  id
 				  user_id
-				  
+
 				}
 			  }`,
 			};
 		}
-		//fetch data
+		// Fetch data
 		const result = await this.hasuraServiceFromService.getData(data);
 		if (result.data[tableName].length > 0) {
 			return true;
@@ -53,10 +63,20 @@ export class Method {
 	}
 
 	public async isUserHasAccessForAcademicYearId(req: any) {
-		//set a table name
-		const tableName =
-			req.mw_roles === 'staff' ? 'program_users' : 'program_faciltators';
+		// Set a table name
+		let tableName;
+		if (req.mw_roles.includes('staff')) {
+			tableName = 'program_users';
+		} else if (req.mw_roles.includes('facilitator')) {
+			tableName = 'program_faciltators';
+		}
+
+		if (typeof tableName == 'undefined') {
+			return false;
+		}
+
 		let data;
+
 		if (tableName === 'program_users') {
 			data = {
 				query: `query MyQuery {
@@ -74,7 +94,7 @@ export class Method {
 				  }`,
 			};
 		}
-		//fetch data
+		// Fetch data
 		const result = await this.hasuraServiceFromService.getData(data);
 		if (result.data[tableName].length > 0) {
 			return true;
