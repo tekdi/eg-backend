@@ -18,7 +18,7 @@ export class ProgramMiddleware implements NestMiddleware {
 			// Validate format
 			const program_id = parseInt(req.mw_program_id, 10);
 			if (isNaN(program_id)) {
-				throw new BadRequestException('Invalid program_id');
+				throw new BadRequestException('Invalid Program Id');
 			}
 
 			// Validate access
@@ -26,7 +26,7 @@ export class ProgramMiddleware implements NestMiddleware {
 			if(!hasAccess){
 				return res.json({
 					success:false,
-					message:'User does not have access',
+					message:'User does not have access to this Program Id',
 				})
 			}
 			next();
