@@ -44,10 +44,24 @@ export class BeneficiariesModule implements NestModule {
 
 		consumer
 			.apply(AcademicYearIdMiddleware)
-			.forRoutes(
-				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
-				'/beneficiaries/beneficiaries-for-camp',
-			);
+			.exclude(
+				'/beneficiaries',
+				'/beneficiaries/admin/list/duplicates-by-aadhaar',
+				'/beneficiaries/admin/list/deactivate-duplicates',
+				'/beneficiaries/admin/list',
+				'/beneficiaries/:id/is_enrollment_exists',
+				'/beneficiaries/getStatusWiseCount',
+				'/beneficiaries/admin/list/duplicate-count-by-aadhar',
+				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
+				'/beneficiaries/register',
+				'/beneficiaries/statusUpdate',
+				'/beneficiaries/admin/statusUpdate',
+				'/beneficiaries/admin/verify-enrollment',
+				'/beneficiaries/update-Beneficiaires-aadhar/:id',
+				'/beneficiaries/admin/reassign',
+			)
+			.forRoutes(BeneficiariesController);
 
 		consumer
 			.apply(ProgramMiddleware)
