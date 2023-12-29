@@ -2476,9 +2476,8 @@ export class FacilitatorService {
 
 	public async createProgramFacilitator(request: any, body: any, res: any) {
 		let user_id = request?.mw_userid;
-		let academic_year_id = request?.mw_academic_year_id;
 
-		let { parent_ip, program_id } = body;
+		let { parent_ip, program_id, academic_year_id } = body;
 
 		//validation to check if th faciltator is getting registered for the same program
 
