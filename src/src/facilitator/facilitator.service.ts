@@ -1468,6 +1468,12 @@ export class FacilitatorService {
 				);
 			}
 
+			if (body?.state && body?.state.length > 0) {
+				filterQueryArray.push(
+					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+				);
+			}
+
 			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
 					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
