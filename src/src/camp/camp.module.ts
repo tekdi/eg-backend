@@ -50,7 +50,7 @@ export class CampModule implements NestModule {
 				'/camp/attendances/list',
 				'/camp/attendance/:id',
 				'/camp/getStatusWiseCount',
-				'/camp/admin/facilitators',
+				//'/camp/admin/facilitators',
 				'/camp/admin/facilitator-reassign/:id',
 				'/camp/add/campdayactivity',
 				{

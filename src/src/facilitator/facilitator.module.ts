@@ -47,7 +47,7 @@ export class FacilitatorModule implements NestModule {
 				'/facilitators/program-facilitator/add',
 				'/facilitators/update-facilitator-aadhar/:id',
 				'/facilitators/admin/learner-status-distribution',
-				'/facilitators/admin/prerak-learner-list/:id',
+				//'/facilitators/admin/prerak-learner-list/:id',
 			)
 			.forRoutes(FacilitatorController);
 		consumer
