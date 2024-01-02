@@ -19,10 +19,11 @@ import {
 import { Request, Response } from 'express';
 import { lastValueFrom, map } from 'rxjs';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
-import { AuthGuard } from 'src/modules/auth/auth.guard';
+//import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { HasuraService } from '../hasura/hasura.service';
 import { CreateUserDto } from '../helper/dto/create-user.dto';
 import { RegisterFacilitatorDto } from '../helper/dto/register-facilitator.dto';
+import { AuthGuard } from '../modules/auth/auth.guard';
 import { UserService } from './user.service';
 
 @UseInterceptors(SentryInterceptor)
@@ -115,6 +116,7 @@ export class UserController {
 
 	// users/update_facilitator/:id update facilitator status.
 	@Put('update_facilitator/:id')
+	@UseGuards(new AuthGuard())
 	public async updateUser(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,

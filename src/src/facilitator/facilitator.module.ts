@@ -1,5 +1,10 @@
 import { HttpModule } from '@nestjs/axios';
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+} from '@nestjs/common';
 
 import { UserModule } from 'src/user/user.module';
 import { EnumModule } from '../enum/enum.module';
@@ -35,28 +40,15 @@ export class FacilitatorModule implements NestModule {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 
 		consumer
-			.apply(AcademicYearIdMiddleware)
-			.exclude(
-				'/facilitators/getStatuswiseCount',
-				'/facilitators/experience/:id',
-				'/facilitators/:id',
-				'/facilitators/admin/okyc_details_override',
-				'/facilitators/admin/search-by-ids',
-				'/facilitators/admin/filter-by-beneficiaries',
-				'/facilitators/exportCsv',
-				'/facilitators/program-facilitator/add',
-				'/facilitators/update-facilitator-aadhar/:id',
-				'/facilitators/admin/learner-status-distribution',
-				//'/facilitators/admin/prerak-learner-list/:id',
-			)
-			.forRoutes(FacilitatorController);
-		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
 				'/facilitators/getStatuswiseCount',
 				'/facilitators/forOrientation',
-				'/facilitators/experience/:id',
-				'/facilitators/:id',
+				{
+					path: '/facilitators/experience/:id',
+					method: RequestMethod.DELETE,
+				},
+				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
 				'/facilitators/program-facilitator/add',
 				'/facilitators/admin/okyc_details_override',
 				'/facilitators/admin/search-by-ids',
@@ -65,8 +57,32 @@ export class FacilitatorModule implements NestModule {
 				'/facilitators/update-facilitator-aadhar/:id',
 				'/facilitators/admin/learner-status-distribution',
 				'/facilitators/',
-				'/facilitators/admin/prerak-learner-list/:id',
+			)
+			.forRoutes(FacilitatorController);
+
+		consumer
+			.apply(AcademicYearIdMiddleware)
+			.exclude(
 				'/facilitators/getStatuswiseCount',
+				{
+					path: '/facilitators/experience/:id',
+					method: RequestMethod.DELETE,
+				},
+				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
+				'/facilitators/admin/okyc_details_override',
+				'/facilitators/admin/search-by-ids',
+				'/facilitators/exportCsv',
+				'/facilitators/program-facilitator/add',
+				'/facilitators/admin/filter-by-beneficiaries',
+				{
+					path: '/facilitators/update-facilitator-aadhar/:id',
+					method: RequestMethod.PATCH,
+				},
+				'/facilitators/admin/learner-status-distribution',
+				{
+					path: '/facilitators/admin/prerak-learner-list/:id',
+					method: RequestMethod.GET,
+				},
 			)
 			.forRoutes(FacilitatorController);
 	}

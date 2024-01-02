@@ -43,27 +43,6 @@ export class BeneficiariesModule implements NestModule {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 
 		consumer
-			.apply(AcademicYearIdMiddleware)
-			.exclude(
-				//'/beneficiaries',
-				//'/beneficiaries/admin/list/duplicates-by-aadhaar',
-				//'/beneficiaries/admin/list/deactivate-duplicates',
-				//'/beneficiaries/admin/list',
-				//'/beneficiaries/admin/list/duplicate-count-by-aadhar',
-				'/beneficiaries/:id/is_enrollment_exists',
-				'/beneficiaries/getStatusWiseCount',
-				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
-				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
-				'/beneficiaries/register',
-				'/beneficiaries/statusUpdate',
-				'/beneficiaries/admin/statusUpdate',
-				'/beneficiaries/admin/verify-enrollment',
-				'/beneficaries/update-Beneficiaires-aadhar/:id',
-				'/beneficiaries/admin/reassign',
-			)
-			.forRoutes(BeneficiariesController);
-
-		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
 				'/beneficiaries',
@@ -81,9 +60,29 @@ export class BeneficiariesModule implements NestModule {
 				'beneficiaries/admin/export-subjects-csv',
 				'/beneficiaries/admin/verify-enrollment',
 				'/beneficaries/update-Beneficiaires-aadhar/:id',
-				'/beneficiaries/admin/reassign',
 				'/beneficiaries/admin/list',
 				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
+			)
+			.forRoutes(BeneficiariesController);
+
+		consumer
+			.apply(AcademicYearIdMiddleware)
+			.exclude(
+				//'/beneficiaries',
+				//'/beneficiaries/admin/list/duplicates-by-aadhaar',
+				//'/beneficiaries/admin/list/deactivate-duplicates',
+				//'/beneficiaries/admin/list',
+				//'/beneficiaries/admin/list/duplicate-count-by-aadhar',
+				'/beneficiaries/:id/is_enrollment_exists',
+				'/beneficiaries/getStatusWiseCount',
+				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
+				'/beneficiaries/register',
+				'/beneficiaries/statusUpdate',
+				'/beneficiaries/admin/statusUpdate',
+				'/beneficiaries/admin/verify-enrollment',
+				'/beneficaries/update-Beneficiaires-aadhar/:id',
+				'/beneficiaries/admin/reassign',
 			)
 			.forRoutes(BeneficiariesController);
 	}

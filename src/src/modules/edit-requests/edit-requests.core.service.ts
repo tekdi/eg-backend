@@ -137,7 +137,7 @@ export class EditRequestCoreService {
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`users: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}`,
+			`users: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}},academic_year_id:{_eq:${academic_year_id}}`,
 		);
 
 		if (edit_req_for_context) {
@@ -168,7 +168,7 @@ export class EditRequestCoreService {
 					}
 			}`,
 		};
-
+		
 		const response = await this.hasuraServiceFromServices.getData(data);
 		return response;
 	}

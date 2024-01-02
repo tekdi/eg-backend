@@ -22,7 +22,9 @@ export class EditRequestModule implements NestModule {
 			.forRoutes(EditRequestController);
 			consumer
 			.apply(ProgramMiddleware)
-			.exclude('/edit-request/admin/update-edit-requests/:id')
+			.exclude('/edit-request/admin/update-edit-requests/:id',
+			'/edit-request/admin/edit-requests',
+			)
 			.forRoutes(EditRequestController);
 	}
 	
