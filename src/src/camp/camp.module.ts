@@ -43,15 +43,26 @@ import { CampService } from './camp.service';
 export class CampModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
-			.apply(AcademicYearIdMiddleware)
+			.apply(ProgramMiddleware)
 			.exclude(
 				'/camp/attendance/add',
-				'/camp/attendance/update/:id',
+				//'/camp/attendance/update/:id',
+				{
+					path: '/camp/attendance/update/:id',
+					method: RequestMethod.PATCH,
+				},
 				'/camp/attendances/list',
-				'/camp/attendance/:id',
+				//'/camp/attendance/:id',
+				{
+					path: '/camp/attendance/:id',
+					method: RequestMethod.POST,
+				},
 				'/camp/getStatusWiseCount',
 				'/camp/admin/facilitators',
-				'/camp/admin/facilitator-reassign/:id',
+				{
+					path: '/camp/admin/facilitator-reassign/:id',
+					method: RequestMethod.PATCH,
+				},
 				'/camp/add/campdayactivity',
 				{
 					path: '/camp/camp-day-activity/:id',
@@ -64,19 +75,30 @@ export class CampModule implements NestModule {
 				'/camp/:id/get-camp-sessions',
 				'/camp/incomplete/camp-day-activity/:id',
 				'/camp/random-attendance/:id',
-				'/camp/admin/:id',
+				{
+					path: '/camp/admin/:id',
+					method: RequestMethod.PATCH,
+				},
+				//'camp/admin/camp-list',
+				'/camp/admin/camp-details/:id',
+				
 			)
 			.forRoutes(CampController);
 
 		consumer
-			.apply(ProgramMiddleware)
+			.apply(AcademicYearIdMiddleware)
 			.exclude(
 				'/camp/attendance/add',
-				'/camp/attendance/update/:id',
+				{
+					path: '/camp/attendance/update/:id',
+					method: RequestMethod.PATCH,
+				},
 				'/camp/attendances/list',
-				'/camp/attendance/:id',
+				{
+					path: '/camp/attendance/:id',
+					method: RequestMethod.POST,
+				},
 				'/camp/getStatusWiseCount',
-				'/camp/admin/facilitators',
 				'/camp/admin/facilitator-reassign/:id',
 				'/camp/add/campdayactivity',
 				{
@@ -90,7 +112,13 @@ export class CampModule implements NestModule {
 				'/camp/:id/get-camp-sessions',
 				'/camp/incomplete/camp-day-activity/:id',
 				'/camp/random-attendance/:id',
-				'/camp/admin/:id',
+				{
+					path: '/camp/admin/:id',
+					method: RequestMethod.PATCH,
+				},
+				'/camp/admin/facilitators',
+				'/camp/admin/camp-details/:id',
+
 			)
 			.forRoutes(CampController);
 	}

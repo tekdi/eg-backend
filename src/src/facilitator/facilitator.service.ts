@@ -72,6 +72,7 @@ export class FacilitatorService {
 		body: any,
 		response: any,
 	) {
+		
 		const user = await this.userService.ipUserInfo(request);
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
@@ -80,6 +81,7 @@ export class FacilitatorService {
 
 		let skip = page > 1 ? limit * (page - 1) : 0;
 
+		
 		const data = {
 			query: `
 				query MyQuery($limit:Int, $offset:Int) {
@@ -88,7 +90,7 @@ export class FacilitatorService {
 							_and: [
 								{
 									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
+										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},
 										status: { _eq: "shortlisted_for_orientation" }
 									}
 								},
@@ -113,7 +115,7 @@ export class FacilitatorService {
 							_and: [
 								{
 									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
+										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},
 										status: { _eq: "shortlisted_for_orientation" }
 									}
 								},
@@ -275,6 +277,7 @@ export class FacilitatorService {
 				offset: skip,
 			},
 		};
+		
 		const hasuraResponse = await this.hasuraService.getData(data);
 
 		let usersList = hasuraResponse?.data?.users;
@@ -1738,18 +1741,14 @@ export class FacilitatorService {
 		  aadhar_token
 		  address
 		  aadhar_verified
-		  block_id
 		  block_village_id
 		  created_by
-		  district_id
 		  email_id
 		  gender
 		  lat
 		  long
 		  mobile
-		  state_id
 		  updated_by
-		  profile_url
 		  state
 		  district
 		  block
@@ -1772,14 +1771,10 @@ export class FacilitatorService {
 			user_id
 		  }
 		  core_faciltator {
-			created_by
 			device_ownership
 			device_type
 			id
-			pan_no
-			refreere
 			sourcing_channel
-			updated_by
 			user_id
 		  }
 		  experience {
@@ -1796,13 +1791,9 @@ export class FacilitatorService {
 		  program_faciltators {
 			parent_ip
 			availability
-			has_social_work_exp
 			id
-			police_verification_done
 			program_id
-			social_background_verified_by_neighbours
 			user_id
-			village_knowledge_test
 			status
 			form_step_number
 			created_by
@@ -1810,22 +1801,15 @@ export class FacilitatorService {
 			academic_year_id
 		  }
 		  qualifications {
-			created_by
 			end_year
 			id
-			institution
 			qualification_master_id
 			start_year
-			updated_by
 			user_id
 			qualification_master {
-			  context
-			  context_id
-			  created_by
 			  id
 			  name
 			  type
-			  updated_by
 			}
 		  }
 		  interviews {

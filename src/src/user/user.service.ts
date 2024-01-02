@@ -27,12 +27,12 @@ export class UserService {
 	public async update(
 		userId: string,
 		body: any,
-		tableName: String,
 		req: any,
+		tableName: String,
 	) {
 		try {
-			const program_id = req.mw_program_id;
 			const academic_year_id = req.mw_academic_year_id;
+
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
@@ -71,7 +71,7 @@ export class UserService {
 			// validation to check if the facilitator is present in the camp
 
 			let validation_query = `query MyQuery {
-				users(where: {group_users: {user_id: {_eq:${userId}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+				users(where: {group_users: {user_id: {_eq:${userId}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {academic_year_id: {_eq:${academic_year_id}}}}) {
 				  id
 				}
 			  }
@@ -106,6 +106,7 @@ export class UserService {
 					id: userId,
 				},
 			};
+
 			var config = {
 				method: 'post',
 				url: this.url,
