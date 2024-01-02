@@ -32,8 +32,7 @@ export class UserService {
 	) {
 		try {
 			const academic_year_id = req.mw_academic_year_id;
-			console.log(academic_year_id);
-			
+
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
@@ -78,8 +77,7 @@ export class UserService {
 			  }
 
 			  `;
-			//console.log(validation_query);
-			
+
 			const validation_data =
 				await this.hasuraServiceFromServices.getData({
 					query: validation_query,
@@ -108,8 +106,7 @@ export class UserService {
 					id: userId,
 				},
 			};
-			console.log(data.query);
-			
+
 			var config = {
 				method: 'post',
 				url: this.url,
