@@ -120,7 +120,7 @@ export class UserController {
 	public async updateUser(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
-		@Req() req:any,
+		@Req() req: any,
 	) {
 		return this.userService.update(id, body, req, 'program_faciltators');
 	}
@@ -202,6 +202,15 @@ export class UserController {
 		@Res() response: any,
 	) {
 		return this.userService.getUserCohorts(type, request, response);
+	}
+
+	@Post('/onboarding/validate')
+	public async validateOnBoardingLink(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.userService.validateOnBoardingLink(body, request, response);
 	}
 
 	/**************************************************************************/
