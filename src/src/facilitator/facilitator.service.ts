@@ -1645,7 +1645,6 @@ export class FacilitatorService {
 					this.allStatus.map((obj) => obj.value).includes(e),
 				).length > 0
 			) {
-				// if (body.hasOwnProperty('status') && body.status.length)
 				paramsQueryArray.push('$status: [String!]');
 				filterQueryArray.push(
 					'{program_faciltators: {status: { _in: $status }}}',
