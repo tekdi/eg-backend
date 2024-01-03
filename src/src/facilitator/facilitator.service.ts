@@ -72,7 +72,6 @@ export class FacilitatorService {
 		body: any,
 		response: any,
 	) {
-		
 		const user = await this.userService.ipUserInfo(request);
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
@@ -81,7 +80,6 @@ export class FacilitatorService {
 
 		let skip = page > 1 ? limit * (page - 1) : 0;
 
-		
 		const data = {
 			query: `
 				query MyQuery($limit:Int, $offset:Int) {
@@ -277,7 +275,7 @@ export class FacilitatorService {
 				offset: skip,
 			},
 		};
-		
+
 		const hasuraResponse = await this.hasuraService.getData(data);
 
 		let usersList = hasuraResponse?.data?.users;
@@ -1639,17 +1637,32 @@ export class FacilitatorService {
 		{ email_id: { _ilike: "%${body.search}%" } }
 	  ]} `);
 		}
-		if (
-			body.hasOwnProperty('status') &&
-			this.isValidString(body.status) &&
-			this.allStatus.map((obj) => obj.value).includes(body.status)
-		) {
-			paramsQueryArray.push('$status: String');
-			filterQueryArray.push(
-				'{program_faciltators: {status: {_eq: $status}}}',
-			);
-			variables.status = body.status;
+		if (body.hasOwnProperty('status')) {
+			if (
+				Array.isArray(body?.status) &&
+				body?.status?.length > 0 &&
+				body?.status?.filter((e) =>
+					this.allStatus.map((obj) => obj.value).includes(e),
+				).length > 0
+			) {
+				// if (body.hasOwnProperty('status') && body.status.length)
+				paramsQueryArray.push('$status: [String!]');
+				filterQueryArray.push(
+					'{program_faciltators: {status: { _in: $status }}}',
+				);
+				variables.status = body.status;
+			} else if (
+				this.isValidString(body.status) &&
+				this.allStatus.map((obj) => obj.value).includes(body?.status)
+			) {
+				paramsQueryArray.push('$status: String');
+				filterQueryArray.push(
+					'{program_faciltators: {status: { _eq: $status }}}',
+				);
+				variables.status = body.status;
+			}
 		}
+		console.log('variable', variables.status, body.status);
 
 		if (body.hasOwnProperty('state') && body.state.length) {
 			paramsQueryArray.push('$state: [String!]');
@@ -1855,6 +1868,7 @@ export class FacilitatorService {
 	  }`,
 			variables: variables,
 		};
+		console.log('variables---', variables);
 
 		let response;
 		try {
