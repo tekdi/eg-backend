@@ -41,15 +41,26 @@ export class SessionsService {
 			});
 		}
 
+		let fillbale = [
+			'learning_lesson_plan_id',
+			'status',
+			'camp_id',
+			'lesson_plan_incomplete_feedback',
+			'lesson_plan_complete_feedback',
+			'created_by',
+			'updated_by',
+			'created_at',
+			'updated_at',
+		];
 		let createSessionResponse = await this.hasuraService.q(
 			'learning_sessions_tracker',
 			{
 				...body,
+				updated_at: body?.updated_at || new Date().toISOString(),
 				created_by: request?.mw_userid,
 				updated_by: request?.mw_userid,
-				status: 'incomplete',
 			},
-			[],
+			fillbale,
 			false,
 			['id', 'learning_lesson_plan_id', 'camp_id'],
 		);
@@ -191,7 +202,6 @@ export class SessionsService {
 										?.camp_id,
 							},
 						});
-					} else {
 					}
 				}
 
