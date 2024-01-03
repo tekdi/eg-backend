@@ -1546,12 +1546,12 @@ export class UserService {
 
 		if (query_response?.data?.program_organisation?.length > 0) {
 			return response.status(200).json({
-				message: 'Successfully retrieved data',
+				message: 'Onboarding link is valid.',
 				isExist: true,
 			});
 		} else {
 			return response.status(200).json({
-				message: 'Successfully retrieved data',
+				message: 'Onboarding link is invalid or does not exist',
 				isExist: false,
 			});
 		}

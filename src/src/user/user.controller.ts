@@ -25,6 +25,7 @@ import { CreateUserDto } from '../helper/dto/create-user.dto';
 import { RegisterFacilitatorDto } from '../helper/dto/register-facilitator.dto';
 import { AuthGuard } from '../modules/auth/auth.guard';
 import { UserService } from './user.service';
+import { LinkValidationDTO } from './dto/link-validation.dto';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/users')
@@ -205,8 +206,9 @@ export class UserController {
 	}
 
 	@Post('/onboarding/validate')
+	@UsePipes(ValidationPipe)
 	public async validateOnBoardingLink(
-		@Body() body: any,
+		@Body() body: LinkValidationDTO,
 		@Req() request: any,
 		@Res() response: any,
 	) {
