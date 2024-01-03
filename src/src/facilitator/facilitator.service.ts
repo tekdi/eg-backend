@@ -1661,7 +1661,6 @@ export class FacilitatorService {
 				variables.status = body.status;
 			}
 		}
-		console.log('variable', variables.status, body.status);
 
 		if (body.hasOwnProperty('state') && body.state.length) {
 			paramsQueryArray.push('$state: [String!]');
@@ -1867,7 +1866,6 @@ export class FacilitatorService {
 	  }`,
 			variables: variables,
 		};
-		console.log('variables---', variables);
 
 		let response;
 		try {
