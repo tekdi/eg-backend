@@ -24,6 +24,7 @@ import { CreateUserDto } from '../helper/dto/create-user.dto';
 import { RegisterFacilitatorDto } from '../helper/dto/register-facilitator.dto';
 import { AuthGuard } from '../modules/auth/auth.guard';
 import { UserService } from './user.service';
+import { LinkValidationDTO } from './dto/link-validation.dto';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/users')
@@ -119,7 +120,7 @@ export class UserController {
 	public async updateUser(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
-		@Req() req:any,
+		@Req() req: any,
 	) {
 		return this.userService.update(id, body, req, 'program_faciltators');
 	}
@@ -201,6 +202,16 @@ export class UserController {
 		@Res() response: any,
 	) {
 		return this.userService.getUserCohorts(type, request, response);
+	}
+
+	@Post('/onboarding/validate')
+	@UsePipes(ValidationPipe)
+	public async validateOnBoardingLink(
+		@Body() body: LinkValidationDTO,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.userService.validateOnBoardingLink(body, request, response);
 	}
 
 	/**************************************************************************/
