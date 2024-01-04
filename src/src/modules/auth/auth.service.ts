@@ -809,6 +809,8 @@ export class AuthService {
 			programRoleTableName = 'program_beneficiaries';
 			groupId = 'facilitator_id';
 			req.facilitator_id = req.role_fields.facilitator_id;
+			req.program_id = req.role_fields.program_id;
+			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'identified';
 		}
 
