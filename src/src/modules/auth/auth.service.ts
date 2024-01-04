@@ -488,18 +488,25 @@ export class AuthService {
 			}
 
 			// Validate role specific fields
-			if (!body.role_fields.parent_ip) {
+			if (
+				!body.role_fields.parent_ip ||
+				!body.role_fields.program_id ||
+				!body.role_fields.academic_year_id
+			) {
 				misssingFieldsFlag = true;
 			}
 		} else if (body.role === 'beneficiary') {
 			// Validate role specific fields
-			if (!body.role_fields.facilitator_id) {
+			if (
+				!body.role_fields.facilitator_id ||
+				!body.role_fields.program_id ||
+				!body.role_fields.academic_year_id
+			) {
 				misssingFieldsFlag = true;
 			}
 		} else {
 			misssingFieldsFlag = true;
 		}
-
 		if (misssingFieldsFlag) {
 			throw new BadRequestException({
 				success: false,
@@ -600,6 +607,12 @@ export class AuthService {
 				body.password = password;
 				if (body.role_fields.parent_ip) {
 					body.parent_ip = body.role_fields.parent_ip;
+				}
+				if (body.role_fields.program_id) {
+					body.program_id = body.role_fields.program_id;
+				}
+				if (body.role_fields.academic_year_id) {
+					body.academic_year_id = body.role_fields.academic_year_id;
 				}
 				if (body.role_fields.facilitator_id) {
 					body.facilitator_id = body.role_fields.facilitator_id;
@@ -796,6 +809,8 @@ export class AuthService {
 			programRoleTableName = 'program_beneficiaries';
 			groupId = 'facilitator_id';
 			req.facilitator_id = req.role_fields.facilitator_id;
+			req.program_id = req.role_fields.program_id;
+			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'identified';
 		}
 
@@ -803,6 +818,8 @@ export class AuthService {
 			programRoleTableName = 'program_faciltators';
 			groupId = 'parent_ip';
 			req.parent_ip = `${req.role_fields.parent_ip}`;
+			req.program_id = req.role_fields.program_id;
+			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'applied';
 		}
 		console.log('tableName', programRoleTableName);
@@ -814,8 +831,8 @@ export class AuthService {
 				{
 					...req,
 					user_id,
-					program_id: 1,
-					academic_year_id: 1,
+					program_id: req.program_id,
+					academic_year_id: req.academic_year_id,
 				},
 				[
 					`${groupId}`,
