@@ -42,46 +42,30 @@ export class FacilitatorModule implements NestModule {
 		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
-				'/facilitators/getStatuswiseCount',
-				'/facilitators/forOrientation',
 				{
 					path: '/facilitators/experience/:id',
 					method: RequestMethod.DELETE,
 				},
 				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
 				'/facilitators/program-facilitator/add',
-				'/facilitators/admin/okyc_details_override',
 				'/facilitators/admin/search-by-ids',
-				'/facilitators/admin/filter-by-beneficiaries',
-				'/facilitators/exportCsv',
 				'/facilitators/update-facilitator-aadhar/:id',
-				'/facilitators/admin/learner-status-distribution',
-				'/facilitators/',
 			)
 			.forRoutes(FacilitatorController);
 
 		consumer
 			.apply(AcademicYearIdMiddleware)
 			.exclude(
-				'/facilitators/getStatuswiseCount',
 				{
 					path: '/facilitators/experience/:id',
 					method: RequestMethod.DELETE,
 				},
 				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
-				'/facilitators/admin/okyc_details_override',
 				'/facilitators/admin/search-by-ids',
-				'/facilitators/exportCsv',
 				'/facilitators/program-facilitator/add',
-				'/facilitators/admin/filter-by-beneficiaries',
 				{
 					path: '/facilitators/update-facilitator-aadhar/:id',
 					method: RequestMethod.PATCH,
-				},
-				'/facilitators/admin/learner-status-distribution',
-				{
-					path: '/facilitators/admin/prerak-learner-list/:id',
-					method: RequestMethod.GET,
 				},
 			)
 			.forRoutes(FacilitatorController);
