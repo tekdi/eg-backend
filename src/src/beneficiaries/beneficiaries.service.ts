@@ -231,13 +231,14 @@ export class BeneficiariesService {
 		try {
 			const user = await this.userService.ipUserInfo(req);
 			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
 			const variables: any = {};
 
 			let filterQueryArray = [];
 			let paramsQueryArray = [];
 
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}} } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
 
 			if (body.search && body.search !== '') {
@@ -336,7 +337,7 @@ export class BeneficiariesService {
 				  }
 				  `,
 				variables: variables,
-			};
+			};			
 			const hasuraResponse = await this.hasuraServiceFromServices.getData(
 				data,
 			);
@@ -426,6 +427,7 @@ export class BeneficiariesService {
 		try {
 			const user = await this.userService.ipUserInfo(req);
 			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
 			if (!user?.data?.program_users?.[0]?.organisation_id) {
 				return resp.status(404).send({
 					success: false,
@@ -437,7 +439,7 @@ export class BeneficiariesService {
 			let status = body?.status;
 			let filterQueryArray = [];
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}} } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
 
 			if (body?.state && body?.state.length > 0) {
@@ -511,7 +513,7 @@ export class BeneficiariesService {
 				}
 			  }`,
 			};
-
+			
 			const response = await this.hasuraServiceFromServices.getData(data);
 			let result = response?.data?.users;
 			let mappedResponse = result;
@@ -677,6 +679,8 @@ export class BeneficiariesService {
 
 	public async getList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
 				success: false,
@@ -693,11 +697,11 @@ export class BeneficiariesService {
 
 		if (body?.reassign) {
 			filterQueryArray.push(
-				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } ,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} } } }`,
 			);
 		} else {
 			filterQueryArray.push(
-				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} } } } }`,
 			);
 		}
 
@@ -3105,6 +3109,8 @@ export class BeneficiariesService {
 		res?: any,
 	) {
 		const user = (await this.findOne(id)).data;
+		const academic_year_id = req.mw_academic_year_id;
+		const program_id = req.mw_program_id;
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3128,6 +3134,10 @@ export class BeneficiariesService {
 				fu.id = pf.user_id
 			WHERE
 				pf.parent_ip = '${user?.program_users?.organisation_id}'
+				AND
+				pf.academic_year_id = ${academic_year_id}
+				AND
+				pf.program_id = ${program_id}
 			AND
 				bu.aadhar_no IS NOT NULL
 			AND
@@ -3154,8 +3164,7 @@ export class BeneficiariesService {
 			${limit ? `LIMIT ${limit}` : ''}
 			${skip ? `OFFSET ${skip}` : ''}
 			;
-		`;
-
+		`;		
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;

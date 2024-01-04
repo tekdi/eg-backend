@@ -236,16 +236,19 @@ export class CampCoreService {
 		parent_ip_id: any,
 		limit: any,
 		offset: any,
+		req:any
 	) {
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let data = {
 			query: `
 			query MyQuery($limit: Int, $offset: Int){
-				users_aggregate(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}){
+				users_aggregate(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}){
 				  aggregate{
 					count
 				  }
 				}
-				users(limit: $limit, offset: $offset,where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}) {
+				users(limit: $limit, offset: $offset,where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}) {
 				  id
 				  first_name
 				  middle_name
@@ -276,7 +279,7 @@ export class CampCoreService {
 				offset: offset,
 			},
 		};
-
+		
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);

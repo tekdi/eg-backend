@@ -88,7 +88,7 @@ export class FacilitatorService {
 							_and: [
 								{
 									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},
+										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
 										status: { _eq: "shortlisted_for_orientation" }
 									}
 								},
@@ -113,7 +113,7 @@ export class FacilitatorService {
 							_and: [
 								{
 									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},
+										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
 										status: { _eq: "shortlisted_for_orientation" }
 									}
 								},
@@ -275,7 +275,7 @@ export class FacilitatorService {
 				offset: skip,
 			},
 		};
-
+		
 		const hasuraResponse = await this.hasuraService.getData(data);
 
 		let usersList = hasuraResponse?.data?.users;
@@ -1602,6 +1602,7 @@ export class FacilitatorService {
 	async getFacilitators(req: any, body: any, resp: any) {
 		const user: any = await this.userService.ipUserInfo(req);
 		const academic_year_id = req.mw_academic_year_id;
+		const program_id = req.mw_program_id;
 
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(400).send({
@@ -1681,7 +1682,7 @@ export class FacilitatorService {
 		}
 
 		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}}}}`,
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}}}`,
 		);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
@@ -1866,7 +1867,7 @@ export class FacilitatorService {
 	  }`,
 			variables: variables,
 		};
-
+		
 		let response;
 		try {
 			response = await this.hasuraService.getData(data);

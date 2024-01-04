@@ -17,6 +17,8 @@ import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { FacilitatorController } from './facilitator.controller';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { FacilitatorService } from './facilitator.service';
+import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
+import { Method } from 'src/common/method/method';
 
 @Module({
 	imports: [
@@ -28,12 +30,27 @@ import { FacilitatorService } from './facilitator.service';
 		S3Module,
 		UploadFileModule,
 	],
-	providers: [FacilitatorService, FacilitatorCoreService],
+	providers: [FacilitatorService, FacilitatorCoreService, Method],
 	controllers: [FacilitatorController],
 	//exports: [FacilitatorCoreService,FacilitatorService],
 })
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer.apply(CohortMiddleware)
+		.exclude(
+			{
+				path: '/facilitators/experience/:id',
+				method: RequestMethod.DELETE,
+			},
+			{ path: '/facilitators/:id', method: RequestMethod.PATCH },
+			'/facilitators/program-facilitator/add',
+			'/facilitators/admin/search-by-ids',
+			{
+				path: '/facilitators/update-facilitator-aadhar/:id',
+				method: RequestMethod.PATCH,
+			},
+		)
+		.forRoutes(FacilitatorController);
 	}
 }
