@@ -1,16 +1,9 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule,
-	RequestMethod,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UserModule } from 'src/user/user.module';
 import { BeneficiariesController } from './beneficiaries.controller';
 
 import { HttpModule } from '@nestjs/axios';
 import { Method } from 'src/common/method/method';
-import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
-import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 import { S3Module } from 'src/services/s3/s3.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
@@ -41,49 +34,5 @@ import { BeneficiariesService } from './beneficiaries.service';
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
-
-		consumer
-			.apply(ProgramMiddleware)
-			.exclude(
-				'/beneficiaries',
-				'/beneficiaries/admin/list/duplicates-by-aadhaar',
-				'/beneficiaries/admin/list/deactivate-duplicates',
-				'/beneficiaries/:id/is_enrollment_exists',
-				'/beneficiaries/getStatusWiseCount',
-				'/beneficiaries/admin/list/duplicates-count-by-aadhaar',
-				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
-				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
-				'/beneficiaries/register',
-				'/beneficiaries/statusUpdate',
-				'/beneficiaries/admin/statusUpdate',
-				'/beneficiaries/admin/export-csv',
-				'beneficiaries/admin/export-subjects-csv',
-				'/beneficiaries/admin/verify-enrollment',
-				'/beneficaries/update-Beneficiaires-aadhar/:id',
-				'/beneficiaries/admin/list',
-				{ path: '/beneficiaries/:id', method: RequestMethod.PATCH },
-			)
-			.forRoutes(BeneficiariesController);
-
-		consumer
-			.apply(AcademicYearIdMiddleware)
-			.exclude(
-				//'/beneficiaries',
-				//'/beneficiaries/admin/list/duplicates-by-aadhaar',
-				//'/beneficiaries/admin/list/deactivate-duplicates',
-				//'/beneficiaries/admin/list',
-				//'/beneficiaries/admin/list/duplicate-count-by-aadhar',
-				'/beneficiaries/:id/is_enrollment_exists',
-				'/beneficiaries/getStatusWiseCount',
-				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
-				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
-				'/beneficiaries/register',
-				'/beneficiaries/statusUpdate',
-				'/beneficiaries/admin/statusUpdate',
-				'/beneficiaries/admin/verify-enrollment',
-				'/beneficaries/update-Beneficiaires-aadhar/:id',
-				'/beneficiaries/admin/reassign',
-			)
-			.forRoutes(BeneficiariesController);
 	}
 }
