@@ -816,8 +816,8 @@ export class AuthService {
 			programRoleTableName = 'program_faciltators';
 			groupId = 'parent_ip';
 			req.parent_ip = `${req.role_fields.parent_ip}`;
-			req.program_id = `${req.role_fields.program_id}`;
-			req.academic_year_id = `${req.role_fields.academic_year_id}`;
+			req.program_id = req.role_fields.program_id;
+			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'applied';
 		}
 		console.log('tableName', programRoleTableName);
