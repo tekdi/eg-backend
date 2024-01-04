@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+	MiddlewareConsumer,
+	Module,
+	NestModule,
+	RequestMethod,
+} from '@nestjs/common';
 import { Method } from 'src/common/method/method';
 import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
 import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
@@ -10,20 +15,17 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
-
 @Module({
 	imports: [
 		HelperModule,
 		HasuraModule,
 		HasuraModuleFromServices,
 		KeycloakModule,
-		
 	],
-	providers: [ UserService, Method],
+	providers: [UserService, Method],
 	controllers: [UserController],
 	exports: [UserService],
 })
-
 export class UserModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
@@ -31,6 +33,7 @@ export class UserModule implements NestModule {
 		consumer
 			.apply(ProgramMiddleware)
 			.exclude(
+				'/users/onboarding/validate',
 				'/users/qualification',
 				'/users/create',
 				'/users/update/:id',
@@ -45,13 +48,17 @@ export class UserModule implements NestModule {
 				'/users/audit/:context/:context_id',
 				'/users/cohorts/my/:type',
 				'/v2/users/is_user_exist/:role',
-				{ path: '/users/update_facilitator/:id', method: RequestMethod.PUT },
+				{
+					path: '/users/update_facilitator/:id',
+					method: RequestMethod.PUT,
+				},
 			)
 			.forRoutes(UserController);
 
 		consumer
 			.apply(AcademicYearIdMiddleware)
 			.exclude(
+				'/users/onboarding/validate',
 				'/users/qualification',
 				'/users/create',
 				'/users/update/:id',
@@ -68,7 +75,5 @@ export class UserModule implements NestModule {
 				'/v2/users/is_user_exist/:role',
 			)
 			.forRoutes(UserController);
-
 	}
 }
-

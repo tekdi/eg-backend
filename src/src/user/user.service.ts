@@ -1526,6 +1526,37 @@ export class UserService {
 		}
 	}
 
+	public async validateOnBoardingLink(
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let { academic_year_id, program_id, organisation_id } = body;
+
+		let query = `query MyQuery {
+			program_organisation(where: {academic_year_id: {_eq:${academic_year_id}}, organisation_id: {_eq:${organisation_id}}, program_id: {_eq:${program_id}}, status: {_eq: "active"}}){
+			  id
+			}
+		  }
+		  `;
+
+		const query_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		if (query_response?.data?.program_organisation?.length > 0) {
+			return response.status(200).json({
+				message: 'Onboarding link is valid.',
+				isExist: true,
+			});
+		} else {
+			return response.status(200).json({
+				message: 'Onboarding link is invalid or does not exist',
+				isExist: false,
+			});
+		}
+	}
+
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
