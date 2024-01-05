@@ -1231,7 +1231,7 @@ export class FacilitatorService {
 			}
 
 			filterQueryArray.unshift(
-				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},academic_year_id:{_eq:${academic_year_id}},,program_id:{_eq:${program_id}}}}`,
+				`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}}`,
 			);
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
