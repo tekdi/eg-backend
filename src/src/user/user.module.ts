@@ -1,12 +1,6 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule,
-	RequestMethod,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { Method } from 'src/common/method/method';
-import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
-import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
+import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { HasuraModule } from '../hasura/hasura.module';
@@ -29,11 +23,9 @@ import { UserService } from './user.service';
 export class UserModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
-
 		consumer
-			.apply(ProgramMiddleware)
+			.apply(CohortMiddleware)
 			.exclude(
-				'/users/onboarding/validate',
 				'/users/qualification',
 				'/users/create',
 				'/users/update/:id',
@@ -47,32 +39,8 @@ export class UserModule implements NestModule {
 				'/users/aadhaarDetails/:userId',
 				'/users/audit/:context/:context_id',
 				'/users/cohorts/my/:type',
-				'/v2/users/is_user_exist/:role',
-				{
-					path: '/users/update_facilitator/:id',
-					method: RequestMethod.PUT,
-				},
-			)
-			.forRoutes(UserController);
-
-		consumer
-			.apply(AcademicYearIdMiddleware)
-			.exclude(
 				'/users/onboarding/validate',
-				'/users/qualification',
-				'/users/create',
-				'/users/update/:id',
-				'/users/list',
-				'/users/info/:id',
-				'/users/is_user_exist',
-				'/users/login',
-				'/users/ip_user_info',
-				'/users/organization/:id',
-				'/users/register',
-				'/users/aadhaarDetails/:userId',
-				'/users/audit/:context/:context_id',
-				'/users/cohorts/my/:type',
-				'/v2/users/is_user_exist/:role',
+				'v2/users/is_user_exist/:role',
 			)
 			.forRoutes(UserController);
 	}

@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { HasuraModule } from 'src/hasura/hasura.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { AttendancesController } from './attendances.controller';
