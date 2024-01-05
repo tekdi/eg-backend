@@ -37,20 +37,21 @@ import { Method } from 'src/common/method/method';
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
-		consumer.apply(CohortMiddleware)
-		.exclude(
-			{
-				path: '/facilitators/experience/:id',
-				method: RequestMethod.DELETE,
-			},
-			{ path: '/facilitators/:id', method: RequestMethod.PATCH },
-			'/facilitators/program-facilitator/add',
-			'/facilitators/admin/search-by-ids',
-			{
-				path: '/facilitators/update-facilitator-aadhar/:id',
-				method: RequestMethod.PATCH,
-			},
-		)
-		.forRoutes(FacilitatorController);
+		consumer
+			.apply(CohortMiddleware)
+			.exclude(
+				{
+					path: '/facilitators/experience/:id',
+					method: RequestMethod.DELETE,
+				},
+				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
+				'/facilitators/program-facilitator/add',
+				'/facilitators/admin/search-by-ids',
+				{
+					path: '/facilitators/update-facilitator-aadhar/:id',
+					method: RequestMethod.PATCH,
+				},
+			)
+			.forRoutes(FacilitatorController);
 	}
 }

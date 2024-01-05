@@ -90,12 +90,12 @@ export class EditRequestService {
 
 	public async getEditRequestList(req, body, res) {
 		const edit_req_by = req.mw_userid;
-		
+
 		const response = await this.editRequestCoreService.getEditRequestList(
 			req,
 			body,
 			edit_req_by,
-			);
+		);
 		return res.status(200).json({
 			success: true,
 			message: 'success',
@@ -118,8 +118,11 @@ export class EditRequestService {
 		const academic_year_id = req.mw_academic_year_id;
 
 		const response =
-			await this.editRequestCoreService.getEditRequestListAdmin(body,program_id,
-				academic_year_id);
+			await this.editRequestCoreService.getEditRequestListAdmin(
+				body,
+				program_id,
+				academic_year_id,
+			);
 		return res.status(200).json({
 			success: true,
 			message: 'success',

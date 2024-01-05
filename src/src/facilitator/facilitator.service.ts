@@ -275,7 +275,7 @@ export class FacilitatorService {
 				offset: skip,
 			},
 		};
-		
+
 		const hasuraResponse = await this.hasuraService.getData(data);
 
 		let usersList = hasuraResponse?.data?.users;
@@ -1867,7 +1867,7 @@ export class FacilitatorService {
 	  }`,
 			variables: variables,
 		};
-		
+
 		let response;
 		try {
 			response = await this.hasuraService.getData(data);
