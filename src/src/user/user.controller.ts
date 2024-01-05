@@ -19,7 +19,6 @@ import {
 import { Request, Response } from 'express';
 import { lastValueFrom, map } from 'rxjs';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
-//import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { HasuraService } from '../hasura/hasura.service';
 import { CreateUserDto } from '../helper/dto/create-user.dto';
 import { RegisterFacilitatorDto } from '../helper/dto/register-facilitator.dto';

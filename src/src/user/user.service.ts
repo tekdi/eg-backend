@@ -165,7 +165,6 @@ export class UserService {
 		try {
 			const res = await axios(configData);
 			if (res) {
-				//return res.data;
 				return response.status(200).send({
 					success: true,
 					status: 'Authenticated',

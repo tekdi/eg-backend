@@ -12,14 +12,13 @@ import { AuthModule } from '../modules/auth/auth.module';
 import { HasuraModule } from '../services/hasura/hasura.module';
 import { S3Module } from '../services/s3/s3.module';
 
-import { Method } from 'src/common/method/method';
-import { AcademicYearIdMiddleware } from 'src/common/middlewares/academic_year_id.middleware';
-import { ProgramMiddleware } from 'src/common/middlewares/program.middleware';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { FacilitatorController } from './facilitator.controller';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { FacilitatorService } from './facilitator.service';
+import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
+import { Method } from 'src/common/method/method';
 
 @Module({
 	imports: [
@@ -38,9 +37,8 @@ import { FacilitatorService } from './facilitator.service';
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
-
 		consumer
-			.apply(ProgramMiddleware)
+			.apply(CohortMiddleware)
 			.exclude(
 				{
 					path: '/facilitators/experience/:id',
@@ -49,20 +47,6 @@ export class FacilitatorModule implements NestModule {
 				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
 				'/facilitators/program-facilitator/add',
 				'/facilitators/admin/search-by-ids',
-				'/facilitators/update-facilitator-aadhar/:id',
-			)
-			.forRoutes(FacilitatorController);
-
-		consumer
-			.apply(AcademicYearIdMiddleware)
-			.exclude(
-				{
-					path: '/facilitators/experience/:id',
-					method: RequestMethod.DELETE,
-				},
-				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
-				'/facilitators/admin/search-by-ids',
-				'/facilitators/program-facilitator/add',
 				{
 					path: '/facilitators/update-facilitator-aadhar/:id',
 					method: RequestMethod.PATCH,

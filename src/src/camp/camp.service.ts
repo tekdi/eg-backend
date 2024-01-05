@@ -3295,6 +3295,7 @@ export class CampService {
 			parent_ip_id,
 			limit,
 			offset,
+			req,
 		);
 
 		let users = response?.data?.users;
