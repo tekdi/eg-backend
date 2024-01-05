@@ -1442,6 +1442,7 @@ export class UserService {
 		let primary_table;
 		let cohort_data;
 		let program_organisation_condition;
+		let cohort_academic_year_id;
 
 		if (cohort_type == 'academic_year') {
 			if (role.includes('staff')) {
@@ -1505,6 +1506,39 @@ export class UserService {
 	 			   WHERE po.status = 'active'  AND pu.user_id = ${user_id}
 		 		   GROUP BY p.id
 		`;
+
+			cohort_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+		}
+		if (cohort_type == 'program_academic_year_id') {
+			if (role.includes('staff')) {
+				const user = await this.ipUserInfo(req);
+				if (!user?.data?.program_users?.[0]?.organisation_id) {
+					return res.status(404).send({
+						success: false,
+						message: 'Invalid Ip',
+						data: {},
+					});
+				}
+
+				cohort_academic_year_id = req?.query?.cohort_academic_year_id;
+				primary_table = 'program_users';
+
+				program_organisation_condition =
+					'pu.organisation_id = po.organisation_id';
+			}
+
+			sql = `SELECT p.id as program_id, p.name as program_name,p.state_id,
+			(SELECT state_name from address where state_cd = p.state_id limit  1) AS state_name
+			FROM ${primary_table} pu
+			LEFT JOIN program_organisation po ON ${program_organisation_condition}
+			LEFT JOIN programs p ON po.program_id = p.id
+			 WHERE po.status = 'active' AND po.academic_year_id = ${cohort_academic_year_id}  AND pu.user_id = ${user_id}
+			 GROUP BY p.id
+
+			 
+ `;
 
 			cohort_data = (
 				await this.hasuraServiceFromServices.executeRawSql(sql)
