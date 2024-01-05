@@ -55,7 +55,10 @@ export class BeneficiariesModule implements NestModule {
 				'/beneficiaries/statusUpdate',
 				'/beneficiaries/admin/statusUpdate',
 				'/beneficiaries/admin/verify-enrollment',
-				{ path: '/beneficiaries/update-Beneficiaries-aadhar/:id', method: RequestMethod.PATCH },
+				{
+					path: '/beneficiaries/update-Beneficiaries-aadhar/:id',
+					method: RequestMethod.PATCH,
+				},
 			)
 			.forRoutes(BeneficiariesController);
 	}

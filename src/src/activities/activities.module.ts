@@ -14,7 +14,7 @@ import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 	providers: [ActivitiesService, ActivitiesCoreService, EnumService, Method],
 	exports: [ActivitiesModule, ActivitiesCoreService],
 })
-export class ActivitiesModule implements NestModule{
+export class ActivitiesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(CohortMiddleware).forRoutes(ActivitiesController);
 	}

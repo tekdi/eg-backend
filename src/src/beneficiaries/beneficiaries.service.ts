@@ -337,7 +337,7 @@ export class BeneficiariesService {
 				  }
 				  `,
 				variables: variables,
-			};			
+			};
 			const hasuraResponse = await this.hasuraServiceFromServices.getData(
 				data,
 			);
@@ -513,7 +513,7 @@ export class BeneficiariesService {
 				}
 			  }`,
 			};
-			
+
 			const response = await this.hasuraServiceFromServices.getData(data);
 			let result = response?.data?.users;
 			let mappedResponse = result;
@@ -3164,7 +3164,7 @@ export class BeneficiariesService {
 			${limit ? `LIMIT ${limit}` : ''}
 			${skip ? `OFFSET ${skip}` : ''}
 			;
-		`;		
+		`;
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;

@@ -236,7 +236,7 @@ export class CampCoreService {
 		parent_ip_id: any,
 		limit: any,
 		offset: any,
-		req:any
+		req: any,
 	) {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
@@ -279,7 +279,7 @@ export class CampCoreService {
 				offset: offset,
 			},
 		};
-		
+
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);

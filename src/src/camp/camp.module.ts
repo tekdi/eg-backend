@@ -36,7 +36,7 @@ import { Method } from 'src/common/method/method';
 		BeneficiariesModule,
 	],
 
-	providers: [CampService, CampCoreService,Method],
+	providers: [CampService, CampCoreService, Method],
 	controllers: [CampController],
 })
 export class CampModule implements NestModule {
