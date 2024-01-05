@@ -949,7 +949,7 @@ export class UserService {
 
 			return resp.status(200).send({
 				success: true,
-				message: 'Data 123 Fetched Successfully',
+				message: 'Data Fetched Successfully',
 				data: {
 					data: mappedResponse,
 				},
