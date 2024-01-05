@@ -749,7 +749,9 @@ export class FacilitatorService {
 		);
 		if (keyExist.length) {
 			const tableName = 'program_faciltators';
+
 			const programDetails = facilitatorUser.program_faciltators;
+
 			await this.hasuraService.q(
 				tableName,
 				{
@@ -906,8 +908,11 @@ export class FacilitatorService {
 	//   }
 	// }
 
-	async update(id: number, body: any, response: any) {
-		const { data: facilitatorUser } = await this.userById(id);
+	async update(id: number, body: any, response: any, req: any) {
+		const { data: facilitatorUser } = (
+			await this.userById(id, response, req)
+		).data;
+
 		const mobile_no = body.mobile;
 		switch (body.page_type) {
 			case 'add_basic_details': {
@@ -1047,7 +1052,7 @@ export class FacilitatorService {
 			//   break;
 			// }
 		}
-		const { data: updatedUser } = await this.userById(id);
+		const { data: updatedUser } = await this.userById(id, response, req);
 		return response.status(200).json({
 			success: true,
 			message: 'User data fetched successfully!',
@@ -1954,8 +1959,8 @@ export class FacilitatorService {
 		});
 	}
 
-	async userById(id: any) {
-		const userData = (await this.userService.userById(+id)).data;
+	async userById(id: any, response: any, req: any) {
+		const userData = await this.userService.userById(+id, response, req);
 
 		return {
 			message: 'User data fetched successfully.',

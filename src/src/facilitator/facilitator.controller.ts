@@ -76,14 +76,15 @@ export class FacilitatorController {
 		return this.facilitatorService.removeExperience(+id, request, response);
 	}
 
-	@Patch(':id')
+	@Patch('/:id')
 	@UseGuards(new AuthGuard())
 	update(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
 		@Res() response: any,
+		@Req() req?: any,
 	) {
-		return this.facilitatorService.update(+id, body, response);
+		return this.facilitatorService.update(+id, body, response, req);
 	}
 
 	@Patch('admin/okyc_details_override')

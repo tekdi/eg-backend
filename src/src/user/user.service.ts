@@ -616,7 +616,13 @@ export class UserService {
 		}
 	}
 
-	async userById(id: any, resp?: any) {
+	async userById(id: any, resp?: any, req?: any) {
+		const academic_year_id = req?.mw_academic_year_id;
+
+		const filterQueryArray = req
+			? `(where: {academic_year_id: {_eq: ${academic_year_id}}})`
+			: ``;
+
 		const data = {
 			query: `query searchById {
 		users_by_pk(id:${id}) {
@@ -757,7 +763,7 @@ export class UserService {
 			  }
 			}
 		  }
-		  program_faciltators {
+		  program_faciltators ${filterQueryArray}{
 			parent_ip
 			documents_status
 			availability
@@ -924,7 +930,7 @@ export class UserService {
 				);
 		}
 
-		if (resp) {
+		if (resp && (req == null || req == undefined)) {
 			if (!mappedResponse.username && mappedResponse.keycloak_id) {
 				const keycloakresponse =
 					await this.keycloakService.findUserByKeycloakId(
@@ -943,7 +949,7 @@ export class UserService {
 
 			return resp.status(200).send({
 				success: true,
-				message: 'Data Fetched Successfully',
+				message: 'Data 123 Fetched Successfully',
 				data: {
 					data: mappedResponse,
 				},
