@@ -377,6 +377,9 @@ export class CampService {
 			  kit_feedback
 			  kit_received
 			  kit_was_sufficient
+				preferred_start_time
+				preferred_end_time
+				week_off
 			  group{
 				name
 				description
@@ -3368,7 +3371,7 @@ export class CampService {
 				data: {},
 			});
 		}
-    
+
 		// Set camp_day_not_happening_reason to NULL if not present in the body
 		if (
 			camp_day_happening === 'no' &&
