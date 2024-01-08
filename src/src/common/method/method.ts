@@ -102,4 +102,10 @@ export class Method {
 			return false;
 		}
 	}
+
+	public async transformGender(gender) {
+		if (gender === 'M') return 'male';
+		if (gender === 'F') return 'female';
+		return gender;
+	}
 }
