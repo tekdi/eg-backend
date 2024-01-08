@@ -46,7 +46,6 @@ export class BeneficiariesModule implements NestModule {
 				'/beneficiaries',
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/admin/list/deactivate-duplicates',
-				'/beneficiaries/admin/list',
 				'/beneficiaries/:id/is_enrollment_exists',
 				'/beneficiaries/getStatusWiseCount',
 				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
