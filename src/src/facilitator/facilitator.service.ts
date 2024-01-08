@@ -2452,6 +2452,14 @@ export class FacilitatorService {
 		let message = 'Okyc Details already Updated';
 		let status = 200;
 		if (userData?.aadhar_verified === 'yes') {
+			// Check and modify the gender field in the body if it's 'M' or 'F'
+			if (
+				body?.gender &&
+				(body?.gender === 'M' || body?.gender === 'F')
+			) {
+				body.gender = body?.gender === 'M' ? 'male' : 'female';
+			}
+
 			okyc_response = await this.facilitatorCoreService.updateOkycDetails(
 				body,
 			);
