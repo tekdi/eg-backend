@@ -5,6 +5,7 @@ import {
 	Param,
 	Post,
 	Res,
+	Req,
 	UseGuards,
 	UseInterceptors,
 	UsePipes,
@@ -71,9 +72,9 @@ export class GeolocationController {
 	}
 
 	@Get('/blocks/:name')
-	public async getBlocks(@Param('name') name: string) {
+	public async getBlocks(@Param('name') name: string, @Req() request: any) {
 		const tableName = 'address';
-		const response = await this.geolocationService.getBlocks(name);
+		const response = await this.geolocationService.getBlocks(name, request);
 		let mappedResponse = response?.data[tableName];
 		const count =
 			response?.data[`${tableName}_aggregate`]?.aggregate?.count;
