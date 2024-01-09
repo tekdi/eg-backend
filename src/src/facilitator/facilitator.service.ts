@@ -12,6 +12,7 @@ import {
 import { S3Service } from '../services/s3/s3.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
+import { Method } from '../common/method/method';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -24,6 +25,7 @@ export class FacilitatorService {
 		private s3Service: S3Service,
 		private uploadFileService: UploadFileService,
 		private facilitatorCoreService: FacilitatorCoreService,
+		private method: Method,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -2366,6 +2368,12 @@ export class FacilitatorService {
 		const program_id = body?.program_id || 1;
 		const academic_year_id = body?.academic_year_id || 1;
 
+		const okyc_gender_data =
+			body?.okyc_response?.data?.aadhaar_data?.gender;
+
+		body.okyc_response.data.aadhaar_data.gender =
+			await this.method.transformGender(okyc_gender_data);
+
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
 				body,
@@ -2401,11 +2409,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
-		if(!id){
+		if (!id) {
 			return res.json({
 				status: 422,
 				success: false,
-				message: "Id is required",})
+				message: 'Id is required',
+			});
 		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {
@@ -2433,6 +2442,9 @@ export class FacilitatorService {
 		let message = 'Okyc Details already Updated';
 		let status = 200;
 		if (userData?.aadhar_verified === 'yes') {
+			// Check and modify the gender field in the body if it's 'M' or 'F' with the utility function
+			body.gender = await this.method.transformGender(body.gender);
+
 			okyc_response = await this.facilitatorCoreService.updateOkycDetails(
 				body,
 			);
