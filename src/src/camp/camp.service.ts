@@ -2623,52 +2623,22 @@ export class CampService {
 			});
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const data = await this.campcoreservice.getFilter_By_camp(
+		const result = await this.campcoreservice.getFilter_By_camp(
 			body,
 			resp,
 			req,
 		);
 
-		const ids = data?.data?.camps?.map((camps) => camps?.faciltator);
+		const ids = result?.data?.data?.users;
 
-		const faciltatorIds = new Set();
-		ids.forEach((camp) => {
-			camp.forEach((item) => {
-				if (item?.user?.faciltator_id) {
-					faciltatorIds.add(item.user.faciltator_id);
-				}
-			});
-		});
-		// Convert the Set to an array if needed
-		const uniqueFaciltatorIds = [...faciltatorIds];
-
-		let searchQuery = '';
-		if (body.search && body.search !== '') {
-			let first_name = body.search.split(' ')[0];
-			let last_name = body.search.split(' ')[1] || '';
-
-			if (last_name?.length > 0) {
-				searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
-			} else {
-				searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
-			}
-		}
-		const query = `query MyQuery{
-				users(where:{id:{_in:[${uniqueFaciltatorIds}]},${searchQuery}}){
-					id
-					first_name
-					last_name
-				}
-			}`;
-
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
-		if (hasura_response?.data?.users) {
+		if (ids) {
 			return resp.status(200).json({
 				message: 'Camp Data Found Successfully',
-				data: hasura_response?.data || { users: [] },
+				data: ids,
+				totalCount: result?.totalCount,
+				limit: result?.limit,
+				currentPage: result?.currentPage,
+				totalPages: result?.totalPages,
 			});
 		} else {
 			return resp.status(500).json({
