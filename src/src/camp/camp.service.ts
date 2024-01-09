@@ -2623,15 +2623,22 @@ export class CampService {
 			});
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const data = await this.campcoreservice.list(body);
+		const data = await this.campcoreservice.getFilter_By_camp(
+			body,
+			resp,
+			req,
+		);
+
+		const ids = data?.data?.camps?.map((camps) => camps?.faciltator);
 
 		const faciltatorIds = new Set();
-		data?.camps?.forEach((item) => {
-			if (item?.faciltator?.user?.faciltator_id) {
-				faciltatorIds.add(item.faciltator.user.faciltator_id);
-			}
+		ids.forEach((camp) => {
+			camp.forEach((item) => {
+				if (item?.user?.faciltator_id) {
+					faciltatorIds.add(item.user.faciltator_id);
+				}
+			});
 		});
-
 		// Convert the Set to an array if needed
 		const uniqueFaciltatorIds = [...faciltatorIds];
 
@@ -2659,14 +2666,12 @@ export class CampService {
 		});
 
 		if (hasura_response?.data?.users) {
-			return resp.json({
-				status: 200,
+			return resp.status(200).json({
 				message: 'Camp Data Found Successfully',
 				data: hasura_response?.data || { users: [] },
 			});
 		} else {
-			return resp.json({
-				status: 500,
+			return resp.status(500).json({
 				message: 'IP_CAMP_LIST_ERROR',
 				data: {},
 			});

@@ -407,4 +407,131 @@ export class CampCoreService {
 			query: query,
 		});
 	}
+
+	public async getFilter_By_camp(body: any, resp: any, req: any) {
+		try {
+			let filterQueryArray = [];
+
+			const status_array = this.enumService
+				.getEnumValue('GROUPS_STATUS')
+				.data.map((item) => item.value);
+
+			const page = isNaN(body.page) ? 1 : parseInt(body.page);
+			const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+			let offset = page > 1 ? limit * (page - 1) : 0;
+			let program_id = body?.program_id || 1;
+			let academic_year_id = body?.academic_year_id || 1;
+			let parent_ip_id = body?.parent_ip_id;
+			let status = body?.status;
+
+			filterQueryArray.push(
+				`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
+			);
+
+			if (body?.district && body?.district.length > 0) {
+				filterQueryArray.push(
+					`{properties:{district:{_in: ${JSON.stringify(
+						body?.district,
+					)}}}}`,
+				);
+			}
+
+			if (body?.block && body?.block.length > 0) {
+				filterQueryArray.push(
+					`{properties:{block:{_in: ${JSON.stringify(
+						body?.block,
+					)}}}}`,
+				);
+			}
+
+			if (body.facilitator && body.facilitator.length > 0) {
+				filterQueryArray.push(
+					`{group_users: {user:{id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}}`,
+				);
+			}
+
+			if (!body?.status || body?.status === '' || body?.status == 'all') {
+				filterQueryArray.push(
+					`{group: {status: {_in: ${JSON.stringify(
+						status_array.filter((item) => item != 'camp_initiated'),
+					)}}}}`,
+				);
+			} else {
+				filterQueryArray.push(`{group:{status:{_eq:"${status}"}}}`);
+			}
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+			const dataIds = {
+				query: `query MyQuery($limit: Int, $offset: Int) {
+					camps_aggregate(where:${filterQuery}) {
+						aggregate {
+						count
+						}
+					}
+					camps(limit: $limit, offset: $offset, where: ${filterQuery}) {
+						id
+						kit_received
+						kit_was_sufficient
+						kit_ratings
+						kit_feedback
+						properties {
+						district
+						block
+						state
+						village
+						landmark
+						grampanchayat
+						street
+						}
+						group {
+						name
+						status
+						}
+					 faciltator:group_users(where: {member_type: {_eq: "owner"},status: {_eq: "active"}}) {
+						user {
+							faciltator_id: id
+							first_name
+							middle_name
+							last_name
+						}
+						
+						}
+						beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
+						user {
+							id
+							first_name
+							middle_name
+							last_name
+							mobile
+							state
+							district
+							block
+							village
+							profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+								id
+								name
+								doument_type
+								document_sub_type
+								path
+							}
+						}
+					}
+					}
+					}`,
+			};
+
+			const result = await this.hasuraServiceFromServices.getData(
+				dataIds,
+			);
+			return result;
+		} catch (error) {
+			return resp.status(500).json({
+				message: 'BENEFICIARIES_LIST_ERROR',
+				data: {},
+			});
+		}
+	}
 }
