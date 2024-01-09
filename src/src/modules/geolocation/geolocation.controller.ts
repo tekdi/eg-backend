@@ -5,6 +5,7 @@ import {
 	Param,
 	Post,
 	Res,
+	Req,
 	UseGuards,
 	UseInterceptors,
 	UsePipes,
@@ -82,6 +83,25 @@ export class GeolocationController {
 			data: {
 				totalCount: count,
 				blocks: mappedResponse,
+			},
+		};
+	}
+
+	@Get('/grampanchyat')
+	public async getGramPanchayat(@Req() request: any) {
+		const tableName = 'address';
+		const response = await this.geolocationService.getGramPanchayat(
+			request,
+		);
+		let mappedResponse = response?.data[tableName];
+		const count =
+			response?.data[`${tableName}_aggregate`]?.aggregate?.count;
+
+		return {
+			success: 'true',
+			data: {
+				totalCount: count,
+				gramPanchayat: mappedResponse,
 			},
 		};
 	}
