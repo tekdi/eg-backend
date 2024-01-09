@@ -2623,7 +2623,7 @@ export class CampService {
 			});
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const result = await this.campcoreservice.getFilter_By_camp(
+		const result = await this.campcoreservice.getPrerakFilter_By_camp(
 			body,
 			resp,
 			req,

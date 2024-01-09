@@ -408,7 +408,7 @@ export class CampCoreService {
 		});
 	}
 
-	public async getFilter_By_camp(body: any, resp: any, req: any) {
+	public async getPrerakFilter_By_camp(body: any, resp: any, req: any) {
 		try {
 			let filterQueryArray = [];
 
