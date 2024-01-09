@@ -2070,7 +2070,7 @@ export class FacilitatorService {
 			id
 			program_faciltators{
 				status
-				learner_total_count:beneficiaries_aggregate {
+				learner_total_count: beneficiaries_aggregate(where: {status: {_in: ["identified", "ready_to_enroll", "enrolled", "enrolled_ip_verified"]}, _not: {group_users: {status: {_eq: "active"}}}}) {
 					aggregate {
 					  count
 					}
@@ -2102,10 +2102,12 @@ export class FacilitatorService {
 				  {
 				  status: {_eq: "${item}"}
 				},
+
 					{ user:	{ id: { _is_null: false } } }
 
-										 ]
-				}
+										 ],
+				  _not: {group_users: {status: {_eq: "active"}}}}					 
+				
 			)
 			{
 				aggregate {
