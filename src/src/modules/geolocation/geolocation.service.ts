@@ -160,7 +160,6 @@ export class GeolocationService {
 		let filter_query;
 
 		if (grampanchayat == 'null') {
-			console.log('heqw1');
 			filter_query = `where: {district_name: {_eq: ${district}}, block_name: {_eq:${block}}, state_name: {_eq:${state}}}`;
 		} else {
 			filter_query = `where: {district_name: {_eq: ${district}}, block_name: {_eq:${block}}, grampanchayat_name: {_eq:"${grampanchayat}"}, state_name: {_eq:${state}}}`;
