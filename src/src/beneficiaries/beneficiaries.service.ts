@@ -622,7 +622,8 @@ export class BeneficiariesService {
 	//status count
 	public async getStatuswiseCount(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		if (!user?.data?.id) {
 			return resp.status(401).json({
 				success: false,
@@ -641,7 +642,9 @@ export class BeneficiariesService {
 			}:program_beneficiaries_aggregate(where:{
 			_and: [
 			  {
-				facilitator_id: { _eq: ${user?.data?.id} }
+				facilitator_id: { _eq: ${
+					user?.data?.id
+				} },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
 			  },{
 			  status: {_eq: "${item}"}
 			},
@@ -894,7 +897,8 @@ export class BeneficiariesService {
 
 	public async findAll(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		if (!user?.data?.id) {
 			return resp.status(404).send({
 				success: false,
@@ -912,7 +916,7 @@ export class BeneficiariesService {
 		let filterQueryArray = [];
 		// only facilitator_id learners lits
 		filterQueryArray.push(
-			`{program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}}`,
+			`{program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}`,
 		);
 
 		if (status && status !== '') {
@@ -1691,6 +1695,8 @@ export class BeneficiariesService {
 
 	public async statusUpdateByIp(body: any, request: any) {
 		const user = await this.userService.ipUserInfo(request);
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return {
 				success: false,
@@ -1703,7 +1709,7 @@ export class BeneficiariesService {
 		//check validation for id benlongs to same IP under prerak
 		let data = {
 			query: `query MyQuery {
-				users(where: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"}, beneficiaries: {user_id: {_eq: ${body?.user_id}}}}}){
+				users(where: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}, beneficiaries: {user_id: {_eq: ${body?.user_id}}}}}){
 				  program_faciltators{
 					parent_ip
 				  }
@@ -3441,6 +3447,8 @@ export class BeneficiariesService {
 	) {
 		//get IP information from token id
 		const user = await this.userService.ipUserInfo(req);
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let aadhaar_no = body?.aadhar_no;
 
 		if (!aadhaar_no || !beneficiaries_id) {
@@ -3462,7 +3470,7 @@ export class BeneficiariesService {
 		}
 
 		const Beneficiaries_validation_query = `query MyQuery {
-			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}}}) {
+			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}}}) {
 				aggregate {
 				  count
 				}
