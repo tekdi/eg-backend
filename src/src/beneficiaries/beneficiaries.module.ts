@@ -43,21 +43,14 @@ export class BeneficiariesModule implements NestModule {
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(
-				'/beneficiaries',
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/admin/list/deactivate-duplicates',
 				'/beneficiaries/:id/is_enrollment_exists',
-				'/beneficiaries/getStatusWiseCount',
 				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
 				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
 				'/beneficiaries/register',
 				'/beneficiaries/statusUpdate',
-				'/beneficiaries/admin/statusUpdate',
 				'/beneficiaries/admin/verify-enrollment',
-				{
-					path: '/beneficiaries/update-Beneficiaries-aadhar/:id',
-					method: RequestMethod.PATCH,
-				},
 			)
 			.forRoutes(BeneficiariesController);
 	}
