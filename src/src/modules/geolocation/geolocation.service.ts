@@ -101,7 +101,7 @@ export class GeolocationService {
 		let filter_query;
 
 		if (state) {
-			filter_query = `where: {district_name: {_eq: ${district}}, state_name: {_eq:${state}}}`;
+			filter_query = `where: {district_name: {_eq: "${district}"}, state_name: {_eq:"${state}"}}`;
 		} else {
 			filter_query = `where: {
 				district_name: {_eq: "${district}"}
@@ -167,9 +167,9 @@ export class GeolocationService {
 		let filter_query;
 
 		if (grampanchayat == 'null') {
-			filter_query = `where: {district_name: {_eq: ${district}}, block_name: {_eq:${block}}, state_name: {_eq:${state}}}`;
+			filter_query = `where: {district_name: {_eq: "${district}"}, block_name: {_eq:"${block}"}, state_name: {_eq:"${state}"}}`;
 		} else {
-			filter_query = `where: {district_name: {_eq: ${district}}, block_name: {_eq:${block}}, grampanchayat_name: {_eq:"${grampanchayat}"}, state_name: {_eq:${state}}}`;
+			filter_query = `where: {district_name: {_eq: "${district}"}, block_name: {_eq:"${block}"}, grampanchayat_name: {_eq:"${grampanchayat}"}, state_name: {_eq:"${state}"}}`;
 		}
 		let data = {
 			query: `query MyQuery {
@@ -193,12 +193,12 @@ export class GeolocationService {
 
 		let data = {
 			query: `query MyQuery {
-				address_aggregate(distinct_on: [grampanchayat_name], where: {district_name: {_eq:${district}}, block_name: {_eq: ${block}}, state_name: {_eq:${state}}}) {
+				address_aggregate(distinct_on: [grampanchayat_name], where: {district_name: {_eq:"${district}"}, block_name: {_eq: "${block}"}, state_name: {_eq:"${state}"}}) {
 				  aggregate {
 					count
 				  }
 				}
-				address(distinct_on: [grampanchayat_name], where: {district_name: {_eq:${district}}, block_name: {_eq: ${block}}, state_name: {_eq:${state}}}) {
+				address(distinct_on: [grampanchayat_name], where: {district_name: {_eq:"${district}"}, block_name: {_eq: "${block}"}, state_name: {_eq:"${state}"}}) {
 				  grampanchayat_name
 				}
 			  }
