@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
-import { stat } from 'fs';
 
 @Injectable()
 export class GeolocationService {
