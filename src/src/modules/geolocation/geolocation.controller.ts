@@ -87,6 +87,25 @@ export class GeolocationController {
 		};
 	}
 
+	@Get('/grampanchyat')
+	public async getGramPanchayat(@Req() request: any) {
+		const tableName = 'address';
+		const response = await this.geolocationService.getGramPanchayat(
+			request,
+		);
+		let mappedResponse = response?.data[tableName];
+		const count =
+			response?.data[`${tableName}_aggregate`]?.aggregate?.count;
+
+		return {
+			success: 'true',
+			data: {
+				totalCount: count,
+				gramPanchayat: mappedResponse,
+			},
+		};
+	}
+
 	// Get villages list
 	@Get('/villages/:name')
 	public async getVillages(@Param('name') name: string) {

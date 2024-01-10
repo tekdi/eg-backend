@@ -190,4 +190,24 @@ export class GeolocationService {
 
 		return await this.hasuraService.postData(data);
 	}
+
+	async getGramPanchayat(req: any) {
+		let { state, district, block } = req.query;
+
+		let data = {
+			query: `query MyQuery {
+				address_aggregate(distinct_on: [grampanchayat_name], where: {district_name: {_eq:${district}}, block_name: {_eq: ${block}}, state_name: {_eq:${state}}}) {
+				  aggregate {
+					count
+				  }
+				}
+				address(distinct_on: [grampanchayat_name], where: {district_name: {_eq:${district}}, block_name: {_eq: ${block}}, state_name: {_eq:${state}}}) {
+				  grampanchayat_name
+				}
+			  }
+			  `,
+		};
+
+		return await this.hasuraService.postData(data);
+	}
 }
