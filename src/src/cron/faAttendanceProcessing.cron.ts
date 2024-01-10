@@ -44,7 +44,11 @@ export class FaAttendanceProcessingCron {
 				const userId = String(user.id);
 				// Iterate through attendance documents and mark attendance
 				for (const attendanceObj of user.attendances) {
-					if (attendanceObj.photo_1) {
+					if (
+						attendanceObj.photo_1 &&
+						attendanceObj.photo_1 != '-' &&
+						attendanceObj.photo_1 != null
+					) {
 						// Find Users matching with image
 						const matchedUser =
 							await this.awsRekognitionService.searchUsersByImage(
