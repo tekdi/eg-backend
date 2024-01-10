@@ -95,15 +95,25 @@ export class GeolocationService {
 		return await this.hasuraService.postData(data);
 	}
 
-	async getBlocks(district: string) {
+	async getBlocks(district: string, req: any) {
+		let state = req?.query?.state;
+
+		let filter_query;
+
+		if (state) {
+			filter_query = `where: {district_name: {_eq: ${district}}, state_name: {_eq:${state}}}`;
+		} else {
+			filter_query = `where: {
+				district_name: {_eq: "${district}"}
+			}`;
+		}
+
 		let data = {
 			query: `
 			query MyQuery {
 				address_aggregate(
 					distinct_on: [block_name],
-					where: {
-						district_name: {_eq: "${district}"}
-					}
+					${filter_query}
 				) {
 					aggregate {
 						count
@@ -112,9 +122,7 @@ export class GeolocationService {
 
 				address(
 					distinct_on: [block_name],
-					where: {
-						district_name: {_eq: "${district}"}
-					}
+					${filter_query}
 				) {
 					block_name
 				}
