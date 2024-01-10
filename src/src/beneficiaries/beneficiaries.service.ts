@@ -644,7 +644,7 @@ export class BeneficiariesService {
 			  {
 				facilitator_id: { _eq: ${
 					user?.data?.id
-				} },,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
+				} },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
 			  },{
 			  status: {_eq: "${item}"}
 			},
@@ -3470,7 +3470,7 @@ export class BeneficiariesService {
 		}
 
 		const Beneficiaries_validation_query = `query MyQuery {
-			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}}}) {
+			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}}}) {
 				aggregate {
 				  count
 				}
