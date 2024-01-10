@@ -162,30 +162,27 @@ export class GeolocationService {
 		}
 	}
 
-	async getVillages(block: string) {
-		let data = {
-			query: `
-			query MyQuery {
-				address_aggregate(
-					distinct_on: [village_ward_name],
-					where: {
-						block_name: {_eq: "${block}"}
-					}
-				) {
-					aggregate {
-						count
-					}
-				}
+	async getVillages(block: string, req: any) {
+		let { state, district, grampanchayat } = req.query;
+		let filter_query;
 
-				address(
-					distinct_on: [village_ward_name],
-					where: {
-						block_name: {_eq: "${block}"}
-					}
-				) {
-					village_ward_name
+		if (grampanchayat == 'null') {
+			filter_query = `where: {district_name: {_eq: ${district}}, block_name: {_eq:${block}}, state_name: {_eq:${state}}}`;
+		} else {
+			filter_query = `where: {district_name: {_eq: ${district}}, block_name: {_eq:${block}}, grampanchayat_name: {_eq:"${grampanchayat}"}, state_name: {_eq:${state}}}`;
+		}
+		let data = {
+			query: `query MyQuery {
+				address_aggregate(distinct_on: [village_ward_name],${filter_query}) {
+				  aggregate {
+					count
+				  }
 				}
-			}`,
+				address(distinct_on: [village_ward_name],${filter_query}) {
+				  village_ward_name
+				}
+			  }
+			  `,
 		};
 
 		return await this.hasuraService.postData(data);
