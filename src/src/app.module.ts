@@ -27,6 +27,10 @@ import { ReferencesModule } from './references/references.module';
 import { PcrscoresModule } from './pcrscores/pcrscores.module';
 import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { MasterDataModule } from './master_data/master_data.module';
+import { LMSModule } from './lms/lms.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { KitMaterialsModule } from './kit-materials/kit-materials.module';
 
 @Module({
 	imports: [
@@ -59,7 +63,11 @@ import { ActivitiesModule } from './activities/activities.module';
 		ReferencesModule,
 		PcrscoresModule,
 		EditRequestModule,
-		ActivitiesModule
+		ActivitiesModule,
+		MasterDataModule,
+		LMSModule,
+		SessionsModule,
+		KitMaterialsModule,
 	],
 	controllers: [],
 	providers: [],
