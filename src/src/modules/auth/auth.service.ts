@@ -118,14 +118,14 @@ export class AuthService {
 		//find mobile no.
 		let query = {
 			query: `query MyQuery2 {
-                users(where: {keycloak_id: {_eq: "${user?.id}"}}) {
-                  keycloak_id
-                  last_name
-                  id
-                  first_name
-                  mobile
-                }
-              }`,
+				users(where: {keycloak_id: {_eq: "${user?.id}"}}) {
+				  keycloak_id
+				  last_name
+				  id
+				  first_name
+				  mobile
+				}
+			  }`,
 		};
 		const userRes = await this.hasuraService.postData(query);
 
@@ -263,18 +263,18 @@ export class AuthService {
 		console.log('keycloak_id', keycloak_id);
 		let query2 = {
 			query: `query MyQuery {
-                users(where: {keycloak_id: {_eq: "${keycloak_id}" }}) {
-                  id
-                  keycloak_id
-                  program_users {
-                    roles {
-                      id
-                      role_type
-                      slag
-                    }
-                  }
-                }
-              }`,
+				users(where: {keycloak_id: {_eq: "${keycloak_id}" }}) {
+				  id
+				  keycloak_id
+				  program_users {
+					roles {
+					  id
+					  role_type
+					  slag
+					}
+				  }
+				}
+			  }`,
 		};
 		const userRole = await this.hasuraService.postData(query2);
 		console.log(
@@ -284,13 +284,13 @@ export class AuthService {
 		if (userRole.data.users[0].program_users[0].roles.role_type === 'IP') {
 			let query = {
 				query: `query MyQuery {
-                    users_by_pk(id: ${req.id}) {
-                      keycloak_id
-                      last_name
-                      id
-                      first_name
-                    }
-                  }`,
+					users_by_pk(id: ${req.id}) {
+					  keycloak_id
+					  last_name
+					  id
+					  first_name
+					}
+				  }`,
 			};
 
 			const userRes = await this.hasuraService.postData(query);
@@ -488,18 +488,25 @@ export class AuthService {
 			}
 
 			// Validate role specific fields
-			if (!body.role_fields.parent_ip) {
+			if (
+				!body.role_fields.parent_ip ||
+				!body.role_fields.program_id ||
+				!body.role_fields.academic_year_id
+			) {
 				misssingFieldsFlag = true;
 			}
 		} else if (body.role === 'beneficiary') {
 			// Validate role specific fields
-			if (!body.role_fields.facilitator_id) {
+			if (
+				!body.role_fields.facilitator_id ||
+				!body.role_fields.program_id ||
+				!body.role_fields.academic_year_id
+			) {
 				misssingFieldsFlag = true;
 			}
 		} else {
 			misssingFieldsFlag = true;
 		}
-
 		if (misssingFieldsFlag) {
 			throw new BadRequestException({
 				success: false,
@@ -600,6 +607,12 @@ export class AuthService {
 				body.password = password;
 				if (body.role_fields.parent_ip) {
 					body.parent_ip = body.role_fields.parent_ip;
+				}
+				if (body.role_fields.program_id) {
+					body.program_id = body.role_fields.program_id;
+				}
+				if (body.role_fields.academic_year_id) {
+					body.academic_year_id = body.role_fields.academic_year_id;
 				}
 				if (body.role_fields.facilitator_id) {
 					body.facilitator_id = body.role_fields.facilitator_id;
@@ -796,6 +809,8 @@ export class AuthService {
 			programRoleTableName = 'program_beneficiaries';
 			groupId = 'facilitator_id';
 			req.facilitator_id = req.role_fields.facilitator_id;
+			req.program_id = req.role_fields.program_id;
+			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'identified';
 		}
 
@@ -803,6 +818,8 @@ export class AuthService {
 			programRoleTableName = 'program_faciltators';
 			groupId = 'parent_ip';
 			req.parent_ip = `${req.role_fields.parent_ip}`;
+			req.program_id = req.role_fields.program_id;
+			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'applied';
 		}
 		console.log('tableName', programRoleTableName);
@@ -814,8 +831,8 @@ export class AuthService {
 				{
 					...req,
 					user_id,
-					program_id: 1,
-					academic_year_id: 1,
+					program_id: req.program_id,
+					academic_year_id: req.academic_year_id,
 				},
 				[
 					`${groupId}`,
@@ -834,108 +851,108 @@ export class AuthService {
 	async userById(id: any) {
 		let data = {
 			query: `query searchById {
-            users_by_pk(id: ${id}) {
-              first_name
-              id
-              last_name
-              middle_name
-              dob
-              aadhar_token
-              address
-              block_id
-              block_village_id
-              created_by
-              district_id
-              email_id
-              gender
-              lat
-              long
-              mobile
-              state_id
-              updated_by
-              profile_url
-              state
-              district
-              block
-              village
-              grampanchayat
-              program_users {
-                id
-                organisation_id
-                academic_year_id
-                program_id
-                role_id
-                status
-                user_id
-              }
-              core_faciltator {
-                created_by
-                device_ownership
-                device_type
-                id
-                pan_no
-                refreere
-                sourcing_channel
-                updated_by
-                user_id
-              }
-              experience {
-                description
-                end_year
-                experience_in_years
-                institution
-                start_year
-                organization
-                role_title
-                user_id
-                type
-              }
-              program_beneficiaries {
-                beneficiaries_found_at
-                created_by
-                facilitator_id
-                id
-                status
-                reason_for_status_update
-                academic_year_id
-                user_id
-              }
-              program_faciltators {
-                parent_ip
-                availability
-                has_social_work_exp
-                id
-                police_verification_done
-                program_id
-                social_background_verified_by_neighbours
-                user_id
-                village_knowledge_test
-                status
-                form_step_number
-                created_by
-                updated_by
-                academic_year_id
-                program_id
-              }
-              qualifications {
-                created_by
-                end_year
-                id
-                institution
-                qualification_master_id
-                start_year
-                updated_by
-                user_id
-                qualification_master {
-                  context
-                  context_id
-                  created_by
-                  id
-                  name
-                  type
-                  updated_by
-                }
-              }
+			users_by_pk(id: ${id}) {
+			  first_name
+			  id
+			  last_name
+			  middle_name
+			  dob
+			  aadhar_token
+			  address
+			  block_id
+			  block_village_id
+			  created_by
+			  district_id
+			  email_id
+			  gender
+			  lat
+			  long
+			  mobile
+			  state_id
+			  updated_by
+			  profile_url
+			  state
+			  district
+			  block
+			  village
+			  grampanchayat
+			  program_users {
+				id
+				organisation_id
+				academic_year_id
+				program_id
+				role_id
+				status
+				user_id
+			  }
+			  core_faciltator {
+				created_by
+				device_ownership
+				device_type
+				id
+				pan_no
+				refreere
+				sourcing_channel
+				updated_by
+				user_id
+			  }
+			  experience {
+				description
+				end_year
+				experience_in_years
+				institution
+				start_year
+				organization
+				role_title
+				user_id
+				type
+			  }
+			  program_beneficiaries {
+				beneficiaries_found_at
+				created_by
+				facilitator_id
+				id
+				status
+				reason_for_status_update
+				academic_year_id
+				user_id
+			  }
+			  program_faciltators {
+				parent_ip
+				availability
+				has_social_work_exp
+				id
+				police_verification_done
+				program_id
+				social_background_verified_by_neighbours
+				user_id
+				village_knowledge_test
+				status
+				form_step_number
+				created_by
+				updated_by
+				academic_year_id
+				program_id
+			  }
+			  qualifications {
+				created_by
+				end_year
+				id
+				institution
+				qualification_master_id
+				start_year
+				updated_by
+				user_id
+				qualification_master {
+				  context
+				  context_id
+				  created_by
+				  id
+				  name
+				  type
+				  updated_by
+				}
+			  }
 			  interviews {
 				id
 				title
@@ -961,28 +978,28 @@ export class AuthService {
 				  id
 				}
 			  }
-              events {
-                context
-                context_id
-                created_by
-                end_date
-                end_time
-                id
-                location
-                location_type
-                start_date
-                start_time
-                updated_by
-                user_id
-              }
-              documents(order_by: {id: desc}){
-                id
-                user_id
-                name
-                doument_type
-                document_sub_type
-              }
-            }}`,
+			  events {
+				context
+				context_id
+				created_by
+				end_date
+				end_time
+				id
+				location
+				location_type
+				start_date
+				start_time
+				updated_by
+				user_id
+			  }
+			  documents(order_by: {id: desc}){
+				id
+				user_id
+				name
+				doument_type
+				document_sub_type
+			  }
+			}}`,
 		};
 
 		const response = await this.hasuraService.postData(data);

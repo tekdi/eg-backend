@@ -8,10 +8,10 @@ import {
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
-import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { KeycloakService } from '../services/keycloak/keycloak.service';
 
 @Injectable()
 export class UserService {
@@ -24,10 +24,15 @@ export class UserService {
 		private readonly keycloakService: KeycloakService,
 	) {}
 
-	public async update(userId: string, body: any, tableName: String) {
+	public async update(
+		userId: string,
+		body: any,
+		req: any,
+		tableName: String,
+	) {
 		try {
-			let program_id = body?.program_id || 1;
-			let academic_year_id = body?.academic_year_id || 1;
+			const academic_year_id = req.mw_academic_year_id;
+
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
@@ -42,7 +47,7 @@ export class UserService {
 				'selected_prerak',
 			];
 			const validationStatusArray = ['rusticate', 'quit', 'rejected'];
-			var axios = require('axios');
+			const axios = require('axios');
 			const userDataSchema = body;
 			let userData = body;
 			let query = '';
@@ -66,11 +71,11 @@ export class UserService {
 			// validation to check if the facilitator is present in the camp
 
 			let validation_query = `query MyQuery {
-				users(where: {group_users: {user_id: {_eq:${userId}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+				users(where: {group_users: {user_id: {_eq:${userId}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {academic_year_id: {_eq:${academic_year_id}}}}) {
 				  id
 				}
 			  }
-			  
+
 			  `;
 
 			const validation_data =
@@ -101,6 +106,7 @@ export class UserService {
 					id: userId,
 				},
 			};
+
 			var config = {
 				method: 'post',
 				url: this.url,
@@ -141,7 +147,7 @@ export class UserService {
 	}
 
 	public async login(username: string, password: string, response: Response) {
-		var axios = require('axios');
+		const axios = require('axios');
 		var loginData = {
 			username: username,
 			password: password,
@@ -159,7 +165,6 @@ export class UserService {
 		try {
 			const res = await axios(configData);
 			if (res) {
-				//return res.data;
 				return response.status(200).send({
 					success: true,
 					status: 'Authenticated',
@@ -215,7 +220,7 @@ export class UserService {
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
 
-		var axios = require('axios');
+		const axios = require('axios');
 		// Set query for getting data info
 		var queryData = {
 			query: `
@@ -610,7 +615,13 @@ export class UserService {
 		}
 	}
 
-	async userById(id: any, resp?: any) {
+	async userById(id: any, resp?: any, req?: any) {
+		const academic_year_id = req?.mw_academic_year_id;
+
+		const filterQueryArray = req
+			? `(where: {academic_year_id: {_eq: ${academic_year_id}}})`
+			: ``;
+
 		const data = {
 			query: `query searchById {
 		users_by_pk(id:${id}) {
@@ -751,7 +762,7 @@ export class UserService {
 			  }
 			}
 		  }
-		  program_faciltators {
+		  program_faciltators ${filterQueryArray}{
 			parent_ip
 			documents_status
 			availability
@@ -918,7 +929,7 @@ export class UserService {
 				);
 		}
 
-		if (resp) {
+		if (resp && (req == null || req == undefined)) {
 			if (!mappedResponse.username && mappedResponse.keycloak_id) {
 				const keycloakresponse =
 					await this.keycloakService.findUserByKeycloakId(
@@ -1334,8 +1345,8 @@ export class UserService {
 	}
 
 	public async userCampExist(user_id: any, body: any, req: any, res: any) {
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const user = await this.ipUserInfo(req);
 
@@ -1419,12 +1430,239 @@ export class UserService {
 			const data_list = (
 				await this.hasuraServiceFromServices.getData({ query })
 			)?.data?.users;
-			//console.log('data_list cunt------>>>>>', data_list.length);
-			//console.log('data_list------>>>>>', data_list);
 			return data_list || [];
 		} catch (error) {
 			console.log('getUserName:', error, error.stack);
 			return [];
 		}
+	}
+
+	public async getUserCohorts(type: any, req: any, res: any) {
+		const user_id = req?.mw_userid;
+		const cohort_type = type;
+
+		const role = req?.mw_roles;
+
+		let sql;
+		let primary_table;
+		let cohort_data;
+		let program_organisation_condition;
+		let cohort_academic_year_id;
+
+		if (cohort_type == 'academic_year') {
+			if (role.includes('staff')) {
+				const user = await this.ipUserInfo(req);
+				if (!user?.data?.program_users?.[0]?.organisation_id) {
+					return res.status(404).send({
+						success: false,
+						message: 'Invalid Ip',
+						data: {},
+					});
+				}
+
+				primary_table = 'program_users';
+
+				program_organisation_condition =
+					'pu.organisation_id = po.organisation_id';
+			}
+
+			if (role.includes('facilitator')) {
+				primary_table = 'program_faciltators';
+
+				program_organisation_condition =
+					'CAST(pu.parent_ip as Int) = po.organisation_id';
+			}
+
+			sql = `SELECT ay.id as academic_year_id, ay.name as academic_year_name
+				   FROM ${primary_table} pu
+				   LEFT JOIN academic_years ay ON pu.academic_year_id = ay.id
+				   LEFT JOIN program_organisation po ON ${program_organisation_condition}
+				   WHERE po.status = 'active'  AND pu.user_id = ${user_id}
+				   GROUP BY ay.id
+		`;
+
+			cohort_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+		}
+
+		if (cohort_type == 'program') {
+			if (role.includes('staff')) {
+				const user = await this.ipUserInfo(req);
+				if (!user?.data?.program_users?.[0]?.organisation_id) {
+					return res.status(404).send({
+						success: false,
+						message: 'Invalid Ip',
+						data: {},
+					});
+				}
+
+				primary_table = 'program_users';
+
+				program_organisation_condition =
+					'pu.organisation_id = po.organisation_id';
+			}
+
+			sql = `SELECT p.id as program_id, p.name as program_name,p.state_id,
+				   (SELECT state_name from address where state_cd = p.state_id limit  1) AS state_name
+				   FROM ${primary_table} pu
+				   LEFT JOIN program_organisation po ON ${program_organisation_condition}
+				   LEFT JOIN programs p ON po.program_id = p.id
+	 			   WHERE po.status = 'active'  AND pu.user_id = ${user_id}
+		 		   GROUP BY p.id
+		`;
+
+			cohort_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+		}
+		if (cohort_type == 'program_academic_year_id') {
+			if (role.includes('staff')) {
+				const user = await this.ipUserInfo(req);
+				if (!user?.data?.program_users?.[0]?.organisation_id) {
+					return res.status(404).send({
+						success: false,
+						message: 'Invalid Ip',
+						data: {},
+					});
+				}
+
+				cohort_academic_year_id = req?.query?.cohort_academic_year_id;
+				primary_table = 'program_users';
+
+				program_organisation_condition =
+					'pu.organisation_id = po.organisation_id';
+			}
+
+			sql = `SELECT p.id as program_id, p.name as program_name,p.state_id,
+			(SELECT state_name from address where state_cd = p.state_id limit  1) AS state_name
+			FROM ${primary_table} pu
+			LEFT JOIN program_organisation po ON ${program_organisation_condition}
+			LEFT JOIN programs p ON po.program_id = p.id
+			 WHERE po.status = 'active' AND po.academic_year_id = ${cohort_academic_year_id}  AND pu.user_id = ${user_id}
+			 GROUP BY p.id
+
+			 
+ `;
+
+			cohort_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+		}
+		if (cohort_data && cohort_data.length > 0) {
+			return res.status(200).json({
+				success: true,
+				data: this.hasuraServiceFromServices.getFormattedData(
+					cohort_data,
+					[5],
+				),
+			});
+		} else {
+			return res.status(200).json({
+				success: false,
+				data: [],
+			});
+		}
+	}
+
+	public async validateOnBoardingLink(
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let { academic_year_id, program_id, organisation_id } = body;
+
+		let query = `query MyQuery {
+			program_organisation(where: {academic_year_id: {_eq:${academic_year_id}}, organisation_id: {_eq:${organisation_id}}, program_id: {_eq:${program_id}}, status: {_eq: "active"}}){
+			  id
+			}
+		  }
+		  `;
+
+		const query_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		if (query_response?.data?.program_organisation?.length > 0) {
+			return response.status(200).json({
+				message: 'Onboarding link is valid.',
+				isExist: true,
+			});
+		} else {
+			return response.status(200).json({
+				message: 'Onboarding link is invalid or does not exist',
+				isExist: false,
+			});
+		}
+	}
+
+	/**************************************************************************/
+	/******************************* V2 APIs **********************************/
+	/**************************************************************************/
+	public async checkUserExistsV2(role: any, body: any, response: any) {
+		const hasura_response = await this.findUsersByFields(body);
+
+		if (hasura_response && hasura_response.data.users.length > 0) {
+			const users = hasura_response.data.users;
+
+			const facilitators_data = users.flatMap(
+				(user) => user.program_faciltators,
+			);
+
+			const beneficiaries_data = users.flatMap(
+				(user) => user.program_beneficiaries,
+			);
+
+			let usersFound = false;
+			if (facilitators_data.length > 0 || beneficiaries_data.length > 0) {
+				usersFound = true;
+			}
+
+			return response.status(200).send({
+				success: usersFound,
+				data: {
+					program_faciltators: facilitators_data,
+					program_beneficiaries: beneficiaries_data,
+				},
+			});
+		} else {
+			return response.status(200).send({
+				success: false,
+				message: 'Matching users not found',
+				data: [],
+			});
+		}
+	}
+
+	public async findUsersByFields(body) {
+		const fields = [];
+		for (const fieldName in body) {
+			const fieldValue = body[fieldName];
+			fields.push(fieldName, fieldValue);
+		}
+
+		const data = {
+			query: `query MyQuery {
+				users(where: {${fields[0]}: {_eq: "${fields[1]}"}}){
+					program_faciltators {
+						user_id
+						academic_year_id
+						program_id
+					  }
+					  program_beneficiaries{
+						user_id
+						academic_year_id
+						program_id
+					}
+				}
+			}`,
+		};
+
+		// Fetch data
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		return hasura_response;
 	}
 }

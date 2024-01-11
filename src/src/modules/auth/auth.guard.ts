@@ -2,7 +2,7 @@ import {
 	CanActivate,
 	ExecutionContext,
 	Injectable,
-	UnauthorizedException
+	UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import jwt_decode from 'jwt-decode';

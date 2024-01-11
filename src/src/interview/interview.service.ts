@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateInterviewDto } from './dto/create-interview.dto';
-import { UpdateInterviewDto } from './dto/update-interview.dto';
 import { HasuraService } from 'src/hasura/hasura.service';
 
 @Injectable()
@@ -45,7 +43,9 @@ export class InterviewService {
 		'reminder',
 		'rsvp',
 	];
+
 	constructor(private readonly hasuraService: HasuraService) {}
+
 	async create(body: any, request: any, resp: any) {
 		const result = await this.hasuraService.create(
 			this.table,

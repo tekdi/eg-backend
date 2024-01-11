@@ -8,13 +8,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createObjectCsvStringifier } from 'csv-writer';
 import { S3Service } from 'src/services/s3/s3.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from 'src/user/user.service';
 import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
-import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 @Injectable()
 export class BeneficiariesService {
@@ -230,14 +230,15 @@ export class BeneficiariesService {
 	async exportCsv(req: any, body: any, resp: any) {
 		try {
 			const user = await this.userService.ipUserInfo(req);
-
+			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
 			const variables: any = {};
 
 			let filterQueryArray = [];
 			let paramsQueryArray = [];
 
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
 
 			if (body.search && body.search !== '') {
@@ -270,6 +271,12 @@ export class BeneficiariesService {
 						`{program_beneficiaries:{status:{_eq:${body?.status}}}}`,
 					);
 				}
+			}
+
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{state: { _in: $state }}');
+				variables.state = body.state;
 			}
 
 			if (body.hasOwnProperty('district') && body.district.length) {
@@ -315,7 +322,7 @@ export class BeneficiariesService {
 						district
 						program_beneficiaries{
 							user_id
-					    	facilitator_id
+							facilitator_id
 							status
 							enrollment_number
 							enrollment_first_name
@@ -419,7 +426,8 @@ export class BeneficiariesService {
 	async exportSubjectCsv(req: any, body: any, resp: any) {
 		try {
 			const user = await this.userService.ipUserInfo(req);
-
+			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
 			if (!user?.data?.program_users?.[0]?.organisation_id) {
 				return resp.status(404).send({
 					success: false,
@@ -427,13 +435,19 @@ export class BeneficiariesService {
 					data: {},
 				});
 			}
-
 			const sortType = body?.sortType ? body?.sortType : 'desc';
 			let status = body?.status;
 			let filterQueryArray = [];
 			filterQueryArray.push(
-				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
+
+			if (body?.state && body?.state.length > 0) {
+				filterQueryArray.push(
+					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+				);
+			}
+
 			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
 					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
@@ -484,7 +498,7 @@ export class BeneficiariesService {
 					district
 					block
 					mobile
-				    program_beneficiaries {
+					program_beneficiaries {
 					id
 					user_id,
 					facilitator_id,
@@ -494,7 +508,7 @@ export class BeneficiariesService {
 					subjects
 					facilitator_id
 					status
-					
+
 				  	}
 				}
 			  }`,
@@ -608,7 +622,8 @@ export class BeneficiariesService {
 	//status count
 	public async getStatuswiseCount(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		if (!user?.data?.id) {
 			return resp.status(401).json({
 				success: false,
@@ -620,28 +635,30 @@ export class BeneficiariesService {
 			await this.enumService.getEnumValue('BENEFICIARY_STATUS')
 		).data.map((item) => item.value);
 
-		let qury = `query MyQuery {                              
-        ${status.map(
+		let qury = `query MyQuery {
+		${status.map(
 			(item) => `${
 				!isNaN(Number(item[0])) ? '_' + item : item
 			}:program_beneficiaries_aggregate(where:{
-            _and: [
-              {
-				facilitator_id: { _eq: ${user?.data?.id} }
-              },{
-              status: {_eq: "${item}"}
-            },
+			_and: [
+			  {
+				facilitator_id: { _eq: ${
+					user?.data?.id
+				} },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
+			  },{
+			  status: {_eq: "${item}"}
+			},
 				{ user:	{ id: { _is_null: false } } }
-			
-                                     ]
-        }) {
-        aggregate {
-          count
-        }
-      }`,
+
+									 ]
+		}) {
+		aggregate {
+		  count
+		}
+	  }`,
 		)}
-	
-     }`;
+
+	 }`;
 
 		const data = { query: qury };
 
@@ -665,6 +682,8 @@ export class BeneficiariesService {
 
 	public async getList(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
 				success: false,
@@ -681,11 +700,11 @@ export class BeneficiariesService {
 
 		if (body?.reassign) {
 			filterQueryArray.push(
-				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } ,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} } } }`,
 			);
 		} else {
 			filterQueryArray.push(
-				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } } } } }`,
+				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} } } } }`,
 			);
 		}
 
@@ -723,6 +742,12 @@ export class BeneficiariesService {
 
 		if (body?.is_duplicate && body?.is_duplicate !== '') {
 			filterQueryArray.push(`{is_duplicate:{_eq:${body?.is_duplicate}}}`);
+		}
+
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
+			);
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -781,6 +806,7 @@ export class BeneficiariesService {
 					id
 					first_name
 					last_name
+					state
 					district
 					block
 					mobile
@@ -871,7 +897,8 @@ export class BeneficiariesService {
 
 	public async findAll(body: any, req: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		if (!user?.data?.id) {
 			return resp.status(404).send({
 				success: false,
@@ -889,7 +916,7 @@ export class BeneficiariesService {
 		let filterQueryArray = [];
 		// only facilitator_id learners lits
 		filterQueryArray.push(
-			`{program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}}}}`,
+			`{program_beneficiaries: {facilitator_id: {_eq: ${user.data.id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}`,
 		);
 
 		if (status && status !== '') {
@@ -1294,25 +1321,25 @@ export class BeneficiariesService {
 				updated_by
 				user_id
 				  }
-                program_beneficiaries {
-                id
-                enrollment_status
-                enrolled_for_board
-                subjects
-                academic_year_id
-                payment_receipt_document_id
-                program_id
-                enrollment_number
-                status
+				program_beneficiaries {
+				id
+				enrollment_status
+				enrolled_for_board
+				subjects
+				academic_year_id
+				payment_receipt_document_id
+				program_id
+				enrollment_number
+				status
 				type_of_enrollement
-                reason_for_status_update
-                documents_status
-                document_checklist
-                updated_by
-                user_id
-                facilitator_id
-                created_by
-                beneficiaries_found_at
+				reason_for_status_update
+				documents_status
+				document_checklist
+				updated_by
+				user_id
+				facilitator_id
+				created_by
+				beneficiaries_found_at
 				enrollment_date
 				enrollment_first_name
 				enrollment_middle_name
@@ -1335,73 +1362,73 @@ export class BeneficiariesService {
 					updated_by
 					user_id
 				  }
-                type_of_support_needed
-                learning_motivation
-                learning_level
-              }
-              core_beneficiaries {
-                career_aspiration
-                updated_by
-                mark_as_whatsapp_number
-                alternative_device_ownership
-                alternative_device_type
-                father_first_name
+				type_of_support_needed
+				learning_motivation
+				learning_level
+			  }
+			  core_beneficiaries {
+				career_aspiration
+				updated_by
+				mark_as_whatsapp_number
+				alternative_device_ownership
+				alternative_device_type
+				father_first_name
 				type_of_enrollement
-                father_middle_name
-                father_last_name
-                mother_first_name
-                mother_last_name
-                mother_middle_name
-                career_aspiration_details
-                enrollment_number
-                type_of_learner
-                status
-                reason_of_leaving_education
-                previous_school_type
-                mobile_ownership
-                learner_wish_to_pursue_education
-                last_standard_of_education_year
-                last_standard_of_education
-                last_school_type
-                id
-                connect_via_refrence
-                created_by
-                device_ownership
-                device_type
-                document_id
-                enrolled_for_board
-                enrollement_status
-              }
-              program_users {
-                organisation_id
-              }
-              references {
-                id
-                name
-                first_name
-                last_name
-                middle_name
-                relation
-                contact_number
-                designation
-                document_id
-                type_of_document
-                context
-                context_id
-              }
-              extended_users {
-                marital_status
-                designation
-                created_by
-                id
-                user_id
-                updated_by
-                social_category
-                qualification_id
-              }
-            }
-          }
-          `,
+				father_middle_name
+				father_last_name
+				mother_first_name
+				mother_last_name
+				mother_middle_name
+				career_aspiration_details
+				enrollment_number
+				type_of_learner
+				status
+				reason_of_leaving_education
+				previous_school_type
+				mobile_ownership
+				learner_wish_to_pursue_education
+				last_standard_of_education_year
+				last_standard_of_education
+				last_school_type
+				id
+				connect_via_refrence
+				created_by
+				device_ownership
+				device_type
+				document_id
+				enrolled_for_board
+				enrollement_status
+			  }
+			  program_users {
+				organisation_id
+			  }
+			  references {
+				id
+				name
+				first_name
+				last_name
+				middle_name
+				relation
+				contact_number
+				designation
+				document_id
+				type_of_document
+				context
+				context_id
+			  }
+			  extended_users {
+				marital_status
+				designation
+				created_by
+				id
+				user_id
+				updated_by
+				social_category
+				qualification_id
+			  }
+			}
+		  }
+		  `,
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -1668,6 +1695,8 @@ export class BeneficiariesService {
 
 	public async statusUpdateByIp(body: any, request: any) {
 		const user = await this.userService.ipUserInfo(request);
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return {
 				success: false,
@@ -1680,7 +1709,7 @@ export class BeneficiariesService {
 		//check validation for id benlongs to same IP under prerak
 		let data = {
 			query: `query MyQuery {
-				users(where: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"}, beneficiaries: {user_id: {_eq: ${body?.user_id}}}}}){
+				users(where: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}, beneficiaries: {user_id: {_eq: ${body?.user_id}}}}}){
 				  program_faciltators{
 					parent_ip
 				  }
@@ -1728,7 +1757,7 @@ export class BeneficiariesService {
 		const user_id = parseInt(id);
 		let query = `query MyQuery {
 					group_users(where: {user_id: {_eq:${user_id}}, status: {_eq:"active"}}){
-				     group_id
+					 group_id
 					  user_id
 					  status
 					  id
@@ -1968,8 +1997,8 @@ export class BeneficiariesService {
 
 	async create(req: any, request, response, update = false) {
 		const user = await this.userService.ipUserInfo(request);
-		let academic_year_id = req?.academic_year_id || 1;
-		let program_id = req?.program_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const { data: beneficiaryUser } =
 			await this.beneficiariesCoreService.userById(req.id);
@@ -2244,7 +2273,7 @@ export class BeneficiariesService {
 					  }
 					}
 				  }
-				  
+
 				  `;
 
 				const hashura_response =
@@ -2341,7 +2370,7 @@ export class BeneficiariesService {
 												{
 													_or: [
 														{ is_deactivated: {_is_null: true} },
-														{ is_deactivated: {_neq: false} }, 
+														{ is_deactivated: {_neq: false} },
 													]
 												},
 												{
@@ -2830,7 +2859,7 @@ export class BeneficiariesService {
 								  }
 							  }
 							}
-				    }`,
+					}`,
 					};
 					const response =
 						await this.hasuraServiceFromServices.getData(data);
@@ -3086,6 +3115,8 @@ export class BeneficiariesService {
 		res?: any,
 	) {
 		const user = (await this.findOne(id)).data;
+		const academic_year_id = req.mw_academic_year_id;
+		const program_id = req.mw_program_id;
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3109,9 +3140,13 @@ export class BeneficiariesService {
 				fu.id = pf.user_id
 			WHERE
 				pf.parent_ip = '${user?.program_users?.organisation_id}'
+				AND
+				pf.academic_year_id = ${academic_year_id}
+				AND
+				pf.program_id = ${program_id}
 			AND
 				bu.aadhar_no IS NOT NULL
-			AND 
+			AND
 				bu.is_deactivated IS NOT true
 			GROUP BY
 				bu.aadhar_no
@@ -3130,13 +3165,12 @@ export class BeneficiariesService {
 					WHERE
 						bu2.aadhar_no = bu.aadhar_no
 					AND
-				        bu2.is_deactivated IS NOT true
+						bu2.is_deactivated IS NOT true
 				)
 			${limit ? `LIMIT ${limit}` : ''}
 			${skip ? `OFFSET ${skip}` : ''}
 			;
 		`;
-
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		).result;
@@ -3239,7 +3273,7 @@ export class BeneficiariesService {
 		ipId: number,
 		programId?: number,
 	) {
-		if (!programId) programId = 1;
+		if (!programId) programId = programId;
 
 		const ipUser = (await this.userService.userById(ipId)).data;
 
@@ -3413,6 +3447,8 @@ export class BeneficiariesService {
 	) {
 		//get IP information from token id
 		const user = await this.userService.ipUserInfo(req);
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let aadhaar_no = body?.aadhar_no;
 
 		if (!aadhaar_no || !beneficiaries_id) {
@@ -3434,7 +3470,7 @@ export class BeneficiariesService {
 		}
 
 		const Beneficiaries_validation_query = `query MyQuery {
-			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}}}}}) {
+			users_aggregate(where: {id: {_eq: ${beneficiaries_id}}, program_beneficiaries: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}}}) {
 				aggregate {
 				  count
 				}
@@ -3579,10 +3615,11 @@ export class BeneficiariesService {
 			}
 		}
 	}
+
 	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
 		const facilitator_id = req.mw_userid;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let status = 'enrolled_ip_verified';
 
 		// Get users which are not present in the camps or whose status is inactive
@@ -3590,7 +3627,7 @@ export class BeneficiariesService {
 		let qury = `query MyQuery {
 			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}}, _not: {group_users: {status: {_eq: "active"}}}}) {
 			  id
-			    state
+				state
 				district
 				block
 				village
@@ -3652,6 +3689,7 @@ export class BeneficiariesService {
 			data: result || {},
 		});
 	}
+
 	private isValidString(str: string) {
 		return typeof str === 'string' && str.trim();
 	}
