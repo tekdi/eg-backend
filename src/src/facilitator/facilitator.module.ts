@@ -18,7 +18,7 @@ import { FacilitatorController } from './facilitator.controller';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { FacilitatorService } from './facilitator.service';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
-import { Method } from 'src/common/method/method';
+import { Method } from '../common/method/method';
 
 @Module({
 	imports: [

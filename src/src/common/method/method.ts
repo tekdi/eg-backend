@@ -102,4 +102,17 @@ export class Method {
 			return false;
 		}
 	}
+	public async transformGender(gender) {
+		return new Promise((resolve, reject) => {
+			if (typeof gender !== 'string') {
+				reject(new Error('Gender should be a string.'));
+			} else if (gender === 'M') {
+				resolve('male');
+			} else if (gender === 'F') {
+				resolve('female');
+			} else {
+				resolve(gender);
+			}
+		});
+	}
 }
