@@ -2021,68 +2021,71 @@ export class FacilitatorService {
 		};
 
 		let qury = `query MyQuery($limit:Int, $offset:Int) {
-		users_aggregate(where: ${filterQuery}) {
-				aggregate {
-					count
-				  }
-			}
-		users(limit: $limit,
-			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
-		  
-			first_name
-			last_name
-			middle_name
-			id
-			program_faciltators{
-				status
-				learner_total_count:beneficiaries_aggregate {
+			users_aggregate(where: ${filterQuery}) {
 					aggregate {
-					  count
-					}
-				  },
-				  identified_and_ready_to_enroll:beneficiaries_aggregate(
-                    where: {
-                        user: {id: {_is_null: false}},
-                        _or: [
-							{ status: { _in: ["identified", "ready_to_enroll"] } },
-                            { status: { _is_null: true } }
-                     ]
-                    }
-                )
+						count
+					  }
+				}
+			users(limit: $limit,
+				offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
+	
+				first_name
+				last_name
+				middle_name
+				id
+				program_faciltators{
+					status
+					learner_total_count: beneficiaries_aggregate(where: {status: {_in: ["identified", "ready_to_enroll", "enrolled", "enrolled_ip_verified"]}, _not: {group_users: {status: {_eq: "active"}}}}) {
+						aggregate {
+						  count
+						}
+					  },
+					  identified_and_ready_to_enroll:beneficiaries_aggregate(
+						where: {
+							user: {id: {_is_null: false}},
+							_or: [
+								{ status: { _in: ["identified", "ready_to_enroll"] } },
+								{ status: { _is_null: true } }
+						 ]
+						}
+					)
+					{
+						aggregate {
+						  count
+						}
+					} ,
+					${status
+						.filter(
+							(item) =>
+								item != 'identified' &&
+								item !== 'ready_to_enroll',
+						)
+						.map(
+							(item) => `${
+								!isNaN(Number(item[0])) ? '_' + item : item
+							}:beneficiaries_aggregate(where: {
+					_and: [
+					  {
+					  status: {_eq: "${item}"}
+					},
+	
+						{ user:	{ id: { _is_null: false } } }
+	
+											 ],
+					  _not: {group_users: {status: {_eq: "active"}}}}					 
+					
+				)
 				{
 					aggregate {
 					  count
 					}
-				} ,
-				${status
-					.filter(
-						(item) =>
-							item != 'identified' && item !== 'ready_to_enroll',
-					)
-					.map(
-						(item) => `${
-							!isNaN(Number(item[0])) ? '_' + item : item
-						}:beneficiaries_aggregate(where: {
-				_and: [
-				  {
-				  status: {_eq: "${item}"}
-				},
-					{ user:	{ id: { _is_null: false } } }
-				
-										 ]
-		    	}
-			) 
-			{
-				aggregate {
-				  count
 				}
-			} 
-			`,
-					)}
+				`,
+						)}
+				}
 			}
-		}
-	  }
-	  `;
+		  }
+		  `;
 
 		const data = { query: qury, variables: variables };
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -2401,11 +2404,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
-		if(!id){
+		if (!id) {
 			return res.json({
 				status: 422,
 				success: false,
-				message: "Id is required",})
+				message: 'Id is required',
+			});
 		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {
