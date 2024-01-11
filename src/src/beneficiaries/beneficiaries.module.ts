@@ -40,6 +40,7 @@ import { BeneficiariesService } from './beneficiaries.service';
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+
 		/*
 		consumer
 			.apply(CohortMiddleware)
@@ -79,21 +80,25 @@ export class BeneficiariesModule implements NestModule {
 				
 
 			);
-	*/
-	consumer
-        .apply(CohortMiddleware)
-        .exclude(
-            '/beneficiaries/admin/list/duplicates-by-aadhaar',
-            '/beneficiaries/:id/is_enrollment_exists',
-            { path: '/beneficiaries/:id', method: RequestMethod.GET },
-            { path: '/beneficiaries/:id', method: RequestMethod.DELETE },
-            '/beneficiaries/register',
-            '/beneficiaries/statusUpdate',
-            '/beneficiaries/admin/verify-enrollment',
-        )
-        .forRoutes(BeneficiariesController);
-    consumer
-        .apply(CohortMiddleware)
-        .forRoutes({ path:'/beneficiaries/getStatusWiseCount', method: RequestMethod.GET });
+		*/
+
+		consumer
+			.apply(CohortMiddleware)
+			.exclude(
+				'/beneficiaries/admin/list/duplicates-by-aadhaar',
+				'/beneficiaries/:id/is_enrollment_exists',
+				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
+				'/beneficiaries/register',
+				'/beneficiaries/statusUpdate',
+				'/beneficiaries/admin/verify-enrollment',
+			)
+			.forRoutes(BeneficiariesController);
+
+		consumer
+			.apply(CohortMiddleware)
+			.forRoutes(
+				{path: '/beneficiaries/getStatusWiseCount', method: RequestMethod.GET,}
+			);
 	}
 }
