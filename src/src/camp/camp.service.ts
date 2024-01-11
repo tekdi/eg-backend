@@ -2037,6 +2037,7 @@ export class CampService {
 	async updateCampStatus(id: any, body: any, req: any, resp: any) {
 		let facilitator_id = body?.facilitator_id;
 		let camp_id = id;
+		let status = body?.status;
 
 		const user = await this.userService.ipUserInfo(req);
 
@@ -2067,8 +2068,7 @@ export class CampService {
 		);
 
 		if (facilitator_data?.data?.users_aggregate?.aggregate.count < 1) {
-			return resp.json({
-				status: 401,
+			return resp.status(401).json({
 				success: false,
 				message: 'Faciltator doesnt belong to IP',
 				data: {},
@@ -2080,6 +2080,7 @@ export class CampService {
 			   group_users(where: {member_type: {_eq: "owner"}, user_id: {_eq: ${facilitator_id}}}) {
 				group {
 				  id
+					status
 				}
 			  }
 			}
@@ -2090,10 +2091,18 @@ export class CampService {
 		});
 		const group_id =
 			hasura_response?.data?.camps_by_pk?.group_users?.[0]?.group?.id;
+		const group_status =
+			hasura_response?.data?.camps_by_pk?.group_users?.[0]?.group?.status;
 
+		if (group_status != 'registered' && status == 'camp_ip_verified') {
+			return resp.status(200).json({
+				status: 422,
+				message: 'CAMP_IS_NOT_REGISTERED',
+				data: [],
+			});
+		}
 		if (!group_id) {
-			return resp.json({
-				status: 400,
+			return resp.status(400).json({
 				message: 'CAMP_INVALID_ERROR',
 				data: [],
 			});
@@ -2115,8 +2124,7 @@ export class CampService {
 				[...this.returnFieldsGroups, 'id', 'status'],
 			);
 
-			return resp.json({
-				status: 200,
+			return resp.status(200).json({
 				message: 'Successfully updated camp details',
 				data: camp_id,
 			});
@@ -2623,50 +2631,25 @@ export class CampService {
 			});
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		const data = await this.campcoreservice.list(body);
+		const result = await this.campcoreservice.getPrerakFilter_By_camp(
+			body,
+			resp,
+			req,
+		);
 
-		const faciltatorIds = new Set();
-		data?.camps?.forEach((item) => {
-			if (item?.faciltator?.user?.faciltator_id) {
-				faciltatorIds.add(item.faciltator.user.faciltator_id);
-			}
-		});
+		const ids = result?.data?.data?.users;
 
-		// Convert the Set to an array if needed
-		const uniqueFaciltatorIds = [...faciltatorIds];
-
-		let searchQuery = '';
-		if (body.search && body.search !== '') {
-			let first_name = body.search.split(' ')[0];
-			let last_name = body.search.split(' ')[1] || '';
-
-			if (last_name?.length > 0) {
-				searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
-			} else {
-				searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
-			}
-		}
-		const query = `query MyQuery{
-				users(where:{id:{_in:[${uniqueFaciltatorIds}]},${searchQuery}}){
-					id
-					first_name
-					last_name
-				}
-			}`;
-
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
-		if (hasura_response?.data?.users) {
-			return resp.json({
-				status: 200,
+		if (ids) {
+			return resp.status(200).json({
 				message: 'Camp Data Found Successfully',
-				data: hasura_response?.data || { users: [] },
+				data: ids,
+				totalCount: result?.totalCount,
+				limit: result?.limit,
+				currentPage: result?.currentPage,
+				totalPages: result?.totalPages,
 			});
 		} else {
-			return resp.json({
-				status: 500,
+			return resp.status(500).json({
 				message: 'IP_CAMP_LIST_ERROR',
 				data: {},
 			});
