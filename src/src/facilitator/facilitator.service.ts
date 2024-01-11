@@ -12,6 +12,7 @@ import {
 } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
+import { Method } from '../common/method/method';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -24,6 +25,7 @@ export class FacilitatorService {
 		private s3Service: S3Service,
 		private uploadFileService: UploadFileService,
 		private facilitatorCoreService: FacilitatorCoreService,
+		private method: Method,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -1978,8 +1980,6 @@ export class FacilitatorService {
 
 	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
 		const user = await this.userService.ipUserInfo(req);
-		const academic_year_id = req.mw_academic_year_id;
-		const program_id = req.mw_program_id;
 		if (!user?.data?.id) {
 			return resp.status(401).json({
 				success: false,
@@ -1995,7 +1995,7 @@ export class FacilitatorService {
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`{program_faciltators:{parent_ip:{_eq:"${user?.data?.program_users[0]?.organisation_id}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}}`,
+			`{program_faciltators:{parent_ip:{_eq:"${user?.data?.program_users[0]?.organisation_id}"}}}`,
 		);
 
 		if (body.search && body.search !== '') {
@@ -2004,20 +2004,14 @@ export class FacilitatorService {
 
 			if (last_name?.length > 0) {
 				filterQueryArray.push(`{_and: [
-				{first_name: { _ilike: "%${first_name}%" } }
-				{ last_name: { _ilike: "%${last_name}%" } }
+				{first_name: { _ilike: "%${first_name}%" } } 
+				{ last_name: { _ilike: "%${last_name}%" } } 
 				 ]} `);
 			} else {
 				filterQueryArray.push(
 					`{ first_name: { _ilike: "%${first_name}%" } }`,
 				);
 			}
-		}
-
-		if (body?.state && body?.state.length > 0) {
-			filterQueryArray.push(
-				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
-			);
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -2056,68 +2050,71 @@ export class FacilitatorService {
 		};
 
 		let qury = `query MyQuery($limit:Int, $offset:Int) {
-		users_aggregate(where: ${filterQuery}) {
-				aggregate {
-					count
-				  }
-			}
-		users(limit: $limit,
-			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
-
-			first_name
-			last_name
-			middle_name
-			id
-			program_faciltators{
-				status
-				learner_total_count:beneficiaries_aggregate {
+			users_aggregate(where: ${filterQuery}) {
 					aggregate {
-					  count
-					}
-				  },
-				  identified_and_ready_to_enroll:beneficiaries_aggregate(
-					where: {
-						user: {id: {_is_null: false}},
-						_or: [
-							{ status: { _in: ["identified", "ready_to_enroll"] } },
-							{ status: { _is_null: true } }
-					 ]
-					}
+						count
+					  }
+				}
+			users(limit: $limit,
+				offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
+	
+				first_name
+				last_name
+				middle_name
+				id
+				program_faciltators{
+					status
+					learner_total_count: beneficiaries_aggregate(where: {status: {_in: ["identified", "ready_to_enroll", "enrolled", "enrolled_ip_verified"]}, _not: {group_users: {status: {_eq: "active"}}}}) {
+						aggregate {
+						  count
+						}
+					  },
+					  identified_and_ready_to_enroll:beneficiaries_aggregate(
+						where: {
+							user: {id: {_is_null: false}},
+							_or: [
+								{ status: { _in: ["identified", "ready_to_enroll"] } },
+								{ status: { _is_null: true } }
+						 ]
+						}
+					)
+					{
+						aggregate {
+						  count
+						}
+					} ,
+					${status
+						.filter(
+							(item) =>
+								item != 'identified' &&
+								item !== 'ready_to_enroll',
+						)
+						.map(
+							(item) => `${
+								!isNaN(Number(item[0])) ? '_' + item : item
+							}:beneficiaries_aggregate(where: {
+					_and: [
+					  {
+					  status: {_eq: "${item}"}
+					},
+	
+						{ user:	{ id: { _is_null: false } } }
+	
+											 ],
+					  _not: {group_users: {status: {_eq: "active"}}}}					 
+					
 				)
 				{
 					aggregate {
 					  count
 					}
-				} ,
-				${status
-					.filter(
-						(item) =>
-							item != 'identified' && item !== 'ready_to_enroll',
-					)
-					.map(
-						(item) => `${
-							!isNaN(Number(item[0])) ? '_' + item : item
-						}:beneficiaries_aggregate(where: {
-				_and: [
-				  {
-				  status: {_eq: "${item}"}
-				},
-					{ user:	{ id: { _is_null: false } } }
-
-										 ]
 				}
-			)
-			{
-				aggregate {
-				  count
+				`,
+						)}
 				}
 			}
-			`,
-					)}
-			}
-		}
-	  }
-	  `;
+		  }
+		  `;
 
 		const data = { query: qury, variables: variables };
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -2401,6 +2398,12 @@ export class FacilitatorService {
 		const user_id = req?.mw_userid;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
+		const okyc_gender_data =
+			body?.okyc_response?.data?.aadhaar_data?.gender;
+
+		body.okyc_response.data.aadhaar_data.gender =
+			await this.method.transformGender(okyc_gender_data);
+
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
 				body,
@@ -2470,6 +2473,9 @@ export class FacilitatorService {
 		let message = 'Okyc Details already Updated';
 		let status = 200;
 		if (userData?.aadhar_verified === 'yes') {
+			// Check and modify the gender field in the body if it's 'M' or 'F' with the utility function
+			body.gender = await this.method.transformGender(body.gender);
+
 			okyc_response = await this.facilitatorCoreService.updateOkycDetails(
 				body,
 			);

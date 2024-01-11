@@ -422,4 +422,103 @@ export class CampCoreService {
 			query: query,
 		});
 	}
+
+	public async getPrerakFilter_By_camp(body: any, resp: any, req: any) {
+		try {
+			let filterQueryArray = [];
+
+			const status_array = this.enumService
+				.getEnumValue('GROUPS_STATUS')
+				.data.map((item) => item.value);
+
+			const page = isNaN(body.page) ? 1 : parseInt(body.page);
+			const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+			let offset = page > 1 ? limit * (page - 1) : 0;
+			let program_id = body?.program_id || 1;
+			let academic_year_id = body?.academic_year_id || 1;
+			let parent_ip_id = body?.parent_ip_id;
+
+			let searchQuery = '';
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					searchQuery = `_and:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${last_name}%" }}],`;
+				} else {
+					searchQuery = `_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}],`;
+				}
+			}
+
+			filterQueryArray.push(
+				`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}},status: {_in: ${JSON.stringify(
+					status_array.filter((item) => item != 'camp_initiated'),
+				)}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
+			);
+
+			if (body?.district && body?.district.length > 0) {
+				filterQueryArray.push(
+					`{properties:{district:{_in: ${JSON.stringify(
+						body?.district,
+					)}}}}`,
+				);
+			}
+
+			if (body?.block && body?.block.length > 0) {
+				filterQueryArray.push(
+					`{properties:{block:{_in: ${JSON.stringify(
+						body?.block,
+					)}}}}`,
+				);
+			}
+
+			if (body.facilitator && body.facilitator.length > 0) {
+				filterQueryArray.push(
+					`{group_users: {user:{id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}}`,
+				);
+			}
+
+			let filterQuery = ' _and: [' + filterQueryArray.join(',') + '] ';
+
+			const dataIds = {
+				query: `query MyQuery($limit: Int, $offset: Int) {
+					users_aggregate(where: {${searchQuery} ${filterQuery}}){
+						aggregate{
+							count
+						}
+				}
+					users(where: {${searchQuery} ${filterQuery}},limit: $limit, offset: $offset) {
+						id
+						first_name
+						last_name
+					}
+					}`,
+				variables: {
+					limit: limit,
+					offset: offset,
+				},
+			};
+
+			const result = await this.hasuraServiceFromServices.getData(
+				dataIds,
+			);
+			const count = result?.data?.users_aggregate?.aggregate?.count;
+			const totalPages = Math.ceil(count / limit);
+			const returnData = {
+				data: result,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
+			};
+			return returnData;
+		} catch (error) {
+			return resp.status(500).json({
+				message: 'BENEFICIARIES_LIST_ERROR',
+				data: {},
+			});
+		}
+	}
 }

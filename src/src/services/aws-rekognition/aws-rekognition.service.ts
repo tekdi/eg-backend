@@ -108,34 +108,33 @@ export class AwsRekognitionService {
 						ClientRequestToken:
 							this.prefixed + new Date().getTime().toString(),
 					};
-				/*console.log(
+					/*console.log(
 					'Trying to create user with details as:',
 					createUserParams,
 				);*/
-				await this.rekognition.send(
-					new CreateUserCommand(createUserParams),
-				);
+					await this.rekognition.send(
+						new CreateUserCommand(createUserParams),
+					);
+					//update in hasura
+					await this.markUserAsCreated(userId);
+					//wait some time to match aws rate limit 5 request per seconds
+					await new Promise((resolve) =>
+						setTimeout(
+							resolve,
+							parseInt(
+								this.configService.get<string>(
+									'AWS_REKOGNITION_CREATE_USER_REQUEST_INTERVAL_TIME',
+								),
+							),
+						),
+					);
 				} catch (error) {
 					console.log(
 						'createUsersInCollection_forloop:',
 						error,
 						error.stack,
 					);
-					
 				}
-				//update in hasura
-				await this.markUserAsCreated(userId);
-				//wait some time to match aws rate limit 5 request per seconds
-				await new Promise((resolve) =>
-					setTimeout(
-						resolve,
-						parseInt(
-							this.configService.get<string>(
-								'AWS_REKOGNITION_CREATE_USER_REQUEST_INTERVAL_TIME',
-							),
-						),
-					),
-				);
 			}
 		} catch (error) {
 			console.log('createUsersInCollection:', error, error.stack);
