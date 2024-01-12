@@ -18,6 +18,8 @@ export class ReferencesService {
 		'middle_name',
 		'last_name',
 		'relation',
+		'program_id',
+		'academic_year_id',
 	];
 
 	public returnFields = [
@@ -33,6 +35,8 @@ export class ReferencesService {
 		'middle_name',
 		'last_name',
 		'relation',
+		'program_id',
+		'academic_year_id',
 	];
 
 	constructor(
@@ -42,12 +46,14 @@ export class ReferencesService {
 
 	async create(body: any, request: any, resp: any) {
 		let facilitator_id = request.mw_userid;
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
 		let context = 'community.user';
 		let contact = body?.contact_number;
 
 		let response;
 		let reference_query = `query MyQuery {
-			references_aggregate(where: {context: {_eq: "${context}"}, context_id: {_eq: ${facilitator_id}}, contact_number: {_eq: ${contact}}}) {
+			references_aggregate(where: {context: {_eq: "${context}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},context_id: {_eq: ${facilitator_id}}, contact_number: {_eq: ${contact}}}) {
 			  aggregate {
 				count
 			  }
@@ -55,7 +61,7 @@ export class ReferencesService {
 		  }`;
 
 		let user_query = `query MyQuery {
-			users_aggregate(where:{id:{_eq:${facilitator_id}},mobile:{_eq:${contact}}}) {
+			users_aggregate(where:{id:{_eq:${facilitator_id}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},mobile:{_eq:${contact}}}) {
 			  aggregate {
 				count
 			  }
@@ -91,6 +97,8 @@ export class ReferencesService {
 				...body,
 				context: 'community.user',
 				context_id: facilitator_id,
+				academic_year_id: academic_year_id,
+				program_id: program_id,
 			},
 			this.returnFields,
 		);
@@ -113,10 +121,12 @@ export class ReferencesService {
 
 	public async communityList(body: any, req: any, resp) {
 		const facilitator_id = req.mw_userid;
+		let academic_year_id = req?.mw_academic_year_id;
+		let program_id = req?.mw_program_id;
 		let context = body?.context;
 
 		let query = `query MyQuery {
-			references(where: {context_id: {_eq: ${facilitator_id}},context:{_eq:"${context}"}}, order_by: {id: desc}) {
+			references(where: {context_id: {_eq: ${facilitator_id}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},context:{_eq:"${context}"}}, order_by: {id: desc}) {
 				id
 				name
 				contact_number
@@ -134,6 +144,7 @@ export class ReferencesService {
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
+
 		const community_response = response?.data?.references;
 
 		if (community_response?.length > 0) {
@@ -155,10 +166,12 @@ export class ReferencesService {
 	}
 
 	public async communityById(id: any, body: any, req: any, resp: any) {
-		const facilitator_id = req.mw_userid;
+		const facilitator_id = req?.mw_userid;
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
 
 		let query = `query MyQuery {
-			references(where: {id:{_eq:${id}},context_id: {_eq: ${facilitator_id}}}) {
+			references(where: {id:{_eq:${id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}},context_id: {_eq: ${facilitator_id}}}) {
 			  id
 			  name
 			  contact_number
@@ -196,13 +209,15 @@ export class ReferencesService {
 	}
 
 	async update(id: any, body: any, request: any, resp: any) {
-		let facilitator_id = request.mw_userid;
+		let facilitator_id = request?.mw_userid;
 		let context = body?.context;
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
 		let reference_id = id;
 		let response;
 
 		let query = `query MyQuery {
-			references(where: {context_id: {_eq: ${facilitator_id}},context:{_eq:"${context}"},id:{_eq:${reference_id}}}) {
+			references(where: {context_id: {_eq: ${facilitator_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}},context:{_eq:"${context}"},id:{_eq:${reference_id}}}) {
 				id
 				name
 				context

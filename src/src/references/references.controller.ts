@@ -21,6 +21,7 @@ export class ReferencesController {
 
 	@Post('/create')
 	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
 	create(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.referencesService.create(body, request, response);
 	}
