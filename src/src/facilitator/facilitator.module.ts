@@ -44,7 +44,7 @@ export class FacilitatorModule implements NestModule {
 					path: '/facilitators/experience/:id',
 					method: RequestMethod.DELETE,
 				},
-				{ path: '/facilitators/:id', method: RequestMethod.PATCH },
+				//{ path: '/facilitators/:id', method: RequestMethod.PATCH },
 				'/facilitators/program-facilitator/add',
 				'/facilitators/admin/search-by-ids',
 				{
