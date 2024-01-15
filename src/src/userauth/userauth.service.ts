@@ -59,9 +59,9 @@ export class UserauthService {
 		// Generate username
 		let username = `${body.first_name}`;
 		if (body?.last_name) {
-			username += `_${body.last_name.charAt(0)}`;
+			username += `${body.last_name.charAt(0)}`;
 		}
-		username += `_${body.mobile}`;
+		username += `${body.mobile}`;
 		username = username.toLowerCase();
 
 		// Role to group mapping
