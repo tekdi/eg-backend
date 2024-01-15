@@ -78,6 +78,7 @@ export class FacilitatorController {
 
 	@Patch('/:id')
 	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
 	update(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,

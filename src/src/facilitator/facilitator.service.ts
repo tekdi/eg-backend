@@ -613,7 +613,9 @@ export class FacilitatorService {
 		let experience_id = body.id;
 		if (
 			experience_id &&
-			!facilitatorUser[body.type].find((data) => data.id == experience_id)
+			!facilitatorUser[body?.type].find(
+				(data) => data.id == experience_id,
+			)
 		) {
 			return {
 				errorMessage: 'Invalid experience id!',
@@ -988,6 +990,7 @@ export class FacilitatorService {
 					body,
 					facilitatorUser,
 				);
+
 				if (result?.errorMessage) {
 					return response.status(400).json({
 						success: false,
@@ -1969,7 +1972,7 @@ export class FacilitatorService {
 		});
 	}
 
-	async userById(id: any, response: any, req: any) {
+	async userById(id: any, response: any, req?: any) {
 		const userData = await this.userService.userById(+id, response, req);
 
 		return {
