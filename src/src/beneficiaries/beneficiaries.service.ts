@@ -3288,8 +3288,6 @@ export class BeneficiariesService {
 		ipId: number,
 		programId?: number,
 	) {
-		if (!programId) programId = programId;
-
 		const ipUser = (await this.userService.userById(ipId)).data;
 
 		let dynamicRoleBasedQuery;
