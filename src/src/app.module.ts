@@ -33,6 +33,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { AuthMiddleware } from './common/middlewares/auth.middleware';
+import { UserauthModule } from './userauth/userauth.module';
 
 @Module({
 	imports: [
@@ -71,6 +72,7 @@ import { AuthMiddleware } from './common/middlewares/auth.middleware';
 		TaxonomyModule,
 		UploadFileModule,
 		UserModule,
+		UserauthModule,
 	],
 	controllers: [],
 	providers: [],
