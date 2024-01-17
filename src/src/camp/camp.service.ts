@@ -3646,87 +3646,69 @@ export class CampService {
 
 	public async getRandomAttendanceGeneration(id: any, req: any, res: any) {
 		let camp_id = id;
-		const currentDate = new Date().toISOString().split('T')[0];
-		const currentDateObject = new Date(currentDate);
+		const format = 'YYYY-MM-DD';
+		const currentDate = moment().format(format);
 
 		// Get the date 7 days before the current date
-		const sevenDaysLess = new Date(currentDateObject);
-		sevenDaysLess.setDate(currentDateObject.getDate() - 7);
-		const formattedSevenDaysLess = sevenDaysLess
-			.toISOString()
-			.split('T')[0]; // Format seven days less
+		const formattedSevenDaysLess = moment()
+			.subtract(7, 'days')
+			.format(format); // Format seven days less
 
-		// Get the date 1 day before the current date
-		const oneDayLess = new Date(currentDateObject);
-		oneDayLess.setDate(currentDateObject.getDate() - 1);
-		const formattedOneDayLess = oneDayLess.toISOString().split('T')[0];
-
-		const sql = `SELECT
-		gs.date AS date,
-		COUNT(a.id) AS count_of_data
-	  FROM
-		generate_series(
+		const sql = `SELECT gs.date AS date, COUNT(a.id) AS count_of_data
+	  FROM generate_series(
 		  '${formattedSevenDaysLess}'::timestamp,
-		  '${formattedOneDayLess}'::timestamp,
+		  '${currentDate}'::timestamp,
 		  '1 day'
 		) AS gs(date)
-	  LEFT JOIN
-		attendance a ON DATE_TRUNC('day', a.date_time) = gs.date AND a.photo_1 IS NOT NULL AND a.context_id = ${camp_id}
-	  WHERE
-		gs.date >= '${formattedSevenDaysLess}' AND gs.date <= '${currentDate}'
-	  GROUP BY
-		gs.date
-	  ORDER BY
-		gs.date;
-	  
+	  LEFT JOIN	attendance a ON DATE_TRUNC('day', a.date_time) = gs.date 
+		LEFT JOIN camp_days_activities_tracker cda ON cda.id = a.context_id
+	  WHERE gs.date >= '${formattedSevenDaysLess}' AND gs.date <= '${currentDate}'
+		AND a.photo_1 IS NOT NULL AND a.photo_1 != '-'
+		AND cda.camp_id = ${camp_id}
+		AND a.context = 'camp_days_activities_tracker'
+	  GROUP BY gs.date
+	  ORDER BY gs.date;
 		;`;
+
 		const attendance_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		)?.result;
 
-		if (attendance_data == undefined) {
+		const data = await this.hasuraServiceFromServices.getFormattedData(
+			attendance_data,
+		);
+
+		if (data.length == 0) {
 			return res.json({
 				learner_camp_attendance_data: 1,
+				mesage: 'data not found',
 			});
-		}
+		} else if (data.length == 1) {
+			const dataDate = moment(data?.[0]?.date);
+			const differenceInDays = moment().diff(dataDate, 'days');
 
-		const filteredDates = attendance_data.reduce(
-			(filtered, entry, index) => {
-				if (index === 0 || parseInt(entry[1]) === 0) return filtered;
-				filtered.push(entry[0].split(' ')[0]);
-				return filtered;
-			},
-			[],
-		);
-
-		const dateObjects = filteredDates.map(
-			(dateString) => new Date(dateString),
-		);
-		const highestDate = new Date(Math.max(...dateObjects));
-
-		// Calculate the difference in days
-		const today = new Date();
-		const differenceInTime = Math.abs(
-			today.getTime() - highestDate.getTime(),
-		);
-		const differenceInDays = Math.floor(
-			differenceInTime / (1000 * 3600 * 24),
-		);
-
-		if (filteredDates.length == 0) {
+			if (differenceInDays == 0) {
+				return res.json({
+					learner_camp_attendance_data: 0,
+					mesage: 'Allready taken Attendances Today',
+				});
+			} else if (differenceInDays == 7) {
+				return res.json({
+					learner_camp_attendance_data: 1,
+					mesage: 'seven days differences',
+				});
+			} else {
+				return res.json({
+					learner_camp_attendance_data:
+						Math.floor(Math.random() * 2) > 0 ? 1 : 0,
+					mesage: 'random',
+				});
+			}
+		} else {
 			return res.json({
-				learner_camp_attendance_data: 1,
+				learner_camp_attendance_data: 0,
+				message: 'data greater than two',
 			});
 		}
-
-		if (filteredDates.length == 1 && differenceInDays == 7) {
-			return res.json({
-				learner_camp_attendance_data: 1,
-			});
-		}
-
-		return res.json({
-			learner_camp_attendance_data: 0,
-		});
 	}
 }
