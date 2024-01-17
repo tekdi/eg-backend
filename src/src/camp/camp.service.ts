@@ -3674,40 +3674,53 @@ export class CampService {
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		)?.result;
 
+		if (attendance_data == undefined && !attendance_data) {
+			return res.json({
+				message: 'No Data found',
+			});
+		}
+
 		const data = await this.hasuraServiceFromServices.getFormattedData(
 			attendance_data,
 		);
 
-		if (data.length == 0) {
-			return res.json({
-				learner_camp_attendance_data: 1,
-				mesage: 'data not found',
-			});
-		} else if (data.length == 1) {
-			const dataDate = moment(data?.[0]?.date);
-			const differenceInDays = moment().diff(dataDate, 'days');
-
-			if (differenceInDays == 0) {
-				return res.json({
-					learner_camp_attendance_data: 0,
-					mesage: 'Allready taken Attendances Today',
-				});
-			} else if (differenceInDays == 7) {
+		if (Array.isArray(data)) {
+			if (data.length == 0) {
 				return res.json({
 					learner_camp_attendance_data: 1,
-					mesage: 'seven days differences',
+					message: 'data not found',
 				});
+			} else if (data.length == 1) {
+				const dataDate = moment(data?.[0]?.date);
+				const differenceInDays = moment().diff(dataDate, 'days');
+
+				if (differenceInDays == 0) {
+					return res.json({
+						learner_camp_attendance_data: 0,
+						message: 'Allready taken Attendances Today',
+					});
+				} else if (differenceInDays == 7) {
+					return res.json({
+						learner_camp_attendance_data: 1,
+						message: 'seven days differences',
+					});
+				} else {
+					return res.json({
+						learner_camp_attendance_data:
+							Math.floor(Math.random() * 2) > 0 ? 1 : 0,
+						message: 'random',
+					});
+				}
 			} else {
 				return res.json({
-					learner_camp_attendance_data:
-						Math.floor(Math.random() * 2) > 0 ? 1 : 0,
-					mesage: 'random',
+					learner_camp_attendance_data: 0,
+					message: 'data greater than two',
 				});
 			}
 		} else {
-			return res.json({
+			return res.status(200).json({
 				learner_camp_attendance_data: 0,
-				message: 'data greater than two',
+				message: 'Invalid data format',
 			});
 		}
 	}
