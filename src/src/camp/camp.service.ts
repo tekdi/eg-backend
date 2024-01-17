@@ -3286,7 +3286,10 @@ export class CampService {
 			req,
 		);
 		let users = response?.pagination_count;
-		let userDataPromises = await users.map(async (user) => {
+		if (users == undefined) {
+			return resp.json({ message: 'Response not getting' });
+		}
+		let userDataPromises = await users?.map(async (user) => {
 			const campLearnerCount = await this.calculateCampLearnerCountSum(
 				user,
 			);

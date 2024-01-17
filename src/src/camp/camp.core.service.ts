@@ -243,11 +243,20 @@ export class CampCoreService {
 		const academic_year_id = req.mw_academic_year_id;
 		let filterQueryArray = [];
 
+		let searchQuery = '';
 		if (body.search && body.search !== '') {
-			filterQueryArray.push(`{_or: [
-			{ first_name: { _ilike: "%${body.search}%" } },
-			{ last_name: { _ilike: "%${body.search}%" } },
-		]} `);
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`{_and: [
+				{first_name: { _ilike: "%${first_name}%" }},
+				{ last_name: { _ilike: "%${last_name}%" } } 
+				 ]} `);
+			} else {
+				filterQueryArray.push(
+					`{_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}]}`,
+				);
+			}
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -319,6 +328,7 @@ export class CampCoreService {
 				}
 			`,
 		};
+
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
