@@ -3696,8 +3696,8 @@ export class CampService {
 
 				if (differenceInDays == 0) {
 					return res.json({
-						learner_camp_attendance_data: 0,
-						message: 'Allready taken Attendances Today',
+						learner_camp_attendance_data: 1,
+						message: 'Taken Attendances Today By Camera',
 					});
 				} else if (differenceInDays == 7) {
 					return res.json({
