@@ -3753,7 +3753,7 @@ export class CampService {
 			}
 		}
 		let check_facilitator = `query MyQuery {
-			camps_aggregate(where: {id: {_eq: ${camp_id}}, group_users: {member_type: {_eq: "owner"}, user_id: {_eq:${facilitator_id}}}}) {
+			camps_aggregate(where: {id: {_eq: ${camp_id}}, group_users: {member_type: {_eq: "owner"},status:{_eq:"active"}, user_id: {_eq:${facilitator_id}}group:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}}}) {
 				aggregate {
 					count
 				}
