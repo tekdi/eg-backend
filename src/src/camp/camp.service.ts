@@ -3268,6 +3268,7 @@ export class CampService {
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
+
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -3278,14 +3279,17 @@ export class CampService {
 		}
 		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		let response = await this.campcoreservice.getFacilitatorsForCamp(
+			body,
 			parent_ip_id,
 			limit,
 			offset,
+			req,
 		);
-
-		let users = response?.data?.users;
-
-		let userDataPromises = await users.map(async (user) => {
+		let users = response?.pagination_count;
+		if (users == undefined) {
+			return resp.json({ message: 'Response not getting' });
+		}
+		let userDataPromises = await users?.map(async (user) => {
 			const campLearnerCount = await this.calculateCampLearnerCountSum(
 				user,
 			);
@@ -3296,19 +3300,18 @@ export class CampService {
 
 		let userData = await Promise.all(userDataPromises);
 
-		const count = response?.data?.users_aggregate?.aggregate?.count;
+		const count = response?.users?.length;
 
 		const totalPages = Math.ceil(count / limit);
 
-		if (users?.length == 0) {
+		if (user?.length == 0) {
 			return resp.json({
 				status: 200,
 				message: 'FACILITATOR_DATA_NOT_FOUND',
 				data: [],
 			});
 		} else {
-			return resp.json({
-				status: 200,
+			return resp.status(200).json({
 				message: 'FACILITATOR_DATA_FOUND_SUCCESS',
 				data: userData,
 				totalCount: count,
@@ -3320,7 +3323,7 @@ export class CampService {
 	}
 
 	async calculateCampLearnerCountSum(user) {
-		if (user.camp_learner_count && user.camp_learner_count.length > 0) {
+		if (user?.camp_learner_count && user.camp_learner_count.length > 0) {
 			return user.camp_learner_count.reduce((sum, camp) => {
 				if (camp?.group && camp?.group?.group_users_aggregate) {
 					return (
