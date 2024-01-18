@@ -3730,23 +3730,58 @@ export class CampService {
 		const facilitator_id = req.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
-		let member_type = 'owner';
-		let status = 'active';
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
+		let user_id;
+		let searchQuery = '';
 
-		let query_data = {
-			qury: `query MyQuery($limit: Int, $offset: Int) {
-			camps_aggregate(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
-				aggregate {
-				count
+		if (body.search && !isNaN(body.search)) {
+			user_id = parseInt(body.search);
+			searchQuery = `user_id: {_eq: ${user_id}}`;
+		} else if (body.search) {
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					searchQuery = `_and:[{enrollment_first_name: { _ilike: "%${first_name}%" }}, {enrollment_last_name: { _ilike: "%${last_name}%" }}],`;
+				} else {
+					searchQuery = `_or:[{enrollment_first_name: { _ilike: "%${first_name}%" }}, {enrollment_last_name: { _ilike: "%${first_name}%" }}],`;
 				}
 			}
-			camps(limit: $limit, offset: $offset, where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {		  
-			  group_users(where: {member_type: {_neq: "owner"}, status: {_eq: "active"}}) {
-				user {
-				  id
+		}
+		let check_facilitator = `query MyQuery {
+			camps_aggregate(where: {id: {_eq: ${camp_id}}, group_users: {member_type: {_eq: "owner"}, user_id: {_eq:${facilitator_id}}}}) {
+				aggregate {
+					count
+				}
+			}
+		}`;
+		const data_exist = { query: check_facilitator };
+		const response_faciliator =
+			await this.hasuraServiceFromServices.getData(data_exist);
+		const check_count =
+			response_faciliator?.data?.camps_aggregate?.aggregate?.count;
+
+		if (!check_count) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data not found!',
+				data: {},
+			});
+		}
+		let query_data = {
+			qury: `
+			query MyQuery($limit: Int, $offset: Int) {
+				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}) {
+					aggregate {
+					count
+					}
+				}
+				users(limit: $limit, offset: $offset, where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}){
+					id
 				  state
 				  district
 				  block
@@ -3766,9 +3801,7 @@ export class CampService {
 					enrollment_middle_name
 				  }
 				}
-			  }
 			}
-		  }
 		  `,
 			variables: {
 				limit: limit,
@@ -3779,9 +3812,7 @@ export class CampService {
 		const data = { query: query_data.qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 
-		const newQdata = response?.data?.camps;
-
-		const count = newQdata?.[0].group_users?.length;
+		const count = response?.data?.users_aggregate?.aggregate?.count;
 
 		const totalPages = Math.ceil(count / limit);
 
@@ -3794,41 +3825,32 @@ export class CampService {
 		}
 
 		const userData = await Promise.all(
-			newQdata?.map(async (item) => {
-				const group_users = await Promise.all(
-					item.group_users.map(async (userObj) => {
-						userObj = userObj.user;
-						let profilePhoto = userObj.profile_photo_1;
-						if (profilePhoto?.[0]?.id !== undefined) {
-							const { success, data: fileData } =
-								await this.uploadFileService.getDocumentById(
-									userObj.profile_photo_1[0].id,
-								);
-							if (success && fileData?.fileUrl) {
-								userObj.profile_photo_1 = {
-									id: userObj.profile_photo_1[0]?.id,
-									name: userObj.profile_photo_1[0]?.name,
-									doument_type:
-										userObj.profile_photo_1[0]
-											?.doument_type,
-									document_sub_type:
-										userObj.profile_photo_1[0]
-											?.document_sub_type,
-									path: userObj.profile_photo_1[0]?.path,
-									fileUrl: fileData.fileUrl,
-								};
-							}
-						} else {
-							userObj.profile_photo_1 = {};
-						}
+			response.data.users.map(async (userObj) => {
+				let profilePhoto = userObj?.profile_photo_1;
+				if (profilePhoto?.[0]?.id !== undefined) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							userObj.profile_photo_1[0].id,
+						);
+					if (success && fileData?.fileUrl) {
+						userObj.profile_photo_1 = {
+							id: userObj.profile_photo_1[0]?.id,
+							name: userObj.profile_photo_1[0]?.name,
+							doument_type:
+								userObj.profile_photo_1[0]?.doument_type,
+							document_sub_type:
+								userObj.profile_photo_1[0]?.document_sub_type,
+							path: userObj.profile_photo_1[0]?.path,
+							fileUrl: fileData.fileUrl,
+						};
+					}
+				} else {
+					userObj.profile_photo_1 = {};
+				}
 
-						return userObj;
-					}),
-				);
-				return { ...item, group_users };
+				return userObj;
 			}),
 		);
-		const userResult = userData?.[0];
 
 		return resp.status(200).json({
 			success: true,
@@ -3837,7 +3859,7 @@ export class CampService {
 			limit,
 			currentPage: page,
 			totalPages: `${totalPages}`,
-			data: userResult || {},
+			data: userData || [],
 		});
 	}
 }
