@@ -3724,4 +3724,120 @@ export class CampService {
 			});
 		}
 	}
+
+	public async campLearnersById(id: any, body: any, req: any, resp) {
+		const camp_id = id;
+		const facilitator_id = req.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+		let member_type = 'owner';
+		let status = 'active';
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
+		let query_data = {
+			qury: `query MyQuery($limit: Int, $offset: Int) {
+			camps_aggregate(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
+				aggregate {
+				count
+				}
+			}
+			camps(limit: $limit, offset: $offset, where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {		  
+			  group_users(where: {member_type: {_neq: "owner"}, status: {_eq: "active"}}) {
+				user {
+				  id
+				  state
+				  district
+				  block
+				  village
+				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+				  }
+				  program_beneficiaries {
+					user_id
+					status
+					enrollment_first_name
+					enrollment_last_name
+					enrollment_middle_name
+				  }
+				}
+			  }
+			}
+		  }
+		  `,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
+
+		const data = { query: query_data.qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const newQdata = response?.data?.camps;
+
+		const count = newQdata?.[0].group_users?.length;
+
+		const totalPages = Math.ceil(count / limit);
+
+		if (!response || response?.length == 0) {
+			return resp.status(400).json({
+				success: false,
+				message: 'Camp data not found!',
+				data: {},
+			});
+		}
+
+		const userData = await Promise.all(
+			newQdata?.map(async (item) => {
+				const group_users = await Promise.all(
+					item.group_users.map(async (userObj) => {
+						userObj = userObj.user;
+						let profilePhoto = userObj.profile_photo_1;
+						if (profilePhoto?.[0]?.id !== undefined) {
+							const { success, data: fileData } =
+								await this.uploadFileService.getDocumentById(
+									userObj.profile_photo_1[0].id,
+								);
+							if (success && fileData?.fileUrl) {
+								userObj.profile_photo_1 = {
+									id: userObj.profile_photo_1[0]?.id,
+									name: userObj.profile_photo_1[0]?.name,
+									doument_type:
+										userObj.profile_photo_1[0]
+											?.doument_type,
+									document_sub_type:
+										userObj.profile_photo_1[0]
+											?.document_sub_type,
+									path: userObj.profile_photo_1[0]?.path,
+									fileUrl: fileData.fileUrl,
+								};
+							}
+						} else {
+							userObj.profile_photo_1 = {};
+						}
+
+						return userObj;
+					}),
+				);
+				return { ...item, group_users };
+			}),
+		);
+		const userResult = userData?.[0];
+
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			totalCount: count,
+			limit,
+			currentPage: page,
+			totalPages: `${totalPages}`,
+			data: userResult || {},
+		});
+	}
 }
