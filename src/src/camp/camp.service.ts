@@ -12,7 +12,7 @@ import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.s
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
-const moment = require('moment');
+import * as moment from 'moment';
 @Injectable()
 export class CampService {
 	constructor(
@@ -3286,7 +3286,7 @@ export class CampService {
 			req,
 		);
 		let users = response?.pagination_count;
-		if (users == undefined) {
+		if (!users || users.length === 0) {
 			return resp.json({ message: 'Response not getting' });
 		}
 		let userDataPromises = await users?.map(async (user) => {
