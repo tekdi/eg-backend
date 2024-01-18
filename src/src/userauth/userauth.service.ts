@@ -4,6 +4,7 @@ import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
 @Injectable()
 export class UserauthService {
@@ -17,6 +18,7 @@ export class UserauthService {
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	public async userAuthRegister(body, response, role) {
@@ -177,6 +179,265 @@ export class UserauthService {
 				message: 'Unable to get keycloak token',
 				data: {},
 			});
+		}
+	}
+
+	public async userOnboarding(body: any, response: any, request: any) {
+		//first check validations for all inputs
+
+		let user_id = request?.mw_userid;
+
+		let result = await this.processTable(body, user_id);
+
+		if (result) {
+			return response.status(200).json({
+				success: true,
+				message: 'Successfully updated data',
+			});
+		}
+	}
+
+	private async processTable(json: any, user_id: any) {
+		let tableFields;
+		let tableName;
+		let set_update;
+		let update_id;
+
+		for (const key in json) {
+			const value = json[key];
+
+			if (typeof value === 'object') {
+				tableName = key;
+				tableFields = Object.keys(value);
+			}
+
+			if (Array.isArray(value)) {
+				// Handle array
+				tableName = key;
+
+				await this.processJsonArray(value, tableName, user_id);
+			}
+
+			if (tableName != 'users' && tableName != 'references') {
+				value.user_id = user_id;
+				tableFields.push('user_id');
+			}
+
+			if (tableName == 'references') {
+				value.context_id = user_id;
+				tableFields.push('context_id');
+			}
+
+			let response = await this.findExisitingReccord(
+				tableName,
+				value,
+				user_id,
+			);
+
+			set_update = response?.set_update;
+			update_id = response?.id;
+
+			await this.upsertRecords(
+				set_update,
+				tableName,
+				tableFields,
+				value,
+				user_id,
+				update_id,
+			);
+		}
+
+		return true;
+	}
+
+	public async processJsonArray(values, tableName, user_id) {
+		let set_update;
+		let update_id;
+		for (const obj of values) {
+			const tableFields = Object.keys(obj);
+			tableFields.push('user_id');
+			obj.user_id = user_id;
+
+			let response = await this.findExisitingReccord(
+				tableName,
+				obj,
+				user_id,
+			);
+			set_update = response?.set_update;
+			update_id = response?.id;
+
+			await this.upsertRecords(
+				set_update,
+				tableName,
+				tableFields,
+				obj,
+				user_id,
+				update_id,
+			);
+		}
+	}
+
+	public async findExisitingReccord(tablename, value, user_id) {
+		let query;
+		let response;
+
+		switch (tablename) {
+			case 'users': {
+				query = `query MyQuery {
+					users(where: {mobile: {_eq:${value.mobile}}}){
+						id,
+						mobile
+					}
+				}`;
+
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update: response?.data?.users?.length > 0 ? 1 : 0,
+					id: response?.data?.users?.[0]?.id,
+				};
+			}
+			case 'core_faciltators': {
+				query = `query MyQuery {
+					core_faciltators(where: {user_id: {_eq:${user_id}}}){
+					  id
+					}
+				  }
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.core_faciltators?.length > 0 ? 1 : 0,
+					id: response?.data?.core_faciltators?.[0]?.id,
+				};
+			}
+			case 'extended_users': {
+				query = `query MyQuery {
+					extended_users(where: {user_id: {_eq:${user_id}}}){
+					  id
+					}
+				  }
+				  
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.extended_users?.length > 0 ? 1 : 0,
+					id: response?.data?.extended_users?.[0]?.id,
+				};
+			}
+			case 'program_faciltators': {
+				query = `query MyQuery {
+					program_faciltators(where: {user_id: {_eq:${user_id}},program_id:{_eq:${value?.program_id}},academic_year_id:{_eq:${value?.academic_year_id}}}){
+					  id
+					}
+				  }
+				  				  
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.program_faciltators?.length > 0 ? 1 : 0,
+					id: response?.data?.program_faciltators?.[0]?.id,
+				};
+			}
+			case 'references': {
+				query = `query MyQuery {
+					references(where: {contact_number: {_eq:${value?.contact_number}},context_id:{_eq:${user_id}}}){
+					  id
+					}
+				  }
+				  
+				  
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update: response?.data?.references?.length > 0 ? 1 : 0,
+					id: response?.data?.references?.[0]?.id,
+				};
+			}
+			case 'qualifications': {
+				query = `query MyQuery {
+					qualifications(where: {user_id: {_eq:${user_id}}}){
+					  id
+					}
+				  }
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.qualifications?.length > 0 ? 1 : 0,
+					id: response?.data?.qualifications?.[0]?.id,
+				};
+			}
+			case 'experience': {
+				query = `query MyQuery {
+					experience(where: {id: {_eq:${value?.id}}}){
+					  id
+					}
+				  }
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update: response?.data?.experience?.length > 0 ? 1 : 0,
+					id: response?.data?.experience?.[0]?.id,
+				};
+			}
+
+			default:
+				return undefined;
+		}
+	}
+
+	public async upsertRecords(
+		set_update,
+		tableName,
+		tableFields,
+		value,
+		user_id,
+		id?,
+	) {
+		if (set_update == 1 && id) {
+			await this.hasuraService.q(
+				tableName,
+				{
+					...value,
+					id: id,
+				},
+				tableFields,
+				true,
+				[tableFields],
+			);
+		} else {
+			await this.hasuraService.q(
+				tableName,
+				{
+					...value,
+				},
+				tableFields,
+				false,
+				[tableFields],
+			);
 		}
 	}
 }
