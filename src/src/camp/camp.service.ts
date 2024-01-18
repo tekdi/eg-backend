@@ -3325,7 +3325,7 @@ export class CampService {
 	async calculateCampLearnerCountSum(user) {
 		if (user?.camp_learner_count && user.camp_learner_count.length > 0) {
 			return user.camp_learner_count.reduce((sum, camp) => {
-				if (camp?.group && camp?.group?.group_users_aggregate) {
+				if (camp?.group?.group_users_aggregate) {
 					return (
 						sum + camp.group.group_users_aggregate.aggregate.count
 					);
