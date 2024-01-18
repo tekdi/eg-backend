@@ -12,6 +12,7 @@ import { FacilitatorController } from './facilitator.controller';
 import { AuthMiddleware } from '../common/middlewares/authmiddleware';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { FacilitatorCoreService } from './facilitator.core.service';
+import { Method } from '../common/method/method';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { FacilitatorCoreService } from './facilitator.core.service';
 		S3Module,
 		UploadFileModule,
 	],
-	providers: [FacilitatorService,FacilitatorCoreService],
+	providers: [FacilitatorService, FacilitatorCoreService, Method],
 	controllers: [FacilitatorController],
 	//exports: [FacilitatorCoreService,FacilitatorService],
 })

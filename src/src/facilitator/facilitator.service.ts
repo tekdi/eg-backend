@@ -12,6 +12,7 @@ import {
 import { S3Service } from '../services/s3/s3.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
+import { Method } from '../common/method/method';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -24,6 +25,7 @@ export class FacilitatorService {
 		private s3Service: S3Service,
 		private uploadFileService: UploadFileService,
 		private facilitatorCoreService: FacilitatorCoreService,
+		private method: Method,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -2021,68 +2023,71 @@ export class FacilitatorService {
 		};
 
 		let qury = `query MyQuery($limit:Int, $offset:Int) {
-		users_aggregate(where: ${filterQuery}) {
-				aggregate {
-					count
-				  }
-			}
-		users(limit: $limit,
-			offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
-		  
-			first_name
-			last_name
-			middle_name
-			id
-			program_faciltators{
-				status
-				learner_total_count:beneficiaries_aggregate {
+			users_aggregate(where: ${filterQuery}) {
 					aggregate {
-					  count
-					}
-				  },
-				  identified_and_ready_to_enroll:beneficiaries_aggregate(
-                    where: {
-                        user: {id: {_is_null: false}},
-                        _or: [
-							{ status: { _in: ["identified", "ready_to_enroll"] } },
-                            { status: { _is_null: true } }
-                     ]
-                    }
-                )
+						count
+					  }
+				}
+			users(limit: $limit,
+				offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
+	
+				first_name
+				last_name
+				middle_name
+				id
+				program_faciltators{
+					status
+					learner_total_count: beneficiaries_aggregate(where: {status: {_in: ["identified", "ready_to_enroll", "enrolled", "enrolled_ip_verified"]}, _not: {group_users: {status: {_eq: "active"}}}}) {
+						aggregate {
+						  count
+						}
+					  },
+					  identified_and_ready_to_enroll:beneficiaries_aggregate(
+						where: {
+							user: {id: {_is_null: false}},
+							_or: [
+								{ status: { _in: ["identified", "ready_to_enroll"] } },
+								{ status: { _is_null: true } }
+						 ]
+						}
+					)
+					{
+						aggregate {
+						  count
+						}
+					} ,
+					${status
+						.filter(
+							(item) =>
+								item != 'identified' &&
+								item !== 'ready_to_enroll',
+						)
+						.map(
+							(item) => `${
+								!isNaN(Number(item[0])) ? '_' + item : item
+							}:beneficiaries_aggregate(where: {
+					_and: [
+					  {
+					  status: {_eq: "${item}"}
+					},
+	
+						{ user:	{ id: { _is_null: false } } }
+	
+											 ],
+					  _not: {group_users: {status: {_eq: "active"}}}}					 
+					
+				)
 				{
 					aggregate {
 					  count
 					}
-				} ,
-				${status
-					.filter(
-						(item) =>
-							item != 'identified' && item !== 'ready_to_enroll',
-					)
-					.map(
-						(item) => `${
-							!isNaN(Number(item[0])) ? '_' + item : item
-						}:beneficiaries_aggregate(where: {
-				_and: [
-				  {
-				  status: {_eq: "${item}"}
-				},
-					{ user:	{ id: { _is_null: false } } }
-				
-										 ]
-		    	}
-			) 
-			{
-				aggregate {
-				  count
 				}
-			} 
-			`,
-					)}
+				`,
+						)}
+				}
 			}
-		}
-	  }
-	  `;
+		  }
+		  `;
 
 		const data = { query: qury, variables: variables };
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -2366,6 +2371,12 @@ export class FacilitatorService {
 		const program_id = body?.program_id || 1;
 		const academic_year_id = body?.academic_year_id || 1;
 
+		const okyc_gender_data =
+			body?.okyc_response?.data?.aadhaar_data?.gender;
+
+		body.okyc_response.data.aadhaar_data.gender =
+			await this.method.transformGender(okyc_gender_data);
+
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
 				body,
@@ -2401,11 +2412,12 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
-		if(!id){
+		if (!id) {
 			return res.json({
 				status: 422,
 				success: false,
-				message: "Id is required",})
+				message: 'Id is required',
+			});
 		}
 		//check validation for id benlongs to same IP under prerak
 		let data = {
@@ -2433,6 +2445,9 @@ export class FacilitatorService {
 		let message = 'Okyc Details already Updated';
 		let status = 200;
 		if (userData?.aadhar_verified === 'yes') {
+			// Check and modify the gender field in the body if it's 'M' or 'F' with the utility function
+			body.gender = await this.method.transformGender(body.gender);
+
 			okyc_response = await this.facilitatorCoreService.updateOkycDetails(
 				body,
 			);
