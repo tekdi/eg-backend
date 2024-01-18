@@ -3732,7 +3732,7 @@ export class CampService {
 		let academic_year_id = body?.academic_year_id || 1;
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 5 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let user_id;
 		let searchQuery = '';
