@@ -70,7 +70,7 @@ export class LearnerCampDist {
 
         const query = `
         query MyQuery {
-            group_users(where: {dist_to_camp: {_eq: "0 km"}}, group_id: {_eq: ${g.id}}}) {
+            group_users(where: {dist_to_camp: {_eq: "0 km"}, group_id: {_eq: ${g.id}}}) {
               id
               user_id
             }
@@ -88,7 +88,7 @@ export class LearnerCampDist {
 
 
 
-            const apiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
+            const apiKey = process.env.GOOGLE_MAPS_API_KEY ;
 
 
             type MyJsonObject = {
@@ -145,7 +145,7 @@ export class LearnerCampDist {
         const balance = this.data_limit - this.count ;
         let upd = `
         mutation MyMutation {
-            update_api_balance_by_pk(pk_columns: {month: 10}, _set: {balance: ${balance}}) {
+            update_api_balance_by_pk(pk_columns: {month: ${month}}, _set: {balance: ${balance}}) {
               month
             }
           }
@@ -164,7 +164,7 @@ export class LearnerCampDist {
     async markdistance(dist: Text, Id: number) {
         let updateQuery = `
         mutation MyMutation {
-            update_group_users_by_pk(pk_columns: {id: ${Id}}, _set: {dist_to_camp: ${dist}}}) {
+            update_group_users_by_pk(pk_columns: {id: ${Id}}, _set: {dist_to_camp: "${dist}"}) {
               id
             }
         }

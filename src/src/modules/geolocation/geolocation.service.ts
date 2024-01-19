@@ -259,6 +259,14 @@ export class GeolocationService {
 			  `,
 		};
 
+		this.sentryservice.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'modules.geolocation.service.getVillages',
+			message: 'Finding villages in block from the given table',
+			data: {data: data},
+		});
+
 		return await this.hasuraService.postData(data);
 	}
 
@@ -284,7 +292,7 @@ export class GeolocationService {
 		this.sentryservice.addBreadcrumb({
 				type: 'debug',
 				level: 'info',
-				category: 'modules.geolocation.service.getVillages',
+				category: 'modules.geolocation.service.getGramPanchayat',
 				message: 'Finding villages in block from the given table',
 				data: {data: data},
 			});
