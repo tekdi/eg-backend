@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserHelperService } from 'src/helper/userHelper.service';
-import { HasuraService } from 'src/hasura/hasura.service';
+import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
@@ -17,7 +17,6 @@ export class UserauthService {
 		private readonly keycloakService: KeycloakService,
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
-
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
 	) {}
