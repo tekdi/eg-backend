@@ -1,11 +1,12 @@
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import {
 	Body,
 	Controller,
 	Get,
 	Param,
 	Post,
-	Res,
 	Req,
+	Res,
 	UseGuards,
 	UseInterceptors,
 	UsePipes,
@@ -22,6 +23,8 @@ export class GeolocationController {
 	constructor(private geolocationService: GeolocationService) {}
 
 	// Get states list
+	@UseInterceptors(CacheInterceptor)
+	@CacheTTL(parseInt(process.env.CACHE_GEOLOCATION_TTL, 10))
 	@Get('/states')
 	public async getStates() {
 		const tableName = 'address';
@@ -40,6 +43,8 @@ export class GeolocationController {
 	}
 
 	// Get districts list
+	@UseInterceptors(CacheInterceptor)
+	@CacheTTL(parseInt(process.env.CACHE_GEOLOCATION_TTL, 10))
 	@Get('/districts/:name')
 	public async getDistricts(@Param('name') name: string, state_id: string) {
 		const tableName = 'address';
@@ -58,6 +63,8 @@ export class GeolocationController {
 	}
 
 	// Get multiple blocks list
+	@UseInterceptors(CacheInterceptor)
+	@CacheTTL(parseInt(process.env.CACHE_GEOLOCATION_TTL, 10))
 	@Post('/multipleblocks')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
@@ -71,6 +78,8 @@ export class GeolocationController {
 		);
 	}
 
+	@UseInterceptors(CacheInterceptor)
+	@CacheTTL(parseInt(process.env.CACHE_GEOLOCATION_TTL, 10))
 	@Get('/blocks/:name')
 	public async getBlocks(@Param('name') name: string, @Req() request: any) {
 		const tableName = 'address';
@@ -87,6 +96,8 @@ export class GeolocationController {
 		};
 	}
 
+	@UseInterceptors(CacheInterceptor)
+	@CacheTTL(parseInt(process.env.CACHE_GEOLOCATION_TTL, 10))
 	@Get('/grampanchyat')
 	public async getGramPanchayat(@Req() request: any) {
 		const tableName = 'address';
@@ -106,6 +117,8 @@ export class GeolocationController {
 		};
 	}
 
+	@UseInterceptors(CacheInterceptor)
+	@CacheTTL(parseInt(process.env.CACHE_GEOLOCATION_TTL, 10))
 	// Get villages list
 	@Get('/villages/:name')
 	public async getVillages(@Param('name') name: string, @Req() request: any) {
