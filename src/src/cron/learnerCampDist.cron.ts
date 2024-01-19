@@ -153,10 +153,11 @@ export class LearnerCampDist {
         `;
 
         try{
-            (await this.hasuraService.getData({ query: upd })).data.update_api_balance_by_pk.month === month;
+            return (await this.hasuraService.getData({ query: upd })).data.update_api_balance_by_pk.month === month;
         }
         catch (error) {
             console.log('userUndefDist:', error, error.stack);
+            return [];
         }
     }
 
