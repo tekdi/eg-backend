@@ -70,10 +70,10 @@ export class LearnerCampDist {
 
         const query = `
         query MyQuery {
-            group_users(where: {dist_to_camp: {_eq: "0 km"}, group_id: {_eq: ${g.id}}}) {
-              id
-              user_id
-            }
+            group_users(where: {dist_to_camp: {_is_null: true}, group_id: {_eq: ${g.id}}}) {
+                id
+                user_id
+              }
           }
         `;
 
