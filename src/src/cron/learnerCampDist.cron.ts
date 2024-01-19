@@ -138,7 +138,7 @@ export class LearnerCampDist {
                 }
 
             } catch (error) {
-                console.log('userUndefDist:', error, error.stack);
+                console.log('userUndefDist:', error);
             }
 
         }
