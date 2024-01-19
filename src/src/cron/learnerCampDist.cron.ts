@@ -25,7 +25,7 @@ export class LearnerCampDist {
 
         const getbalance = `
         query MyQuery {
-            api_balance_by_pk(month: ${month}}) {
+            api_balance_by_pk(month: ${month}) {
               balance
             }
           }
