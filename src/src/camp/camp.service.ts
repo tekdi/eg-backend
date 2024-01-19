@@ -3776,14 +3776,14 @@ export class CampService {
 			});
 		}
 		let query_data = {
-			qury: `
+			query: `
 			query MyQuery($limit: Int, $offset: Int) {
 				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}) {
 					aggregate {
 					count
 					}
 				}
-				users(limit: $limit, offset: $offset, where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}){
+				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}){
 					id
 				  state
 				  district
@@ -3812,8 +3812,9 @@ export class CampService {
 			},
 		};
 
-		const data = { query: query_data.qury };
-		const response = await this.hasuraServiceFromServices.getData(data);
+		const response = await this.hasuraServiceFromServices.getData(
+			query_data,
+		);
 
 		const count = response?.data?.users_aggregate?.aggregate?.count;
 
