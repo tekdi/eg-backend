@@ -1,18 +1,21 @@
 import { HttpModule } from '@nestjs/axios';
+import { CacheModule } from '@nestjs/cache-manager';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import * as redisStore from 'cache-manager-redis-store';
+import type { RedisClientOptions } from 'redis';
 
 import { AadhaarKycModule } from 'src/modules/aadhaar_kyc/aadhaar_kyc.module';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { GeolocationModule } from 'src/modules/geolocation/geolocation.module';
 import { TaxonomyModule } from 'src/modules/taxonomy/taxonomy.module';
-
 import { ActivitiesModule } from './activities/activities.module';
 import { AttendancesModule } from './attendances/attendances.module';
 import { BeneficiariesModule } from './beneficiaries/beneficiaries.module';
 import { CampModule } from './camp/camp.module';
 import { CommentsModule } from './comments/comments.module';
+import { AuthMiddleware } from './common/middlewares/auth.middleware';
 import { CronModule } from './cron/cron.module';
 import { EnumModule } from './enum/enum.module';
 import { EventsModule } from './events/events.module';
@@ -32,9 +35,8 @@ import { SessionsModule } from './sessions/sessions.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
-import { AuthMiddleware } from './common/middlewares/auth.middleware';
 import { UserauthModule } from './userauth/userauth.module';
-
+import { CacheCleanerProvider } from './common/providers/cacheCleaner.provider';
 @Module({
 	imports: [
 		ScheduleModule.forRoot(),
@@ -43,6 +45,15 @@ import { UserauthModule } from './userauth/userauth.module';
 			...HttpModule.register({}),
 			global: true,
 		},
+		CacheModule.register<RedisClientOptions>({
+			isGlobal: true,
+			store: redisStore,
+			host: 'redis',
+			port: 6379,
+			user: 'default',
+			password: process.env.CACHE_REDIS_PASSWORD,
+			ttl: process.env.CACHE_DEFAULT_TTL,
+		}),
 		AadhaarKycModule,
 		ActivitiesModule,
 		AttendancesModule,
@@ -75,9 +86,9 @@ import { UserauthModule } from './userauth/userauth.module';
 		UserauthModule,
 	],
 	controllers: [],
-	providers: [],
+	providers: [CacheCleanerProvider],
 })
-export class AppModule implements NestModule{
+export class AppModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 	}
