@@ -48,7 +48,7 @@ import { CacheCleanerProvider } from './common/providers/cacheCleaner.provider';
 		CacheModule.register<RedisClientOptions>({
 			isGlobal: true,
 			store: redisStore,
-			host: 'localhost',
+			host: 'redis',
 			port: 6379,
 			user: 'default',
 			password: process.env.CACHE_REDIS_PASSWORD,
