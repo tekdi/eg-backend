@@ -2371,11 +2371,11 @@ export class FacilitatorService {
 		const program_id = body?.program_id || 1;
 		const academic_year_id = body?.academic_year_id || 1;
 
-		const okyc_gender_data =
-			body?.okyc_response?.data?.aadhaar_data?.gender;
+		const okyc_gender_data = body?.aadhaar_data?.gender;
 
-		body.okyc_response.data.aadhaar_data.gender =
-			await this.method.transformGender(okyc_gender_data);
+		body.aadhaar_data.gender = await this.method.transformGender(
+			okyc_gender_data,
+		);
 
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
