@@ -3733,7 +3733,6 @@ export class CampService {
 		const facilitator_id = req.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
-		const context_id = body?.context_id;
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 5 : parseInt(body.limit);
@@ -3745,6 +3744,21 @@ export class CampService {
 		if (body?.order_by) {
 			const order = JSON.stringify(body?.order_by).replace(/"/g, '');
 			order_by = `, order_by:${order}`;
+		}
+
+		let attandances_query = '';
+		if (body?.context_id) {
+			attandances_query = `attendances(where:{context: {_eq: "camp_days_activities_tracker"},context_id:{_eq:${body?.context_id}}}, order_by: {id: asc}){
+				id
+				user_id
+				context
+				context_id
+				created_by
+				lat
+				long
+				status
+				date_time
+			}`;
 		}
 
 		if (body.search && !isNaN(body.search)) {
@@ -3796,17 +3810,7 @@ export class CampService {
 				  district
 				  block
 				  village
-				  attendances(where:{context: {_eq: "camp_days_activities_tracker"}, context_id: {_eq:${context_id}}}, order_by: {id: asc}){
-						id
-						user_id
-						context
-						context_id
-						created_by
-						lat
-						long
-						status
-						date_time
-					}
+				  ${attandances_query}
 				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 					id
 					name
@@ -3829,6 +3833,7 @@ export class CampService {
 				offset: offset,
 			},
 		};
+
 		const response = await this.hasuraServiceFromServices.getData(
 			query_data,
 		);
