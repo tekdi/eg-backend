@@ -1,10 +1,13 @@
 import { HttpService } from '@nestjs/axios';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
 	BadRequestException,
 	HttpException,
 	HttpStatus,
+	Inject,
 	Injectable,
 } from '@nestjs/common';
+import { Cache } from 'cache-manager';
 import { Response } from 'express';
 import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
@@ -12,11 +15,12 @@ import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
-
 @Injectable()
 export class UserService {
 	public url = process.env.HASURA_BASE_URL;
+
 	constructor(
+		@Inject(CACHE_MANAGER) private cacheService: Cache,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly httpService: HttpService,
 		private helper: UserHelperService,
@@ -185,53 +189,29 @@ export class UserService {
 		}
 	}
 
-	public async ipUserInfo(request: any, role: any = '') {
-		let userData = null;
-		let bearerToken = null;
-		let bearerTokenTemp = null;
+	public async getUserIdFromKeycloakId(keycloak_id: string) {
+		// 1. Check if data is in cache:
+		const cachedUserId = await this.cacheService.get<{ name: string }>(
+			'uIdFromKcId-' + keycloak_id,
+		);
 
-		// Get userid from  auth/login jwt token
-		const authToken = request?.headers?.authorization;
-		const authTokenTemp = request?.headers?.authorization.split(' ');
-
-		// If Bearer word not found in auth header value
-		if (authTokenTemp[0] !== 'Bearer') {
-			return userData;
-		}
-		// Get trimmed Bearer token value by skipping Bearer value
-		else {
-			bearerToken = authToken.trim().substr(7, authToken.length).trim();
+		if (cachedUserId) {
+			return `${cachedUserId}`;
 		}
 
-		// If Bearer token value is not passed
-		if (!bearerToken) {
-			return userData;
-		}
-		// Lets split token by dot (.)
-		else {
-			bearerTokenTemp = bearerToken.split('.');
-		}
-
-		// Since JWT has three parts - seperated by dots(.), lets split token
-		if (bearerTokenTemp.length < 3) {
-			return userData;
-		}
-
-		const decoded: any = jwt_decode(authToken);
-		let keycloak_id = decoded.sub;
-
+		// 2. Check if data is in DB:
 		const axios = require('axios');
+
 		// Set query for getting data info
 		var queryData = {
-			query: `
-		query GetUserDetails($keycloak_id:uuid) {
-		  users(where: {keycloak_id: {_eq: $keycloak_id}}) {
-			id
-		  }
-		}
-	  `,
+			query: `query GetUserDetails($keycloak_id:uuid) {
+				users(where: {keycloak_id: {_eq: $keycloak_id}}) {
+					id
+				}
+			}`,
 			variables: { keycloak_id: keycloak_id },
 		};
+
 		// Initialize config
 		var configData = {
 			method: 'post',
@@ -246,19 +226,36 @@ export class UserService {
 		const response = await axios(configData);
 
 		if (response?.data?.data?.users[0]) {
+			// 2.2 Add response into cache
+			await this.cacheService.set(
+				'uIdFromKcId-' + keycloak_id,
+				response?.data?.data?.users[0]?.id,
+			);
+
+			return response?.data?.data?.users[0]?.id;
+		} else {
+			return null;
+		}
+	}
+
+	public async ipUserInfo(request: any, role: any = '') {
+		let userData = null;
+
+		if (request.mw_userid) {
 			if (role === 'staff') {
-				userData = await this.getIpRoleUserById(
-					+response?.data?.data?.users[0]?.id,
-				);
+				userData = await this.getIpRoleUserById(request.mw_userid);
 			} else {
-				userData = (
-					await this.userById(+response?.data?.data?.users[0]?.id)
-				).data;
+				userData = (await this.userById(request.mw_userid)).data;
 			}
+		} else {
+			return {
+				status: 400,
+				data: userData,
+			};
 		}
 
 		return {
-			status: response?.status,
+			status: 200,
 			data: userData,
 		};
 	}
@@ -1542,7 +1539,7 @@ export class UserService {
 			 WHERE po.status = 'active' AND po.academic_year_id = ${cohort_academic_year_id}  AND pu.user_id = ${user_id}
 			 GROUP BY p.id
 
-			 
+
  `;
 
 			cohort_data = (
