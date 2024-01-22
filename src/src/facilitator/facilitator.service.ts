@@ -2429,11 +2429,12 @@ export class FacilitatorService {
 		const user_id = req?.mw_userid;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
-		const okyc_gender_data =
-			body?.okyc_response?.data?.aadhaar_data?.gender;
 
-		body.okyc_response.data.aadhaar_data.gender =
-			await this.method.transformGender(okyc_gender_data);
+		const okyc_gender_data = body?.aadhaar_data?.gender;
+
+		body.aadhaar_data.gender = await this.method.transformGender(
+			okyc_gender_data,
+		);
 
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(
