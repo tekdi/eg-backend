@@ -559,6 +559,7 @@ export class FacilitatorService {
 			'block',
 			'village',
 			'grampanchayat',
+			'pincode',
 		];
 		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
 		if (keyExist.length) {
