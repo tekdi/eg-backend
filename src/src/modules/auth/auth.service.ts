@@ -347,16 +347,12 @@ export class AuthService {
 	}
 
 	public async login(req, response) {
-		console.log(req);
-
 		const data = {
 			username: req.body.username,
 			password: req.body.password,
 		};
 
 		const token = await this.keycloakService.getUserKeycloakToken(data);
-		console.log('token', token);
-
 		if (token) {
 			return response.status(200).send({
 				success: true,

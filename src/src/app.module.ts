@@ -16,6 +16,7 @@ import { BeneficiariesModule } from './beneficiaries/beneficiaries.module';
 import { CampModule } from './camp/camp.module';
 import { CommentsModule } from './comments/comments.module';
 import { AuthMiddleware } from './common/middlewares/auth.middleware';
+import { CacheCleanerProvider } from './common/providers/cacheCleaner.provider';
 import { CronModule } from './cron/cron.module';
 import { EnumModule } from './enum/enum.module';
 import { EventsModule } from './events/events.module';
@@ -36,7 +37,6 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { UserauthModule } from './userauth/userauth.module';
-import { CacheCleanerProvider } from './common/providers/cacheCleaner.provider';
 @Module({
 	imports: [
 		ScheduleModule.forRoot(),
@@ -48,7 +48,7 @@ import { CacheCleanerProvider } from './common/providers/cacheCleaner.provider';
 		CacheModule.register<RedisClientOptions>({
 			isGlobal: true,
 			store: redisStore,
-			host: 'redis',
+			host: process.env.CACHE_SERVICE_HOST,
 			port: 6379,
 			user: 'default',
 			password: process.env.CACHE_REDIS_PASSWORD,
@@ -70,7 +70,6 @@ import { CacheCleanerProvider } from './common/providers/cacheCleaner.provider';
 		HasuraModule,
 		HelperModule,
 		InterviewModule,
-		KeycloakModule,
 		KeycloakModule,
 		KitMaterialsModule,
 		LMSModule,
