@@ -3733,13 +3733,19 @@ export class CampService {
 		const facilitator_id = req.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
-		const context_id = body.context_id;
+		const context_id = body?.context_id;
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 5 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let user_id;
 		let searchQuery = '';
+
+		let order_by = '';
+		if (body?.order_by) {
+			const order = JSON.stringify(body?.order_by).replace(/"/g, '');
+			order_by = `, order_by:${order}`;
+		}
 
 		if (body.search && !isNaN(body.search)) {
 			user_id = parseInt(body.search);
@@ -3779,17 +3785,28 @@ export class CampService {
 		let query_data = {
 			query: `
 			query MyQuery($limit: Int, $offset: Int) {
-				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}, attendances: {context: {_eq: "camp_days_activities_tracker"}, context_id: {_eq: ${context_id}}}}, order_by: {id: asc}) {
+				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}, ${order_by}) {
 					aggregate {
 					count
 					}
 				}
-				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}, attendances: {context: {_eq: "camp_days_activities_tracker"}, context_id: {_eq: ${context_id}}}}, order_by: {id: asc}){
+				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}, ${order_by}){
 					id
 				  state
 				  district
 				  block
 				  village
+				  attendances(where:{context: {_eq: "camp_days_activities_tracker"}, context_id: {_eq:${context_id}}}, order_by: {id: asc}){
+						id
+						user_id
+						context
+						context_id
+						created_by
+						lat
+						long
+						status
+						date_time
+					}
 				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 					id
 					name
@@ -3812,7 +3829,6 @@ export class CampService {
 				offset: offset,
 			},
 		};
-
 		const response = await this.hasuraServiceFromServices.getData(
 			query_data,
 		);
