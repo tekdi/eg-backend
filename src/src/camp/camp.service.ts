@@ -3740,6 +3740,27 @@ export class CampService {
 		let user_id;
 		let searchQuery = '';
 
+		let order_by = '';
+		if (body?.order_by) {
+			const order = JSON.stringify(body?.order_by).replace(/"/g, '');
+			order_by = `, order_by:${order}`;
+		}
+
+		let attandances_query = '';
+		if (body?.context_id) {
+			attandances_query = `attendances(where:{context: {_eq: "camp_days_activities_tracker"},context_id:{_eq:${body?.context_id}}}, order_by: {id: asc}){
+				id
+				user_id
+				context
+				context_id
+				created_by
+				lat
+				long
+				status
+				date_time
+			}`;
+		}
+
 		if (body.search && !isNaN(body.search)) {
 			user_id = parseInt(body.search);
 			searchQuery = `user_id: {_eq: ${user_id}}`;
@@ -3778,17 +3799,18 @@ export class CampService {
 		let query_data = {
 			query: `
 			query MyQuery($limit: Int, $offset: Int) {
-				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}) {
+				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}${order_by}) {
 					aggregate {
 					count
 					}
 				}
-				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}){
+				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}${order_by}){
 					id
 				  state
 				  district
 				  block
 				  village
+				  ${attandances_query}
 				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 					id
 					name
