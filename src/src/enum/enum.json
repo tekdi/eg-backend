@@ -1295,8 +1295,8 @@
 			"value": "festival_holiday"
 		},
 		{
-			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STACKHOLDER",
-			"value": "meeting_with_stackholder"
+			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STAKEHOLDER",
+			"value": "meeting_with_stakeholder"
 		},
 		{
 			"title": "CAMP_ABSENT_REASONS_PCP",
