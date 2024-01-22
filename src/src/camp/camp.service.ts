@@ -3785,12 +3785,12 @@ export class CampService {
 		let query_data = {
 			query: `
 			query MyQuery($limit: Int, $offset: Int) {
-				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}, ${order_by}) {
+				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}${order_by}) {
 					aggregate {
 					count
 					}
 				}
-				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}, ${order_by}){
+				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}${order_by}){
 					id
 				  state
 				  district
