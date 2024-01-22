@@ -974,8 +974,8 @@
 			"value": "festival_holiday"
 		},
 		{
-			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STACKHOLDER",
-			"value": "meeting_with_stackholder"
+			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STAKEHOLDER",
+			"value": "meeting_with_stakeholder"
 		},
 		{
 			"title": "CAMP_ABSENT_REASONS_PCP",
@@ -998,7 +998,7 @@
 			"value": "exam"
 		}
 	],
-	"FACILITATOR_MOOD_LIST":[
+	"FACILITATOR_MOOD_LIST": [
 		{
 			"title": "FACILITATOR_MOOD_LIST_FULL_OF_COURAGE",
 			"value": "facilitator_mood_list_full_of_courage"
@@ -1024,7 +1024,7 @@
 			"value": "facilitator_mood_list_aspirational"
 		}
 	],
-	"MISCELLANEOUS_ACTIVITIES":[
+	"MISCELLANEOUS_ACTIVITIES": [
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
 			"value": "miscellaneous_activities_communication_skills"
@@ -1091,7 +1091,6 @@
 			"title": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER",
 			"subTitle": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER_QUANTITY",
 			"value": "ypp_cpp_posh_poster"
-			
 		},
 		{
 			"title": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH",

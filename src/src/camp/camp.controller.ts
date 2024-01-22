@@ -352,4 +352,15 @@ export class CampController {
 			response,
 		);
 	}
+
+	@Post('/:id/camp_learners')
+	@UseGuards(new AuthGuard())
+	campLearnersById(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.campLearnersById(id, body, request, response);
+	}
 }
