@@ -3733,6 +3733,7 @@ export class CampService {
 		const facilitator_id = req.mw_userid;
 		let program_id = body?.program_id || 1;
 		let academic_year_id = body?.academic_year_id || 1;
+		const context_id = body.context_id;
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 5 : parseInt(body.limit);
@@ -3778,12 +3779,12 @@ export class CampService {
 		let query_data = {
 			query: `
 			query MyQuery($limit: Int, $offset: Int) {
-				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}) {
+				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}, attendances: {context: {_eq: "camp_days_activities_tracker"}, context_id: {_eq: ${context_id}}}}, order_by: {id: asc}) {
 					aggregate {
 					count
 					}
 				}
-				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}){
+				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}, attendances: {context: {_eq: "camp_days_activities_tracker"}, context_id: {_eq: ${context_id}}}}, order_by: {id: asc}){
 					id
 				  state
 				  district
