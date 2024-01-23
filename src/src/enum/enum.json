@@ -1089,7 +1089,7 @@
 		},
 		{
 			"title": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSTER",
-			"subTitle": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER_QUANTITY",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSTER_QUANTITY",
 			"value": "ypp_cpp_poster"
 		},
 		{
@@ -1103,7 +1103,7 @@
 			"value": "one_week_series"
 		},
 		{
-			"title": "KIT_MATERIALS_CHECKLISTS_PRAGATI_JOURNEY_Poster",
+			"title": "KIT_MATERIALS_CHECKLISTS_PRAGATI_JOURNEY_POSTER",
 			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRAGATI_JOURNEY_POSTER_QUANTITY",
 			"value": "pragati_journey_poster"
 		},
