@@ -7,10 +7,10 @@ import jwt_decode from 'jwt-decode';
 export class AuthMiddleware implements NestMiddleware {
 	constructor(private userService: UserService) {}
 	async use(req: any, res: Response, next: NextFunction) {
-		if (req.headers.authorization) {
-			req.mw_roles = [];
-			req.mw_userid = null;
+		req.mw_roles = [];
+		req.mw_userid = null;
 
+		if (req.headers.authorization) {
 			let bearerToken = null;
 			let bearerTokenTemp = null;
 
@@ -44,22 +44,23 @@ export class AuthMiddleware implements NestMiddleware {
 				req.mw_userid = null;
 			}
 
-			const decoded: any = jwt_decode(authToken);
-			let keycloak_id = decoded.sub;
+			try {
+				const decoded: any = jwt_decode(authToken);
+				let keycloak_id = decoded.sub;
 
-			// const user = await this.userService.ipUserInfo(req);
-			const userId = await this.userService.getUserIdFromKeycloakId(
-				keycloak_id,
-			);
+				// const user = await this.userService.ipUserInfo(req);
+				const userId = await this.userService.getUserIdFromKeycloakId(
+					keycloak_id,
+				);
 
-			req.mw_userid = userId;
+				req.mw_userid = userId;
 
-			if (userId) {
-				const decoded: any = jwt_decode(req.headers.authorization);
-				req.mw_roles = decoded.resource_access.hasura.roles || [];
+				if (userId) {
+					req.mw_roles = decoded.resource_access.hasura.roles || [];
+				}
+			} catch (error) {
+				req.mw_userid = null;
 			}
-		} else {
-			req.mw_userid = null;
 		}
 
 		next();
