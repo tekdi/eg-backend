@@ -3339,9 +3339,10 @@ export class CampService {
 	public async createCampDayActivity(body: any, req: any, res: any) {
 		let created_by = req?.mw_userid;
 		let updated_by = req?.mw_userid;
-		let camp_id = body.camp_id;
-		let camp_day_happening = body.camp_day_happening;
-		let camp_day_not_happening_reason = body.camp_day_not_happening_reason;
+		let camp_id = body?.camp_id;
+		let camp_day_happening = body?.camp_day_happening;
+		let camp_day_not_happening_reason = body?.camp_day_not_happening_reason;
+		let mood = body?.mood;
 		let object;
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
@@ -3374,7 +3375,7 @@ export class CampService {
 		if (camp_day_happening === 'no') {
 			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
 		} else {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
 		}
 
 		const data = {
@@ -3394,7 +3395,6 @@ export class CampService {
 			}
 		}`,
 		};
-
 		const result = await this.hasuraServiceFromServices.getData(data);
 
 		let createresponse = result?.data;
