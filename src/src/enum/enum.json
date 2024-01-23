@@ -1083,14 +1083,14 @@
 			"value": "mock_test_question_papers"
 		},
 		{
-			"title": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS",
+			"title": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS_1_CORRECTION_SHEET",
 			"subTitle": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS_QUANTITY",
-			"value": "answer_keys"
+			"value": "answer_keys_1_correction_sheet"
 		},
 		{
-			"title": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER",
+			"title": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSTER",
 			"subTitle": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSH_POSTER_QUANTITY",
-			"value": "ypp_cpp_posh_poster"
+			"value": "ypp_cpp_poster"
 		},
 		{
 			"title": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH",
@@ -1103,24 +1103,19 @@
 			"value": "one_week_series"
 		},
 		{
-			"title": "KIT_MATERIALS_CHECKLISTS_BANNER_AND_POSTER",
-			"subTitle": "KIT_MATERIALS_CHECKLISTS_BANNER_AND_POSTER_QUANTITY",
-			"value": "banner_and_poster"
+			"title": "KIT_MATERIALS_CHECKLISTS_PRAGATI_JOURNEY_Poster",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRAGATI_JOURNEY_POSTER_QUANTITY",
+			"value": "pragati_journey_poster"
 		},
 		{
-			"title": "KIT_MATERIALS_CHECKLISTS_PRERAK_HAND_BOOK",
-			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRERAK_HAND_BOOK_QUANTITY",
-			"value": "prerak_hand_book"
+			"title": "KIT_MATERIALS_CHECKLISTS_RSOS_BOOK",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_RSOS_BOOK_QUANTITY",
+			"value": "rsos_books"
 		},
 		{
-			"title": "KIT_MATERIALS_CHECKLISTS_TEXT_BOOKS_HINDI",
-			"subTitle": "KIT_MATERIALS_CHECKLISTS_TEXT_BOOKS_HINDI_QUANTITY",
-			"value": "text_books_hindi"
-		},
-		{
-			"title": "KIT_MATERIALS_CHECKLISTS_GOVERNMENT_CONSENT_LETTER_FOR_CAMP",
-			"subTitle": "KIT_MATERIALS_CHECKLISTS_GOVERNMENT_CONSENT_LETTER_FOR_CAMP_QUANTITY",
-			"value": "government_consent_letter_for_camp"
+			"title": "KIT_MATERIALS_CHECKLISTS_PRI_COMMUNITY_ACKNOWLEDGEMENT_LETTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRI_COMMUNITY_ACKNOWLEDGEMENT_LETTER_QUANTITY",
+			"value": "pri_community_acknowledgement_letter"
 		}
 	],
 	"SESSION_PARTIALLY_COMPLETE": [
