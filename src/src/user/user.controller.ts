@@ -104,8 +104,18 @@ export class UserController {
 	public async searchById(
 		@Param('id') id: number,
 		@Res() response: Response,
+		@Req() request: any,
 	) {
-		return this.userService.userById(id, response);
+		this.userService
+			.userById(id, response, request)
+			.then((result) => {
+				// Further processing or sending the result as a response
+				response.send(result);
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+				response.status(500).send({ error: 'Internal Server Error' });
+			});
 	}
 
 	// users/is_user_exist by mobile and adhaar etc filter.
@@ -138,8 +148,17 @@ export class UserController {
 	// users/ip_user_info by auth token.
 	@Get('/ip_user_info')
 	@UseGuards(new AuthGuard())
-	ipUserInfo(@Req() request: Request) {
-		return this.userService.ipUserInfo(request);
+	ipUserInfo(@Req() request: Request, @Res() response: Response) {
+		this.userService
+			.ipUserInfo(request, response)
+			.then((result) => {
+				// Further processing or sending the result as a response
+				response.send(result);
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+				response.status(500).send({ error: 'Internal Server Error' });
+			});
 	}
 
 	@Get('/organization/:id')
