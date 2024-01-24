@@ -30,7 +30,7 @@ export class UserModule implements NestModule {
 				'/users/create',
 				'/users/update/:id',
 				'/users/list',
-				'/users/info/:id',
+				//'/users/info/:id',
 				'/users/is_user_exist',
 				'/users/login',
 				'/users/ip_user_info',

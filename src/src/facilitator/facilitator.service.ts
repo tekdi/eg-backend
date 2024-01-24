@@ -877,6 +877,31 @@ export class FacilitatorService {
 				true,
 			);
 		}
+		// Update core_facilitator table
+		const coreFacilitatorsArr = [
+			'user_id',
+			'has_diploma',
+			'diploma_details',
+		];
+		keyExist = coreFacilitatorsArr.filter((e) =>
+			Object.keys(body).includes(e),
+		);
+		if (keyExist.length) {
+			const tableName = 'core_faciltators';
+			await this.hasuraService.q(
+				tableName,
+				{
+					has_diploma: body.has_diploma || false,
+					diploma_details: body.has_diploma
+						? body.diploma_details || null
+						: null,
+					id: facilitatorUser?.core_faciltator?.id ?? null,
+					user_id: id,
+				},
+				coreFacilitatorsArr,
+				true,
+			);
+		}
 	}
 
 	async updateReferenceDetails(id: number, body: any, facilitatorUser: any) {
@@ -1807,6 +1832,8 @@ export class FacilitatorService {
 			id
 			sourcing_channel
 			user_id
+			has_diploma
+			diploma_details
 		  }
 		  experience {
 			description
@@ -2402,11 +2429,12 @@ export class FacilitatorService {
 		const user_id = req?.mw_userid;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
-		const okyc_gender_data =
-			body?.okyc_response?.data?.aadhaar_data?.gender;
 
-		body.okyc_response.data.aadhaar_data.gender =
-			await this.method.transformGender(okyc_gender_data);
+		const okyc_gender_data = body?.aadhaar_data?.gender;
+
+		body.aadhaar_data.gender = await this.method.transformGender(
+			okyc_gender_data,
+		);
 
 		const updated_response =
 			await this.facilitatorCoreService.updateOkycResponse(

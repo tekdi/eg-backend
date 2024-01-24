@@ -12,7 +12,7 @@ import { S3Service } from '../services/s3/s3.service';
 
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
-const moment = require('moment');
+import * as moment from 'moment';
 @Injectable()
 export class CampService {
 	constructor(
@@ -3268,6 +3268,7 @@ export class CampService {
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
+
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -3278,15 +3279,18 @@ export class CampService {
 		}
 		let parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		let response = await this.campcoreservice.getFacilitatorsForCamp(
+			body,
 			parent_ip_id,
 			limit,
 			offset,
 			req,
 		);
+		let users = response?.pagination_count;
 
-		let users = response?.data?.users;
-
-		let userDataPromises = await users.map(async (user) => {
+		if (!users || users.length === 0) {
+			return resp.json({ message: 'Response not getting' });
+		}
+		let userDataPromises = await users?.map(async (user) => {
 			const campLearnerCount = await this.calculateCampLearnerCountSum(
 				user,
 			);
@@ -3297,7 +3301,7 @@ export class CampService {
 
 		let userData = await Promise.all(userDataPromises);
 
-		const count = response?.data?.users_aggregate?.aggregate?.count;
+		const count = response?.users?.length;
 
 		const totalPages = Math.ceil(count / limit);
 
@@ -3308,8 +3312,7 @@ export class CampService {
 				data: [],
 			});
 		} else {
-			return resp.json({
-				status: 200,
+			return resp.status(200).json({
 				message: 'FACILITATOR_DATA_FOUND_SUCCESS',
 				data: userData,
 				totalCount: count,
@@ -3321,9 +3324,9 @@ export class CampService {
 	}
 
 	async calculateCampLearnerCountSum(user) {
-		if (user.camp_learner_count && user.camp_learner_count.length > 0) {
+		if (user?.camp_learner_count && user.camp_learner_count.length > 0) {
 			return user.camp_learner_count.reduce((sum, camp) => {
-				if (camp?.group && camp?.group?.group_users_aggregate) {
+				if (camp?.group?.group_users_aggregate) {
 					return (
 						sum + camp.group.group_users_aggregate.aggregate.count
 					);
@@ -3337,9 +3340,10 @@ export class CampService {
 	public async createCampDayActivity(body: any, req: any, res: any) {
 		let created_by = req?.mw_userid;
 		let updated_by = req?.mw_userid;
-		let camp_id = body.camp_id;
-		let camp_day_happening = body.camp_day_happening;
-		let camp_day_not_happening_reason = body.camp_day_not_happening_reason;
+		let camp_id = body?.camp_id;
+		let camp_day_happening = body?.camp_day_happening;
+		let camp_day_not_happening_reason = body?.camp_day_not_happening_reason;
+		let mood = body?.mood;
 		let object;
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
@@ -3372,7 +3376,7 @@ export class CampService {
 		if (camp_day_happening === 'no') {
 			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
 		} else {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
 		}
 
 		const data = {
@@ -3392,7 +3396,6 @@ export class CampService {
 			}
 		}`,
 		};
-
 		const result = await this.hasuraServiceFromServices.getData(data);
 
 		let createresponse = result?.data;
@@ -3628,7 +3631,6 @@ export class CampService {
 		});
 
 		let result = hasura_response?.data;
-		console.log(result);
 
 		if (result) {
 			return res.json({
@@ -3647,87 +3649,243 @@ export class CampService {
 
 	public async getRandomAttendanceGeneration(id: any, req: any, res: any) {
 		let camp_id = id;
-		const currentDate = new Date().toISOString().split('T')[0];
-		const currentDateObject = new Date(currentDate);
+		const format = 'YYYY-MM-DD';
+		const currentDate = moment().format(format);
 
 		// Get the date 7 days before the current date
-		const sevenDaysLess = new Date(currentDateObject);
-		sevenDaysLess.setDate(currentDateObject.getDate() - 7);
-		const formattedSevenDaysLess = sevenDaysLess
-			.toISOString()
-			.split('T')[0]; // Format seven days less
+		const formattedSevenDaysLess = moment()
+			.subtract(7, 'days')
+			.format(format); // Format seven days less
 
-		// Get the date 1 day before the current date
-		const oneDayLess = new Date(currentDateObject);
-		oneDayLess.setDate(currentDateObject.getDate() - 1);
-		const formattedOneDayLess = oneDayLess.toISOString().split('T')[0];
-
-		const sql = `SELECT
-		gs.date AS date,
-		COUNT(a.id) AS count_of_data
-	  FROM
-		generate_series(
+		const sql = `SELECT gs.date AS date, COUNT(a.id) AS count_of_data
+	  FROM generate_series(
 		  '${formattedSevenDaysLess}'::timestamp,
-		  '${formattedOneDayLess}'::timestamp,
+		  '${currentDate}'::timestamp,
 		  '1 day'
 		) AS gs(date)
-	  LEFT JOIN
-		attendance a ON DATE_TRUNC('day', a.date_time) = gs.date AND a.photo_1 IS NOT NULL AND a.context_id = ${camp_id}
-	  WHERE
-		gs.date >= '${formattedSevenDaysLess}' AND gs.date <= '${currentDate}'
-	  GROUP BY
-		gs.date
-	  ORDER BY
-		gs.date;
-
+	  LEFT JOIN	attendance a ON DATE_TRUNC('day', a.date_time) = gs.date 
+		LEFT JOIN camp_days_activities_tracker cda ON cda.id = a.context_id
+	  WHERE gs.date >= '${formattedSevenDaysLess}' AND gs.date <= '${currentDate}'
+		AND a.photo_1 IS NOT NULL AND a.photo_1 != '-'
+		AND cda.camp_id = ${camp_id}
+		AND a.context = 'camp_days_activities_tracker'
+	  GROUP BY gs.date
+	  ORDER BY gs.date;
 		;`;
+
 		const attendance_data = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		)?.result;
 
-		if (attendance_data == undefined) {
+		if (attendance_data == undefined && !attendance_data) {
 			return res.json({
-				learner_camp_attendance_data: 1,
+				message: 'No Data found',
 			});
 		}
 
-		const filteredDates = attendance_data.reduce(
-			(filtered, entry, index) => {
-				if (index === 0 || parseInt(entry[1]) === 0) return filtered;
-				filtered.push(entry[0].split(' ')[0]);
-				return filtered;
+		const data = await this.hasuraServiceFromServices.getFormattedData(
+			attendance_data,
+		);
+
+		if (Array.isArray(data)) {
+			if (data.length == 0) {
+				return res.json({
+					learner_camp_attendance_data: 1,
+					message: 'data not found',
+				});
+			} else if (data.length == 1) {
+				const dataDate = moment(data?.[0]?.date);
+				const differenceInDays = moment().diff(dataDate, 'days');
+
+				if (differenceInDays == 0) {
+					return res.json({
+						learner_camp_attendance_data: 1,
+						message: 'Taken Attendances Today By Camera',
+					});
+				} else if (differenceInDays == 7) {
+					return res.json({
+						learner_camp_attendance_data: 1,
+						message: 'seven days differences',
+					});
+				} else {
+					return res.json({
+						learner_camp_attendance_data:
+							Math.floor(Math.random() * 2) > 0 ? 1 : 0,
+						message: 'random',
+					});
+				}
+			} else {
+				return res.json({
+					learner_camp_attendance_data: 0,
+					message: 'data greater than two',
+				});
+			}
+		} else {
+			return res.status(200).json({
+				learner_camp_attendance_data: 0,
+				message: 'Invalid data format',
+			});
+		}
+	}
+
+	public async campLearnersById(id: any, body: any, req: any, resp) {
+		const camp_id = id;
+		const facilitator_id = req.mw_userid;
+		let program_id = body?.program_id || 1;
+		let academic_year_id = body?.academic_year_id || 1;
+
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 5 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+		let user_id;
+		let searchQuery = '';
+
+		let order_by = '';
+		if (body?.order_by) {
+			const order = JSON.stringify(body?.order_by).replace(/"/g, '');
+			order_by = `, order_by:${order}`;
+		}
+
+		let attandances_query = '';
+		if (body?.context_id) {
+			attandances_query = `attendances(where:{context: {_eq: "camp_days_activities_tracker"},context_id:{_eq:${body?.context_id}}}, order_by: {id: asc}){
+				id
+				user_id
+				context
+				context_id
+				created_by
+				lat
+				long
+				status
+				date_time
+			}`;
+		}
+
+		if (body.search && !isNaN(body.search)) {
+			user_id = parseInt(body.search);
+			searchQuery = `user_id: {_eq: ${user_id}}`;
+		} else if (body.search) {
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					searchQuery = `_and:[{enrollment_first_name: { _ilike: "%${first_name}%" }}, {enrollment_last_name: { _ilike: "%${last_name}%" }}],`;
+				} else {
+					searchQuery = `_or:[{enrollment_first_name: { _ilike: "%${first_name}%" }}, {enrollment_last_name: { _ilike: "%${first_name}%" }}],`;
+				}
+			}
+		}
+		let check_facilitator = `query MyQuery {
+			camps_aggregate(where: {id: {_eq: ${camp_id}}, group_users: {member_type: {_eq: "owner"},status:{_eq:"active"}, user_id: {_eq:${facilitator_id}}group:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}}}) {
+				aggregate {
+					count
+				}
+			}
+		}`;
+		const data_exist = { query: check_facilitator };
+		const response_faciliator =
+			await this.hasuraServiceFromServices.getData(data_exist);
+		const check_count =
+			response_faciliator?.data?.camps_aggregate?.aggregate?.count;
+
+		if (!check_count) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data not found!',
+				data: {},
+			});
+		}
+		let query_data = {
+			query: `
+			query MyQuery($limit: Int, $offset: Int) {
+				users_aggregate(where:{program_beneficiaries:{},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}${order_by}) {
+					aggregate {
+					count
+					}
+				}
+				users(limit: $limit, offset: $offset , where:{program_beneficiaries:{${searchQuery}},group_users:{camps:{id:{_eq:${camp_id}}},group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}} ,member_type:{_eq:"member"},status: {_eq: "active"}}}${order_by}){
+					id
+				  state
+				  district
+				  block
+				  village
+				  ${attandances_query}
+				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+				  }
+				  program_beneficiaries {
+					user_id
+					status
+					enrollment_first_name
+					enrollment_last_name
+					enrollment_middle_name
+				  }
+				}
+			}
+		  `,
+			variables: {
+				limit: limit,
+				offset: offset,
 			},
-			[],
+		};
+
+		const response = await this.hasuraServiceFromServices.getData(
+			query_data,
 		);
 
-		const dateObjects = filteredDates.map(
-			(dateString) => new Date(dateString),
-		);
-		const highestDate = new Date(Math.max(...dateObjects));
+		const count = response?.data?.users_aggregate?.aggregate?.count;
 
-		// Calculate the difference in days
-		const today = new Date();
-		const differenceInTime = Math.abs(
-			today.getTime() - highestDate.getTime(),
-		);
-		const differenceInDays = Math.floor(
-			differenceInTime / (1000 * 3600 * 24),
-		);
+		const totalPages = Math.ceil(count / limit);
 
-		if (filteredDates.length == 0) {
-			return res.json({
-				learner_camp_attendance_data: 1,
+		if (!response || response?.length == 0) {
+			return resp.status(400).json({
+				success: false,
+				message: 'Camp data not found!',
+				data: {},
 			});
 		}
 
-		if (filteredDates.length == 1 && differenceInDays == 7) {
-			return res.json({
-				learner_camp_attendance_data: 1,
-			});
-		}
+		const userData = await Promise.all(
+			response.data.users.map(async (userObj) => {
+				let profilePhoto = userObj?.profile_photo_1;
+				if (profilePhoto?.[0]?.id !== undefined) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							userObj.profile_photo_1[0].id,
+						);
+					if (success && fileData?.fileUrl) {
+						userObj.profile_photo_1 = {
+							id: userObj.profile_photo_1[0]?.id,
+							name: userObj.profile_photo_1[0]?.name,
+							doument_type:
+								userObj.profile_photo_1[0]?.doument_type,
+							document_sub_type:
+								userObj.profile_photo_1[0]?.document_sub_type,
+							path: userObj.profile_photo_1[0]?.path,
+							fileUrl: fileData.fileUrl,
+						};
+					}
+				} else {
+					userObj.profile_photo_1 = {};
+				}
 
-		return res.json({
-			learner_camp_attendance_data: 0,
+				return userObj;
+			}),
+		);
+
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			totalCount: count,
+			limit,
+			currentPage: page,
+			totalPages: `${totalPages}`,
+			data: userData || [],
 		});
 	}
 }

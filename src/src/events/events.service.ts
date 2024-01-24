@@ -40,6 +40,8 @@ export class EventsService {
 		'updated_by',
 		'user_id',
 		'reminders',
+		'academic_year_id',
+		'program_id',
 	];
 
 	public attendanceReturnFields = [
@@ -67,6 +69,9 @@ export class EventsService {
 
 	public async create(req, header, response) {
 		let user_id_arr = req.attendees;
+		let program_id = header?.mw_program_id;
+		let academic_year_id = header?.mw_academic_year_id;
+
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
 		let obj = {
@@ -85,6 +90,8 @@ export class EventsService {
 			updated_by: user_id,
 			type: req.type,
 			reminders: JSON.stringify(req.reminders).replace(/"/g, '\\"'),
+			program_id: program_id,
+			academic_year_id: academic_year_id,
 		};
 
 		const eventResult = await this.hasuraService.create(
@@ -143,6 +150,8 @@ export class EventsService {
 	}
 
 	public async getEventsList(header, response) {
+		let program_id = header?.mw_program_id;
+		let academic_year_id = header?.mw_academic_year_id;
 		const userDetail: any = await this.userService.ipUserInfo(header);
 		if (!userDetail?.data?.id) {
 			return response.status(400).send({
@@ -158,6 +167,7 @@ export class EventsService {
 				}
 			  }`,
 		};
+
 		const getIps = await this.hasuraServiceFromServices.getData(data);
 
 		if (!getIps?.data?.users) {
@@ -182,8 +192,9 @@ export class EventsService {
 								_is_null: true
 							}
 						}
-					]
-				}) {
+					],
+					_and: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}
+				}}) {
 					id
 					location
 					location_type
@@ -735,6 +746,8 @@ export class EventsService {
 	}
 
 	async getEventsListByUserId(req, id, body, res) {
+		let academic_year_id = req?.mw_academic_year_id;
+		let program_id = req?.mw_program_id;
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
 		const offset = page > 1 ? limit * (page - 1) : 0;
@@ -743,12 +756,12 @@ export class EventsService {
 
 		const data = {
 			query: `query MyQuery($limit: Int, $offset: Int) {
-				events_aggregate(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}) {
+				events_aggregate(where: {end_date:{_gte:"${todayDate}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}) {
 					aggregate {
 						count
 					}
 				}
-				events(where: {end_date:{_gte:"${todayDate}"},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
+				events(where: {end_date:{_gte:"${todayDate}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					id
 					user_id
 					context

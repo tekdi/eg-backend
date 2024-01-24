@@ -233,6 +233,7 @@ export class CampCoreService {
 	}
 
 	public async getFacilitatorsForCamp(
+		body: any,
 		parent_ip_id: any,
 		limit: any,
 		offset: any,
@@ -240,52 +241,118 @@ export class CampCoreService {
 	) {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
+		let filterQueryArray = [];
+
+		let searchQuery = '';
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`{_and: [
+				{first_name: { _ilike: "%${first_name}%" }},
+				{ last_name: { _ilike: "%${last_name}%" } } 
+				 ]} `);
+			} else {
+				filterQueryArray.push(
+					`{_or:[{first_name: { _ilike: "%${first_name}%" }}, {last_name: { _ilike: "%${first_name}%" }}]}`,
+				);
+			}
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+			);
+		}
+
+		let filterQuery = '_and: [' + filterQueryArray.join(',') + ']';
+
 		let data = {
 			query: `
-			query MyQuery($limit: Int, $offset: Int){
-				users_aggregate(where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}){
-				  aggregate{
-					count
-				  }
-				}
-				users(limit: $limit, offset: $offset,where: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}}}) {
-				  id
-				  first_name
-				  middle_name
-				  last_name
-				  district
-				  block
-				  state
-				  camp_count: group_users_aggregate(where: {status: {_eq: "active"}}) {
-					aggregate {
-					  count
-					}
-				  }
-				  camp_learner_count: group_users(where: {status: {_eq: "active"}}) {
-					group {
-					  group_users_aggregate(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
-						aggregate {
-						  count
+				query MyQuery {
+					users_aggregate(
+						where: {${filterQuery},
+							program_faciltators: {
+								parent_ip: { _eq: "${parent_ip_id}" }, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
+								status: { _in: ["selected_prerak", "selected_for_onboarding"] }
+							},
+							references: { context: { _eq: "community.user" } }
 						}
-					  }
+					) {
+						aggregate {
+							count
+						}
 					}
-				  }
+					users(
+						where: {${filterQuery},
+							program_faciltators: {
+								parent_ip: { _eq: "${parent_ip_id}" }, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
+								status: { _in: ["selected_prerak", "selected_for_onboarding"] }
+							},
+							references: { context: { _eq: "community.user" } }
+						}
+					) {
+						id
+						first_name
+						middle_name
+						last_name
+						district
+						block
+						state
+						references {
+							id
+							context
+							context_id
+						}
+						camp_count: group_users_aggregate(where: { status: { _eq: "active" } }) {
+							aggregate {
+								count
+							}
+						}
+						camp_learner_count: group_users(where: { status: { _eq: "active" } }) {
+							group {
+								group_users_aggregate(where: { member_type: { _eq: "member" }, status: { _eq: "active" } }) {
+									aggregate {
+										count
+									}
+								}
+							}
+						}
+					}
 				}
-			  }
-
 			`,
-			variables: {
-				limit: limit,
-				offset: offset,
-			},
 		};
 
 		const hasura_response = await this.hasuraServiceFromServices.getData(
 			data,
 		);
 
-		return hasura_response;
+		const mappedUsersWithMinReferencesWithPagination =
+			hasura_response?.data?.users
+				.filter((user) => user.references.length >= 2)
+				.map((user) => {
+					return user;
+				})
+				.slice(offset, offset + limit);
+
+		const mappedUsersWithMinReferences = hasura_response?.data?.users
+			.filter((user) => user.references.length >= 2)
+			.map((user) => {
+				return user;
+			});
+
+		return {
+			pagination_count: mappedUsersWithMinReferencesWithPagination,
+			users: mappedUsersWithMinReferences,
+		};
 	}
+
 	public async createCampUser(
 		body: any,
 		returnFields: any,

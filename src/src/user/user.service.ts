@@ -238,14 +238,16 @@ export class UserService {
 		}
 	}
 
-	public async ipUserInfo(request: any, role: any = '') {
+	public async ipUserInfo(request: any, res?, role: any = '') {
 		let userData = null;
 
 		if (request.mw_userid) {
 			if (role === 'staff') {
 				userData = await this.getIpRoleUserById(request.mw_userid);
 			} else {
-				userData = (await this.userById(request.mw_userid)).data;
+				userData = (
+					await this.userById(request.mw_userid, res, request)
+				).data;
 			}
 		} else {
 			return {
@@ -256,7 +258,7 @@ export class UserService {
 
 		return {
 			status: 200,
-			data: userData,
+			data: userData?.data,
 		};
 	}
 
@@ -726,6 +728,8 @@ export class UserService {
 			sourcing_channel
 			updated_by
 			user_id
+			has_diploma
+			diploma_details
 		  }
 		  experience {
 			id
@@ -861,7 +865,7 @@ export class UserService {
 			context
 			context_id
 		  }
-		  references {
+		  references(where:{context:{_eq:"users"}}) {
 			id
 			name
 			contact_number
@@ -954,7 +958,9 @@ export class UserService {
 			return {
 				statusCode: 200,
 				message: 'Ok.',
-				data: mappedResponse,
+				data: {
+					data: mappedResponse,
+				},
 			};
 		}
 	}
