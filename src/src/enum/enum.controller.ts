@@ -1,6 +1,5 @@
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
-import { Controller, Get, Query, Res, UseInterceptors } from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, Query, UseInterceptors } from '@nestjs/common';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { EnumService } from './enum.service';
 
