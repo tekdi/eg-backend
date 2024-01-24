@@ -19,7 +19,7 @@ export class EnumController {
 	@UseInterceptors(CacheInterceptor)
 	@CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
 	@Get('/list')
-	getAllEnums(@Res() res: Response) {
-		return this.enumService.getAllEnums(res);
+	getAllEnums() {
+		return this.enumService.getAllEnums();
 	}
 }
