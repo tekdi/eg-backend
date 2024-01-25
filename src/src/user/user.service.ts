@@ -258,7 +258,7 @@ export class UserService {
 
 		return {
 			status: 200,
-			data: userData?.data,
+			data: userData,
 		};
 	}
 
@@ -958,9 +958,7 @@ export class UserService {
 			return {
 				statusCode: 200,
 				message: 'Ok.',
-				data: {
-					data: mappedResponse,
-				},
+				data: mappedResponse,
 			};
 		}
 	}
