@@ -3155,11 +3155,7 @@ export class BeneficiariesService {
 				fu.id = pf.user_id
 			WHERE
 				pf.parent_ip = '${user?.program_users?.organisation_id}'
-				AND
-				pf.academic_year_id = ${academic_year_id}
-				AND
-				pf.program_id = ${program_id}
-			AND
+							AND
 				bu.aadhar_no IS NOT NULL
 			AND
 				bu.is_deactivated IS NOT true
