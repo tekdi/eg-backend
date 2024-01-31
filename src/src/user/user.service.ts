@@ -63,14 +63,31 @@ export class UserService {
 				}
 			});
 
+			//get user_id from program_facilitator_id
+
+			let data_query = `query MyQuery {
+				program_faciltators_by_pk(id:${userId}){
+				  id
+				  user_id
+				}
+			  }
+			  `;
+
+			const query_data = await this.hasuraServiceFromServices.getData({
+				query: data_query,
+			});
+
+			let facilitator_user_id =
+				query_data?.data?.program_faciltators_by_pk?.user_id;
+
 			// validation to check if the facilitator is present in the camp
 
 			let validation_query = `query MyQuery {
-				users(where: {group_users: {user_id: {_eq:${userId}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+				users(where: {group_users: {user_id: {_eq:${facilitator_user_id}}, member_type: {_eq: "owner"}, status: {_eq: "active"}, group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}, program_faciltators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
 				  id
 				}
 			  }
-			  
+				  
 			  `;
 
 			const validation_data =
@@ -91,7 +108,7 @@ export class UserService {
 				};
 			}
 
-			var data = {
+			let data = {
 				query: `mutation update($id:Int) {
 			  update_${tableName}(where: {id: {_eq: $id}}, _set: {${query}}) {
 				affected_rows
@@ -101,7 +118,8 @@ export class UserService {
 					id: userId,
 				},
 			};
-			var config = {
+
+			let config = {
 				method: 'post',
 				url: this.url,
 				headers: {
