@@ -2010,6 +2010,8 @@ export class FacilitatorService {
 	}
 
 	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
+		let program_id = req?.mw_program_id;
+		let academic_year_id = req?.mw_academic_year_id;
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.id) {
 			return resp.status(401).json({
@@ -2026,7 +2028,7 @@ export class FacilitatorService {
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`{program_faciltators:{parent_ip:{_eq:"${user?.data?.program_users[0]?.organisation_id}"}}}`,
+			`{program_faciltators:{parent_ip:{_eq:"${user?.data?.program_users[0]?.organisation_id}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}`,
 		);
 
 		if (body.search && body.search !== '') {
