@@ -361,4 +361,21 @@ export class CampController {
 	) {
 		return this.campService.campLearnersById(id, body, request, response);
 	}
+
+	//multiple reassigne learner from One camp to other
+	@Patch('/admin/multiplereassign/:id')
+	@UseGuards(new AuthGuard())
+	multiplereassignBeneficiarytoCamp(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.multiplereassignBeneficiarytoCamp(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }

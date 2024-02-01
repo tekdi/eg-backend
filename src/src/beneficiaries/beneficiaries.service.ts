@@ -3702,4 +3702,59 @@ export class BeneficiariesService {
 	private isValidString(str: string) {
 		return typeof str === 'string' && str.trim();
 	}
+
+	//Multiple Beneficiary facilitator id update
+	public async updateMultipleBeneficiaryFacilitatorId(
+		beneficiaryDetails,
+		newFacilitatorId: number,
+	) {
+		const response = {
+			success: false,
+			data: null,
+			message: '',
+		};
+
+		let updateResult = [];
+		if (
+			Array.isArray(beneficiaryDetails) &&
+			beneficiaryDetails?.length > 0
+		) {
+			let coreQuery = [];
+			beneficiaryDetails.forEach((program_beneficiary) => {
+				if (
+					newFacilitatorId !== program_beneficiary.facilitator_id &&
+					program_beneficiary.original_facilitator_id === null
+				) {
+					coreQuery = [
+						...coreQuery,
+						`{
+					where: {id: {_eq: ${program_beneficiary?.id}}},
+					_set: {original_facilitator_id: ${program_beneficiary.facilitator_id},facilitator_id:${newFacilitatorId}}
+					}`,
+					];
+				}
+			});
+			const data = {
+				query: `mutation update_many_articles {
+					update_program_beneficiaries_many(updates: [${coreQuery.join(',')}]){
+						affected_rows
+						returning{
+							id
+							user_id
+							facilitator_id
+							original_facilitator_id
+					}
+				}
+			}
+			`,
+			};
+
+			const newResult = await this.hasuraServiceFromServices.getData(
+				data,
+			);
+			updateResult = newResult?.data?.update_program_beneficiaries_many;
+		}
+
+		return updateResult;
+	}
 }
