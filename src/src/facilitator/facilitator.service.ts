@@ -2099,25 +2099,16 @@ export class FacilitatorService {
 					user?.data?.program_users[0]?.organisation_id
 				}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}){
 					status
-					learner_total_count: beneficiaries_aggregate(where: {status: {_in: ["identified", "ready_to_enroll", "enrolled", "enrolled_ip_verified"]}, _not: {group_users: {status: {_eq: "active"}}}}) {
+					learner_total_count: beneficiaries_aggregate(where: {status: {_in: ["identified", "ready_to_enroll", "enrolled", "enrolled_ip_verified"]},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}, _not: {group_users: {status: {_eq: "active"}}}}) {
 						aggregate {
 						  count
 						}
 					  },
-					  identified_and_ready_to_enroll:beneficiaries_aggregate(
-						where: {
-							user: {id: {_is_null: false}},
-							_or: [
-								{ status: { _in: ["identified", "ready_to_enroll"] } },
-								{ status: { _is_null: true } }
-						 ]
-						}
-					)
-					{
+					  identified_and_ready_to_enroll: beneficiaries_aggregate(where: {user: {id: {_is_null: false}}, _or: [{status: {_in: ["identified", "ready_to_enroll"]}}, {status: {_is_null: true}}],academic_year_id: {_eq:${academic_year_id}},program_id:{_eq:${program_id}}}) {
 						aggregate {
 						  count
 						}
-					} ,
+					  },
 					${status
 						.filter(
 							(item) =>
@@ -2136,6 +2127,7 @@ export class FacilitatorService {
 						{ user:	{ id: { _is_null: false } } }
 	
 											 ],
+					 academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}				 
 					  _not: {group_users: {status: {_eq: "active"}}}}					 
 					
 				)
