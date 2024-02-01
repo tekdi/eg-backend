@@ -8,6 +8,7 @@ import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 import { UserModule } from 'src/user/user.module';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
+import { AcknowledgementModule } from '../services/acknowledgement/acknowledgement.module';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { Method } from '../common/method/method';
 		AadhaarKycModule,
 		HelperModule,
 		UserModule,
+		AcknowledgementModule,
 	],
 	controllers: [UserauthController],
 	providers: [UserauthService, AuthService, Method],

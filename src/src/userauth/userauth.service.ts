@@ -5,6 +5,7 @@ import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
+import { AcknowledgementService } from 'src/services/acknowledgement/acknowledgement.service';
 
 @Injectable()
 export class UserauthService {
@@ -18,6 +19,7 @@ export class UserauthService {
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
+		private acknowledgementService: AcknowledgementService,
 		private method: Method,
 	) {}
 
@@ -160,8 +162,7 @@ export class UserauthService {
 
 				if (user_id) {
 					// Set the timezone to Indian Standard Time (Asia/Kolkata)
-					const formattedISTTime =
-						await this.method.getFormattedISTTime();
+					const formattedISTTime = this.method.getFormattedISTTime();
 
 					// Format the time as per datetime
 
@@ -175,14 +176,8 @@ export class UserauthService {
 					};
 
 					//add acknowledgment details
-					await this.hasuraService.q(
-						'acknowledgement',
-						{
-							...acknowledgement_create_body,
-						},
-						[],
-						false,
-						['id'],
+					await this.acknowledgementService.createAcknowledgement(
+						acknowledgement_create_body,
 					);
 				}
 
