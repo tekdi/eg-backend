@@ -4,6 +4,7 @@ import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
+const moment = require('moment-timezone');
 
 @Injectable()
 export class UserauthService {
@@ -151,6 +152,38 @@ export class UserauthService {
 						body.mobile,
 						message,
 						args,
+					);
+				}
+
+				let user_id = result?.data?.id;
+
+				if (user_id) {
+					// Set the timezone to Indian Standard Time (Asia/Kolkata)
+					const istTime = moment().tz('Asia/Kolkata');
+
+					// Format the time as per datetime
+					const formattedISTTime = istTime.format(
+						'YYYY-MM-DD HH:mm:ss',
+					);
+
+					let acknowledgement_create_body = {
+						user_id: user_id,
+						user_role: role,
+						academic_year_id: body?.role_fields?.academic_year_id,
+						program_id: body?.role_fields?.program_id,
+						ack_date_time: formattedISTTime,
+						ack_doc_version: 1,
+					};
+
+					//add acknowledgment details
+					await this.hasuraService.q(
+						'acknowledgement',
+						{
+							...acknowledgement_create_body,
+						},
+						[],
+						false,
+						['id'],
 					);
 				}
 
