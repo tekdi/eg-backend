@@ -117,15 +117,7 @@ export class Method {
 		});
 	}
 
-	public async getFormattedISTTime() {
-		return new Promise((resolve, reject) => {
-			try {
-				const istTime = moment().tz('Asia/Kolkata');
-				const formattedISTTime = istTime.format('YYYY-MM-DD HH:mm:ss');
-				resolve(formattedISTTime);
-			} catch (error) {
-				reject(error);
-			}
-		});
+	public getFormattedISTTime() {
+		return moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
 	}
 }
