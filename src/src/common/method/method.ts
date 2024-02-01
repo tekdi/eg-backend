@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
+import * as moment from 'moment-timezone';
 
 @Injectable()
 export class Method {
@@ -112,6 +113,18 @@ export class Method {
 				resolve('female');
 			} else {
 				resolve(gender);
+			}
+		});
+	}
+
+	public async getFormattedISTTime() {
+		return new Promise((resolve, reject) => {
+			try {
+				const istTime = moment().tz('Asia/Kolkata');
+				const formattedISTTime = istTime.format('YYYY-MM-DD HH:mm:ss');
+				resolve(formattedISTTime);
+			} catch (error) {
+				reject(error);
 			}
 		});
 	}

@@ -7,6 +7,7 @@ import { HasuraModule } from 'src/services/hasura/hasura.module';
 import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 import { UserModule } from 'src/user/user.module';
 import { AuthService } from 'src/modules/auth/auth.service';
+import { Method } from '../common/method/method';
 
 @Module({
 	imports: [
@@ -17,7 +18,7 @@ import { AuthService } from 'src/modules/auth/auth.service';
 		UserModule,
 	],
 	controllers: [UserauthController],
-	providers: [UserauthService, AuthService],
+	providers: [UserauthService, AuthService, Method],
 	exports: [UserauthService],
 })
 export class UserauthModule {}

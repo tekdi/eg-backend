@@ -4,7 +4,7 @@ import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
-const moment = require('moment-timezone');
+import { Method } from '../common/method/method';
 
 @Injectable()
 export class UserauthService {
@@ -18,6 +18,7 @@ export class UserauthService {
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
+		private method: Method,
 	) {}
 
 	public async userAuthRegister(body, response, role) {
@@ -159,12 +160,10 @@ export class UserauthService {
 
 				if (user_id) {
 					// Set the timezone to Indian Standard Time (Asia/Kolkata)
-					const istTime = moment().tz('Asia/Kolkata');
+					const formattedISTTime =
+						await this.method.getFormattedISTTime();
 
 					// Format the time as per datetime
-					const formattedISTTime = istTime.format(
-						'YYYY-MM-DD HH:mm:ss',
-					);
 
 					let acknowledgement_create_body = {
 						user_id: user_id,
