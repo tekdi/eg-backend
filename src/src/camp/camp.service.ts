@@ -3888,4 +3888,338 @@ export class CampService {
 			data: userData || [],
 		});
 	}
+
+	//multiple reassigne learner to camp
+	async multiplereassignBeneficiarytoCamp(
+		id: any,
+		body: any,
+		req: any,
+		resp: any,
+	) {
+		let new_camp_id = id;
+		let old_camp_id = body?.old_camp_id;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		const learner_ids = body?.learner_id;
+		let create_response;
+		let update_response;
+
+		const user = await this.userService.ipUserInfo(req);
+
+		let errorData = {
+			message: null,
+			status: 422,
+			success: false,
+			data: {},
+		};
+		if (!learner_ids || !Array.isArray(learner_ids)) {
+			errorData = { ...errorData, message: 'Invalid learner_id inputs' };
+		} else if (!user?.data?.program_users?.[0]?.organisation_id) {
+			errorData = { ...errorData, message: 'Invalid Ip' };
+		} else if (old_camp_id == new_camp_id) {
+			//check old-camp-id send is not same as new camp id
+			errorData = {
+				...errorData,
+				message: 'Camp Id and old camp id is can not be same',
+			};
+		}
+
+		if (errorData?.message) {
+			return resp.status(404).send(errorData);
+		}
+
+		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
+		//validation to check beneficiary status and camp status
+		let validation_query = `query MyQuery {
+			camp_details:groups(where: {
+				camp: {id: {_eq:${new_camp_id}}},
+				program_id: {_eq:${program_id}},
+				academic_year_id: {_eq:${academic_year_id}}
+			}) {
+				id
+				status
+				group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}){
+					user_id
+				}
+			}
+			learner_details:program_beneficiaries(where:{
+				user_id:{_in:[${learner_ids}]},
+				program_id:{_eq:${program_id}},
+				academic_year_id:{_eq:${academic_year_id}}
+			}){
+				id
+				user_id
+			  status
+				original_facilitator_id
+				facilitator_id
+			}
+			old_camp_details_repsonse:group_users_aggregate(where: {
+				user_id: {_nin: [${learner_ids}]},
+				camps: {id: {_eq: ${old_camp_id}}},
+				status: {_eq: "active"},
+				member_type: {_eq: "member"}
+			}){
+				aggregate{
+					count
+				}
+			}
+			countOfLearner:group_users(where: {
+				user_id: {_in: [${learner_ids}]},
+				camps: {id: {_eq: ${old_camp_id}}},
+				status: {_eq: "active"},
+				member_type: {_eq: "member"}
+			}){
+				user_id
+			}
+		}`;
+
+		const validation_hasura_response =
+			await this.hasuraServiceFromServices.getData({
+				query: validation_query,
+			});
+
+		let reassign_camp_status =
+			validation_hasura_response?.data?.camp_details?.[0]?.status;
+
+		//get facilitator_id of new camp  to which beneficiary is to be assigned
+		let new_facilitator_id =
+			validation_hasura_response?.data?.camp_details?.[0]
+				?.group_users?.[0]?.user_id;
+
+		let learner_data = validation_hasura_response?.data?.learner_details;
+
+		let new_result = validation_hasura_response?.data?.countOfLearner;
+
+		let old_camp_details_repsonse =
+			validation_hasura_response?.data?.old_camp_details_repsonse
+				?.aggregate?.count;
+
+		let new_group_id =
+			validation_hasura_response?.data?.camp_details?.[0]?.id;
+		const leanerStatusNotRegistered = learner_ids
+			?.map((user_id) =>
+				learner_data?.find(
+					(item) =>
+						user_id === item.user_id &&
+						item.status !== 'registered_in_camp',
+				),
+			)
+			.filter((e) => e);
+
+		if (reassign_camp_status == 'camp_initiated') {
+			errorData = {
+				...errorData,
+				message: 'INVALID_REASSIGNMENT_REQUEST',
+			};
+		} else if (leanerStatusNotRegistered?.length) {
+			errorData = {
+				...errorData,
+				data: leanerStatusNotRegistered,
+				message: 'INVALID_REASSIGNMENT_REQUEST_as',
+			};
+		} else if (learner_ids.length !== new_result?.length) {
+			// Extract the IDs that are not found
+			const missingIds = learner_ids.filter(
+				(id) => !new_result?.find((e) => e.user_id === id),
+			);
+			errorData = {
+				...errorData,
+				message: 'Some IDs are not found in the database',
+				data: missingIds,
+			};
+		}
+
+		if (errorData?.message) {
+			return resp.status(422).send(errorData);
+		}
+		try {
+			//update learner ids if it is active mark inactive and if its already in group_user inactive make active
+			update_response = await this.campcoreservice.multipleUpdateCampUser(
+				id,
+				{
+					updated_by: ip_id,
+					learner_ids,
+					new_result,
+				},
+			);
+			const create_leaner_ids = learner_ids.filter(
+				(e) =>
+					!update_response.filter((item) => item.user_id === e)
+						?.length,
+			);
+
+			// create_leaner_ids if lenth > 0
+			if (create_leaner_ids.length > 0) {
+				create_response =
+					await this.campcoreservice.multipleCreateCampUser(
+						create_leaner_ids.map((item) => ({
+							status: 'active',
+							created_by: ip_id,
+							updated_by: ip_id,
+							member_type: 'member',
+							group_id: new_group_id,
+							user_id: item,
+						})),
+						['id', 'status', 'updated_by'],
+						req,
+						resp,
+					);
+			}
+
+			// activity logs old camp to new camp
+			const auditData = {
+				userId: req?.mw_userid,
+				mw_userid: req?.mw_userid,
+				user_type: 'IP',
+				context: 'camp.beneficiary.reassigncamp',
+				context_id: new_camp_id,
+				oldData: {
+					camp_id: old_camp_id,
+					learner_id: learner_ids,
+				},
+				newData: {
+					camp_id: new_camp_id,
+					learner_id: learner_ids,
+				},
+				subject: 'beneficiary',
+				subject_id: new_camp_id,
+				log_transaction_text: `IP ${req.mw_userid} reassigned leaner [${learner_ids}]  from camp ${old_camp_id} to new camp ${new_camp_id}`,
+				tempArray: ['learner_id', 'camp_id'],
+				action: 'update',
+				sortedData: true,
+			};
+			await this.userService.addAuditLogAction(auditData);
+
+			//Update learners facilitator_id and original_facilitator_id
+			const updatedResult =
+				await this.beneficiariesService.updateMultipleBeneficiaryFacilitatorId(
+					learner_data,
+					new_facilitator_id,
+				);
+			let arrData = updatedResult?.reduce(
+				(old, item) => [...old, ...(item?.returning || [])],
+				[],
+			);
+
+			//Logs for updated facilitator id
+			const LogsForLearnersFacilitatorUpdate = {
+				userId: req?.mw_userid,
+				mw_userid: req?.mw_userid,
+				user_type: 'IP',
+				context: 'camp.beneficiary.status',
+				context_id: new_camp_id,
+				oldData: learner_data,
+				newData: arrData,
+				subject: 'facilitator',
+				subject_id: new_facilitator_id,
+				log_transaction_text: `IP ${
+					req.mw_userid
+				} reassigned facilitator  ${
+					learner_data?.[0]?.facilitator_id
+				} for leaners ${learner_data.map((e) => e.user_id).join(', ')}`,
+				tempArray: ['facilitator_id', 'camp_id'],
+				action: 'update',
+				sortedData: true,
+			};
+
+			await this.userService.addAuditLogAction(
+				LogsForLearnersFacilitatorUpdate,
+			);
+
+			//Update consents status as inactive for old camp
+			if (old_camp_id) {
+				await this.campcoreservice.multipleUpdateConsentDetails({
+					old_camp_id,
+					learner_ids,
+				});
+			}
+
+			if (old_camp_details_repsonse == 0) {
+				await this.campcoreservice.multipleUpdateCampGroup(old_camp_id);
+			}
+
+			if (reassign_camp_status == 'inactive') {
+				let response =
+					await this.campcoreservice.multipleUpdateCampGroup(
+						new_camp_id,
+						'camp_initiated',
+					);
+				//Logs for camp and learner status changes
+				let campstatus = {
+					userId: req?.mw_userid,
+					mw_userid: req?.mw_userid,
+					user_type: 'IP',
+					context: 'camp.update.status',
+					context_id: new_camp_id,
+					subject: 'camp',
+					subject_id: new_camp_id,
+					log_transaction_text: `Facilitator ${req.mw_userid} updated camp status of camp ${new_camp_id}`,
+					oldData: reassign_camp_status,
+					newData: 'camp_initiated',
+					tempArray: ['status'],
+					action: 'update',
+					sortedData: true,
+				};
+
+				await this.userService.addAuditLogAction(campstatus);
+
+				if (response) {
+					//beneficiary enrolled_ip_verified status update
+					const query = `mutation MyMutation2 {
+						update_program_beneficiaries_many(updates: {where: {user_id: {_in: [${learner_ids}]}}, _set: {status: "enrolled_ip_verified"}}){
+							affected_rows
+							returning{
+								status
+								user_id
+							}
+						}
+					}`;
+					const new_hasura_response =
+						await this.hasuraServiceFromServices.getData({
+							query: query,
+						});
+					const newStatusLeaner =
+						new_hasura_response?.data
+							?.update_program_beneficiaries_many;
+
+					let arrDataStatus = newStatusLeaner?.reduce(
+						(old, item) => [...old, ...(item?.returning || [])],
+						[],
+					);
+
+					//Logs for camp and learner status changes
+					const auditData = {
+						userId: req?.mw_userid,
+						mw_userid: req?.mw_userid,
+						user_type: 'IP',
+						context: 'camp.beneficiary.status',
+						context_id: new_camp_id,
+						oldData: learner_data,
+						newData: arrDataStatus,
+						subject: 'beneficiary',
+						subject_id: new_camp_id,
+						log_transaction_text: `learners  ${learner_ids} change status ${reassign_camp_status} to  camp status enrolled_ip_verified`,
+						tempArray: ['learner_id', 'camp_id'],
+						action: 'update',
+						sortedData: true,
+					};
+
+					await this.userService.addAuditLogAction(auditData);
+				}
+			}
+
+			return resp.json({
+				status: 200,
+				message: 'Camp reassigned successfully',
+				data: create_response?.group_users?.id,
+			});
+		} catch (error) {
+			return resp.json({
+				status: 500,
+				message: 'IP_REASSIGN_BENEFICIARIES' + error?.message,
+				data: {},
+			});
+		}
+	}
 }

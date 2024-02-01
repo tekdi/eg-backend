@@ -588,4 +588,92 @@ export class CampCoreService {
 			});
 		}
 	}
+
+	//multiple users data update
+	public async multipleUpdateCampUser(camp_id: any, body: any) {
+		const idsArray = body?.learner_ids || [];
+
+		const dataN = {
+			query: `mutation MyMutation {
+				update_group_users(where: {
+					user_id: {_in: [${idsArray}]},
+					member_type: {_eq: "member"},
+					status: {_eq: "active"}
+				}, _set: {
+					updated_by: ${body?.updated_by},
+					status: "inactive"
+				}){
+					affected_rows
+				}
+				activate:update_group_users(where: {
+					user_id: {_in: [${idsArray}]},
+					member_type: {_eq: "member"},
+					group: {camp: {id:{_eq: ${camp_id}}}}
+				}, _set: {
+					updated_by: ${body?.updated_by},
+					status: "active"
+				}){
+					affected_rows
+					returning{
+						group_id
+						user_id
+						camps{
+							id
+						}
+					}
+				}
+			}`,
+		};
+
+		const response = await this.hasuraServiceFromServices.getData(dataN);
+		return response?.data?.activate?.returning;
+	}
+
+	public async multipleCreateCampUser(
+		body: any,
+		returnFields: any,
+		req: any,
+		resp: any,
+	) {
+		let response = await this.hasuraService.qM(
+			'insert_group_users',
+			body,
+			[],
+			returnFields,
+		);
+
+		return { response };
+	}
+
+	public async multipleUpdateConsentDetails(body) {
+		const data = {
+			query: `mutation MyMutation2 {
+				update_consents(where: {user_id: {_in: [${body?.learner_ids}]},camp_id:{_eq:${body?.old_camp_id}}}, _set: {status: "inactive"}){
+					affected_rows
+				}
+			}`,
+		};
+
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		return { response };
+	}
+
+	public async multipleUpdateCampGroup(
+		camp_id: any,
+		status: any = 'inactive',
+	) {
+		const data = {
+			query: `mutation MyMutation {
+				update_groups(where: {camp: {id: {_eq: ${camp_id}}}}, _set: {status: ${status}}){
+					affected_rows
+					returning{
+						id 
+					}
+				}
+			}`,
+		};
+		const response = await this.hasuraServiceFromServices.getData(data);
+		return { response };
+	}
 }

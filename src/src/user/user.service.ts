@@ -1248,10 +1248,11 @@ export class UserService {
 			newData,
 			tempArray,
 			action,
+			sortedData,
 		} = auditLogsObject;
 		let storeOld = {};
 		let storeNew = {};
-		if (!action || action != 'create') {
+		if (!action || (action != 'create' && !sortedData)) {
 			for (let data of tempArray) {
 				if (oldData[data] !== newData[data]) {
 					storeOld[data] = oldData[data];
@@ -1262,9 +1263,6 @@ export class UserService {
 			storeOld = oldData;
 			storeNew = newData;
 		}
-
-		console.log('storeOld', storeOld);
-		console.log('storeNew', storeNew);
 
 		if (
 			Object.keys(storeOld).length !== 0 &&
