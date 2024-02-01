@@ -3708,12 +3708,6 @@ export class BeneficiariesService {
 		beneficiaryDetails,
 		newFacilitatorId: number,
 	) {
-		const response = {
-			success: false,
-			data: null,
-			message: '',
-		};
-
 		let updateResult = [];
 		if (
 			Array.isArray(beneficiaryDetails) &&
