@@ -2095,7 +2095,9 @@ export class FacilitatorService {
 				last_name
 				middle_name
 				id
-				program_faciltators{
+				program_faciltators(where:{parent_ip:{_eq:"${
+					user?.data?.program_users[0]?.organisation_id
+				}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}){
 					status
 					learner_total_count: beneficiaries_aggregate(where: {status: {_in: ["identified", "ready_to_enroll", "enrolled", "enrolled_ip_verified"]}, _not: {group_users: {status: {_eq: "active"}}}}) {
 						aggregate {
