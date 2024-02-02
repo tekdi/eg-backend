@@ -242,16 +242,19 @@ export class AwsRekognitionService {
 			imageName,
 		);*/
 		const response = { success: false, faceId: null };
+		const regex = /[^a-zA-Z0-9_.:]+/g;
+		const originalString = imageName;
+		const modifiedString = originalString.replace(regex, '-');
 		try {
 			const addFaceParams = {
 				CollectionId: collectionId,
 				Image: {
 					S3Object: {
 						Bucket: this.bucketName,
-						Name: imageName,
+						Name: modifiedString,
 					},
 				},
-				ExternalImageId: imageName,
+				ExternalImageId: modifiedString,
 				MaxFaces: 1,
 			};
 			/*console.log(
