@@ -4,6 +4,8 @@ import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
+import { Method } from '../common/method/method';
+import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
 
 @Injectable()
 export class UserauthService {
@@ -17,6 +19,8 @@ export class UserauthService {
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
+		private acknowledgementService: AcknowledgementService,
+		private method: Method,
 	) {}
 
 	public async userAuthRegister(body, response, role) {
@@ -151,6 +155,32 @@ export class UserauthService {
 						body.mobile,
 						message,
 						args,
+					);
+				}
+
+				let user_id = result?.data?.id;
+
+				if (user_id) {
+					// Set the timezone to Indian Standard Time (Asia/Kolkata)
+					const formattedISTTime = this.method.getFormattedISTTime();
+
+					// Format the time as per datetime
+
+					let acknowledgement_create_body = {
+						user_id: user_id,
+						academic_year_id: body?.role_fields?.academic_year_id,
+						program_id: body?.role_fields?.program_id,
+						date_time: formattedISTTime,
+						doc_version: 1,
+						doc_id: 1,
+						context: 'facilitator.profile',
+						context_id: user_id,
+						accepted: true,
+					};
+
+					//add acknowledgment details
+					await this.acknowledgementService.createAcknowledgement(
+						acknowledgement_create_body,
 					);
 				}
 
