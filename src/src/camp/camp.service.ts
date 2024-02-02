@@ -415,7 +415,7 @@ export class CampService {
 		let status = 'active';
 
 		let qury = `query MyQuery {
-			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
+			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:"${member_type}"}, status: {_eq:"${status}"}, user_id: {_eq:${facilitator_id}}}}) {
 			  id
 			  kit_ratings
 			  kit_feedback
@@ -502,8 +502,6 @@ export class CampService {
 			  }
 			}
 		  }
-
-
 		  `;
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -1389,14 +1387,14 @@ export class CampService {
 				) {
 					let update_beneficiaries_array = [];
 					let status = 'enrolled_ip_verified';
-					body.program_id = program_id;
-					body.academic_year_id = academic_year_id;
+					request.mw_program_id = program_id;
+					request.mw_academic_year_id = academic_year_id;
 					for (const learnerId of learner_ids) {
 						let result =
 							await this.beneficiariesCoreService.getBeneficiaryDetailsById(
 								learnerId,
 								status,
-								body,
+								request,
 							);
 						update_beneficiaries_array.push(result);
 					}
@@ -1414,8 +1412,8 @@ export class CampService {
 				if (deactiveLearnerIds?.length > 0) {
 					let update_beneficiaries_array = [];
 					let status = 'registered_in_camp';
-					body.program_id = program_id;
-					body.academic_year_id = academic_year_id;
+					request.mw_program_id = program_id;
+					request.mw_academic_year_id = academic_year_id;
 					for (const deactivateId of deactiveLearnerIds) {
 						let result =
 							await this.beneficiariesCoreService.getBeneficiaryDetailsById(
@@ -1445,13 +1443,9 @@ export class CampService {
 			}
 
 			case 'edit_camp_status': {
-				let program_id = update_body?.program_id
-					? update_body?.program_id
-					: 1;
+				let program_id = request.mw_program_id;
 
-				let academic_year_id = update_body.academic_year_id
-					? update_body?.academic_year_id
-					: 1;
+				let academic_year_id = request.mw_academic_year_id;
 
 				let query = `
 				query MyQuery {
@@ -1471,7 +1465,6 @@ export class CampService {
 				  }
 				  `;
 				const qdata = { query: query };
-
 				const res = await this.hasuraServiceFromServices.getData(qdata);
 
 				if (res?.data?.camps?.length == 0) {

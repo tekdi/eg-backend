@@ -270,9 +270,10 @@ export class BeneficiariesCoreService {
 		);
 	}
 
-	public async getBeneficiaryDetailsById(id, status, body) {
+	public async getBeneficiaryDetailsById(id, status, request) {
 		let filter_query = [];
-		const { program_id, academic_year_id } = body;
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 
 		filter_query.push(`id:{_eq:${id}}`);
 		if (status) {
