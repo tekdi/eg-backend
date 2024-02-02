@@ -5,7 +5,7 @@ import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
-import { AcknowledgementService } from 'src/services/acknowledgement/acknowledgement.service';
+import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
 
 @Injectable()
 export class UserauthService {
