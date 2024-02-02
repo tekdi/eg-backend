@@ -8,7 +8,7 @@ export class AcknowledgementService {
 	public async createAcknowledgement(acknowledgement) {
 		try {
 			let result = await this.hasuraService.q(
-				'acknowledgement',
+				'acknowledgements',
 				{
 					...acknowledgement,
 				},

@@ -168,11 +168,14 @@ export class UserauthService {
 
 					let acknowledgement_create_body = {
 						user_id: user_id,
-						user_role: role,
 						academic_year_id: body?.role_fields?.academic_year_id,
 						program_id: body?.role_fields?.program_id,
-						ack_date_time: formattedISTTime,
-						ack_doc_version: 1,
+						date_time: formattedISTTime,
+						doc_version: 1,
+						doc_id: 1,
+						context: 'facilitator.profile',
+						context_id: user_id,
+						accepted: true,
 					};
 
 					//add acknowledgment details
