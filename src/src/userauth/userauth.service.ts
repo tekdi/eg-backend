@@ -6,6 +6,7 @@ import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
 import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class UserauthService {
@@ -20,6 +21,7 @@ export class UserauthService {
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
 		private acknowledgementService: AcknowledgementService,
+		private userService: UserService,
 		private method: Method,
 	) {}
 
@@ -42,6 +44,15 @@ export class UserauthService {
 			// Validate role specific fields
 			if (
 				!body.role_fields.parent_ip ||
+				!body.role_fields.program_id ||
+				!body.role_fields.academic_year_id
+			) {
+				misssingFieldsFlag = true;
+			}
+		} else if (role === 'beneficiary') {
+			// Validate role specific fields
+			if (
+				!body.role_fields.facilitator_id ||
 				!body.role_fields.program_id ||
 				!body.role_fields.academic_year_id
 			) {
@@ -73,6 +84,8 @@ export class UserauthService {
 
 		if (role == 'facilitator') {
 			group = `facilitators`;
+		} else if (role == 'beneficiary') {
+			group = `beneficiaries`;
 		}
 
 		let data_to_create_user = {
@@ -97,6 +110,16 @@ export class UserauthService {
 				username,
 				token?.access_token,
 			);
+
+			if (findUsername.length > 0 && group === 'beneficiaries') {
+				let lastUsername =
+					findUsername[findUsername.length - 1].username;
+				console.log('lastUsername', lastUsername);
+				let count = findUsername.length;
+				console.log('count', count);
+				data_to_create_user.username =
+					data_to_create_user.username + '_' + count;
+			}
 
 			const registerUserRes = await this.keycloakService.registerUser(
 				data_to_create_user,
@@ -145,6 +168,27 @@ export class UserauthService {
 				body.role = role;
 
 				const result = await this.authService.newCreate(body);
+				if (
+					role === 'beneficiary' &&
+					result.data.program_beneficiaries
+				) {
+					await this.userService.addAuditLog(
+						result?.data?.id,
+						body.role_fields.facilitator_id,
+						'program_beneficiaries.status',
+						result?.data?.program_beneficiaries[0]?.id,
+						{
+							status: '',
+							reason_for_status_update: '',
+						},
+						{
+							status: result?.data?.program_beneficiaries[0]
+								?.status,
+							reason_for_status_update: 'new registration',
+						},
+						['status', 'reason_for_status_update'],
+					);
+				}
 
 				// Send login details SMS
 				// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
@@ -160,7 +204,7 @@ export class UserauthService {
 
 				let user_id = result?.data?.id;
 
-				if (user_id) {
+				if (user_id && role === 'facilitator') {
 					// Set the timezone to Indian Standard Time (Asia/Kolkata)
 					const formattedISTTime = this.method.getFormattedISTTime();
 
