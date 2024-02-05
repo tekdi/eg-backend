@@ -244,7 +244,7 @@ export class AwsRekognitionService {
 		const response = { success: false, faceId: null };
 		const regex = /[^a-zA-Z0-9_.:]+/g;
 		const originalImageName = imageName;
-		const modifiedImageName = originalString.replace(regex, '-');
+		const modifiedImageName = originalImageName.replace(regex, '-');
 		try {
 			const addFaceParams = {
 				CollectionId: collectionId,
