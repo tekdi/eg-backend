@@ -2399,7 +2399,18 @@ export class CampService {
 		const response = await this.attendancesService.createAttendance(
 			camp_attendance_body,
 			req,
-			resp,
+			[
+				'lat',
+				'long',
+				'context_id',
+				'user_id',
+				'status',
+				'reason',
+				'photo_1',
+				'created_by',
+				'updated_by',
+				'context',
+			],
 		);
 
 		if (!response?.attendance?.id) {
