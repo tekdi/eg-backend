@@ -332,7 +332,7 @@ export class CampService {
 		  }
 
 
-          `;
+		  `;
 		const data = { query: query };
 		const res = await this.hasuraServiceFromServices.getData(data);
 		return res;
@@ -349,14 +349,14 @@ export class CampService {
 		let status = ['selected_prerak', 'selected_for_onboarding'];
 
 		let query = `query MyQuery {
-      users_aggregate(where: {id: {_eq: ${facilitator_id}}, program_faciltators: {status: {_in:${status}}, program_id: {_eq:${facilitator_id_program_id}}, academic_year_id: {_eq:${facilitator_id_academic_id}}}}) {
-        aggregate {
-          count
-        }
-      }
-    }
+	  users_aggregate(where: {id: {_eq: ${facilitator_id}}, program_faciltators: {status: {_in:${status}}, program_id: {_eq:${facilitator_id_program_id}}, academic_year_id: {_eq:${facilitator_id_academic_id}}}}) {
+		aggregate {
+		  count
+		}
+	  }
+	}
 
-      `;
+	  `;
 
 		const data = { query: query };
 		const res = await this.hasuraServiceFromServices.getData(data);
@@ -528,7 +528,7 @@ export class CampService {
 							const { success, data: fileData } =
 								await this.uploadFileService.getDocumentById(
 									profilePhoto.id,
-                                    '',
+									'original',
 								);
 							if (success && fileData?.fileUrl) {
 								userObj.profile_photo_1 = {
@@ -550,7 +550,7 @@ export class CampService {
 							const { success, data: fileData } =
 								await this.uploadFileService.getDocumentById(
 									userObj.profile_photo_1[0].id,
-                                    '',
+									'original',
 								);
 							if (success && fileData?.fileUrl) {
 								userObj.profile_photo_1 = {
@@ -580,7 +580,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							photo_building?.id,
-                            '',
+							'original',
 						);
 					if (success && fileData?.fileUrl) {
 						properties = {
@@ -597,7 +597,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							photo_classroom?.id,
-                            '',
+							'original',
 						);
 					if (success && fileData?.fileUrl) {
 						properties = {
@@ -614,7 +614,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							photo_other?.id,
-                            '',
+							'original',
 						);
 					if (success && fileData?.fileUrl) {
 						properties = {
@@ -777,7 +777,7 @@ export class CampService {
 			  group_id
 			  property_id
 			  kit_received
-              kit_was_sufficient
+			  kit_was_sufficient
 			  kit_ratings
 			  kit_feedback
 			  preferred_start_time
@@ -2291,8 +2291,7 @@ export class CampService {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
 								profilePhoto.id,
-                                '',
-
+								'original',
 							);
 						if (success && fileData?.fileUrl) {
 							userObj.profile_photo_1 = {
@@ -2316,7 +2315,7 @@ export class CampService {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
 								profilePhoto.id,
-                                '',
+								'original',
 							);
 						if (success && fileData?.fileUrl) {
 							userObj.profile_photo_1 = {
@@ -2341,8 +2340,7 @@ export class CampService {
 								const { success, data: fileData } =
 									await this.uploadFileService.getDocumentById(
 										photo?.id,
-                                        '',
-
+										'original',
 									);
 								if (success && fileData?.fileUrl) {
 									camp.properties[item] = {
@@ -2591,10 +2589,10 @@ export class CampService {
 
 		if (body.search && body.search !== '') {
 			filterQueryArray.push(`{_or: [
-        { first_name: { _ilike: "%${body.search}%" } },
-        { last_name: { _ilike: "%${body.search}%" } },
-        { email_id: { _ilike: "%${body.search}%" } }
-      ]} `);
+		{ first_name: { _ilike: "%${body.search}%" } },
+		{ last_name: { _ilike: "%${body.search}%" } },
+		{ email_id: { _ilike: "%${body.search}%" } }
+	  ]} `);
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -3917,7 +3915,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							userObj.profile_photo_1[0].id,
-                            '',
+							'original',
 						);
 					if (success && fileData?.fileUrl) {
 						userObj.profile_photo_1 = {

@@ -285,7 +285,7 @@ export class UploadFileService {
 		}
 	}
 
-	async getResizedImagePath(key: string, size: number) {
+	async getResizedImagePath(key: string, size: any) {
 		let resizedImagePath = key;
 
 		// Get file extension
@@ -297,6 +297,7 @@ export class UploadFileService {
 		if (
 			isFileImage &&
 			size &&
+			size !== 'original' &&
 			this.imageResizingVariants.includes(Number(size))
 		) {
 			resizedImagePath = `resized/${size}x${size}/${key}`;

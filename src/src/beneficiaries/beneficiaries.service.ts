@@ -1174,7 +1174,7 @@ export class BeneficiariesService {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
 								mappedData?.profile_photo_1?.id,
-								'',
+								'original',
 							);
 						if (success && fileData?.fileUrl) {
 							mappedData.profile_photo_1.fileUrl =
@@ -1185,7 +1185,7 @@ export class BeneficiariesService {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
 								mappedData?.profile_photo_2?.id,
-								'',
+								'original',
 							);
 						if (success && fileData?.fileUrl) {
 							mappedData.profile_photo_2.fileUrl =
@@ -1196,7 +1196,7 @@ export class BeneficiariesService {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
 								mappedData?.profile_photo_3?.id,
-								'',
+								'original',
 							);
 						if (success && fileData?.fileUrl) {
 							mappedData.profile_photo_3.fileUrl =
@@ -1453,7 +1453,7 @@ export class BeneficiariesService {
 				const { success, data: fileData } =
 					await this.uploadFileService.getDocumentById(
 						mappedData?.profile_photo_1?.id,
-						'',
+						'original',
 					);
 				if (success && fileData?.fileUrl) {
 					mappedData.profile_photo_1.fileUrl = fileData.fileUrl;
@@ -1463,7 +1463,7 @@ export class BeneficiariesService {
 				const { success, data: fileData } =
 					await this.uploadFileService.getDocumentById(
 						mappedData?.profile_photo_2?.id,
-						'',
+						'original',
 					);
 				if (success && fileData?.fileUrl) {
 					mappedData.profile_photo_2.fileUrl = fileData.fileUrl;
@@ -1473,7 +1473,7 @@ export class BeneficiariesService {
 				const { success, data: fileData } =
 					await this.uploadFileService.getDocumentById(
 						mappedData?.profile_photo_3?.id,
-						'',
+						'original',
 					);
 				if (success && fileData?.fileUrl) {
 					mappedData.profile_photo_3.fileUrl = fileData.fileUrl;
@@ -3645,7 +3645,7 @@ export class BeneficiariesService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							user.profile_photo_1[0].id,
-							'',
+							'original',
 						);
 					if (success && fileData?.fileUrl) {
 						user.profile_photo_1 = {

@@ -54,7 +54,7 @@ export class UploadFileController {
 	@UseInterceptors(FileInterceptor('file'))
 	async getFileUrl(
 		@Param('id') id: string,
-		@Query('size') size: number,
+		@Query('size') size: string,
 		@Res() response: Response,
 	) {
 		await this.uploadFileService.getFile(id, size, response);
@@ -63,7 +63,7 @@ export class UploadFileController {
 	@Get('/getDocumentById/:id?')
 	async getDocumentById(
 		@Param('id') id: string,
-		@Query('size') size: number,
+		@Query('size') size: string,
 		@Res() response: Response,
 	) {
 		await this.uploadFileService.getDocumentById(id, size, response);
