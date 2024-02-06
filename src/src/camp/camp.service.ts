@@ -3351,6 +3351,7 @@ export class CampService {
 			camp_id,
 		);
 		let result1 = hasura_response?.data?.camp_days_activities_tracker;
+
 		if (result1?.length > 0) {
 			return res.status(401).json({
 				success: false,
@@ -3358,16 +3359,25 @@ export class CampService {
 				data: {},
 			});
 		}
-
+		let errorMessage;
 		// Set camp_day_not_happening_reason to NULL if not present in the body
 		if (
 			camp_day_happening === 'no' &&
-			!camp_day_not_happening_reason &&
-			camp_day_not_happening_reason === ''
+			(!camp_day_not_happening_reason ||
+				camp_day_not_happening_reason === '')
 		) {
-			return res.status(401).json({
+			errorMessage = 'Please send Reason';
+		} else if (
+			camp_day_happening === 'yes' &&
+			(!body?.lat || !body?.long || !body?.photo_1)
+		) {
+			errorMessage = 'Please send Lat, Long and Photo_1';
+		}
+
+		if (errorMessage) {
+			return res.status(422).json({
 				success: false,
-				message: 'Please send Reason',
+				message: errorMessage,
 				data: {},
 			});
 		}
@@ -3395,14 +3405,43 @@ export class CampService {
 			}
 		}`,
 		};
-		const result = await this.hasuraServiceFromServices.getData(data);
 
+		const result = await this.hasuraServiceFromServices.getData(data);
 		let createresponse = result?.data;
+		let context_id =
+			createresponse?.insert_camp_days_activities_tracker_one?.id;
+
+		const attendance_response =
+			await this.attendancesService.createAttendance(
+				{
+					...body,
+					context: 'camp_days_activities_tracker',
+					context_id,
+					user_id: req?.mw_userid,
+					status: 'present',
+					reason: 'camp_started',
+					created_by: req?.mw_userid,
+					updated_by: req?.mw_userid,
+				},
+				req,
+				[
+					'lat',
+					'long',
+					'context_id',
+					'user_id',
+					'status',
+					'reason',
+					'photo_1',
+					'created_by',
+					'updated_by',
+					'context',
+				],
+			);
 
 		if (createresponse) {
 			return res.status(200).json({
 				success: true,
-				data: createresponse,
+				data: { ...createresponse, attendance_response },
 			});
 		} else {
 			return res.status(500).json({
