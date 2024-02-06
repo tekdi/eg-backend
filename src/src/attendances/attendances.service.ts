@@ -32,18 +32,18 @@ export class AttendancesService {
 		private readonly hasuraService: HasuraService,
 		private readonly attendanceCoreService: AttendancesCoreService,
 	) {}
-	public async createAttendance(body: any, req: any, res: any) {
+	public async createAttendance(body: any, req: any, onlyFiled: any = []) {
 		let faciltator_id = req.mw_userid;
 		let create_attendance_object = {
 			...body,
 			updated_by: faciltator_id,
 			created_by: faciltator_id,
 		};
+
 		let createAttendanceResponse = await this.attendanceCoreService.create(
 			create_attendance_object,
 			this.returnFields,
-			req,
-			res,
+			onlyFiled,
 		);
 
 		return createAttendanceResponse;
