@@ -42,8 +42,6 @@ export class S3Service {
 			);
 
 			if (response.$metadata.httpStatusCode === 200) {
-				console.log(response.$metadata);
-
 				return await this.getFileUrl(key);
 			}
 

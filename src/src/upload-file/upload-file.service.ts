@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import * as sharp from 'sharp';
 
 import { HasuraService } from 'src/services/hasura/hasura.service';
@@ -19,7 +19,7 @@ export class UploadFileService {
 	private imageResizingVariants = [32, 64, 128, 256];
 	private imageResizingFolderPrefix = 'resized';
 
-	private documentTypesToBeResizedArray = [
+	private documentTypesToBeResized = [
 		'profile',
 		'profile_photo',
 		'profile_photo_1',
@@ -27,7 +27,7 @@ export class UploadFileService {
 		'profile_photo_3',
 	];
 
-	private documentSubtypesArray = [
+	private documentSubtypes = [
 		'aadhaar_front',
 		'aadhaar_back',
 		'profile_photo_1',
@@ -43,7 +43,6 @@ export class UploadFileService {
 	// Function to download and resize image (updated for SDK v3)
 	async resizeImage(file: Express.Multer.File, key: string) {
 		let mimeType = file.mimetype;
-		console.log(mimeType);
 
 		// Resize to multiple widths in pixels
 		for (const size of this.imageResizingVariants) {
@@ -109,16 +108,16 @@ export class UploadFileService {
 		let isFileImage = await this.isImage(`.${fileType}`);
 		if (
 			isFileImage &&
-			this.documentTypesToBeResizedArray.includes(document_type)
+			this.documentTypesToBeResized.includes(document_type)
 		) {
 			await this.resizeImage(file, key);
-		} else {
+		} /*else {
 			console.log(
 				`Document type: ${document_type} is not an image or not to be resized`,
 			);
-		}
+		}*/
 
-		if (this.documentSubtypesArray.includes(document_sub_type)) {
+		if (this.documentSubtypes.includes(document_sub_type)) {
 			try {
 				const data = {
 					query: `query MyQuery {
