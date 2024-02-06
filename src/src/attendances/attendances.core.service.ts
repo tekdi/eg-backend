@@ -8,13 +8,13 @@ export class AttendancesCoreService {
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
-	public async create(body: any, returnFields: any, req: any, res: any) {
+	public async create(body: any, returnFields: any, onlyFiled: any = []) {
 		let response = await this.hasuraService.q(
 			'attendance',
 			{
 				...body,
 			},
-			[],
+			onlyFiled,
 			false,
 			[...returnFields],
 		);
