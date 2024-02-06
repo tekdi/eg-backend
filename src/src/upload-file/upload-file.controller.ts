@@ -4,6 +4,7 @@ import {
 	Get,
 	Param,
 	Post,
+	Query,
 	Res,
 	UploadedFile,
 	UseGuards,
@@ -30,7 +31,13 @@ export class UploadFileController {
 		@Res() request: Request,
 		@Res() response: Response,
 	) {
-		await this.uploadFileService.addFile(file, id, document_type, document_sub_type,response);
+		await this.uploadFileService.addFile(
+			file,
+			id,
+			document_type,
+			document_sub_type,
+			response,
+		);
 	}
 
 	@Post('/attendance')
@@ -43,22 +50,22 @@ export class UploadFileController {
 		await this.uploadFileService.addFileNoMeta(file, response);
 	}
 
-	@Get('/:id/get-file')
+	@Get('/:id/get-file?')
 	@UseInterceptors(FileInterceptor('file'))
 	async getFileUrl(
 		@Param('id') id: string,
-		@Res() request: Request,
+		@Query('size') size: number,
 		@Res() response: Response,
 	) {
-		console.log('get-file id', id);
-		await this.uploadFileService.getFile(id, response);
+		await this.uploadFileService.getFile(id, size, response);
 	}
 
-	@Get('/getDocumentById/:id')
+	@Get('/getDocumentById/:id?')
 	async getDocumentById(
 		@Param('id') id: string,
+		@Query('size') size: number,
 		@Res() response: Response,
 	) {
-		await this.uploadFileService.getDocumentById(id, response);
+		await this.uploadFileService.getDocumentById(id, size, response);
 	}
 }

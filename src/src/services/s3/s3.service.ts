@@ -1,10 +1,10 @@
 import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-  PutObjectCommandInput,
-  PutObjectCommandOutput,
-  S3Client,
+	DeleteObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand,
+	PutObjectCommandInput,
+	PutObjectCommandOutput,
+	S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
@@ -27,33 +27,29 @@ export class S3Service {
 		});
 	}
 
-	async uploadFile(file: Express.Multer.File, key: string) {
-		console.log('inside upload file');
+	async uploadFile(fileBuffer: Buffer, key: string, contentType: string) {
 		const bucket = this.configService.get<string>('S3_BUCKET');
-		const expiresIn = this.configService.get<number>('EXPIRES_IN');
 		const input: PutObjectCommandInput = {
-			Body: file.buffer,
+			Body: fileBuffer,
 			Bucket: bucket,
 			Key: key,
-			ContentType: file.mimetype,
+			ContentType: contentType,
 		};
-		console.log('input', input);
+
 		try {
 			const response: PutObjectCommandOutput = await this.s3.send(
 				new PutObjectCommand(input),
 			);
-			console.log('response', response);
+
 			if (response.$metadata.httpStatusCode === 200) {
-				const client = this.s3;
-				const command = new GetObjectCommand({
-					Bucket: bucket,
-					Key: key,
-				});
-				return getSignedUrl(client, command, { expiresIn: expiresIn });
+				console.log(response.$metadata);
+
+				return await this.getFileUrl(key);
 			}
-			throw new Error('File not saved to s3!');
+
+			throw new Error('S3 - Error in uploading file');
 		} catch (err) {
-			console.log('uploadFile err', err);
+			console.log('S3 - Error in uploading file:', err);
 		}
 	}
 

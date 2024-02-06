@@ -102,7 +102,7 @@ export class CampService {
 				  group_id
 				}
 			  }
-				  
+
 			  `;
 
 			const hasura_validation_response =
@@ -330,8 +330,8 @@ export class CampService {
 			  }
 			}
 		  }
-		  
-          
+
+
           `;
 		const data = { query: query };
 		const res = await this.hasuraServiceFromServices.getData(data);
@@ -355,7 +355,7 @@ export class CampService {
         }
       }
     }
-    
+
       `;
 
 		const data = { query: query };
@@ -385,12 +385,12 @@ export class CampService {
 				description
 				status
 			  }
-			  
+
 			  group_users(where: {member_type: {_neq: "owner"}}) {
 				user_id
 				status
 				member_type
-				
+
 			  }
 			}
 		  }`;
@@ -472,11 +472,11 @@ export class CampService {
 					name
 				  }
 				  photo_classroom {
-					id 
+					id
 					name
 				  }
 			  }
-			  
+
 			  group_users(where: {member_type: {_neq: "owner"}, status: {_eq: "active"}}) {
 				user {
 				  id
@@ -502,8 +502,8 @@ export class CampService {
 			  }
 			}
 		  }
-		  
-		  
+
+
 		  `;
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -528,6 +528,7 @@ export class CampService {
 							const { success, data: fileData } =
 								await this.uploadFileService.getDocumentById(
 									profilePhoto.id,
+                                    '',
 								);
 							if (success && fileData?.fileUrl) {
 								userObj.profile_photo_1 = {
@@ -549,6 +550,7 @@ export class CampService {
 							const { success, data: fileData } =
 								await this.uploadFileService.getDocumentById(
 									userObj.profile_photo_1[0].id,
+                                    '',
 								);
 							if (success && fileData?.fileUrl) {
 								userObj.profile_photo_1 = {
@@ -578,6 +580,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							photo_building?.id,
+                            '',
 						);
 					if (success && fileData?.fileUrl) {
 						properties = {
@@ -594,6 +597,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							photo_classroom?.id,
+                            '',
 						);
 					if (success && fileData?.fileUrl) {
 						properties = {
@@ -610,6 +614,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							photo_other?.id,
+                            '',
 						);
 					if (success && fileData?.fileUrl) {
 						properties = {
@@ -677,7 +682,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -795,7 +800,7 @@ export class CampService {
 			  group_users(where: {user_id: {_eq:${facilitator_id}}, member_type: {_eq:${member_type}}, status: {_eq:${status}}}) {
 				id
 				user_id
-				
+
 			  }
 			  group{
 				id
@@ -803,7 +808,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const data = { query: query };
@@ -1149,7 +1154,7 @@ export class CampService {
 					};
 				}
 
-				let qury = `query MyQuery {	
+				let qury = `query MyQuery {
 					camps_by_pk(id:${camp_id})  {
 					group_id
 					group {
@@ -1876,7 +1881,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -1990,7 +1995,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -2235,7 +2240,7 @@ export class CampService {
 								enrollment_middle_name
 								enrollment_last_name
 							}
-							
+
 						}
 					}
 					properties {
@@ -2286,6 +2291,8 @@ export class CampService {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
 								profilePhoto.id,
+                                '',
+
 							);
 						if (success && fileData?.fileUrl) {
 							userObj.profile_photo_1 = {
@@ -2309,6 +2316,7 @@ export class CampService {
 						const { success, data: fileData } =
 							await this.uploadFileService.getDocumentById(
 								profilePhoto.id,
+                                '',
 							);
 						if (success && fileData?.fileUrl) {
 							userObj.profile_photo_1 = {
@@ -2333,6 +2341,8 @@ export class CampService {
 								const { success, data: fileData } =
 									await this.uploadFileService.getDocumentById(
 										photo?.id,
+                                        '',
+
 									);
 								if (success && fileData?.fileUrl) {
 									camp.properties[item] = {
@@ -2681,14 +2691,14 @@ export class CampService {
 				id
 				status
 			  }
-			 
+
 			}
 			learner_details:program_beneficiaries(where:{user_id:{_eq:${body?.learner_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}){
 			  status
 			}
 		  }
-		  
-		  
+
+
 		  `;
 
 		const validation_hasura_response =
@@ -2730,7 +2740,7 @@ export class CampService {
 			  }
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3109,7 +3119,7 @@ export class CampService {
 			  id
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3138,10 +3148,10 @@ export class CampService {
 				  beneficiaries_data: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 					user_id
 				  }
-					
+
 				}
 			  }
-			  
+
 			 `;
 
 			const hasura_response =
@@ -3424,7 +3434,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {mood:${body?.mood}}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3459,7 +3469,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {camp_day_happening:${body?.camp_day_happening}}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3494,7 +3504,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery($misc_activities: json) {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {misc_activities:$misc_activities}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3535,7 +3545,7 @@ export class CampService {
 				const data = {
 					query: `mutation MyQuery {
 					update_camp_days_activities_tracker(where: {id: {_eq: ${id}}}, _set: {end_date:"${currentDate}", end_camp_marked_by: "user"}) {
-						
+
 																		affected_rows
 																		returning {
 																						id
@@ -3622,7 +3632,7 @@ export class CampService {
 			  updated_by
 			}
 		  }
-		  
+
 		  `;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
@@ -3663,7 +3673,7 @@ export class CampService {
 		  '${currentDate}'::timestamp,
 		  '1 day'
 		) AS gs(date)
-	  LEFT JOIN	attendance a ON DATE_TRUNC('day', a.date_time) = gs.date 
+	  LEFT JOIN	attendance a ON DATE_TRUNC('day', a.date_time) = gs.date
 		LEFT JOIN camp_days_activities_tracker cda ON cda.id = a.context_id
 	  WHERE gs.date >= '${formattedSevenDaysLess}' AND gs.date <= '${currentDate}'
 		AND a.photo_1 IS NOT NULL AND a.photo_1 != '-'
@@ -3857,6 +3867,7 @@ export class CampService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							userObj.profile_photo_1[0].id,
+                            '',
 						);
 					if (success && fileData?.fileUrl) {
 						userObj.profile_photo_1 = {

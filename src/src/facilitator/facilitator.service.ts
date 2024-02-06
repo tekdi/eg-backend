@@ -108,7 +108,7 @@ export class FacilitatorService {
 						  count
 						}
 					}
-					
+
 					users(
 						where: {
 							_and: [
@@ -452,16 +452,16 @@ export class FacilitatorService {
 			all:program_faciltators_aggregate(where: {
 				parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
 				user: {id: {_is_null: false}}
-			}) 
+			})
 			{
 				aggregate {
 					count
 				}
 			},
-			
+
 			applied: program_faciltators_aggregate(
 				where: {
-					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, 
+					parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"},
 					user: {id: {_is_null: false}},
 					_or: [
 						{status: {_nin: ${JSON.stringify(status.filter((item) => item != 'applied'))}}},
@@ -1435,7 +1435,7 @@ export class FacilitatorService {
 				}},{
 					program_beneficiaries: {
 						facilitator_user: {
-						program_faciltators: {					
+						program_faciltators: {
 							parent_ip: {
 								 _eq: "${user?.data?.program_users[0]?.organisation_id}"
 							}
@@ -1917,6 +1917,7 @@ export class FacilitatorService {
 					const { success, data: fileData } =
 						await this.uploadFileService.getDocumentById(
 							mappedData?.profile_photo_1?.id,
+                            '',
 						);
 					if (success && fileData?.fileUrl) {
 						mappedData.profile_photo_1.fileUrl = fileData.fileUrl;
@@ -1977,8 +1978,8 @@ export class FacilitatorService {
 
 			if (last_name?.length > 0) {
 				filterQueryArray.push(`{_and: [
-				{first_name: { _ilike: "%${first_name}%" } } 
-				{ last_name: { _ilike: "%${last_name}%" } } 
+				{first_name: { _ilike: "%${first_name}%" } }
+				{ last_name: { _ilike: "%${last_name}%" } }
 				 ]} `);
 			} else {
 				filterQueryArray.push(
@@ -2030,7 +2031,7 @@ export class FacilitatorService {
 				}
 			users(limit: $limit,
 				offset: $offset,where: ${filterQuery},order_by:{created_at:${sortType}}) {
-	
+
 				first_name
 				last_name
 				middle_name
@@ -2070,12 +2071,12 @@ export class FacilitatorService {
 					  {
 					  status: {_eq: "${item}"}
 					},
-	
+
 						{ user:	{ id: { _is_null: false } } }
-	
+
 											 ],
-					  _not: {group_users: {status: {_eq: "active"}}}}					 
-					
+					  _not: {group_users: {status: {_eq: "active"}}}}
+
 				)
 				{
 					aggregate {

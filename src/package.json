@@ -43,7 +43,8 @@
     "node-html-parser": "^6.1.11",
     "qrcode": "^1.5.3",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "sharp": "^0.33.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
