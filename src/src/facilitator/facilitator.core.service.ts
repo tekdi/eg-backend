@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { HasuraService } from '../services/hasura/hasura.service';
+import * as moment from 'moment';
 
 @Injectable()
 export class FacilitatorCoreService {
@@ -57,16 +58,31 @@ export class FacilitatorCoreService {
 			'aadhar_verified',
 		];
 
-		// const requiredFields = ['id','first_name', 'dob', 'last_name', 'gender'];
+		const requiredFields = ['id', 'first_name', 'dob', 'gender'];
 
-		// // Check required fields
-		// const missingRequiredField = requiredFields.find(
-		// 	(field) => !body[field] || body[field] === '',
-		// );
+		const dataValidationFields = ['middle_name', 'last_name'];
 
-		// if (missingRequiredField) {
-		// 	return { error: `${missingRequiredField} is required` };
-		// }
+		//Check required fields
+
+		const missingRequiredField = requiredFields.find(
+			(field) => !body[field] || body[field] === '',
+		);
+		if (missingRequiredField) {
+			return { error: `${missingRequiredField} is required` };
+		}
+
+		// Validate and set default values for fields in dataValidationFields if these fields are not present in body
+		dataValidationFields.forEach((field) => {
+			if (!body[field]) {
+				body[field] = null;
+			}
+		});
+
+		const dobFormat = 'YYYY-MM-DD';
+		if (body?.dob && !moment(body.dob, dobFormat, true).isValid()) {
+			// If the dob is not in the expected format,do not update in database
+			delete body.dob;
+		}
 
 		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
 
