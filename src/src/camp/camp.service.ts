@@ -4090,10 +4090,13 @@ export class CampService {
 					learner_data,
 					new_facilitator_id,
 				);
-			let arrData = updatedResult?.reduce(
-				(old, item) => [...old, ...(item?.returning || [])],
-				[],
-			);
+
+			let arrData = Array.isArray(updatedResult)
+				? updatedResult?.reduce(
+						(old, item) => [...old, ...(item?.returning || [])],
+						[],
+				  )
+				: [];
 
 			//Logs for updated facilitator id
 			const LogsForLearnersFacilitatorUpdate = {
@@ -4175,12 +4178,10 @@ export class CampService {
 					const newStatusLeaner =
 						new_hasura_response?.data
 							?.update_program_beneficiaries_many;
-
 					let arrDataStatus = newStatusLeaner?.reduce(
 						(old, item) => [...old, ...(item?.returning || [])],
 						[],
 					);
-
 					//Logs for camp and learner status changes
 					const auditData = {
 						userId: req?.mw_userid,
