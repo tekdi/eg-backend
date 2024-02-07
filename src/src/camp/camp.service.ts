@@ -2392,7 +2392,18 @@ export class CampService {
 		const response = await this.attendancesService.createAttendance(
 			camp_attendance_body,
 			req,
-			resp,
+			[
+				'lat',
+				'long',
+				'context_id',
+				'user_id',
+				'status',
+				'reason',
+				'photo_1',
+				'created_by',
+				'updated_by',
+				'context',
+			],
 		);
 
 		if (!response?.attendance?.id) {
@@ -4251,6 +4262,70 @@ export class CampService {
 			return resp.json({
 				status: 500,
 				message: 'IP_REASSIGN_BENEFICIARIES' + error?.message,
+			});
+		}
+	}
+
+	async campDetails(body: any, req: any, resp: any) {
+		let camp_id = body?.camp_id;
+		let context_id = body?.context_id;
+		const dateString = moment().startOf('day').format();
+		const endDate = moment().endOf('day').format();
+		// Validate the request parameters
+		if (!camp_id || !context_id) {
+			return resp.status(422).json({
+				message: 'Required Camp-id and camp-day-activity-id',
+				data: {},
+			});
+		}
+
+		let data = {
+			query: `query MyQuery {
+								leanerCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"}}) {
+									aggregate {
+										count
+									}
+								}
+								attendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+									aggregate {
+										count
+									}
+								}
+								learning_sessions_tracker_aggregate(where: {camp_id: {_eq: ${camp_id}},
+									_or: [{
+										created_at: {_gte: "${dateString}", _lte: "${endDate}"}
+										
+									},{
+										updated_at:{_gte: "${dateString}", _lte: "${endDate}"}
+									}
+									]
+								}) {
+									aggregate{
+										count
+									}
+								}
+								camp_days_activities_tracker(where:{id:{_eq:${context_id}}}){
+									misc_activities
+								}
+							}
+			  `,
+		};
+
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+		const camps_data = hasura_response?.data;
+
+		if (camps_data) {
+			return resp.json({
+				status: 200,
+				message: 'Camp Data Found Successfully',
+				data: camps_data,
+			});
+		} else {
+			return resp.json({
+				status: 500,
+				message: 'IP_CAMP_LIST_ERROR',
 				data: {},
 			});
 		}
