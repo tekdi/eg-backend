@@ -3726,6 +3726,14 @@ export class BeneficiariesService {
 					_set: {original_facilitator_id: ${program_beneficiary.facilitator_id},facilitator_id:${newFacilitatorId}}
 					}`,
 					];
+				} else {
+					coreQuery = [
+						...coreQuery,
+						`{
+					where: {id: {_eq: ${program_beneficiary?.id}}},
+					_set: {facilitator_id:${newFacilitatorId}}
+					}`,
+					];
 				}
 			});
 			const data = {
