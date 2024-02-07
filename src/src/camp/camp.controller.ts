@@ -363,4 +363,10 @@ export class CampController {
 	) {
 		return this.campService.campLearnersById(id, body, request, response);
 	}
+
+	@Post('campday/campdetails')
+	@UseGuards(new AuthGuard())
+	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
+		return this.campService.campDetails(body, request, response);
+	}
 }
