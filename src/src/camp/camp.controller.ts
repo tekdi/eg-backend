@@ -378,4 +378,10 @@ export class CampController {
 			response,
 		);
 	}
+
+	@Post('campday/campdetails')
+	@UseGuards(new AuthGuard())
+	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
+		return this.campService.campDetails(body, request, response);
+	}
 }
