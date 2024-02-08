@@ -78,21 +78,11 @@ export class FacilitatorCoreService {
 			}
 		});
 
-		const dobFormats = ['YYYY-M-DD', 'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-MM-D'];
-
-		// Check if body.dob exists and if it matches any of the expected formats
-		if (body?.dob) {
-			let validFormat = false;
-			for (const format of dobFormats) {
-				if (moment(body.dob, format, true).isValid()) {
-					validFormat = true;
-					break;
-				}
-			}
-			// If the dob is not in any of the expected formats, delete it from the database
-			if (!validFormat) {
-				delete body.dob;
-			}
+		// return {data:moment(body.dob, 'YYYY-MM-DD').isValid()
+		const dobFormat = 'YYYY-MM-DD';
+		if (body?.dob && !moment(body.dob, dobFormat).isValid()) {
+			// If the dob is not in the expected format,do not update in database
+			delete body.dob;
 		}
 
 		const keyExist = userArr.filter((e) => Object.keys(body).includes(e));
