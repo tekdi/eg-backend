@@ -251,7 +251,7 @@ export class AwsRekognitionService {
 				Image: {
 					S3Object: {
 						Bucket: this.bucketName,
-						Name: modifiedImageName,
+						Name: imageName,
 					},
 				},
 				ExternalImageId: modifiedImageName,
