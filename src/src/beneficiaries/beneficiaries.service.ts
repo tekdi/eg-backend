@@ -704,7 +704,7 @@ export class BeneficiariesService {
 			);
 		} else {
 			filterQueryArray.push(
-				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} } } } }`,
+				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} }},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}  } }`,
 			);
 		}
 
