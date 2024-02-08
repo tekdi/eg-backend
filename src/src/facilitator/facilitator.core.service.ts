@@ -78,7 +78,6 @@ export class FacilitatorCoreService {
 			}
 		});
 
-		// return {data:moment(body.dob, 'YYYY-MM-DD').isValid()
 		const dobFormat = 'YYYY-MM-DD';
 		if (body?.dob && !moment(body.dob, dobFormat).isValid()) {
 			// If the dob is not in the expected format,do not update in database
