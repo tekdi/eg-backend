@@ -15,14 +15,13 @@ const add_log = function (d) { //
 };
 
 // CSV paths
-// SELECT id, name, provider, path, doument_type
-// FROM documents
-// WHERE doument_type IN ('profile', 'profile_photo', 'profile_photo_1', 'profile_photo_2', 'profile_photo_3')
-// AND provider = 's3'
-// AND name <> 'NULL'
-// ORDER BY id
+/*SELECT id, name, provider, path, doument_type
+FROM documents
+WHERE doument_type IN ('profile', 'profile_photo', 'profile_photo_1', 'profile_photo_2', 'profile_photo_3')
+AND provider = 's3'
+AND name <> 'NULL'
+ORDER BY id*/
 const CSV_INPUT_PATH = path.join(__dirname, process.env.CSV_INPUT_PATH);
-//const CSV_OUTPUT_PATH = path.join(__dirname, process.env.CSV_OUTPUT_PATH);
 let images_from_csv = [];
 
 // Configure AWS credentials (using environment variables or other preferred methods)
@@ -120,7 +119,7 @@ async function resizeImage(object) {
 		};
 
 		// 3.2 - Resize image using sharp
-		const resizedImage = await image
+		await image
 			.keepExif()
 			.resize(width, height, options)
 			.toFile(newKey, async (err, info) => {
@@ -141,7 +140,7 @@ async function resizeImage(object) {
 					};
 
 					add_log(`INFO: S3    - Uploading resized image: ${newKey}`);
-					let response = await s3Client.send(new PutObjectCommand(putObjectCommandParams));
+					await s3Client.send(new PutObjectCommand(putObjectCommandParams));
 					// add_log(`s3upload response:`, JSON.stringify(response, null, 2))
 
 					// Delete the temporary file
@@ -205,7 +204,6 @@ async function main() {
 
 		// 2 - Get S3 objects from S3
 		let s3Files = await getObjectsFromS3();
-		// let s3Files = [{ 'Key': 'abc.jpg' }];
 
 		// 2.1 Print info
 		add_log(`=======================================`);
