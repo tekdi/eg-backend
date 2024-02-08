@@ -79,7 +79,7 @@ export class FacilitatorCoreService {
 		});
 
 		const dobFormat = 'YYYY-MM-DD';
-		if (body?.dob && !moment(body.dob, dobFormat, true).isValid()) {
+		if (body?.dob && !moment(body.dob, dobFormat).isValid()) {
 			// If the dob is not in the expected format,do not update in database
 			delete body.dob;
 		}
