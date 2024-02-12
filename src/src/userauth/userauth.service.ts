@@ -228,7 +228,7 @@ export class UserauthService {
 			filterQueryArray.push(`middle_name = '${body.middle_name}'`);
 		}
 
-		const filterQuery = `SELECT * FROM users WHERE ${filterQueryArray.join(
+		const filterQuery = `SELECT mobile,id FROM users WHERE ${filterQueryArray.join(
 			' AND ',
 		)}`;
 
@@ -247,17 +247,21 @@ export class UserauthService {
 		let result =
 			this.hasuraServiceFromServices.getFormattedData(users_data);
 
-		if (result?.length == 0) {
+		// Check if the mobile number sent in the body is present in the result array
+		const mobileFound = result.some((user) => user.mobile === mobile);
+
+		if (mobileFound) {
 			return response.status(200).json({
-				message: 'No Data found',
+				message: 'Data found successfully',
+				status: 'success',
+				is_mobile_found: true,
+			});
+		} else {
+			return response.status(200).json({
+				message: 'Mobile number not found',
 				status: 'success',
 				is_mobile_found: false,
 			});
 		}
-		return response.status(200).json({
-			message: 'Data found successfully',
-			status: 'success',
-			is_mobile_found: true,
-		});
 	}
 }
