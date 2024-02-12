@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
@@ -16,6 +17,7 @@ export class UserauthService {
 	constructor(
 		private configService: ConfigService,
 		private readonly keycloakService: KeycloakService,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
@@ -206,6 +208,64 @@ export class UserauthService {
 				success: false,
 				message: 'Unable to get keycloak token',
 				data: {},
+			});
+		}
+	}
+
+	public async isUserExists(body, response) {
+		let { first_name, dob, mobile } = body;
+		let filterQueryArray = [];
+
+		filterQueryArray.push(
+			`first_name = '${first_name}'  AND dob = '${dob}'`,
+		);
+
+		if (body?.last_name) {
+			filterQueryArray.push(`last_name = '${body.last_name}'`);
+		}
+
+		if (body?.middle_name) {
+			filterQueryArray.push(`middle_name = '${body.middle_name}'`);
+		}
+
+		const filterQuery = `SELECT mobile,id FROM users WHERE ${filterQueryArray.join(
+			' AND ',
+		)}`;
+
+		const users_data = (
+			await this.hasuraServiceFromServices.executeRawSql(filterQuery)
+		)?.result;
+
+		if (users_data == undefined && !users_data) {
+			return response.status(200).json({
+				message: 'No Data found',
+				status: 'success',
+				is_mobile_found: false,
+			});
+		}
+
+		let result =
+			this.hasuraServiceFromServices.getFormattedData(users_data);
+
+		// Check if the mobile number sent in the body is present in the result array
+		const mobileFound = result.some((user) => user.mobile === mobile);
+
+		if (mobileFound) {
+			return response.status(200).json({
+				message: 'Data found successfully',
+				status: 'success',
+				is_mobile_found: true,
+				is_data_found: true,
+			});
+		} else {
+			return response.status(200).json({
+				message:
+					result?.length > 0
+						? 'Data found successfully'
+						: 'Data not found',
+				status: 'success',
+				is_mobile_found: false,
+				is_data_found: result?.length > 0 ? true : false,
 			});
 		}
 	}
