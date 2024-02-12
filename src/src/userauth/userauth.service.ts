@@ -217,7 +217,7 @@ export class UserauthService {
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`first_name = '${first_name}' AND mobile = '${mobile}' AND dob = '${dob}'`,
+			`first_name = '${first_name}'  AND dob = '${dob}'`,
 		);
 
 		if (body?.last_name) {
@@ -255,12 +255,17 @@ export class UserauthService {
 				message: 'Data found successfully',
 				status: 'success',
 				is_mobile_found: true,
+				is_data_found: true,
 			});
 		} else {
 			return response.status(200).json({
-				message: 'Mobile number not found',
+				message:
+					result?.length > 0
+						? 'Data found successfully'
+						: 'Data not found',
 				status: 'success',
 				is_mobile_found: false,
+				is_data_found: result?.length > 0 ? true : false,
 			});
 		}
 	}
