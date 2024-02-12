@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Query } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
@@ -215,19 +215,16 @@ export class UserauthService {
 	public async isUserExists(body, response) {
 		let { first_name, dob, mobile } = body;
 		let filterQueryArray = [];
-		let filterParams = [];
 
 		filterQueryArray.push(
 			`first_name = '${first_name}' AND mobile = '${mobile}' AND dob = '${dob}'`,
 		);
 
 		if (body?.last_name) {
-			filterParams.push(body.last_name);
 			filterQueryArray.push(`last_name = '${body.last_name}'`);
 		}
 
 		if (body?.middle_name) {
-			filterParams.push(body.middle_name);
 			filterQueryArray.push(`middle_name = '${body.middle_name}'`);
 		}
 
@@ -247,9 +244,8 @@ export class UserauthService {
 			});
 		}
 
-		let result = await this.hasuraServiceFromServices.getFormattedData(
-			users_data,
-		);
+		let result =
+			this.hasuraServiceFromServices.getFormattedData(users_data);
 
 		if (result?.length == 0) {
 			return response.status(200).json({
