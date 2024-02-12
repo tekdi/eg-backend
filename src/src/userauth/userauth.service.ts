@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
@@ -16,6 +17,7 @@ export class UserauthService {
 	constructor(
 		private configService: ConfigService,
 		private readonly keycloakService: KeycloakService,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
@@ -208,5 +210,58 @@ export class UserauthService {
 				data: {},
 			});
 		}
+	}
+
+	public async isUserExists(body, response) {
+		let { first_name, dob, mobile } = body;
+		let filterQueryArray = [];
+		let filterParams = [];
+
+		filterQueryArray.push(
+			`first_name = '${first_name}' AND mobile = '${mobile}' AND dob = '${dob}'`,
+		);
+
+		if (body?.last_name) {
+			filterParams.push(body.last_name);
+			filterQueryArray.push(`last_name = '${body.last_name}'`);
+		}
+
+		if (body?.middle_name) {
+			filterParams.push(body.middle_name);
+			filterQueryArray.push(`middle_name = '${body.middle_name}'`);
+		}
+
+		const filterQuery = `SELECT * FROM users WHERE ${filterQueryArray.join(
+			' AND ',
+		)}`;
+
+		const users_data = (
+			await this.hasuraServiceFromServices.executeRawSql(filterQuery)
+		)?.result;
+
+		if (users_data == undefined && !users_data) {
+			return response.status(200).json({
+				message: 'No Data found',
+				status: 'success',
+				is_mobile_found: false,
+			});
+		}
+
+		let result = await this.hasuraServiceFromServices.getFormattedData(
+			users_data,
+		);
+
+		if (result?.length == 0) {
+			return response.status(200).json({
+				message: 'No Data found',
+				status: 'success',
+				is_mobile_found: false,
+			});
+		}
+		return response.status(200).json({
+			message: 'Data found successfully',
+			status: 'success',
+			is_mobile_found: true,
+		});
 	}
 }
