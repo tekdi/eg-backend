@@ -1,21 +1,19 @@
-// camp.controller.ts
-
 import {
+	Body,
 	Controller,
+	Get,
+	Param,
+	Patch,
 	Post,
+	Req,
+	Res,
+	Response,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
-	Body,
-	Req,
-	UseGuards,
-	Res,
-	Param,
-	Response,
-	Patch,
-	Get,
 } from '@nestjs/common';
-import { CampService } from './camp.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { CampService } from './camp.service';
 
 @Controller('camp')
 export class CampController {
@@ -362,5 +360,28 @@ export class CampController {
 		@Res() response: any,
 	) {
 		return this.campService.campLearnersById(id, body, request, response);
+	}
+
+	//multiple reassigne learner from One camp to other
+	@Patch('/admin/multiplereassign/:id')
+	@UseGuards(new AuthGuard())
+	multiplereassignBeneficiarytoCamp(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.multiplereassignBeneficiarytoCamp(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('campday/campdetails')
+	@UseGuards(new AuthGuard())
+	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
+		return this.campService.campDetails(body, request, response);
 	}
 }

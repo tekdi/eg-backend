@@ -1,7 +1,6 @@
 import {
 	Body,
 	Controller,
-	Get,
 	Injectable,
 	Param,
 	Patch,
@@ -10,8 +9,8 @@ import {
 	Res,
 	UseGuards,
 } from '@nestjs/common';
-import { ActivitiesService } from './activities.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { ActivitiesService } from './activities.service';
 
 @Injectable()
 @Controller('/activities')

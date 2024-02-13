@@ -32,15 +32,15 @@ export class EditRequestCoreService {
 			query: `query MyQuery {
 				edit_requests(where: {edit_req_for_context_id: {_eq: ${edit_req_for_context_id}}, edit_req_for_context: {_eq: ${edit_req_for_context}}, program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}}) {
 				  id
-                  edit_req_for_context
-                  edit_req_for_context_id
-                  fields
-                  req_date
-                  req_approved_date
-                  program_id
-                  academic_year_id
-                  status
-                  edit_req_approved_by
+				  edit_req_for_context
+				  edit_req_for_context_id
+				  fields
+				  req_date
+				  req_approved_date
+				  program_id
+				  academic_year_id
+				  status
+				  edit_req_approved_by
 				  edit_req_by
 				}
 			  }`,
@@ -77,13 +77,10 @@ export class EditRequestCoreService {
 
 		return result;
 	}
-	public async getEditRequestList(body, edit_req_by) {
-		let {
-			program_id,
-			academic_year_id,
-			edit_req_for_context,
-			edit_req_for_context_id,
-		} = body;
+	public async getEditRequestList(req, body, edit_req_by) {
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		let { edit_req_for_context, edit_req_for_context_id } = body;
 
 		let filterQueryArray = [];
 
@@ -104,7 +101,7 @@ export class EditRequestCoreService {
 		}
 		const data = {
 			query: `query MyQuery {
-                    edit_requests(where: {${filterQueryArray}}) {
+					edit_requests(where: {${filterQueryArray}}) {
 						id
 						edit_req_for_context
 						edit_req_for_context_id
@@ -116,27 +113,22 @@ export class EditRequestCoreService {
 						status
 						edit_req_approved_by
 						edit_req_by
-                    }
-            }`,
+					}
+			}`,
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);
 		return response;
 	}
 
-	public async getEditRequestListAdmin(body) {
-		let {
-			program_id,
-			academic_year_id,
-			edit_req_for_context,
-			edit_req_for_context_id,
-			parent_ip_id,
-		} = body;
+	public async getEditRequestListAdmin(body, program_id, academic_year_id) {
+		let { edit_req_for_context, edit_req_for_context_id, parent_ip_id } =
+			body;
 
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`users: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}`,
+			`users: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}`,
 		);
 
 		if (edit_req_for_context) {
@@ -152,7 +144,7 @@ export class EditRequestCoreService {
 		}
 		const data = {
 			query: `query MyQuery {
-                    edit_requests(where: {${filterQueryArray}}) {
+					edit_requests(where: {${filterQueryArray}}) {
 						id
 						edit_req_for_context
 						edit_req_for_context_id
@@ -164,8 +156,8 @@ export class EditRequestCoreService {
 						status
 						edit_req_approved_by
 						edit_req_by
-                    }
-            }`,
+					}
+			}`,
 		};
 
 		const response = await this.hasuraServiceFromServices.getData(data);

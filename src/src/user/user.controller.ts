@@ -14,15 +14,17 @@ import {
 	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
+	Version,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { lastValueFrom, map } from 'rxjs';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
-import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { HasuraService } from '../hasura/hasura.service';
 import { CreateUserDto } from '../helper/dto/create-user.dto';
 import { RegisterFacilitatorDto } from '../helper/dto/register-facilitator.dto';
+import { AuthGuard } from '../modules/auth/auth.guard';
 import { UserService } from './user.service';
+import { LinkValidationDTO } from './dto/link-validation.dto';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/users')
@@ -42,12 +44,12 @@ export class UserController {
 					this.url,
 					{
 						query: `query MyQuery {
-              qualification_masters {
-                id
-                name
-                type
-              }
-            }`,
+			  qualification_masters {
+				id
+				name
+				type
+			  }
+			}`,
 					},
 					{
 						headers: {
@@ -102,8 +104,18 @@ export class UserController {
 	public async searchById(
 		@Param('id') id: number,
 		@Res() response: Response,
+		@Req() request: any,
 	) {
-		return this.userService.userById(id, response);
+		this.userService
+			.userById(id, response, request)
+			.then((result) => {
+				// Further processing or sending the result as a response
+				response.send(result);
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+				response.status(500).send({ error: 'Internal Server Error' });
+			});
 	}
 
 	// users/is_user_exist by mobile and adhaar etc filter.
@@ -114,11 +126,13 @@ export class UserController {
 
 	// users/update_facilitator/:id update facilitator status.
 	@Put('update_facilitator/:id')
+	@UseGuards(new AuthGuard())
 	public async updateUser(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
+		@Req() req: any,
 	) {
-		return this.userService.update(id, body, 'program_faciltators');
+		return this.userService.update(id, body, req, 'program_faciltators');
 	}
 
 	// users/login by username and password.
@@ -134,8 +148,17 @@ export class UserController {
 	// users/ip_user_info by auth token.
 	@Get('/ip_user_info')
 	@UseGuards(new AuthGuard())
-	ipUserInfo(@Req() request: Request) {
-		return this.userService.ipUserInfo(request);
+	ipUserInfo(@Req() request: Request, @Res() response: Response) {
+		this.userService
+			.ipUserInfo(request, response)
+			.then((result) => {
+				// Further processing or sending the result as a response
+				response.send(result);
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+				response.status(500).send({ error: 'Internal Server Error' });
+			});
 	}
 
 	@Get('/organization/:id')
@@ -188,5 +211,38 @@ export class UserController {
 		@Body() body: any,
 	) {
 		return this.userService.userCampExist(id, body, request, response);
+	}
+
+	@Get('cohorts/my/:type')
+	@UseGuards(new AuthGuard())
+	public async getUserCohorts(
+		@Param('type') type: any,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.userService.getUserCohorts(type, request, response);
+	}
+
+	@Post('/onboarding/validate')
+	@UsePipes(ValidationPipe)
+	public async validateOnBoardingLink(
+		@Body() body: LinkValidationDTO,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.userService.validateOnBoardingLink(body, request, response);
+	}
+
+	/**************************************************************************/
+	/******************************* V2 APIs **********************************/
+	/**************************************************************************/
+	@Version('2')
+	@Post('/is_user_exist/:role')
+	public async checkUserExistsV2(
+		@Param('role') role: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.userService.checkUserExistsV2(role, body, response);
 	}
 }

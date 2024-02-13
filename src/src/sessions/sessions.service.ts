@@ -15,12 +15,12 @@ export class SessionsService {
 	async createSession(body: any, request: any, response: any) {
 		//validation to check if the data is already present in the
 		let validation_query = `query MyQuery {
-            learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq:${body?.learning_lesson_plan_id}}, camp_id: {_eq:${body?.camp_id}}}){
-                learning_lesson_plan_id
-                camp_id
-            }
-          }
-          `;
+			learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq:${body?.learning_lesson_plan_id}}, camp_id: {_eq:${body?.camp_id}}}){
+				learning_lesson_plan_id
+				camp_id
+			}
+		  }
+		  `;
 
 		const res = await this.hasuraServiceFromServices.getData({
 			query: validation_query,
@@ -211,29 +211,29 @@ export class SessionsService {
 
 	public async getSessionsListByCampId(id: any, request: any, response: any) {
 		let query = `query MyQuery {
-            learning_lesson_plans_master(order_by: {ordering: asc}){
-              ordering
-              id
+			learning_lesson_plans_master(order_by: {ordering: asc}){
+			  ordering
+			  id
 							title
 							cms_lesson_id
 							academic_year_id
 							program_id
-              session_tracks(where:{camp_id:{_eq:${id}}}){
+			  session_tracks(where:{camp_id:{_eq:${id}}}){
 								id
-                learning_lesson_plan_id
-                lesson_plan_complete_feedback
-                lesson_plan_incomplete_feedback
-                created_at
-                updated_at
+				learning_lesson_plan_id
+				lesson_plan_complete_feedback
+				lesson_plan_incomplete_feedback
+				created_at
+				updated_at
 								camp_id
 								status
 								created_by
 								updated_by
-              }
-            }
-          }
-          
-          `;
+			  }
+			}
+		  }
+
+		  `;
 		const res = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});

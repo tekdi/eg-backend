@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from 'src/user/user.service';
+import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { S3Service } from '../services/s3/s3.service';
-import { EnumService } from '../enum/enum.service';
 const moment = require('moment');
 @Injectable()
 export class CampCoreService {
@@ -32,23 +32,23 @@ export class CampCoreService {
 		variables: any,
 	) {
 		let query = `query MyQuery {
-        all:camps_aggregate(where:${filterQuery}) {
-          aggregate {
-            count
-          }
-        },
+		all:camps_aggregate(where:${filterQuery}) {
+		  aggregate {
+			count
+		  }
+		},
 		camp_initiated: camps_aggregate(where:{ _and: [${filterQueryArray.join(
 			',',
 		)}, {group:{_or: [
-            {status: {_nin: ${JSON.stringify(
+			{status: {_nin: ${JSON.stringify(
 				status.filter((item) => item != 'camp_initiated'),
 			)}}},
-            { status: { _is_null: true } }
-         ]}}] } ) {
-            aggregate {
-                count
-            }},
-        ${status
+			{ status: { _is_null: true } }
+		 ]}}] } ) {
+			aggregate {
+				count
+			}},
+		${status
 			.filter((item) => item != 'camp_initiated')
 			.map(
 				(
@@ -56,11 +56,11 @@ export class CampCoreService {
 				) => `${item}:camps_aggregate(where:{ _and: [${filterQueryArray.join(
 					',',
 				)},{group: {status: {_eq: ${item}}}}] } ) {
-                    aggregate {
-                        count
-                    }}`,
+					aggregate {
+						count
+					}}`,
 			)}
-    }`;
+	}`;
 
 		const response = await this.hasuraServiceFromServices.getData({
 			query,
@@ -70,7 +70,7 @@ export class CampCoreService {
 		return response;
 	}
 
-	public async list(body: any) {
+	public async list(body: any, req: any) {
 		let filterQueryArray = [];
 
 		const status_array = this.enumService
@@ -80,8 +80,8 @@ export class CampCoreService {
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let parent_ip_id = body?.parent_ip_id;
 		let status = body?.status;
 
@@ -89,11 +89,23 @@ export class CampCoreService {
 			`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
 		);
 
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{properties:{state:{_in: ${JSON.stringify(body?.state)}}}}`,
+			);
+		}
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{properties:{district:{_in: ${JSON.stringify(
 					body?.district,
 				)}}}}`,
+			);
+		}
+
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{properties:{state:{_in: ${JSON.stringify(body?.state)}}}}`,
 			);
 		}
 
@@ -156,7 +168,7 @@ export class CampCoreService {
 					  middle_name
 					  last_name
 					}
-					
+
 				  }
 				  beneficiaries: group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}}) {
 					user {
@@ -179,7 +191,7 @@ export class CampCoreService {
 					}
 				}
 				}
-				
+
 			  }
 			  `,
 			variables: {
@@ -227,6 +239,8 @@ export class CampCoreService {
 		offset: any,
 		req: any,
 	) {
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 		let filterQueryArray = [];
 
 		let searchQuery = '';
@@ -265,7 +279,7 @@ export class CampCoreService {
 					users_aggregate(
 						where: {${filterQuery},
 							program_faciltators: {
-								parent_ip: { _eq: "${parent_ip_id}" },
+								parent_ip: { _eq: "${parent_ip_id}" }, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
 								status: { _in: ["selected_prerak", "selected_for_onboarding"] }
 							},
 							references: { context: { _eq: "community.user" } }
@@ -278,7 +292,7 @@ export class CampCoreService {
 					users(
 						where: {${filterQuery},
 							program_faciltators: {
-								parent_ip: { _eq: "${parent_ip_id}" },
+								parent_ip: { _eq: "${parent_ip_id}" }, program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}
 								status: { _in: ["selected_prerak", "selected_for_onboarding"] }
 							},
 							references: { context: { _eq: "community.user" } }
@@ -466,9 +480,9 @@ export class CampCoreService {
 			  end_date
 			  updated_by
 			  updated_at
-			  
+
 			}
-		  }		  
+		  }
 		  `;
 
 		return await this.hasuraServiceFromServices.getData({
@@ -573,5 +587,93 @@ export class CampCoreService {
 				data: {},
 			});
 		}
+	}
+
+	//multiple users data update
+	public async multipleUpdateCampUser(camp_id: any, body: any) {
+		const idsArray = body?.learner_ids || [];
+
+		const dataN = {
+			query: `mutation MyMutation {
+				update_group_users(where: {
+					user_id: {_in: [${idsArray}]},
+					member_type: {_eq: "member"},
+					status: {_eq: "active"}
+				}, _set: {
+					updated_by: ${body?.updated_by},
+					status: "inactive"
+				}){
+					affected_rows
+				}
+				activate:update_group_users(where: {
+					user_id: {_in: [${idsArray}]},
+					member_type: {_eq: "member"},
+					group: {camp: {id:{_eq: ${camp_id}}}}
+				}, _set: {
+					updated_by: ${body?.updated_by},
+					status: "active"
+				}){
+					affected_rows
+					returning{
+						group_id
+						user_id
+						camps{
+							id
+						}
+					}
+				}
+			}`,
+		};
+
+		const response = await this.hasuraServiceFromServices.getData(dataN);
+		return response?.data?.activate?.returning;
+	}
+
+	public async multipleCreateCampUser(
+		body: any,
+		returnFields: any,
+		req: any,
+		resp: any,
+	) {
+		let response = await this.hasuraService.qM(
+			'insert_group_users',
+			body,
+			[],
+			returnFields,
+		);
+
+		return { response };
+	}
+
+	public async multipleUpdateConsentDetails(body) {
+		const data = {
+			query: `mutation MyMutation2 {
+				update_consents(where: {user_id: {_in: [${body?.learner_ids}]},camp_id:{_eq:${body?.old_camp_id}}}, _set: {status: "inactive"}){
+					affected_rows
+				}
+			}`,
+		};
+
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		return { response };
+	}
+
+	public async multipleUpdateCampGroup(
+		camp_id: any,
+		status: any = 'inactive',
+	) {
+		const data = {
+			query: `mutation MyMutation {
+				update_groups(where: {camp: {id: {_eq: ${camp_id}}}}, _set: {status: ${status}}){
+					affected_rows
+					returning{
+						id 
+					}
+				}
+			}`,
+		};
+		const response = await this.hasuraServiceFromServices.getData(data);
+		return { response };
 	}
 }

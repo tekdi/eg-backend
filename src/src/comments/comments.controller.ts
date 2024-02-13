@@ -1,4 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Param,
+	Patch,
+	Post,
+	Req,
+	Res,
+	UseGuards,
+	UsePipes,
+	ValidationPipe,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { CommentsService } from './comments.service';
@@ -44,13 +57,8 @@ export class CommentsController {
 	}
 
 	@Get('/:context/:context_id/:id')
-	async findOne(
-		@Param('id') id: string,
-		@Res() response: Response,
-	) {
-		const result: any = await this.commentsService.findOne(
-			+id,
-		);
+	async findOne(@Param('id') id: string, @Res() response: Response) {
+		const result: any = await this.commentsService.findOne(+id);
 		if (result?.data?.comments.length > 0) {
 			return response.status(200).json({
 				success: true,
@@ -75,12 +83,7 @@ export class CommentsController {
 		@Res() response: Response,
 		@Body() body: UpdateCommentDto,
 	) {
-		return this.commentsService.update(
-			id,
-			body,
-			request,
-			response,
-		);
+		return this.commentsService.update(id, body, request, response);
 	}
 
 	@Delete('/:context/:context_id/:id')
@@ -90,10 +93,6 @@ export class CommentsController {
 		@Req() request: any,
 		@Res() response: Response,
 	) {
-		return this.commentsService.remove(
-			id,
-			request,
-			response,
-		);
+		return this.commentsService.remove(id, request, response);
 	}
 }

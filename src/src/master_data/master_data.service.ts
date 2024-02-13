@@ -16,7 +16,7 @@ export class MasterDataService {
 					learning_lesson_plans_master: result.data,
 					limit,
 					currentPage: page,
-					totalPages:result.totalPages,
+					totalPages: result.totalPages,
 				},
 			});
 		} else {

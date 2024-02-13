@@ -1,8 +1,8 @@
-import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
-import { HasuraService } from '../../hasura/hasura.service';
 import { Injectable } from '@nestjs/common';
-import { EditRequestCoreService } from './edit-requests.core.service';
+import { HasuraService } from '../../hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 import { UserService } from '../../user/user.service';
+import { EditRequestCoreService } from './edit-requests.core.service';
 @Injectable()
 export class EditRequestService {
 	constructor(
@@ -52,8 +52,8 @@ export class EditRequestService {
 			});
 		}
 
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const response = await this.editRequestCoreService.getEditRequest(
 			body.edit_req_for_context_id,
@@ -90,10 +90,9 @@ export class EditRequestService {
 
 	public async getEditRequestList(req, body, res) {
 		const edit_req_by = req.mw_userid;
-		body.academic_year_id = body?.academic_year_id || 1;
-		body.program_id = body?.program_id || 1;
 
 		const response = await this.editRequestCoreService.getEditRequestList(
+			req,
 			body,
 			edit_req_by,
 		);
@@ -115,11 +114,15 @@ export class EditRequestService {
 		}
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
-		body.academic_year_id = body?.academic_year_id || 1;
-		body.program_id = body?.program_id || 1;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
 
 		const response =
-			await this.editRequestCoreService.getEditRequestListAdmin(body);
+			await this.editRequestCoreService.getEditRequestListAdmin(
+				body,
+				program_id,
+				academic_year_id,
+			);
 		return res.status(200).json({
 			success: true,
 			message: 'success',
