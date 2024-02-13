@@ -30,17 +30,39 @@ export class UserauthService {
 	public async userAuthRegister(body, response, role) {
 		let misssingFieldsFlag = false;
 		if (role === 'facilitator') {
-			let isMobileExist = await this.hasuraService.findAll('users', {
-				mobile: body?.mobile,
-			});
-			let userExist = isMobileExist?.data?.users;
+			//validation to check if the mobile exists for another facilitator
 
-			if (userExist.length > 0) {
-				return response.status(422).send({
-					success: false,
-					message: 'Mobile Number Already Exist',
-					data: {},
+			let query = `query MyQuery {
+				users(where: {mobile: {_eq: "${body?.mobile}"}}){
+				  id
+				  mobile
+				  program_faciltators{
+					id
+					user_id
+				  }
+				}
+			  }
+			  `;
+			const hasura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: query,
 				});
+
+			let users = hasura_response?.data?.users;
+
+			if (users?.length > 0) {
+				let facilitator_data = users.filter(
+					(user) => user.program_faciltators.length > 0,
+				);
+
+				
+				if (facilitator_data.length > 0) {
+					return response.status(422).send({
+						success: false,
+						message: 'Mobile Number Already Exist',
+						data: {},
+					});
+				}
 			}
 
 			// Validate role specific fields
