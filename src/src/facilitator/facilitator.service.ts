@@ -2594,14 +2594,15 @@ export class FacilitatorService {
 			});
 		}
 
+		const { okyc_response, ...otherData } = program_faciltators[0] || {};
 		let program_faciltator_create = {
-			...program_faciltators[0],
+			...otherData,
 			user_id: user_id,
 			academic_year_id: academic_year_id,
 			parent_ip: parent_ip,
 			program_id: program_id,
 			qualification_ids: JSON.stringify(
-				JSON.parse(program_faciltators[0].qualification_ids),
+				JSON.parse(otherData.qualification_ids),
 			).replace(/"/g, '\\"'),
 		};
 
