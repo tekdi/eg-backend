@@ -75,6 +75,7 @@ export class CampModule implements NestModule {
 				'/camp/:id/get-camp-sessions',
 				'/camp/incomplete/camp-day-activity/:id',
 				'/camp/random-attendance/:id',
+				'/camp/campday/campdetails',
 			)
 			.forRoutes(CampController);
 	}
