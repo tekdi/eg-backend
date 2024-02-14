@@ -54,6 +54,71 @@ export class QueryGeneratorService {
 	`;
 	}
 
+	// create
+	createWithVariable(
+		tName: String,
+		item: any,
+		onlyFields: any = [],
+		fields: any = [],
+		variable = [],
+	) {
+		let resultObject = {};
+		let params = '';
+		if (Array.isArray(variable) && variable?.length > 0) {
+			params = `(${variable
+				.map((newD) => `$${newD.key}: ${newD?.type}`)
+				.join(', ')})`;
+
+			let vData = {};
+			variable.forEach((e) => {
+				vData = { ...vData, [e.key]: item?.[e.key] };
+			});
+			resultObject = { ...resultObject, variables: vData };
+		}
+
+		let tableName = `insert_${tName}_one`;
+		const keys = Object.keys(item);
+
+		const getObjStr = (item: any, type: String = '') => {
+			let str = 'object: {';
+			let strArr = [];
+			keys.forEach((e, index) => {
+				if (
+					e !== 'id' &&
+					(onlyFields.length < 1 || onlyFields.includes(e))
+				) {
+					const data = variable.map((e) => e.key).filter((e) => e);
+					if (data.includes(e)) {
+						strArr = [...strArr, `${e}:$${e}`];
+					} else {
+						strArr = [...strArr, `${e}:"${item[e]}"`];
+					}
+				}
+			});
+			str += strArr.join();
+			str += `}`;
+			return str;
+		};
+
+		resultObject = {
+			query: `mutation MyQuery${params} {
+	  ${tableName}(${getObjStr(item)}) {
+		${this.getParam(
+			fields && fields.length > 0
+				? fields
+				: onlyFields
+				? onlyFields
+				: keys,
+		)}
+	  }
+	}
+	`,
+			...resultObject,
+		};
+
+		return resultObject;
+	}
+
 	// update
 	update(
 		id: number,
