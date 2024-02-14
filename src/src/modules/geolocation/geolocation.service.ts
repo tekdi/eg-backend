@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
+import { SentryService } from '../services/sentry/sentry.service';
+
 
 @Injectable()
 export class GeolocationService {
 	constructor(
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private sentryservice: SentryService,
 	) {}
 
 	public async findAll(tableName: string, filters: Object = {}) {
@@ -18,6 +21,16 @@ export class GeolocationService {
 				}
 			});
 		}
+
+		//Add a breadcrumb with data as query
+
+		 this.sentryservice.addBreadcrumb({
+		 	type: 'debug',
+		 	level: 'info',
+		 	category: 'modules.geolocation.service.findAll',
+		 	message: 'Query to search the details of the given table',
+		 	data: {query: query},
+		 });
 
 		let data = {
 			query: `
@@ -42,6 +55,16 @@ export class GeolocationService {
 			}`,
 		};
 
+		//Add a breadcrumb with data as data
+
+			this.sentryservice.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'modules.geolocation.service.findAll',
+				message: 'Finding details of the given table',
+				data: {data: data},
+			});
+
 		return await this.hasuraService.postData(data);
 	}
 
@@ -61,6 +84,16 @@ export class GeolocationService {
 				}
 			}`,
 		};
+
+		//Add a breadcrumb with data as data
+
+		this.sentryservice.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'modules.geolocation.service.getStates',
+				message: 'Finding states from the given table',
+				data: {data: data},
+			});
 
 		return await this.hasuraService.postData(data);
 	}
@@ -91,6 +124,16 @@ export class GeolocationService {
 				}
 			}`,
 		};
+
+		//Add a breadcrumb with data as data
+
+		this.sentryservice.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'modules.geolocation.service.getDistricts',
+				message: 'Finding districts from the given table',
+				data: {data: data},
+			});
 
 		return await this.hasuraService.postData(data);
 	}
@@ -129,6 +172,16 @@ export class GeolocationService {
 			}`,
 		};
 
+		//Add a breadcrumb with data as data
+
+		this.sentryservice.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'modules.geolocation.service.getBlocks',
+				message: 'Finding all blocks from the given table',
+				data: {data: data},
+			});
+
 		return await this.hasuraService.postData(data);
 	}
 
@@ -144,7 +197,28 @@ export class GeolocationService {
 			  }`,
 		};
 
+		//Add a breadcrumb with data as data
+
+		this.sentryservice.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'modules.geolocation.service.getBlocksFromDistricts',
+				message: 'Finding blocks in district from the given table',
+				data: {data: data},
+			});
+
+
 		const response = await this.hasuraServiceFromServices.getData(data);
+
+		//Add a breadcrumb with data as response
+
+		this.sentryservice.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'modules.geolocation.service.getBlocksFromDistricts',
+				message: 'Success or failure in getting blocks from district',
+				data: {response},
+			});
 
 		if (response?.data?.address && response?.data?.address?.length > 0) {
 			return resp.status(200).json({
@@ -185,6 +259,14 @@ export class GeolocationService {
 			  `,
 		};
 
+		this.sentryservice.addBreadcrumb({
+			type: 'debug',
+			level: 'info',
+			category: 'modules.geolocation.service.getVillages',
+			message: 'Finding villages in block from the given table',
+			data: {data: data},
+		});
+
 		return await this.hasuraService.postData(data);
 	}
 
@@ -204,6 +286,16 @@ export class GeolocationService {
 			  }
 			  `,
 		};
+
+		//Add a breadcrumb with data as data
+
+		this.sentryservice.addBreadcrumb({
+				type: 'debug',
+				level: 'info',
+				category: 'modules.geolocation.service.getGramPanchayat',
+				message: 'Finding villages in block from the given table',
+				data: {data: data},
+			});
 
 		return await this.hasuraService.postData(data);
 	}

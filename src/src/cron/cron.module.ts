@@ -9,6 +9,7 @@ import { FaAttendanceProcessingCron } from './faAttendanceProcessing.cron';
 import { FaFaceIndexingCron } from './faFaceIndexing.cron';
 import { FaUserIndexingCron } from './faUserIndexing.cron';
 import { PrepareCertificateHtmlCron } from './prepareCertificateHtml.cron';
+import { LearnerCampDist } from './learnerCampDist.cron';
 @Module({
 	imports: [
 		AwsRekognitionModule,
@@ -22,6 +23,7 @@ import { PrepareCertificateHtmlCron } from './prepareCertificateHtml.cron';
 		FaAttendanceProcessingCron,
 		PrepareCertificateHtmlCron,
 		CampEndCron,
+		LearnerCampDist,
 		Method,
 	],
 })
