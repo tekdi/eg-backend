@@ -1235,6 +1235,40 @@ export class CampService {
 					);
 				}
 
+				if (camp_status === 'inactive') {
+					let updatebody = {
+						status: 'camp_initiated',
+					};
+					let updatStatus = await this.hasuraService.q(
+						'groups',
+						{
+							...updatebody,
+							id: group_id,
+						},
+						['status'],
+						true,
+						['id', 'status'],
+					);
+
+					let auditData = {
+						userId: facilitator_id,
+						mw_userid: facilitator_id,
+						user_type: 'Facilitator',
+						context: 'camp.update.status',
+						context_id: camp_id,
+						subject: 'camp',
+						subject_id: camp_id,
+						log_transaction_text: `Facilitator ${facilitator_id} updated camp status of camp ${camp_id}`,
+						oldData: { status: camp_status },
+						newData: { status: 'camp_initiated' },
+						tempArray: ['status'],
+						action: 'update',
+						sortedData: true,
+					};
+
+					await this.userService.addAuditLogAction(auditData);
+				}
+
 				const createAuditData = learner_ids
 					.filter(
 						(id) =>
