@@ -1470,5 +1470,19 @@
 			"title": "SESSION_COMPLETED_SESSION_SUCCESSFULLY_IMPLEMENTED",
 			"value": "session_completed_session_successfully_implemented"
 		}
+	],
+	"PARENT_SUPPORT": [
+		{
+			"title": "PARENT_SUPPORT_YES",
+			"value": "yes"
+		},
+		{
+			"title": "PARENT_SUPPORT_NO",
+			"value": "no"
+		},
+		{
+			"title": "PARENT_SUPPORT_MAY_BE",
+			"value": "may_be"
+		}
 	]
 }

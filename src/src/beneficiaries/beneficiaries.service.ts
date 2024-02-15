@@ -1149,6 +1149,7 @@ export class BeneficiariesService {
 						document_id
 						enrolled_for_board
 						enrollement_status
+						parent_support
 					}
 					extended_users {
 						marital_status
@@ -1413,6 +1414,7 @@ export class BeneficiariesService {
 				document_id
 				enrolled_for_board
 				enrollement_status
+				parent_support
 			  }
 			  program_users {
 				organisation_id
@@ -2135,6 +2137,7 @@ export class BeneficiariesService {
 					'user_id',
 					'career_aspiration',
 					'career_aspiration_details',
+					'parent_support',
 				],
 				program_beneficiaries: [
 					'learning_motivation',
@@ -2726,6 +2729,7 @@ export class BeneficiariesService {
 						career_aspiration: req?.career_aspiration,
 						career_aspiration_details:
 							req?.career_aspiration_details,
+						parent_support: req?.parent_support,
 						id: beneficiaryUser?.core_beneficiaries?.id
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
