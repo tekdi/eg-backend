@@ -1149,6 +1149,7 @@ export class BeneficiariesService {
 						document_id
 						enrolled_for_board
 						enrollement_status
+						parent_support
 					}
 					extended_users {
 						marital_status
@@ -1413,6 +1414,7 @@ export class BeneficiariesService {
 				document_id
 				enrolled_for_board
 				enrollement_status
+				parent_support
 			  }
 			  program_users {
 				organisation_id
