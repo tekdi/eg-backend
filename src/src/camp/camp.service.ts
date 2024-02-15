@@ -4292,10 +4292,14 @@ export class CampService {
 
 		// Determine which fields to include in the query
 		const fields = body?.fields;
-		if (!fields || fields?.length === 0 || fields.includes('leanerCount')) {
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('beneficairesCount')
+		) {
 			queryFields = [
 				...queryFields,
-				`leanerCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"}}) {
+				`beneficairesCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}}) {
           aggregate {
             count
             }
@@ -4305,11 +4309,11 @@ export class CampService {
 		if (
 			!fields ||
 			fields?.length === 0 ||
-			fields.includes('attendaceCount')
+			fields.includes('beneficairesAttendaceCount')
 		) {
 			queryFields = [
 				...queryFields,
-				`attendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+				`beneficairesAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
           aggregate {
           	count
           }
@@ -4319,11 +4323,25 @@ export class CampService {
 		if (
 			!fields ||
 			fields?.length === 0 ||
-			fields.includes('presentAttendaceCount')
+			fields.includes('beneficairesPresentAttendaceCount')
 		) {
 			queryFields = [
 				...queryFields,
-				`presentAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"},status:{_eq:"present"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+				`beneficairesPresentAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"},status:{_eq:"present"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+          aggregate {
+            count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('prerakPresentAttendaceCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`prerakPresentAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"owner"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"},status:{_eq:"present"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
           aggregate {
             count
           }
@@ -4351,9 +4369,9 @@ export class CampService {
 		) {
 			queryFields = [
 				...queryFields,
-				`misc_activities:camp_days_activities_tracker(where:{id:{_eq:${context_id}}}){
-          misc_activities
-        }`,
+				`misc_activities:camp_days_activities_tracker_by_pk(id: ${context_id}){
+					misc_activities
+				}`,
 			];
 		}
 
