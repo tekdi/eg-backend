@@ -2135,6 +2135,7 @@ export class BeneficiariesService {
 					'user_id',
 					'career_aspiration',
 					'career_aspiration_details',
+					'parent_support',
 				],
 				program_beneficiaries: [
 					'learning_motivation',
@@ -2726,6 +2727,7 @@ export class BeneficiariesService {
 						career_aspiration: req?.career_aspiration,
 						career_aspiration_details:
 							req?.career_aspiration_details,
+						parent_support: req?.parent_support,
 						id: beneficiaryUser?.core_beneficiaries?.id
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,

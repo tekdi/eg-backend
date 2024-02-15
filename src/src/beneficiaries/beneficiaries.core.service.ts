@@ -219,6 +219,7 @@ export class BeneficiariesCoreService {
 			alternative_device_ownership
 			alternative_device_type
 			mark_as_whatsapp_number
+			parent_support
 		  }
 		  references {
 			id
