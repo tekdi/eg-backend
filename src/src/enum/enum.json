@@ -239,8 +239,8 @@
 	],
 	"TYPE_OF_LEARNER": [
 		{
-			"title": "DROPOUT",
-			"value": "dropout"
+			"title": "SCHOOL_DROPOUT",
+			"value": "school_dropout"
 		},
 		{
 			"title": "NEVER_ENROLLED",
@@ -257,10 +257,6 @@
 		{
 			"title": "STREAM_2_(MAINSTREAM_SYC)",
 			"value": "stream_2_mainstream_syc"
-		},
-		{
-			"title": "PRAGATI_SYC",
-			"value": "pragati_syc"
 		}
 	],
 	"LAST_STANDARD_OF_EDUCATION": [
@@ -315,8 +311,8 @@
 			"value": "enrolled"
 		},
 		{
-			"title": "NOT_ENROLLED",
-			"value": "not_enrolled"
+			"title": "READY_TO_ENROLL",
+			"value": "ready_to_enroll"
 		},
 		{
 			"title": "ENROLLMENT_AWAITED",
