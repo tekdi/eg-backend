@@ -171,6 +171,7 @@ export class BeneficiariesCoreService {
 			enrollment_last_name
 			enrollment_dob
 			enrollment_aadhaar_no
+			enrollment_mobile_no
 			is_eligible
 			enrollment_verification_reason
 			enrollment_verification_status
