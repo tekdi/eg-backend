@@ -55,7 +55,6 @@ export class UserauthService {
 					(user) => user.program_faciltators.length > 0,
 				);
 
-				
 				if (facilitator_data.length > 0) {
 					return response.status(422).send({
 						success: false,
@@ -249,6 +248,24 @@ export class UserauthService {
 					//add acknowledgment details
 					await this.acknowledgementService.createAcknowledgement(
 						acknowledgement_create_body,
+					);
+				}
+
+				if (role === 'beneficiary' && body?.career_aspiration) {
+					let core_beneficiary_body = {
+						career_aspiration: body?.career_aspiration,
+						career_aspiration_details:
+							body?.career_aspiration_details,
+						user_id: user_id,
+					};
+					await this.hasuraService.q(
+						'core_beneficiaries',
+						{
+							...core_beneficiary_body,
+						},
+						[],
+						false,
+						['id'],
 					);
 				}
 
