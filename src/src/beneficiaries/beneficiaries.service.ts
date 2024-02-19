@@ -2078,6 +2078,7 @@ export class BeneficiariesService {
 					'village',
 					'grampanchayat',
 					'address',
+					'pincode',
 				],
 			},
 			personal: {
