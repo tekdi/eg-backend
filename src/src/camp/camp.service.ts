@@ -819,7 +819,11 @@ export class CampService {
 			};
 		}
 
-		if (campData?.group_users[0]?.user_id != facilitator_id) {
+		if (
+			campData?.group_users[0]?.user_id != facilitator_id ||
+			(campData?.group?.status === 'inactive' &&
+				update_body?.edit_page_type !== 'edit_learners')
+		) {
 			return {
 				status: 401,
 				success: false,
