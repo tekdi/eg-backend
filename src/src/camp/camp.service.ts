@@ -819,7 +819,11 @@ export class CampService {
 			};
 		}
 
-		if (campData?.group_users[0]?.user_id != facilitator_id) {
+		if (
+			campData?.group_users[0]?.user_id != facilitator_id ||
+			(campData?.group?.status === 'inactive' &&
+				update_body?.edit_page_type !== 'edit_learners')
+		) {
 			return {
 				status: 401,
 				success: false,
@@ -1210,11 +1214,77 @@ export class CampService {
 					)
 					.map((item) => item.user_id);
 
+				// get learners id from program_beneficiaries from deactiveLearnerIds
+				let data = {
+					query: `query MyQuery {
+					program_beneficiaries(where: {user_id: {_in: [${deactiveLearnerIds}]}}) {
+						id
+						user_id
+						status
+					}
+				}`,
+				};
+
+				const resp = await this.hasuraServiceFromServices.getData({
+					query: data.query,
+				});
+
+				let programbeneficiariesdata =
+					resp?.data?.program_beneficiaries || [];
+				// get program_beneficiaires id who's status want to update
+				const programbeneficiaries = programbeneficiariesdata.map(
+					(item) => item.id,
+				);
+
+				//update learner status in program_beneficiaires removed from change_request
+				if (programbeneficiaries?.length > 0) {
+					resultActive = await this.hasuraServiceFromServices.update(
+						null,
+						'program_beneficiaries',
+						{
+							status: 'enrolled_ip_verified',
+							updated_by: facilitator_id,
+						},
+						[],
+						returnFields,
+						{ where: `{id:{_in:[${programbeneficiaries}]}}` },
+					);
+
+					const activeIdsAuditData = programbeneficiariesdata.map(
+						(item) => ({
+							user_id: item.user_id,
+							user_type: 'Facilitator',
+							updated_by_user: facilitator_id,
+							context: 'campBeneficiaryStatus',
+							context_id: camp_id,
+							subject: 'beneficiary',
+							subject_id: item.user_id,
+							log_transaction_text: JSON.stringify(
+								`Facilitator ${facilitator_id} updated beneficiary ${item.user_id} status from ${item.status} to enrolled_ip_verified`,
+							),
+							old_data: JSON.stringify(
+								`{ learner_id: ${item.user_id},status:${item.status} }`,
+							),
+							new_data: JSON.stringify(
+								`{ learner_id: ${item.user_id},status:enrolled_ip_verified }`,
+							),
+							action: 'update',
+						}),
+					);
+					if (activeIdsAuditData?.length > 0) {
+						resultCreate = await this.hasuraServiceFromServices.qM(
+							'insert_audit_logs',
+							activeIdsAuditData,
+							[],
+							['id'],
+						);
+					}
+				}
+
 				if (
 					deactivateIds.length > 0 &&
 					(camp_status == 'registered' ||
-						camp_status == 'camp_ip_verified' ||
-						camp_status == 'change_required')
+						camp_status == 'camp_ip_verified')
 				) {
 					return {
 						status: 422,
