@@ -1365,6 +1365,7 @@ export class BeneficiariesService {
 				is_eligible
 				enrollment_verification_status
 				enrollment_verification_reason
+				enrollment_mobile_no
 				document {
 					context
 					context_id
