@@ -300,15 +300,19 @@ export class UserauthService {
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`first_name = '${first_name}'  AND dob = '${dob}'`,
+			`soundex(first_name) = soundex('${first_name}')  AND dob = '${dob}'`,
 		);
 
 		if (body?.last_name) {
-			filterQueryArray.push(`last_name = '${body.last_name}'`);
+			filterQueryArray.push(
+				`soundex(last_name) = soundex('${body.last_name}')`,
+			);
 		}
 
 		if (body?.middle_name) {
-			filterQueryArray.push(`middle_name = '${body.middle_name}'`);
+			filterQueryArray.push(
+				`soundex(middle_name) = soundex('${body.middle_name}')`,
+			);
 		}
 
 		const filterQuery = `SELECT mobile,id FROM users WHERE ${filterQueryArray.join(
