@@ -2066,6 +2066,7 @@ export class BeneficiariesService {
 					'block',
 					'village',
 					'grampanchayat',
+					'pincode',
 				],
 			},
 			edit_address: {
