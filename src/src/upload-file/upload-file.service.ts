@@ -45,19 +45,19 @@ export class UploadFileService {
 			try {
 				const data = {
 					query: `query MyQuery {
-                    users(where: {id: {_eq: ${id}}}) {
-                      id
-                      username
-                      mobile
-                      ${document_sub_type}: documents(where: {document_sub_type: {_eq: "${document_sub_type}"}}) {
-                        id
-                        name
-                        doument_type
-                        document_sub_type
-                        path
-                      }
-                    }
-                  }`,
+					users(where: {id: {_eq: ${id}}}) {
+					  id
+					  username
+					  mobile
+					  ${document_sub_type}: documents(where: {document_sub_type: {_eq: "${document_sub_type}"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					  }
+					}
+				  }`,
 				};
 				//fetch documents data based on id and docuent_type
 				const response = await this.hasuraServiceFromServices.getData(
@@ -94,25 +94,25 @@ export class UploadFileService {
 		if (fileUrl) {
 			let query = {
 				query: `mutation MyMutation {
-                  insert_documents(objects: {name: "${key}", path: "/user/docs", provider: "s3", updated_by: "${id}", user_id: "${id}", doument_type: "${document_type}", document_sub_type: "${
+				  insert_documents(objects: {name: "${key}", path: "/user/docs", provider: "s3", updated_by: "${id}", user_id: "${id}", doument_type: "${document_type}", document_sub_type: "${
 					document_sub_type ?? document_type
 				}", created_by: "${id}"}) {
-                    affected_rows
-                    returning {
-                      id
-                      doument_type
-                      document_sub_type
-                      path
-                      name
-                      user_id
-                      updated_by
-                      provider
-                      created_by
-                      context_id
-                      context
-                    }
-                  }
-                }`,
+					affected_rows
+					returning {
+					  id
+					  doument_type
+					  document_sub_type
+					  path
+					  name
+					  user_id
+					  updated_by
+					  provider
+					  created_by
+					  context_id
+					  context
+					}
+				  }
+				}`,
 			};
 			const res = await this.hasuraService.postData(query);
 

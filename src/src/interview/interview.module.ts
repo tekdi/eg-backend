@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { InterviewService } from './interview.service';
-import { InterviewController } from './interview.controller';
 import { HasuraModule } from 'src/hasura/hasura.module';
+import { InterviewController } from './interview.controller';
+import { InterviewService } from './interview.service';
 
 @Module({
-  imports: [HasuraModule],
-  controllers: [InterviewController],
-  providers: [InterviewService],
+	imports: [HasuraModule],
+	controllers: [InterviewController],
+	providers: [InterviewService],
 })
 export class InterviewModule {}

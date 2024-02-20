@@ -1,57 +1,159 @@
 {
 	"GENDER": [
-		{ "title": "FEMALE", "value": "female" },
-		{ "title": "MALE", "value": "male" },
-		{ "title": "OTHER", "value": "other" }
+		{
+			"title": "FEMALE",
+			"value": "female"
+		},
+		{
+			"title": "MALE",
+			"value": "male"
+		},
+		{
+			"title": "OTHER",
+			"value": "other"
+		}
 	],
 	"QUALIFICATION": [
-		{ "title": "QUALIFICATION_BACHELORS", "value": "bachelors" },
-		{ "title": "QUALIFICATION_MASTERS", "value": "masters" },
-		{ "title": "QUALIFICATION_DIPLOMA", "value": "diploma" },
-		{ "title": "QUALIFICATION_POST_GRADUATE", "value": "post_graduate" },
-		{ "title": "QUALIFICATION_PH_D", "value": "ph_d" },
+		{
+			"title": "QUALIFICATION_BACHELORS",
+			"value": "bachelors"
+		},
+		{
+			"title": "QUALIFICATION_MASTERS",
+			"value": "masters"
+		},
+		{
+			"title": "QUALIFICATION_DIPLOMA",
+			"value": "diploma"
+		},
+		{
+			"title": "QUALIFICATION_POST_GRADUATE",
+			"value": "post_graduate"
+		},
+		{
+			"title": "QUALIFICATION_PH_D",
+			"value": "ph_d"
+		},
 		{
 			"title": "QUALIFICATION_PERSUING_GRADUATION",
 			"value": "pursuing_graduation"
 		}
 	],
 	"TEACHING_QUALIFICATION": [
-		{ "title": "TEACHING_QUALIFICATION_D_ED", "value": "d_ed" },
-		{ "title": "TEACHING_QUALIFICATION_B_ED", "value": "b_ed" },
-		{ "title": "TEACHING_QUALIFICATION_M_ED", "value": "m_ed" },
-		{ "title": "TEACHING_QUALIFICATION_STC", "value": "stc" },
-		{ "title": "TEACHING_QUALIFICATION_NONE", "value": "none" }
+		{
+			"title": "TEACHING_QUALIFICATION_D_ED",
+			"value": "d_ed"
+		},
+		{
+			"title": "TEACHING_QUALIFICATION_B_ED",
+			"value": "b_ed"
+		},
+		{
+			"title": "TEACHING_QUALIFICATION_M_ED",
+			"value": "m_ed"
+		},
+		{
+			"title": "TEACHING_QUALIFICATION_STC",
+			"value": "stc"
+		},
+		{
+			"title": "TEACHING_QUALIFICATION_NONE",
+			"value": "none"
+		}
 	],
 	"TEACHING_DEGREE": [
-		{ "title": "NO", "value": "no" },
-		{ "title": "YES", "value": "yes" }
+		{
+			"title": "NO",
+			"value": "no"
+		},
+		{
+			"title": "YES",
+			"value": "yes"
+		}
 	],
 	"EXPERIENCE": [
-		{ "title": "0", "value": "0" },
-		{ "title": "1", "value": "1" },
-		{ "title": "2", "value": "2" },
-		{ "title": "3", "value": "3" },
-		{ "title": "4", "value": "4" },
-		{ "title": "5", "value": "5" },
-		{ "title": "5+", "value": "5+" }
+		{
+			"title": "0",
+			"value": "0"
+		},
+		{
+			"title": "1",
+			"value": "1"
+		},
+		{
+			"title": "2",
+			"value": "2"
+		},
+		{
+			"title": "3",
+			"value": "3"
+		},
+		{
+			"title": "4",
+			"value": "4"
+		},
+		{
+			"title": "5",
+			"value": "5"
+		},
+		{
+			"title": "5+",
+			"value": "5+"
+		}
 	],
 	"MOBILE_TYPE": [
-		{ "title": "ANDROID", "value": "android" },
-		{ "title": "IPHONE", "value": "iphone" }
+		{
+			"title": "ANDROID",
+			"value": "android"
+		},
+		{
+			"title": "IPHONE",
+			"value": "iphone"
+		}
 	],
 	"REFERRAL": [
-		{ "title": "PRERAK_REFERRAL", "value": "prerak_referral" },
-		{ "title": "NGO_REFERRAL", "value": "ngo_referral" },
-		{ "title": "ADVERTISEMENTS", "value": "advertisements" },
-		{ "title": "DROPOUTS", "value": "dropouts" },
-		{ "title": "OLD_PRERAK", "value": "old_prerak" },
-		{ "title": "OTHER", "value": "other" }
+		{
+			"title": "PRERAK_REFERRAL",
+			"value": "prerak_referral"
+		},
+		{
+			"title": "NGO_REFERRAL",
+			"value": "ngo_referral"
+		},
+		{
+			"title": "ADVERTISEMENTS",
+			"value": "advertisements"
+		},
+		{
+			"title": "DROPOUTS",
+			"value": "dropouts"
+		},
+		{
+			"title": "OLD_PRERAK",
+			"value": "old_prerak"
+		},
+		{
+			"title": "OTHER",
+			"value": "other"
+		}
 	],
 	"FACILITATOR_STATUS": [
-		{ "title": "FACILITATOR_STATUS_QUIT", "value": "quit" },
-		{ "title": "FACILITATOR_STATUS_REJECTED", "value": "rejected" },
-		{ "title": "FACILITATOR_STATUS_ON_HOLD", "value": "on_hold" },
-		{ "title": "FACILITATOR_STATUS_APPLIED", "value": "applied" },
+		{
+			"title": "FACILITATOR_STATUS_QUIT",
+			"value": "quit"
+		},
+		{
+			"title": "FACILITATOR_STATUS_REJECTED",
+			"value": "rejected"
+		},
+		{
+			"title": "FACILITATOR_STATUS_ON_HOLD",
+			"value": "on_hold"
+		},
+		{
+			"title": "FACILITATOR_STATUS_APPLIED",
+			"value": "applied"
+		},
 		{
 			"title": "FACILITATOR_STATUS_APPLICATION_SCREENED",
 			"value": "application_screened"
@@ -76,16 +178,28 @@
 			"title": "FACILITATOR_STATUS_SELECTED_PRERAK",
 			"value": "selected_prerak"
 		},
-		{ "title": "FACILITATOR_STATUS_RUSTICATE", "value": "rusticate" }
+		{
+			"title": "FACILITATOR_STATUS_RUSTICATE",
+			"value": "rusticate"
+		}
 	],
 	"BENEFICIARY_STATUS": [
-		{ "title": "BENEFICIARY_STATUS_IDENTIFIED", "value": "identified" },
+		{
+			"title": "BENEFICIARY_STATUS_IDENTIFIED",
+			"value": "identified"
+		},
 		{
 			"title": "BENEFICIARY_STATUS_READY_TO_ENROLL",
 			"value": "ready_to_enroll"
 		},
-		{ "title": "BENEFICIARY_STATUS_ENROLLED", "value": "enrolled" },
-		{ "title": "BENEFICIARY_STATUS_NOT_ENROLLED", "value": "not_enrolled" },
+		{
+			"title": "BENEFICIARY_STATUS_ENROLLED",
+			"value": "enrolled"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_NOT_ENROLLED",
+			"value": "not_enrolled"
+		},
 		{
 			"title": "BENEFICIARY_STATUS_ENROLLMENT_AWAITED",
 			"value": "enrollment_awaited"
@@ -102,9 +216,18 @@
 			"title": "BENEFICIARY_STATUS_REGISTERED_IN_CAMP",
 			"value": "registered_in_camp"
 		},
-		{ "title": "BENEFICIARY_STATUS_REJECTED", "value": "rejected" },
-		{ "title": "BENEFICIARY_STATUS_DROPOUT", "value": "dropout" },
-		{ "title": "BENEFICIARY_STATUS_DEACTIVATED", "value": "deactivated" },
+		{
+			"title": "BENEFICIARY_STATUS_REJECTED",
+			"value": "rejected"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_DROPOUT",
+			"value": "dropout"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_DEACTIVATED",
+			"value": "deactivated"
+		},
 		{
 			"title": "BENEFICIARY_STATUS_INELIGIBLE_FOR_PRAGATI_CAMP",
 			"value": "ineligible_for_pragati_camp"
@@ -115,8 +238,14 @@
 		}
 	],
 	"TYPE_OF_LEARNER": [
-		{ "title": "DROPOUT", "value": "dropout" },
-		{ "title": "NEVER_ENROLLED", "value": "never_enrolled" },
+		{
+			"title": "SCHOOL_DROPOUT",
+			"value": "school_dropout"
+		},
+		{
+			"title": "NEVER_ENROLLED",
+			"value": "never_enrolled"
+		},
 		{
 			"title": "ALREADY_ENROLLED_IN_OPEN_SCHOOL",
 			"value": "already_enrolled_in_open_school"
@@ -128,27 +257,71 @@
 		{
 			"title": "STREAM_2_(MAINSTREAM_SYC)",
 			"value": "stream_2_mainstream_syc"
-		},
-		{ "title": "PRAGATI_SYC", "value": "pragati_syc" }
+		}
 	],
 	"LAST_STANDARD_OF_EDUCATION": [
-		{ "title": "NA", "value": "na" },
-		{ "title": "1", "value": "1" },
-		{ "title": "2", "value": "2" },
-		{ "title": "3", "value": "3" },
-		{ "title": "4", "value": "4" },
-		{ "title": "5", "value": "5" },
-		{ "title": "6", "value": "6" },
-		{ "title": "7", "value": "7" },
-		{ "title": "8", "value": "8" },
-		{ "title": "9", "value": "9" },
-		{ "title": "10", "value": "10" }
+		{
+			"title": "NA",
+			"value": "na"
+		},
+		{
+			"title": "1",
+			"value": "1"
+		},
+		{
+			"title": "2",
+			"value": "2"
+		},
+		{
+			"title": "3",
+			"value": "3"
+		},
+		{
+			"title": "4",
+			"value": "4"
+		},
+		{
+			"title": "5",
+			"value": "5"
+		},
+		{
+			"title": "6",
+			"value": "6"
+		},
+		{
+			"title": "7",
+			"value": "7"
+		},
+		{
+			"title": "8",
+			"value": "8"
+		},
+		{
+			"title": "9",
+			"value": "9"
+		},
+		{
+			"title": "10",
+			"value": "10"
+		}
 	],
 	"ENROLLEMENT_STATUS": [
-		{ "title": "ENROLLED", "value": "enrolled" },
-		{ "title": "NOT_ENROLLED", "value": "not_enrolled" },
-		{ "title": "ENROLLMENT_AWAITED", "value": "enrollment_awaited" },
-		{ "title": "ENROLLMENT_REJECTED", "value": "enrollment_rejected" }
+		{
+			"title": "ENROLLED",
+			"value": "enrolled"
+		},
+		{
+			"title": "READY_TO_ENROLL",
+			"value": "ready_to_enroll"
+		},
+		{
+			"title": "ENROLLMENT_AWAITED",
+			"value": "enrollment_awaited"
+		},
+		{
+			"title": "ENROLLMENT_REJECTED",
+			"value": "enrollment_rejected"
+		}
 	],
 	"ENROLLEMENT_VERIFICATION_STATUS": [
 		{
@@ -169,35 +342,82 @@
 		}
 	],
 	"ENROLLED_FOR_BOARD": [
-		{ "title": "RSOS", "value": "rsos" },
-		{ "title": "NIOS", "value": "nios" }
+		{
+			"title": "RSOS",
+			"value": "rsos"
+		},
+		{
+			"title": "NIOS",
+			"value": "nios"
+		}
 	],
 	"BENEFICIARY_SOCIAL_STATUS": [
-		{ "title": "BENEFICIARY_SOCIAL_STATUS_SC", "value": "sc" },
-		{ "title": "BENEFICIARY_SOCIAL_STATUS_ST", "value": "st" },
-		{ "title": "BENEFICIARY_SOCIAL_STATUS_OBC", "value": "obc" },
-		{ "title": "BENEFICIARY_SOCIAL_STATUS_GENERAL", "value": "general" },
-		{ "title": "BENEFICIARY_SOCIAL_STATUS_OTHERS", "value": "others" }
+		{
+			"title": "BENEFICIARY_SOCIAL_STATUS_SC",
+			"value": "sc"
+		},
+		{
+			"title": "BENEFICIARY_SOCIAL_STATUS_ST",
+			"value": "st"
+		},
+		{
+			"title": "BENEFICIARY_SOCIAL_STATUS_OBC",
+			"value": "obc"
+		},
+		{
+			"title": "BENEFICIARY_SOCIAL_STATUS_GENERAL",
+			"value": "general"
+		},
+		{
+			"title": "BENEFICIARY_SOCIAL_STATUS_OTHERS",
+			"value": "others"
+		}
 	],
 	"FACILITATOR_SOCIAL_STATUS": [
-		{ "title": "FACILITATOR_SOCIAL_STATUS_SC", "value": "sc" },
-		{ "title": "FACILITATOR_SOCIAL_STATUS_ST", "value": "st" },
-		{ "title": "FACILITATOR_SOCIAL_STATUS_OBC", "value": "obc" },
-		{ "title": "FACILITATOR_SOCIAL_STATUS_OPEN", "value": "open" },
-		{ "title": "FACILITATOR_SOCIAL_STATUS_OTHER", "value": "other" }
+		{
+			"title": "FACILITATOR_SOCIAL_STATUS_SC",
+			"value": "sc"
+		},
+		{
+			"title": "FACILITATOR_SOCIAL_STATUS_ST",
+			"value": "st"
+		},
+		{
+			"title": "FACILITATOR_SOCIAL_STATUS_OBC",
+			"value": "obc"
+		},
+		{
+			"title": "FACILITATOR_SOCIAL_STATUS_OPEN",
+			"value": "open"
+		},
+		{
+			"title": "FACILITATOR_SOCIAL_STATUS_OTHER",
+			"value": "other"
+		}
 	],
 	"MARITAL_STATUS": [
-		{ "title": "MARITAL_STATUS_MARRIED", "value": "married" },
+		{
+			"title": "MARITAL_STATUS_MARRIED",
+			"value": "married"
+		},
 		{
 			"title": "MARITAL_STATUS_UNMARRIED",
 			"value": "unmarried"
 		},
-		{ "title": "MARITAL_STATUS_SINGLE", "value": "single" }
+		{
+			"title": "MARITAL_STATUS_SINGLE",
+			"value": "single"
+		}
 	],
-
 	"FACILITATOR_AVAILABILITY": [
-		{ "title": "FACILITATOR_PART_TIME", "value": "part_time" },
-		{ "title": "FACILITATOR_FULL_TIME", "value": "full_time" }
+		{
+			"title": "FACILITATOR_PART_TIME",
+			"value": "part_time"
+		},
+		{
+			"title": "FACILITATOR_FULL_TIME",
+			"value": "full_time"
+		}
 	],
 	"FACILITATOR_EVENT_TYPE": [
 		{
@@ -213,14 +433,12 @@
 			"value": "prerak_camp_execution_training"
 		}
 	],
-
 	"BENEFICIARY_REASONS_FOR_REJECTING_LEARNER": [
 		{
 			"title": "BENEFICIARY_REASONS_FOR_REJECTING_LEARNER_BEHAVIOURAL_ISSUES",
 			"value": "behavioural_issues"
 		}
 	],
-
 	"FACILITATOR_REASONS_FOR_QUIT": [
 		{
 			"title": "FACILITATOR_REASONS_FOR_QUIT_GOT_ANOTHER_JOB",
@@ -366,7 +584,10 @@
 			"title": "SCHOOL_BEING_TOO_FAR_AWAY",
 			"value": "school_being_too_far_away"
 		},
-		{ "title": "DUE_TO_FAIL", "value": "fail" },
+		{
+			"title": "DUE_TO_FAIL",
+			"value": "fail"
+		},
 		{
 			"title": "GIRL_NOT_WILLING_TO_PURSUE_FURTHER_STUDIES",
 			"value": "girl_not_willing_to_pursue_further_studies"
@@ -375,12 +596,18 @@
 			"title": "SOCIAL_FAMILY_PRESSURE",
 			"value": "social_family_pressure"
 		},
-		{ "title": "ECONOMIC_DIFFICULTIES", "value": "economic_difficulties" },
+		{
+			"title": "ECONOMIC_DIFFICULTIES",
+			"value": "economic_difficulties"
+		},
 		{
 			"title": "FRIENDS_FRIENDS_LEAVING_SCHOOL",
 			"value": "friends_friends_leaving_school"
 		},
-		{ "title": "DUE_TO_MARRIAGES", "value": "marriages" },
+		{
+			"title": "DUE_TO_MARRIAGES",
+			"value": "marriages"
+		},
 		{
 			"title": "MIGRATION_RELATED_TO_EMPLOYMENT",
 			"value": "migration_related_to_employment"
@@ -403,8 +630,14 @@
 			"title": "PREVIOUS_SCHOOL_TYPE_NEVER_STUDIED",
 			"value": "never_studied"
 		},
-		{ "title": "PREVIOUS_SCHOOL_TYPE_OPEN_SCHOOL", "value": "open_school" },
-		{ "title": "PREVIOUS_SCHOOL_TYPE_OTHER", "value": "other" }
+		{
+			"title": "PREVIOUS_SCHOOL_TYPE_OPEN_SCHOOL",
+			"value": "open_school"
+		},
+		{
+			"title": "PREVIOUS_SCHOOL_TYPE_OTHER",
+			"value": "other"
+		}
 	],
 	"CAREER_ASPIRATION": [
 		{
@@ -425,25 +658,64 @@
 		}
 	],
 	"DOCUMENT_STATUS": [
-		{ "title": "NOT_AVAILABLE", "value": "not_available" },
-		{ "title": "NOT_APPLICABLE", "value": "not_applicable" },
-		{ "title": "UPDATE_REQUIRED", "value": "update_required" },
+		{
+			"title": "NOT_AVAILABLE",
+			"value": "not_available"
+		},
+		{
+			"title": "NOT_APPLICABLE",
+			"value": "not_applicable"
+		},
+		{
+			"title": "UPDATE_REQUIRED",
+			"value": "update_required"
+		},
 		{
 			"title": "APPLIED_NEW_FOR_CHANGE",
 			"value": "applied_new_for_change"
 		},
-		{ "title": "COMPLETE", "value": "complete" }
+		{
+			"title": "COMPLETE",
+			"value": "complete"
+		}
 	],
 	"DOCUMENT_LIST": [
-		{ "title": "JAN_AADHAAR_CARD", "value": "jan_aadhaar_card" },
-		{ "title": "AADHAAR_CARD", "value": "aadhaar_card" },
-		{ "title": "BANK_PASSBOOK", "value": "bank_passbook" },
-		{ "title": "PHOTO", "value": "photo" },
-		{ "title": "CAST_CERTIFICATE", "value": "cast_certificate" },
-		{ "title": "MOBILE_NUMBER", "value": "mobile_number" },
-		{ "title": "EMAIL_ID", "value": "email_id" },
-		{ "title": "TRANSFER_CERTIFICATE", "value": "transfer_certificate" },
-		{ "title": "MARKSHEET", "value": "marksheet" },
+		{
+			"title": "JAN_AADHAAR_CARD",
+			"value": "jan_aadhaar_card"
+		},
+		{
+			"title": "AADHAAR_CARD",
+			"value": "aadhaar_card"
+		},
+		{
+			"title": "BANK_PASSBOOK",
+			"value": "bank_passbook"
+		},
+		{
+			"title": "PHOTO",
+			"value": "photo"
+		},
+		{
+			"title": "CAST_CERTIFICATE",
+			"value": "cast_certificate"
+		},
+		{
+			"title": "MOBILE_NUMBER",
+			"value": "mobile_number"
+		},
+		{
+			"title": "EMAIL_ID",
+			"value": "email_id"
+		},
+		{
+			"title": "TRANSFER_CERTIFICATE",
+			"value": "transfer_certificate"
+		},
+		{
+			"title": "MARKSHEET",
+			"value": "marksheet"
+		},
 		{
 			"title": "TRANSFER_CERTIFICATE_WITH_CBO_SIGN",
 			"value": "transfer_certificate_with_cbo_sign"
@@ -456,10 +728,16 @@
 			"title": "AFFIDAVIT_FOR_NON_SCHOOLING_CERTIFICATION_NOTARY",
 			"value": "affidavit_for_non_schooling_certification_notary"
 		},
-		{ "title": "BIRTH_CERTIFICATE", "value": "birth_certificate" }
+		{
+			"title": "BIRTH_CERTIFICATE",
+			"value": "birth_certificate"
+		}
 	],
 	"LEARNING_MOTIVATION": [
-		{ "title": "TO_CONTINUE_STUDY", "value": "to_continue_study" },
+		{
+			"title": "TO_CONTINUE_STUDY",
+			"value": "to_continue_study"
+		},
 		{
 			"title": "TO_BECOME_MANREGA_MATT_OR_MANREGA_SUPERVISOR",
 			"value": "to_become_manrega_matt_or_manrega_supervisor"
@@ -468,15 +746,30 @@
 			"title": "TO_BECOME_ANGANWADI_WORKER",
 			"value": "to_become_anganwadi_worker"
 		},
-		{ "title": "TO_DO_ITI", "value": "to_do_iti" },
+		{
+			"title": "TO_DO_ITI",
+			"value": "to_do_iti"
+		},
 		{
 			"title": "TO_GET_A_DRIVING_OR_OTHER_LICENSE",
 			"value": "to_get_a_driving_or_other_license"
 		},
-		{ "title": "TO_BE_EFFICIENT_PRI", "value": "to_be_efficient_pri" },
-		{ "title": "TO_GET_RECOGINIZE", "value": "to_get_recoginize" },
-		{ "title": "TO_GET_EMPLOYMENT", "value": "to_get_employment" },
-		{ "title": "OTHER", "value": "other" }
+		{
+			"title": "TO_BE_EFFICIENT_PRI",
+			"value": "to_be_efficient_pri"
+		},
+		{
+			"title": "TO_GET_RECOGINIZE",
+			"value": "to_get_recoginize"
+		},
+		{
+			"title": "TO_GET_EMPLOYMENT",
+			"value": "to_get_employment"
+		},
+		{
+			"title": "OTHER",
+			"value": "other"
+		}
 	],
 	"TYPE_OF_SUPPORT_NEEDED": [
 		{
@@ -507,12 +800,24 @@
 			"title": "SUPPORT_IN_PROBLEM_SOLVING",
 			"value": "support_in_problem_solving"
 		},
-		{ "title": "OTHER", "value": "other" }
+		{
+			"title": "OTHER",
+			"value": "other"
+		}
 	],
 	"REMINDERS": [
-		{ "title": "REMINDERS_1_HOUR_BEFORE", "value": "hour_1_before" },
-		{ "title": "REMINDERS_1_DAY_BEFORE", "value": "day_1_before" },
-		{ "title": "REMINDERS_1_WEEK_BEFORE", "value": "week_1_before" }
+		{
+			"title": "REMINDERS_1_HOUR_BEFORE",
+			"value": "hour_1_before"
+		},
+		{
+			"title": "REMINDERS_1_DAY_BEFORE",
+			"value": "day_1_before"
+		},
+		{
+			"title": "REMINDERS_1_WEEK_BEFORE",
+			"value": "week_1_before"
+		}
 	],
 	"BENEFICIARY_REASONS_FOR_DROPOUT_REASONS": [
 		{
@@ -593,8 +898,14 @@
 			"title": "REACTIVATE_REASONS_ISSUE_RESOLVED",
 			"value": "issue_resolved"
 		},
-		{ "title": "REACTIVATE_REASONS_CHANGED_MIND", "value": "changed_mind" },
-		{ "title": "REACTIVATE_REASONS_OTHER", "value": "other" }
+		{
+			"title": "REACTIVATE_REASONS_CHANGED_MIND",
+			"value": "changed_mind"
+		},
+		{
+			"title": "REACTIVATE_REASONS_OTHER",
+			"value": "other"
+		}
 	],
 	"BENEFICIARY_LEARNING_LEVEL": [
 		{
@@ -609,7 +920,10 @@
 			"title": "BENEFICIARY_LEARNING_LEVEL_INTERMEDIATORY",
 			"value": "intermediatory"
 		},
-		{ "title": "BENEFICIARY_LEARNING_LEVEL_EXPERT", "value": "expert" }
+		{
+			"title": "BENEFICIARY_LEARNING_LEVEL_EXPERT",
+			"value": "expert"
+		}
 	],
 	"CAMP_PROPERTY_TYPE": [
 		{
@@ -644,7 +958,10 @@
 			"title": "CAMP_PROPERTY_TYPE_OTHER_GOVERNMENT_BUILDING",
 			"value": "other_government_building"
 		},
-		{ "title": "CAMP_PROPERTY_TYPE_OTHER", "value": "other" }
+		{
+			"title": "CAMP_PROPERTY_TYPE_OTHER",
+			"value": "other"
+		}
 	],
 	"GROUPS_STATUS": [
 		{
@@ -678,8 +995,8 @@
 			"value": "fan"
 		},
 		{
-			"title": "CAMP_PROPERTY_FACILITIES_CLEAN_SEATING_AREA",
-			"value": "clean_seating_area"
+			"title": "CAMP_PROPERTY_FACILITIES_SUFFICIENT_AND_SUTABLE_SEATING_AREA",
+			"value": "sufficient_and_sutable_seating_area"
 		},
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_SHED",
@@ -692,6 +1009,10 @@
 		{
 			"title": "CAMP_PROPERTY_FACILITIES_PROPER_LIGHTINGS",
 			"value": "proper_lightings"
+		},
+		{
+			"title": "CAMP_PROPERTY_FACILITIES_DRINKING_WATER",
+			"value": "drinking_water"
 		}
 	],
 	"COMMUNITY_MEMBER_DESIGNATIONS": [
@@ -954,6 +1275,210 @@
 		{
 			"title": "OPEN_SCHOOL_GOVERNMENT_ACTIVITY_OTHER",
 			"value": "other"
+		}
+	],
+	"CAMP_ABSENT_REASONS": [
+		{
+			"title": "CAMP_ABSENT_REASONS_PERSONAL_LEAVE",
+			"value": "personal_leave"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_OTHER_WEEKLY_OFF",
+			"value": "other_weekly_off"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_FESTIVAL_HOLIDAY",
+			"value": "festival_holiday"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STAKEHOLDER",
+			"value": "meeting_with_stakeholder"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PCP",
+			"value": "pcp"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PRERAK_TRAINING",
+			"value": "prerak_training"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_LEARNER_EXPOSER_VISIT",
+			"value": "learner_exposer_visit"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_CAMP_FACILITY_RELATED_WORK",
+			"value": "camp_facility_related_work"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_EXAM",
+			"value": "exam"
+		}
+	],
+	"FACILITATOR_MOOD_LIST": [
+		{
+			"title": "FACILITATOR_MOOD_LIST_FULL_OF_COURAGE",
+			"value": "facilitator_mood_list_full_of_courage"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_CREATIVE",
+			"value": "facilitator_mood_list_creative"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_CARE_FOR_EACH_OTHER",
+			"value": "facilitator_mood_list_care_for_each_other"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_MUTUAL_SUPPORT",
+			"value": "facilitator_mood_list_mutual_support"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_FEEL_GOOD",
+			"value": "facilitator_mood_list_feel_good"
+		},
+		{
+			"title": "FACILITATOR_MOOD_LIST_ASPIRATIONAL",
+			"value": "facilitator_mood_list_aspirational"
+		}
+	],
+	"MISCELLANEOUS_ACTIVITIES": [
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
+			"value": "miscellaneous_activities_communication_skills"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
+			"value": "miscellaneous_activities_role_model_intervention"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
+			"value": "miscellaneous_activities_aspiration_mapping"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
+			"value": "miscellaneous_activities_digital_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
+			"value": "miscellaneous_activities_financial_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
+			"value": "miscellaneous_activities_linkages"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
+			"value": "miscellaneous_activities_family_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
+			"value": "miscellaneous_activities_role_model_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
+			"value": "miscellaneous_activities_school_teacher_visit"
+		}
+	],
+	"KIT_MATERIALS_CHECKLISTS": [
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_SATRA_YOJANA",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_SATRA_YOJANA_QUANTITY",
+			"value": "satra_yojana"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_MIND_MAPS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_MIND_MAPS_QUANTITY",
+			"value": "mind_maps"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_MOCK_TEST_QUESTION_PAPERS",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_MOCK_TEST_QUESTION_PAPERS_QUANTITY",
+			"value": "mock_test_question_papers"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS_1_CORRECTION_SHEET",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_ANSWER_KEYS_1_CORRECTION_SHEET_QUANTITY",
+			"value": "answer_keys_1_correction_sheet"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_YPP_CPP_POSTER_QUANTITY",
+			"value": "ypp_cpp_poster"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PASSBOOK_HINDI_HOME_SCIENCE_SOCIAL_SCIENCE_ICH_QUANTITY",
+			"value": "passbook_hindi_home_science_social_sciences_ich"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_ONE_WEEK_SERIES",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_ONE_WEEK_SERIES_QUANTITY",
+			"value": "one_week_series"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_PRAGATI_JOURNEY_POSTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRAGATI_JOURNEY_POSTER_QUANTITY",
+			"value": "pragati_journey_poster"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_RSOS_BOOK",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_RSOS_BOOK_QUANTITY",
+			"value": "rsos_books"
+		},
+		{
+			"title": "KIT_MATERIALS_CHECKLISTS_PRI_COMMUNITY_ACKNOWLEDGEMENT_LETTER",
+			"subTitle": "KIT_MATERIALS_CHECKLISTS_PRI_COMMUNITY_ACKNOWLEDGEMENT_LETTER_QUANTITY",
+			"value": "pri_community_acknowledgement_letter"
+		}
+	],
+	"SESSION_PARTIALLY_COMPLETE": [
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_COMPLEXITY_OF_CONCEPTS",
+			"value": "session_partially_complete_complexity_of_concepts"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_TIME_ALLOCATION",
+			"value": "session_partially_complete_time_allocation"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_LEARNING_ACTIVITIES",
+			"value": "session_partially_complete_learning_activites"
+		},
+		{
+			"title": "SESSION_PARTIALLY_COMPLETE_OTHER",
+			"value": "session_partially_complete_other"
+		}
+	],
+	"SESSION_COMPLETED": [
+		{
+			"title": "SESSION_COMPLETED_THE_SESSION_COULD_NOT_BE_IMPLEMENTED_PROPERLY_DUE_TO_LACK_OF_UNDERSTANDING",
+			"value": "session_completed_the session_could_not_be_implemented_properly_due_to_lack_of_understanding"
+		},
+		{
+			"title": "SESSION_COMPLETED_MORE_WORK_NEEDED_TO_IMPLEMENT_THE_SESSION_WELL",
+			"value": "session_completed_more_work_needed_to_implement_the_session_well"
+		},
+		{
+			"title": "SESSION_COMPLETED_SESSION_SUCCESSFULLY_IMPLEMENTED",
+			"value": "session_completed_session_successfully_implemented"
+		}
+	],
+	"PARENT_SUPPORT": [
+		{
+			"title": "PARENT_SUPPORT_YES",
+			"value": "yes"
+		},
+		{
+			"title": "PARENT_SUPPORT_NO",
+			"value": "no"
+		},
+		{
+			"title": "PARENT_SUPPORT_MAY_BE",
+			"value": "may_be"
 		}
 	]
 }

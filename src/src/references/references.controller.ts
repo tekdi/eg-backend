@@ -1,17 +1,17 @@
 import {
-	Controller,
-	Post,
 	Body,
-	Patch,
+	Controller,
 	Param,
-	Res,
+	Patch,
+	Post,
 	Req,
+	Res,
 	UseGuards,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
-import { ReferencesService } from './references.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { ReferencesService } from './references.service';
 
 @Controller('references')
 @UseGuards(new AuthGuard())

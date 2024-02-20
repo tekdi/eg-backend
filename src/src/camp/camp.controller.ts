@@ -1,23 +1,21 @@
-// camp.controller.ts
-
 import {
+	Body,
 	Controller,
+	Get,
+	Param,
+	Patch,
 	Post,
+	Req,
+	Res,
+	Response,
+	UseGuards,
 	UsePipes,
 	ValidationPipe,
-	Body,
-	Req,
-	UseGuards,
-	Res,
-	Param,
-	Response,
-	Patch,
-	Get,
 } from '@nestjs/common';
-import { CampService } from './camp.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { RoleGuard } from 'src/modules/auth/role.guard';
 import { Roles } from 'src/modules/auth/role.decorator';
+import { CampService } from './camp.service';
 
 @Controller('camp')
 export class CampController {
@@ -314,5 +312,119 @@ export class CampController {
 			request,
 			response,
 		);
+	}
+
+	@Post('/add/campdayactivity')
+	@UseGuards(new AuthGuard())
+	createCampDayActivity(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.createCampDayActivity(body, request, response);
+	}
+
+	@Patch('/camp-day-activity/:id')
+	@UseGuards(new AuthGuard())
+	update_camp_day_activity(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.update_camp_day_activity(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/camp-day-activity/:id')
+	@UseGuards(new AuthGuard())
+	getCampDayActivityById(
+		@Param('id') id: number,
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getCampDayActivityById(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Get('/:id/get-camp-sessions')
+	@UseGuards(new AuthGuard())
+	getCampSession(@Req() req: any, @Param('id') id: number, @Res() res) {
+		return this.campService.getCampSessions(req, id, res);
+	}
+
+	@Post('/incomplete/camp-day-activity/:id')
+	@UseGuards(new AuthGuard())
+	getPreviousCampAcitivityById(
+		@Param('id') id: number,
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getPreviousCampAcitivityById(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Get('/random-attendance/:id')
+	@UseGuards(new AuthGuard())
+	getRandomAttendanceGeneration(
+		@Param('id') id: number,
+		@Req() request: any,
+
+		@Res() response: Response,
+	) {
+		return this.campService.getRandomAttendanceGeneration(
+			id,
+
+			request,
+			response,
+		);
+	}
+
+	@Post('/:id/camp_learners')
+	@UseGuards(new AuthGuard())
+	campLearnersById(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.campLearnersById(id, body, request, response);
+	}
+
+	//multiple reassigne learner from One camp to other
+	@Patch('/admin/multiplereassign/:id')
+	@UseGuards(new AuthGuard())
+	multiplereassignBeneficiarytoCamp(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.multiplereassignBeneficiarytoCamp(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('campday/campdetails')
+	@UseGuards(new AuthGuard())
+	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
+		return this.campService.campDetails(body, request, response);
 	}
 }

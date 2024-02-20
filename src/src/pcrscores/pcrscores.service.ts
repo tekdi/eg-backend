@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/hasura/hasura.service';
-import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
 @Injectable()
 export class PcrscoresService {
@@ -88,8 +88,12 @@ export class PcrscoresService {
 				let auditData = {
 					userId: user_id,
 					mw_userid: facilitator_id,
+					user_type: 'Facilitator',
 					context: 'pcrscore.user',
 					context_id: facilitator_id,
+					subject: 'beneficiary',
+					subject_id: user_id,
+					log_transaction_text: `Facilitator ${facilitator_id} updated pcr for user ${user_id}}`,
 					oldData: newData,
 					newData: newData,
 					tempArray: [
@@ -106,9 +110,13 @@ export class PcrscoresService {
 				let data = body;
 				let auditData = {
 					userId: user_id,
+					user_type: 'Facilitator',
 					mw_userid: facilitator_id,
 					context: 'pcrscore.user',
 					context_id: facilitator_id,
+					subject: 'beneficiary',
+					subject_id: user_id,
+					log_transaction_text: `Facilitator ${facilitator_id} updated pcr for user ${user_id}}`,
 					tempArray: [
 						'user_id',
 						'baseline_learning_level',
@@ -193,20 +201,20 @@ export class PcrscoresService {
 		const facilitator_id = req.mw_userid;
 
 		let query = `query MyQuery {
-      pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}}) {
-        id
-        user_id
-        camp_id
-        baseline_learning_level
-        rapid_assessment_first_learning_level
-        rapid_assessment_second_learning_level
-        endline_learning_level
-        updated_by
-        created_at
-        updated_at
-      }
-    }
-    `;
+	  pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}}) {
+		id
+		user_id
+		camp_id
+		baseline_learning_level
+		rapid_assessment_first_learning_level
+		rapid_assessment_second_learning_level
+		endline_learning_level
+		updated_by
+		created_at
+		updated_at
+	  }
+	}
+	`;
 
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -232,20 +240,20 @@ export class PcrscoresService {
 		const facilitator_id = req.mw_userid;
 
 		let query = `query MyQuery {
-      pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, id: {_eq: ${id}}}) {
-        id
-        user_id
-        camp_id
-        baseline_learning_level
-        rapid_assessment_first_learning_level
-        rapid_assessment_second_learning_level
-        endline_learning_level
-        updated_by
-        created_at
-        updated_at
-      }
-    }
-    `;
+	  pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, id: {_eq: ${id}}}) {
+		id
+		user_id
+		camp_id
+		baseline_learning_level
+		rapid_assessment_first_learning_level
+		rapid_assessment_second_learning_level
+		endline_learning_level
+		updated_by
+		created_at
+		updated_at
+	  }
+	}
+	`;
 
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -276,20 +284,20 @@ export class PcrscoresService {
 		const facilitator_id = req.mw_userid;
 
 		let query = `query MyQuery {
-      pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, user_id: {_eq: ${user_id}}}) {
-        id
-        user_id
-        camp_id
-        baseline_learning_level
-        rapid_assessment_first_learning_level
-        rapid_assessment_second_learning_level
-        endline_learning_level
-        updated_by
-        created_at
-        updated_at
-      }
-    }
-    `;
+	  pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, user_id: {_eq: ${user_id}}}) {
+		id
+		user_id
+		camp_id
+		baseline_learning_level
+		rapid_assessment_first_learning_level
+		rapid_assessment_second_learning_level
+		endline_learning_level
+		updated_by
+		created_at
+		updated_at
+	  }
+	}
+	`;
 
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -319,17 +327,17 @@ export class PcrscoresService {
 		let response;
 
 		let query = `query MyQuery {
-      pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, user_id: {_eq: ${user_id}}, id: {_eq: ${pcrscore_id}}}) {
-        id
-        user_id
-        camp_id
-        baseline_learning_level
-        rapid_assessment_first_learning_level
-        rapid_assessment_second_learning_level
-        endline_learning_level
-        updated_by
-      }
-    }`;
+	  pcr_scores(where: {updated_by: {_eq: ${facilitator_id}}, user_id: {_eq: ${user_id}}, id: {_eq: ${pcrscore_id}}}) {
+		id
+		user_id
+		camp_id
+		baseline_learning_level
+		rapid_assessment_first_learning_level
+		rapid_assessment_second_learning_level
+		endline_learning_level
+		updated_by
+	  }
+	}`;
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});

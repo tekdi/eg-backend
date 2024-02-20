@@ -1,21 +1,22 @@
 import {
-	Post,
-	Controller,
-	UseGuards,
-	Res,
-	Req,
 	Body,
-	ValidationPipe,
-	UsePipes,
-	Patch,
+	Controller,
 	Param,
+	Patch,
+	Post,
+	Req,
+	Res,
+	UseGuards,
+	UsePipes,
+	ValidationPipe,
 } from '@nestjs/common';
-import { EditRequestService } from './edit-requests.service';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { EditRequestService } from './edit-requests.service';
 
 @Controller('edit-request')
 export class EditRequestController {
 	constructor(private editRequestService: EditRequestService) {}
+
 	@Post('/edit-requests')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
@@ -30,6 +31,7 @@ export class EditRequestController {
 			response,
 		);
 	}
+
 	@Post('/create-edit-requests')
 	@UseGuards(new AuthGuard())
 	createEditRequests(
@@ -43,6 +45,7 @@ export class EditRequestController {
 			response,
 		);
 	}
+
 	@Patch('/admin/update-edit-requests/:id')
 	@UseGuards(new AuthGuard())
 	updateEditRequests(
@@ -58,6 +61,7 @@ export class EditRequestController {
 			response,
 		);
 	}
+
 	@Post('/admin/edit-requests')
 	@UseGuards(new AuthGuard())
 	getAdminEditRequests(

@@ -23,7 +23,7 @@ export class AadhaarKycService {
 				? response?.data?.error?.code
 				: 500,
 			data: {},
-		});;
+		});
 	}
 
 	public async createOkycRequest(body, request: any, resp: any) {

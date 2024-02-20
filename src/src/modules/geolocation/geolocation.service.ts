@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/services/hasura/hasura.service';
-import { lastValueFrom, map } from 'rxjs';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 
 @Injectable()
@@ -96,15 +95,25 @@ export class GeolocationService {
 		return await this.hasuraService.postData(data);
 	}
 
-	async getBlocks(district: string) {
+	async getBlocks(district: string, req: any) {
+		let state = req?.query?.state;
+
+		let filter_query;
+
+		if (state) {
+			filter_query = `where: {district_name: {_eq: "${district}"}, state_name: {_eq:"${state}"}}`;
+		} else {
+			filter_query = `where: {
+				district_name: {_eq: "${district}"}
+			}`;
+		}
+
 		let data = {
 			query: `
 			query MyQuery {
 				address_aggregate(
 					distinct_on: [block_name],
-					where: {
-						district_name: {_eq: "${district}"}
-					}
+					${filter_query}
 				) {
 					aggregate {
 						count
@@ -113,9 +122,7 @@ export class GeolocationService {
 
 				address(
 					distinct_on: [block_name],
-					where: {
-						district_name: {_eq: "${district}"}
-					}
+					${filter_query}
 				) {
 					block_name
 				}
@@ -124,7 +131,7 @@ export class GeolocationService {
 
 		return await this.hasuraService.postData(data);
 	}
-	
+
 	async getBlocksFromDistricts(body: any, resp: any) {
 		let data = {
 			query: `query MyQuery {
@@ -155,30 +162,47 @@ export class GeolocationService {
 		}
 	}
 
-	async getVillages(block: string) {
-		let data = {
-			query: `
-			query MyQuery {
-				address_aggregate(
-					distinct_on: [village_ward_name],
-					where: {
-						block_name: {_eq: "${block}"}
-					}
-				) {
-					aggregate {
-						count
-					}
-				}
+	async getVillages(block: string, req: any) {
+		let { state, district, grampanchayat } = req.query;
+		let filter_query;
 
-				address(
-					distinct_on: [village_ward_name],
-					where: {
-						block_name: {_eq: "${block}"}
-					}
-				) {
-					village_ward_name
+		if (grampanchayat == 'null') {
+			filter_query = `where: {district_name: {_eq: "${district}"}, block_name: {_eq:"${block}"}, state_name: {_eq:"${state}"}}`;
+		} else {
+			filter_query = `where: {district_name: {_eq: "${district}"}, block_name: {_eq:"${block}"}, grampanchayat_name: {_eq:"${grampanchayat}"}, state_name: {_eq:"${state}"}}`;
+		}
+		let data = {
+			query: `query MyQuery {
+				address_aggregate(distinct_on: [village_ward_name],${filter_query}) {
+				  aggregate {
+					count
+				  }
 				}
-			}`,
+				address(distinct_on: [village_ward_name],${filter_query}) {
+				  village_ward_name
+				}
+			  }
+			  `,
+		};
+
+		return await this.hasuraService.postData(data);
+	}
+
+	async getGramPanchayat(req: any) {
+		let { state, district, block } = req.query;
+
+		let data = {
+			query: `query MyQuery {
+				address_aggregate(distinct_on: [grampanchayat_name], where: {district_name: {_eq:"${district}"}, block_name: {_eq: "${block}"}, state_name: {_eq:"${state}"}}) {
+				  aggregate {
+					count
+				  }
+				}
+				address(distinct_on: [grampanchayat_name], where: {district_name: {_eq:"${district}"}, block_name: {_eq: "${block}"}, state_name: {_eq:"${state}"}}) {
+				  grampanchayat_name
+				}
+			  }
+			  `,
 		};
 
 		return await this.hasuraService.postData(data);
