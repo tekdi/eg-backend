@@ -3677,7 +3677,7 @@ export class BeneficiariesService {
 				document_sub_type
 				path
 			  }
-			  program_beneficiaries {
+			  program_beneficiaries(where:{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}) {
 				status,
 				enrollment_first_name,
 				enrollment_middle_name,

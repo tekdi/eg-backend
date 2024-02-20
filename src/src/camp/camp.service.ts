@@ -1224,13 +1224,13 @@ export class CampService {
 					}
 				}`,
 				};
-
 				const resp = await this.hasuraServiceFromServices.getData({
 					query: data.query,
 				});
 
 				let programbeneficiariesdata =
 					resp?.data?.program_beneficiaries || [];
+
 				// get program_beneficiaires id who's status want to update
 				const programbeneficiaries = programbeneficiariesdata.map(
 					(item) => item.id,
@@ -1246,7 +1246,7 @@ export class CampService {
 							updated_by: facilitator_id,
 						},
 						[],
-						returnFields,
+						['id', 'status'],
 						{ where: `{id:{_in:[${programbeneficiaries}]}}` },
 					);
 
