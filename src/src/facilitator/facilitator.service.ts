@@ -91,7 +91,7 @@ export class FacilitatorService {
 								{
 									program_faciltators: {
 										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
-										status: { _eq: "shortlisted_for_orientation" }
+										status: { _eq: "applied" }
 									}
 								},
 								{
@@ -116,7 +116,7 @@ export class FacilitatorService {
 								{
 									program_faciltators: {
 										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
-										status: { _eq: "shortlisted_for_orientation" }
+										status: { _eq: "applied" }
 									}
 								},
 								{
