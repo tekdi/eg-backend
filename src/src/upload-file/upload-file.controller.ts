@@ -30,7 +30,13 @@ export class UploadFileController {
 		@Res() request: Request,
 		@Res() response: Response,
 	) {
-		await this.uploadFileService.addFile(file, id, document_type, document_sub_type,response);
+		await this.uploadFileService.addFile(
+			file,
+			id,
+			document_type,
+			document_sub_type,
+			response,
+		);
 	}
 
 	@Post('/attendance')
@@ -55,10 +61,7 @@ export class UploadFileController {
 	}
 
 	@Get('/getDocumentById/:id')
-	async getDocumentById(
-		@Param('id') id: string,
-		@Res() response: Response,
-	) {
+	async getDocumentById(@Param('id') id: string, @Res() response: Response) {
 		await this.uploadFileService.getDocumentById(id, response);
 	}
 }

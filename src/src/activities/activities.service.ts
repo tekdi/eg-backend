@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ActivitiesCoreService } from './activities.core.service';
 import { EnumService } from 'src/enum/enum.service';
+import { ActivitiesCoreService } from './activities.core.service';
 
 @Injectable()
 export class ActivitiesService {
@@ -12,9 +12,9 @@ export class ActivitiesService {
 	public async create(request: any, body: any, resp: any) {
 		try {
 			let facilitator_id = request.mw_userid;
-			let user_id = body?.user_id;
-			let academic_year_id = body?.academic_year_id || 1;
-			let program_id = body?.program_id || 1;
+			let user_id = request.mw_userid;
+			let academic_year_id = request.mw_academic_year_id;
+			let program_id = request.mw_program_id;
 			let created_by = request.mw_userid;
 			let updated_by = request.mw_userid;
 
@@ -29,7 +29,7 @@ export class ActivitiesService {
 			);
 
 			if (response) {
-				return resp.json({
+				return resp.status(response.status).json({
 					status: response.status,
 					message: response.message,
 					data: response.data,
@@ -47,8 +47,8 @@ export class ActivitiesService {
 	async update(id: any, body: any, request: any, resp: any) {
 		let actvities_id = id;
 		let user_id = body?.user_id;
-		let academic_year_id = body?.academic_year_id || 1;
-		let program_id = body?.program_id || 1;
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 		let created_by = request.mw_userid;
 		let updated_by = request.mw_userid;
 
@@ -83,8 +83,8 @@ export class ActivitiesService {
 
 	public async List(body: any, req: any, resp: any) {
 		try {
-			let academic_year_id = body?.academic_year_id || 1;
-			let program_id = body?.program_id || 1;
+			const program_id = req.mw_program_id;
+			const academic_year_id = req.mw_academic_year_id;
 			let context_id = req.mw_userid;
 			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
@@ -98,7 +98,6 @@ export class ActivitiesService {
 				limit,
 				offset,
 			);
-			
 
 			if (newQdata.activities.length > 0) {
 				return resp.status(200).json({

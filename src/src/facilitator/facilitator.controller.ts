@@ -76,14 +76,16 @@ export class FacilitatorController {
 		return this.facilitatorService.removeExperience(+id, request, response);
 	}
 
-	@Patch(':id')
+	@Patch('/:id')
 	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
 	update(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
 		@Res() response: any,
+		@Req() req?: any,
 	) {
-		return this.facilitatorService.update(+id, body, response);
+		return this.facilitatorService.update(+id, body, response, req);
 	}
 
 	@Patch('admin/okyc_details_override')
@@ -191,9 +193,20 @@ export class FacilitatorController {
 			response,
 		);
 	}
+
 	@Post('/update-okyc-response')
 	@UseGuards(new AuthGuard())
 	updateOkycResponse(@Req() req: any, @Body() body: any, @Res() res: any) {
 		return this.facilitatorService.updateOkycResponse(req, body, res);
+	}
+
+	@Post('/program-facilitator/add')
+	@UseGuards(new AuthGuard())
+	createProgramFacilitator(
+		@Req() req: any,
+		@Body() body: any,
+		@Res() res: any,
+	) {
+		return this.facilitatorService.createProgramFacilitator(req, body, res);
 	}
 }
