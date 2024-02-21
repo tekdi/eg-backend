@@ -37,6 +37,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { UserauthModule } from './userauth/userauth.module';
+import { BoardModule } from './modules/board/board.module';
 @Module({
 	imports: [
 		ScheduleModule.forRoot(),
@@ -59,6 +60,7 @@ import { UserauthModule } from './userauth/userauth.module';
 		AttendancesModule,
 		AuthModule,
 		BeneficiariesModule,
+		BoardModule,
 		CampModule,
 		CommentsModule,
 		CronModule,
