@@ -81,6 +81,72 @@ export class FacilitatorService {
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
 		let skip = page > 1 ? limit * (page - 1) : 0;
+		let filterQueryArray = [];
+
+		let status;
+		switch (body?.type) {
+			case 'pragati_orientation': {
+				status = `status: { _in: ["applied" ]}`;
+				break;
+			}
+			case 'gkp_training': {
+				status = `status: { _in: ["pragati_mobilizer" ]}`;
+				break;
+			}
+			case 'pcr_training': {
+				status = `status: { _in: ["pragati_mobilizer","selected_for_onboarding" ]}`;
+				break;
+			}
+			case 'main_camp_execution_training': {
+				status = `status: { _in: ["selected_for_onboarding" ]}`;
+				break;
+			}
+			case 'drip_training': {
+				status = `status: { _in: ["applied","pragati_mobilizer","selected_for_onboarding" ]}`;
+				break;
+			}
+		}
+
+		filterQueryArray.push(
+			`	program_faciltators: {
+				parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
+				${status}}`,
+		);
+
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+			  last_name: { _ilike: "%${last_name}%" } 
+				  `);
+			} else {
+				filterQueryArray.push(
+					`first_name: { _ilike: "%${first_name}%" }`,
+				);
+			}
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`district:{_in: ${JSON.stringify(body?.district)}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`block:{_in: ${JSON.stringify(body?.block)}}`,
+			);
+		}
+		if (body?.village && body?.village.length > 0) {
+			filterQueryArray.push(
+				`village:{_in: ${JSON.stringify(body?.village)}}`,
+			);
+		}
+
+		let filterQuery = '' + filterQueryArray.join(',') + '';
 
 		const data = {
 			query: `
@@ -89,10 +155,7 @@ export class FacilitatorService {
 						where: {
 							_and: [
 								{
-									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
-										status: { _eq: "shortlisted_for_orientation" }
-									}
+									${filterQuery}
 								},
 								{
 									attendances_aggregate: {
@@ -114,10 +177,7 @@ export class FacilitatorService {
 						where: {
 							_and: [
 								{
-									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
-										status: { _eq: "shortlisted_for_orientation" }
-									}
+									${filterQuery}
 								},
 								{
 									attendances_aggregate: {
