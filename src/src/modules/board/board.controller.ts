@@ -16,7 +16,7 @@ import { AuthGuard } from '../auth/auth.guard';
 @Controller('board')
 export class BoardController {
 	constructor(private boardService: BoardService) {}
-	@Get('/list/')
+	@Get('/list')
 	@UsePipes(ValidationPipe)
 	// @UseInterceptors(CacheInterceptor)
 	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
