@@ -6,6 +6,8 @@ import {
 	Req,
 	UseGuards,
 	UseInterceptors,
+	UsePipes,
+	ValidationPipe,
 } from '@nestjs/common';
 //import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { BoardService } from './board.service';
@@ -14,19 +16,17 @@ import { AuthGuard } from '../auth/auth.guard';
 @Controller('board')
 export class BoardController {
 	constructor(private boardService: BoardService) {}
-	@Get('/list/:id')
+	@Get('/list/')
+	@UsePipes(ValidationPipe)
 	// @UseInterceptors(CacheInterceptor)
 	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
 	@UseGuards(new AuthGuard())
-	public async getBoardList(
-		@Param('id') id: number,
-		@Res() response: any,
-		@Req() request: any,
-	) {
-		return this.boardService.getBoardList(id, response, request);
+	public async getBoardList(@Res() response: any, @Req() request: any) {
+		return this.boardService.getBoardList(response, request);
 	}
 
 	@Get('/subject/list/:id')
+	@UsePipes(ValidationPipe)
 	// @UseInterceptors(CacheInterceptor)
 	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
 	@UseGuards(new AuthGuard())

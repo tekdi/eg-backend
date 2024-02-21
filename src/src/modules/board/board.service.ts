@@ -9,8 +9,8 @@ export class BoardService {
 		private readonly hasuraService: HasuraService,
 	) {}
 
-	public async getBoardList(id: any, response: any, request: any) {
-		let program_id = id;
+	public async getBoardList(response: any, request: any) {
+		let program_id = request?.mw_program_id;
 
 		let query = `query MyQuery {
             boards(where: {program_id: {_eq:${program_id}}}){
@@ -42,7 +42,6 @@ export class BoardService {
 
 		let query = `query MyQuery {
 			subjects(where: {board_id: {_eq:${board_id}}}) {
-				board
 				name
 				board_id
 				subject_id: id
