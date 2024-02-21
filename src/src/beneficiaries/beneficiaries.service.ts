@@ -2858,7 +2858,7 @@ export class BeneficiariesService {
 						);
 					}
 				}
-				if (req.enrollment_status == 'not_enrolled') {
+				if (req.enrollment_status == 'ready_to_enroll') {
 					myRequest['enrollment_status'] = req?.enrollment_status;
 					myRequest['enrollment_number'] = null;
 					myRequest['enrolled_for_board'] = null;
