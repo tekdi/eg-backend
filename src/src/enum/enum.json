@@ -437,6 +437,22 @@
 		{
 			"title": "BENEFICIARY_REASONS_FOR_REJECTING_LEARNER_BEHAVIOURAL_ISSUES",
 			"value": "behavioural_issues"
+		},
+		{
+			"title": "WRONG_ENTRY",
+			"value": "wrong_entry"
+		},
+		{
+			"title": "NOT_ELIGIBLE",
+			"value": "not_eligible"
+		},
+		{
+			"title": "NOT_TARGET_GROUP",
+			"value": "not_target_group"
+		},
+		{
+			"title": "NOT_INTERESTED",
+			"value": "not_interested"
 		}
 	],
 	"FACILITATOR_REASONS_FOR_QUIT": [
