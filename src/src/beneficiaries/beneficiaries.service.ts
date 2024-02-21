@@ -2847,26 +2847,14 @@ export class BeneficiariesService {
 									: null,
 						};
 
-						if (
-							req?.enrollment_mobile_no &&
-							req?.enrollment_mobile_no == beneficiaryUser?.mobile
-						) {
-							await this.statusUpdate(
-								{
-									user_id: req.id,
-									status: 'enrolled',
-									reason_for_status_update: 'enrolled',
-								},
-								request,
-							);
-						} else {
-							return response.status(400).send({
-								success: false,
-								message:
-									'Enrollment Mobile number Not matching with your Mobile Number',
-								data: {},
-							});
-						}
+						await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: 'enrolled',
+								reason_for_status_update: 'enrolled',
+							},
+							request,
+						);
 					}
 				}
 				if (req.enrollment_status == 'not_enrolled') {
@@ -2970,29 +2958,6 @@ export class BeneficiariesService {
 					});
 				}
 
-				if (
-					!(
-						programDetails.enrollment_number &&
-						programDetails.enrollment_mobile_no ==
-							beneficiaryUser?.mobile
-					)
-				) {
-					console.log(
-						'programDetails.enrollment_mobile_no--->> ',
-						programDetails.enrollment_mobile_no,
-					);
-					console.log(
-						'beneficiaryUser?.mobile-->> ',
-						beneficiaryUser?.mobile,
-					);
-
-					return response.status(400).json({
-						success: false,
-						message:
-							'Invalid Enrollment number or Enrollment mobile number',
-						data: {},
-					});
-				}
 				let messageArray = [];
 				let tempArray = [
 					'enrollment_first_name',
