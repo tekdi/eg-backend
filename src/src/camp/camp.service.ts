@@ -408,14 +408,13 @@ export class CampService {
 
 	public async campById(id: any, body: any, req: any, resp) {
 		const camp_id = id;
-		const facilitator_id = req.mw_userid;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
 		let member_type = 'owner';
 		let status = 'active';
 
 		let qury = `query MyQuery {
-			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
+			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}}}) {
 			  id
 			  kit_ratings
 			  kit_feedback

@@ -16,6 +16,8 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { RoleGuard } from 'src/modules/auth/role.guard';
 import { Roles } from 'src/modules/auth/role.decorator';
 import { CampService } from './camp.service';
+import { OwnershipGuard } from 'src/modules/auth/ownership.guard';
+import { OwnershipDecorator } from 'src/modules/auth/ownership.decorator';
 
 @Controller('camp')
 export class CampController {
@@ -44,8 +46,8 @@ export class CampController {
 
 	@Post('/:id')
 	@UseGuards(new AuthGuard())
-	@UseGuards(RoleGuard)
-	@Roles('facilitator')
+	@UseGuards(OwnershipGuard)
+	@OwnershipDecorator({ entity: 'camps' })
 	campById(
 		@Req() request: any,
 		@Body() body: any,

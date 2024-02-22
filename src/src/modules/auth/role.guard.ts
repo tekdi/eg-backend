@@ -20,7 +20,7 @@ export class RoleGuard implements CanActivate {
 		const request = context.switchToHttp().getRequest();
 		const user = request.mw_roles; // Assuming user data is attached to the request
 
-		console.log('user roles-->>', user);
+		console.log('user roles-->>', user, request?.params, request?.body);
 		if (!user) {
 			return false; // User is not authenticated
 		}

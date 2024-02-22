@@ -676,4 +676,55 @@ export class CampCoreService {
 		const response = await this.hasuraServiceFromServices.getData(data);
 		return { response };
 	}
+
+	async cehckOwnership({
+		camp_id,
+		user_id,
+		program_id,
+		academic_year_id,
+		roles,
+	}) {
+		const member_type = 'owner';
+		const status = 'active';
+		let rolesQuery = `user_id: {_eq: ${user_id}}`;
+
+		if (roles?.includes('program_owner')) {
+			rolesQuery = ``;
+		} else if (roles?.includes('staff')) {
+			const redultIP = await this.userService.getIpRoleUserById(user_id, {
+				program_id,
+				academic_year_id,
+			});
+			const parent_ip = redultIP?.program_users?.[0]?.organisation_id;
+			rolesQuery = `user:{program_faciltators:{
+				academic_year_id: {_eq: ${academic_year_id}},
+				program_id: {_eq: ${program_id}},
+				parent_ip:{_eq:"${parent_ip}"}
+			}}`;
+		}
+		let query = `query MyQuery {
+			camps_aggregate(where: {
+				id: {_eq: ${camp_id}},
+				group: {
+					academic_year_id: {_eq: ${academic_year_id}},
+					program_id: {_eq: ${program_id}}
+				},
+				group_users: {
+					member_type: {_eq: ${member_type}},
+					status: {_eq: ${status}},
+					${rolesQuery}
+				}
+			}) {
+			  aggregate {
+				count
+			  }
+			}
+		}`;
+		const response = await this.hasuraServiceFromServices.getData({
+			query,
+		});
+		const newQdata = response?.data?.camps_aggregate?.aggregate?.count;
+
+		return newQdata;
+	}
 }
