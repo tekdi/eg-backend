@@ -45,8 +45,6 @@ export class UserService {
 			);
 			const oldStatus = user?.program_faciltators?.status;
 			const statusArray = [
-				'shortlisted_for_orientation',
-				'selected_for_training',
 				'pragati_mobilizer',
 				'selected_for_onboarding',
 				'selected_prerak',

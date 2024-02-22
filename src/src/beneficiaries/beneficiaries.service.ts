@@ -1365,6 +1365,7 @@ export class BeneficiariesService {
 				is_eligible
 				enrollment_verification_status
 				enrollment_verification_reason
+				enrollment_mobile_no
 				document {
 					context
 					context_id
@@ -2066,6 +2067,7 @@ export class BeneficiariesService {
 					'block',
 					'village',
 					'grampanchayat',
+					'pincode',
 				],
 			},
 			edit_address: {
@@ -2846,29 +2848,17 @@ export class BeneficiariesService {
 									: null,
 						};
 
-						if (
-							req?.enrollment_mobile_no &&
-							req?.enrollment_mobile_no == beneficiaryUser?.mobile
-						) {
-							await this.statusUpdate(
-								{
-									user_id: req.id,
-									status: 'enrolled',
-									reason_for_status_update: 'enrolled',
-								},
-								request,
-							);
-						} else {
-							return response.status(400).send({
-								success: false,
-								message:
-									'Enrollment Mobile number Not matching with your Mobile Number',
-								data: {},
-							});
-						}
+						await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: 'enrolled',
+								reason_for_status_update: 'enrolled',
+							},
+							request,
+						);
 					}
 				}
-				if (req.enrollment_status == 'not_enrolled') {
+				if (req.enrollment_status == 'ready_to_enroll') {
 					myRequest['enrollment_status'] = req?.enrollment_status;
 					myRequest['enrollment_number'] = null;
 					myRequest['enrolled_for_board'] = null;
@@ -2969,29 +2959,6 @@ export class BeneficiariesService {
 					});
 				}
 
-				if (
-					!(
-						programDetails.enrollment_number &&
-						programDetails.enrollment_mobile_no ==
-							beneficiaryUser?.mobile
-					)
-				) {
-					console.log(
-						'programDetails.enrollment_mobile_no--->> ',
-						programDetails.enrollment_mobile_no,
-					);
-					console.log(
-						'beneficiaryUser?.mobile-->> ',
-						beneficiaryUser?.mobile,
-					);
-
-					return response.status(400).json({
-						success: false,
-						message:
-							'Invalid Enrollment number or Enrollment mobile number',
-						data: {},
-					});
-				}
 				let messageArray = [];
 				let tempArray = [
 					'enrollment_first_name',
@@ -3677,7 +3644,7 @@ export class BeneficiariesService {
 				document_sub_type
 				path
 			  }
-			  program_beneficiaries {
+			  program_beneficiaries(where:{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}) {
 				status,
 				enrollment_first_name,
 				enrollment_middle_name,
