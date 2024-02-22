@@ -280,10 +280,13 @@ export class UserService {
 		};
 	}
 
-	public async getIpRoleUserById(id: any) {
+	public async getIpRoleUserById(
+		id: any,
+		filter: any = { program_id: 1, academic_year_id: 1 },
+	) {
 		const data = await this.hasuraServiceFromServices.getOne(id, 'users', [
 			'id',
-			'program_users{organisation_id}',
+			`program_users(where:{program_id:{_eq:${filter?.program_id}}, academic_year_id:{_eq:${filter?.academic_year_id}}}){organisation_id program_id academic_year_id}`,
 			'first_name',
 		]);
 		return data?.users;
