@@ -74,9 +74,13 @@ export class FacilitatorService {
 		body: any,
 		response: any,
 	) {
-		const user = await this.userService.ipUserInfo(request);
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
+		const user = await this.userService.getIpRoleUserById(
+			request.mw_userid,
+			{ program_id, academic_year_id },
+		);
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
@@ -109,7 +113,7 @@ export class FacilitatorService {
 
 		filterQueryArray.push(
 			`	program_faciltators: {
-				parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
+				parent_ip: { _eq: "${user?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
 				${status}}`,
 		);
 
