@@ -155,20 +155,8 @@
 			"value": "applied"
 		},
 		{
-			"title": "FACILITATOR_STATUS_APPLICATION_SCREENED",
-			"value": "application_screened"
-		},
-		{
-			"title": "FACILITATOR_STATUS_SHORTLISTED_FOR_ORIENTATION",
-			"value": "shortlisted_for_orientation"
-		},
-		{
 			"title": "FACILITATOR_STATUS_PRAGATI_MOBILIZER",
 			"value": "pragati_mobilizer"
-		},
-		{
-			"title": "FACILITATOR_STATUS_SELECTED_FOR_TRAINING",
-			"value": "selected_for_training"
 		},
 		{
 			"title": "FACILITATOR_STATUS_SELECTED_FOR_ONBOARDING",
