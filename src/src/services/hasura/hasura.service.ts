@@ -295,6 +295,39 @@ export class HasuraService {
 		);
 	}
 
+	public async createWithVariable(
+		tableName: String,
+		item: Object,
+		onlyFields: any = [],
+		fields: any = [],
+		variable = [],
+	) {
+		return this.getResponce(
+			await lastValueFrom(
+				this.httpService
+					.post(
+						this.url,
+						this.qgService.createWithVariable(
+							tableName,
+							item,
+							onlyFields,
+							fields,
+							variable,
+						),
+						{
+							headers: {
+								'x-hasura-admin-secret':
+									process.env.HASURA_ADMIN_SECRET,
+								'Content-Type': 'application/json',
+							},
+						},
+					)
+					.pipe(map((res) => res.data)),
+			),
+			tableName,
+		);
+	}
+
 	public async update(
 		id: number,
 		tableName: String,

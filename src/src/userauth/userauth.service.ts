@@ -2,10 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
 import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class UserauthService {
@@ -16,32 +18,64 @@ export class UserauthService {
 	constructor(
 		private configService: ConfigService,
 		private readonly keycloakService: KeycloakService,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
 		private acknowledgementService: AcknowledgementService,
+		private userService: UserService,
 		private method: Method,
 	) {}
 
 	public async userAuthRegister(body, response, role) {
 		let misssingFieldsFlag = false;
 		if (role === 'facilitator') {
-			let isMobileExist = await this.hasuraService.findAll('users', {
-				mobile: body?.mobile,
-			});
-			let userExist = isMobileExist?.data?.users;
+			//validation to check if the mobile exists for another facilitator
 
-			if (userExist.length > 0) {
-				return response.status(422).send({
-					success: false,
-					message: 'Mobile Number Already Exist',
-					data: {},
+			let query = `query MyQuery {
+				users(where: {mobile: {_eq: "${body?.mobile}"}}){
+				  id
+				  mobile
+				  program_faciltators{
+					id
+					user_id
+				  }
+				}
+			  }
+			  `;
+			const hasura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: query,
 				});
+
+			let users = hasura_response?.data?.users;
+
+			if (users?.length > 0) {
+				let facilitator_data = users.filter(
+					(user) => user.program_faciltators.length > 0,
+				);
+
+				if (facilitator_data.length > 0) {
+					return response.status(422).send({
+						success: false,
+						message: 'Mobile Number Already Exist',
+						data: {},
+					});
+				}
 			}
 
 			// Validate role specific fields
 			if (
 				!body.role_fields.parent_ip ||
+				!body.role_fields.program_id ||
+				!body.role_fields.academic_year_id
+			) {
+				misssingFieldsFlag = true;
+			}
+		} else if (role === 'beneficiary') {
+			// Validate role specific fields
+			if (
+				!body.role_fields.facilitator_id ||
 				!body.role_fields.program_id ||
 				!body.role_fields.academic_year_id
 			) {
@@ -73,6 +107,8 @@ export class UserauthService {
 
 		if (role == 'facilitator') {
 			group = `facilitators`;
+		} else if (role == 'beneficiary') {
+			group = `beneficiaries`;
 		}
 
 		let data_to_create_user = {
@@ -97,6 +133,16 @@ export class UserauthService {
 				username,
 				token?.access_token,
 			);
+
+			if (findUsername.length > 0 && group === 'beneficiaries') {
+				let lastUsername =
+					findUsername[findUsername.length - 1].username;
+				console.log('lastUsername', lastUsername);
+				let count = findUsername.length;
+				console.log('count', count);
+				data_to_create_user.username =
+					data_to_create_user.username + '_' + count;
+			}
 
 			const registerUserRes = await this.keycloakService.registerUser(
 				data_to_create_user,
@@ -145,6 +191,27 @@ export class UserauthService {
 				body.role = role;
 
 				const result = await this.authService.newCreate(body);
+				if (
+					role === 'beneficiary' &&
+					result.data.program_beneficiaries
+				) {
+					await this.userService.addAuditLog(
+						result?.data?.id,
+						body.role_fields.facilitator_id,
+						'program_beneficiaries.status',
+						result?.data?.program_beneficiaries[0]?.id,
+						{
+							status: '',
+							reason_for_status_update: '',
+						},
+						{
+							status: result?.data?.program_beneficiaries[0]
+								?.status,
+							reason_for_status_update: 'new registration',
+						},
+						['status', 'reason_for_status_update'],
+					);
+				}
 
 				// Send login details SMS
 				// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
@@ -160,7 +227,7 @@ export class UserauthService {
 
 				let user_id = result?.data?.id;
 
-				if (user_id) {
+				if (user_id && role === 'facilitator') {
 					// Set the timezone to Indian Standard Time (Asia/Kolkata)
 					const formattedISTTime = this.method.getFormattedISTTime();
 
@@ -181,6 +248,24 @@ export class UserauthService {
 					//add acknowledgment details
 					await this.acknowledgementService.createAcknowledgement(
 						acknowledgement_create_body,
+					);
+				}
+
+				if (role === 'beneficiary' && body?.career_aspiration) {
+					let core_beneficiary_body = {
+						career_aspiration: body?.career_aspiration,
+						career_aspiration_details:
+							body?.career_aspiration_details,
+						user_id: user_id,
+					};
+					await this.hasuraService.q(
+						'core_beneficiaries',
+						{
+							...core_beneficiary_body,
+						},
+						[],
+						false,
+						['id'],
 					);
 				}
 
@@ -206,6 +291,68 @@ export class UserauthService {
 				success: false,
 				message: 'Unable to get keycloak token',
 				data: {},
+			});
+		}
+	}
+
+	public async isUserExists(body, response) {
+		let { first_name, dob, mobile } = body;
+		let filterQueryArray = [];
+
+		filterQueryArray.push(
+			`soundex(first_name) = soundex('${first_name}')  AND dob = '${dob}'`,
+		);
+
+		if (body?.last_name) {
+			filterQueryArray.push(
+				`soundex(last_name) = soundex('${body.last_name}')`,
+			);
+		}
+
+		if (body?.middle_name) {
+			filterQueryArray.push(
+				`soundex(middle_name) = soundex('${body.middle_name}')`,
+			);
+		}
+
+		const filterQuery = `SELECT mobile,id FROM users WHERE ${filterQueryArray.join(
+			' AND ',
+		)}`;
+
+		const users_data = (
+			await this.hasuraServiceFromServices.executeRawSql(filterQuery)
+		)?.result;
+
+		if (users_data == undefined && !users_data) {
+			return response.status(200).json({
+				message: 'No Data found',
+				status: 'success',
+				is_mobile_found: false,
+			});
+		}
+
+		let result =
+			this.hasuraServiceFromServices.getFormattedData(users_data);
+
+		// Check if the mobile number sent in the body is present in the result array
+		const mobileFound = result.some((user) => user.mobile === mobile);
+
+		if (mobileFound) {
+			return response.status(200).json({
+				message: 'Data found successfully',
+				status: 'success',
+				is_mobile_found: true,
+				is_data_found: true,
+			});
+		} else {
+			return response.status(200).json({
+				message:
+					result?.length > 0
+						? 'Data found successfully'
+						: 'Data not found',
+				status: 'success',
+				is_mobile_found: false,
+				is_data_found: result?.length > 0 ? true : false,
 			});
 		}
 	}

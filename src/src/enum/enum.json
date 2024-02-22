@@ -155,20 +155,8 @@
 			"value": "applied"
 		},
 		{
-			"title": "FACILITATOR_STATUS_APPLICATION_SCREENED",
-			"value": "application_screened"
-		},
-		{
-			"title": "FACILITATOR_STATUS_SHORTLISTED_FOR_ORIENTATION",
-			"value": "shortlisted_for_orientation"
-		},
-		{
 			"title": "FACILITATOR_STATUS_PRAGATI_MOBILIZER",
 			"value": "pragati_mobilizer"
-		},
-		{
-			"title": "FACILITATOR_STATUS_SELECTED_FOR_TRAINING",
-			"value": "selected_for_training"
 		},
 		{
 			"title": "FACILITATOR_STATUS_SELECTED_FOR_ONBOARDING",
@@ -239,8 +227,8 @@
 	],
 	"TYPE_OF_LEARNER": [
 		{
-			"title": "DROPOUT",
-			"value": "dropout"
+			"title": "SCHOOL_DROPOUT",
+			"value": "school_dropout"
 		},
 		{
 			"title": "NEVER_ENROLLED",
@@ -257,10 +245,6 @@
 		{
 			"title": "STREAM_2_(MAINSTREAM_SYC)",
 			"value": "stream_2_mainstream_syc"
-		},
-		{
-			"title": "PRAGATI_SYC",
-			"value": "pragati_syc"
 		}
 	],
 	"LAST_STANDARD_OF_EDUCATION": [
@@ -315,8 +299,8 @@
 			"value": "enrolled"
 		},
 		{
-			"title": "NOT_ENROLLED",
-			"value": "not_enrolled"
+			"title": "READY_TO_ENROLL",
+			"value": "ready_to_enroll"
 		},
 		{
 			"title": "ENROLLMENT_AWAITED",
@@ -429,18 +413,42 @@
 			"value": "prerak_orientation"
 		},
 		{
-			"title": "FACILITATOR_EVENT_TYPE_PRERAK_FLN_TRAINING",
-			"value": "prerak_fln_training"
+			"title": "FACILITATOR_EVENT_TYPE_GKP_TRAINING",
+			"value": "gkp_training"
 		},
 		{
-			"title": "FACILITATOR_EVENT_TYPE_PRERAK_CAMP_EXECUTION_TRAINING",
-			"value": "prerak_camp_execution_training"
+			"title": "FACILITATOR_EVENT_TYPE_PCR_TRAINING",
+			"value": "pcr_training"
+		},
+		{
+			"title": "FACILITATOR_EVENT_TYPE_MAIN_CAMP_EXECUTION_TRAINING",
+			"value": "main_camp_execution_training"
+		},
+		{
+			"title": "FACILITATOR_EVENT_TYPE_DRIP_TRAINING",
+			"value": "drip_training"
 		}
 	],
 	"BENEFICIARY_REASONS_FOR_REJECTING_LEARNER": [
 		{
 			"title": "BENEFICIARY_REASONS_FOR_REJECTING_LEARNER_BEHAVIOURAL_ISSUES",
 			"value": "behavioural_issues"
+		},
+		{
+			"title": "WRONG_ENTRY",
+			"value": "wrong_entry"
+		},
+		{
+			"title": "NOT_ELIGIBLE",
+			"value": "not_eligible"
+		},
+		{
+			"title": "NOT_TARGET_GROUP",
+			"value": "not_target_group"
+		},
+		{
+			"title": "NOT_INTERESTED",
+			"value": "not_interested"
 		}
 	],
 	"FACILITATOR_REASONS_FOR_QUIT": [
@@ -1469,6 +1477,102 @@
 		{
 			"title": "SESSION_COMPLETED_SESSION_SUCCESSFULLY_IMPLEMENTED",
 			"value": "session_completed_session_successfully_implemented"
+		}
+	],
+	"PARENT_SUPPORT": [
+		{
+			"title": "PARENT_SUPPORT_YES",
+			"value": "yes"
+		},
+		{
+			"title": "PARENT_SUPPORT_NO",
+			"value": "no"
+		},
+		{
+			"title": "PARENT_SUPPORT_MAY_BE",
+			"value": "may_be"
+		}
+	],
+	"EVENT_BATCH_NAME": [
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_1",
+			"value": "batch_1"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_2",
+			"value": "batch_2"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_3",
+			"value": "batch_3"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_4",
+			"value": "batch_4"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_5",
+			"value": "batch_5"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_6",
+			"value": "batch_6"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_7",
+			"value": "batch_7"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_8",
+			"value": "batch_8"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_9",
+			"value": "batch_9"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_10",
+			"value": "batch_10"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_11",
+			"value": "batch_11"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_12",
+			"value": "batch_12"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_13",
+			"value": "batch_13"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_14",
+			"value": "batch_14"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_15",
+			"value": "batch_15"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_16",
+			"value": "batch_16"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_17",
+			"value": "batch_17"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_18",
+			"value": "batch_18"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_19",
+			"value": "batch_19"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_20",
+			"value": "batch_20"
 		}
 	]
 }

@@ -29,4 +29,10 @@ export class UserauthController {
 	) {
 		return this.userauthService.userAuthRegister(body, response, role);
 	}
+
+	@Post('/is-user-exists')
+	@UsePipes(ValidationPipe)
+	public async isUserExists(@Body() body: Body, @Res() response: Response) {
+		return this.userauthService.isUserExists(body, response);
+	}
 }

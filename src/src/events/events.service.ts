@@ -42,6 +42,7 @@ export class EventsService {
 		'reminders',
 		'academic_year_id',
 		'program_id',
+		'params',
 	];
 
 	public attendanceReturnFields = [
@@ -71,7 +72,6 @@ export class EventsService {
 		let user_id_arr = req.attendees;
 		let program_id = header?.mw_program_id;
 		let academic_year_id = header?.mw_academic_year_id;
-
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
 		let obj = {
@@ -92,47 +92,78 @@ export class EventsService {
 			reminders: JSON.stringify(req.reminders).replace(/"/g, '\\"'),
 			program_id: program_id,
 			academic_year_id: academic_year_id,
+			params: req.params,
+		};
+		let data = {
+			query: `query MyQuery {
+			events_aggregate(where: {start_date: {_gte: "${req.start_date}", _lte: "${req.start_date}"}, end_date: {_gte: "${req.end_date}", _lte: "${req.end_date}"}, program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, master_trainer: {_eq: "${req.master_trainer}"}, start_time: {_eq: "${req.start_time}"}, type: {_eq: "${req.type}"}, user_id: {_eq: ${user_id}}, name: {_eq: "${req.name}"}}) {
+				aggregate {
+					count
+				}
+			}
+		}
+		`,
 		};
 
-		const eventResult = await this.hasuraService.create(
-			this.table,
-			obj,
-			this.returnFields,
-		);
+		const geteventData = await this.hasuraServiceFromServices.getData(data);
 
-		if (eventResult) {
-			const promises = [];
-			const query = [];
-			for (const iterator of user_id_arr) {
-				let obj = {
-					user_id: iterator,
-					created_by: user_id,
-					context_id: eventResult.events.id,
-					context: 'events',
-					updated_by: user_id,
-				};
-				query.push(obj);
-			}
-			for (const iterator of query) {
-				promises.push(
-					this.hasuraService.create(
-						'attendance',
-						iterator,
-						this.attendanceReturnFields,
-					),
-				);
-			}
-			const createAttendees = await Promise.all(promises);
-			let mappedData = createAttendees.map((data) => data.attendance);
-			if (createAttendees) {
-				return response.status(200).send({
-					success: true,
-					message: 'Event created successfully!',
-					data: {
-						events: eventResult.events,
-						attendance: mappedData,
-					},
-				});
+		const count = geteventData?.data?.events_aggregate?.aggregate?.count;
+
+		if (count > 0) {
+			return response.status(200).send({
+				success: true,
+				message: 'Event Already created!',
+				data: {},
+			});
+		} else {
+			const eventResult = await this.hasuraService.createWithVariable(
+				this.table,
+				obj,
+				this.returnFields,
+				[],
+				[{ key: 'params', type: 'json' }],
+			);
+
+			if (eventResult) {
+				const promises = [];
+				const query = [];
+				for (const iterator of user_id_arr) {
+					let obj = {
+						user_id: iterator,
+						created_by: user_id,
+						context_id: eventResult.events.id,
+						context: 'events',
+						updated_by: user_id,
+					};
+					query.push(obj);
+				}
+				for (const iterator of query) {
+					promises.push(
+						this.hasuraService.create(
+							'attendance',
+							iterator,
+							this.attendanceReturnFields,
+						),
+					);
+				}
+				const createAttendees = await Promise.all(promises);
+				let mappedData = createAttendees.map((data) => data.attendance);
+				if (createAttendees) {
+					return response.status(200).send({
+						success: true,
+						message: 'Event created successfully!',
+						data: {
+							events: eventResult.events,
+							attendance: mappedData,
+						},
+					});
+				} else {
+					return response.status(500).send({
+						success: false,
+						message: 'Unable to create Event!',
+						data: {},
+					});
+				}
 			} else {
 				return response.status(500).send({
 					success: false,
@@ -140,12 +171,6 @@ export class EventsService {
 					data: {},
 				});
 			}
-		} else {
-			return response.status(500).send({
-				success: false,
-				message: 'Unable to create Event!',
-				data: {},
-			});
 		}
 	}
 

@@ -819,7 +819,11 @@ export class CampService {
 			};
 		}
 
-		if (campData?.group_users[0]?.user_id != facilitator_id) {
+		if (
+			campData?.group_users[0]?.user_id != facilitator_id ||
+			(campData?.group?.status === 'inactive' &&
+				update_body?.edit_page_type !== 'edit_learners')
+		) {
 			return {
 				status: 401,
 				success: false,
@@ -1210,11 +1214,77 @@ export class CampService {
 					)
 					.map((item) => item.user_id);
 
+				// get learners id from program_beneficiaries from deactiveLearnerIds
+				let data = {
+					query: `query MyQuery {
+					program_beneficiaries(where: {user_id: {_in: [${deactiveLearnerIds}]}}) {
+						id
+						user_id
+						status
+					}
+				}`,
+				};
+				const resp = await this.hasuraServiceFromServices.getData({
+					query: data.query,
+				});
+
+				let programbeneficiariesdata =
+					resp?.data?.program_beneficiaries || [];
+
+				// get program_beneficiaires id who's status want to update
+				const programbeneficiaries = programbeneficiariesdata.map(
+					(item) => item.id,
+				);
+
+				//update learner status in program_beneficiaires removed from change_request
+				if (programbeneficiaries?.length > 0) {
+					resultActive = await this.hasuraServiceFromServices.update(
+						null,
+						'program_beneficiaries',
+						{
+							status: 'enrolled_ip_verified',
+							updated_by: facilitator_id,
+						},
+						[],
+						['id', 'status'],
+						{ where: `{id:{_in:[${programbeneficiaries}]}}` },
+					);
+
+					const activeIdsAuditData = programbeneficiariesdata.map(
+						(item) => ({
+							user_id: item.user_id,
+							user_type: 'Facilitator',
+							updated_by_user: facilitator_id,
+							context: 'campBeneficiaryStatus',
+							context_id: camp_id,
+							subject: 'beneficiary',
+							subject_id: item.user_id,
+							log_transaction_text: JSON.stringify(
+								`Facilitator ${facilitator_id} updated beneficiary ${item.user_id} status from ${item.status} to enrolled_ip_verified`,
+							),
+							old_data: JSON.stringify(
+								`{ learner_id: ${item.user_id},status:${item.status} }`,
+							),
+							new_data: JSON.stringify(
+								`{ learner_id: ${item.user_id},status:enrolled_ip_verified }`,
+							),
+							action: 'update',
+						}),
+					);
+					if (activeIdsAuditData?.length > 0) {
+						resultCreate = await this.hasuraServiceFromServices.qM(
+							'insert_audit_logs',
+							activeIdsAuditData,
+							[],
+							['id'],
+						);
+					}
+				}
+
 				if (
 					deactivateIds.length > 0 &&
 					(camp_status == 'registered' ||
-						camp_status == 'camp_ip_verified' ||
-						camp_status == 'change_required')
+						camp_status == 'camp_ip_verified')
 				) {
 					return {
 						status: 422,
@@ -1233,6 +1303,40 @@ export class CampService {
 						[],
 						returnFields,
 					);
+				}
+
+				if (camp_status === 'inactive') {
+					let updatebody = {
+						status: 'camp_initiated',
+					};
+					let updatStatus = await this.hasuraService.q(
+						'groups',
+						{
+							...updatebody,
+							id: group_id,
+						},
+						['status'],
+						true,
+						['id', 'status'],
+					);
+
+					let auditData = {
+						userId: facilitator_id,
+						mw_userid: facilitator_id,
+						user_type: 'Facilitator',
+						context: 'camp.update.status',
+						context_id: camp_id,
+						subject: 'camp',
+						subject_id: camp_id,
+						log_transaction_text: `Facilitator ${facilitator_id} updated camp status of camp ${camp_id}`,
+						oldData: { status: camp_status },
+						newData: { status: 'camp_initiated' },
+						tempArray: ['status'],
+						action: 'update',
+						sortedData: true,
+					};
+
+					await this.userService.addAuditLogAction(auditData);
 				}
 
 				const createAuditData = learner_ids
@@ -2392,7 +2496,18 @@ export class CampService {
 		const response = await this.attendancesService.createAttendance(
 			camp_attendance_body,
 			req,
-			resp,
+			[
+				'lat',
+				'long',
+				'context_id',
+				'user_id',
+				'status',
+				'reason',
+				'photo_1',
+				'created_by',
+				'updated_by',
+				'context',
+			],
 		);
 
 		if (!response?.attendance?.id) {
@@ -3345,6 +3460,7 @@ export class CampService {
 			camp_id,
 		);
 		let result1 = hasura_response?.data?.camp_days_activities_tracker;
+
 		if (result1?.length > 0) {
 			return res.status(401).json({
 				success: false,
@@ -3352,16 +3468,25 @@ export class CampService {
 				data: {},
 			});
 		}
-
+		let errorMessage;
 		// Set camp_day_not_happening_reason to NULL if not present in the body
 		if (
 			camp_day_happening === 'no' &&
-			!camp_day_not_happening_reason &&
-			camp_day_not_happening_reason === ''
+			(!camp_day_not_happening_reason ||
+				camp_day_not_happening_reason === '')
 		) {
-			return res.status(401).json({
+			errorMessage = 'Please send Reason';
+		} else if (
+			camp_day_happening === 'yes' &&
+			(!body?.lat || !body?.long || !body?.photo_1)
+		) {
+			errorMessage = 'Please send Lat, Long and Photo_1';
+		}
+
+		if (errorMessage) {
+			return res.status(422).json({
 				success: false,
-				message: 'Please send Reason',
+				message: errorMessage,
 				data: {},
 			});
 		}
@@ -3389,14 +3514,43 @@ export class CampService {
 			}
 		}`,
 		};
-		const result = await this.hasuraServiceFromServices.getData(data);
 
+		const result = await this.hasuraServiceFromServices.getData(data);
 		let createresponse = result?.data;
+		let context_id =
+			createresponse?.insert_camp_days_activities_tracker_one?.id;
+
+		const attendance_response =
+			await this.attendancesService.createAttendance(
+				{
+					...body,
+					context: 'camp_days_activities_tracker',
+					context_id,
+					user_id: req?.mw_userid,
+					status: 'present',
+					reason: 'camp_started',
+					created_by: req?.mw_userid,
+					updated_by: req?.mw_userid,
+				},
+				req,
+				[
+					'lat',
+					'long',
+					'context_id',
+					'user_id',
+					'status',
+					'reason',
+					'photo_1',
+					'created_by',
+					'updated_by',
+					'context',
+				],
+			);
 
 		if (createresponse) {
 			return res.status(200).json({
 				success: true,
-				data: createresponse,
+				data: { ...createresponse, attendance_response },
 			});
 		} else {
 			return res.status(500).json({
@@ -4212,6 +4366,138 @@ export class CampService {
 			return resp.json({
 				status: 500,
 				message: 'IP_REASSIGN_BENEFICIARIES' + error?.message,
+			});
+		}
+	}
+
+	async campDetails(body: any, req: any, resp: any) {
+		let camp_id = body?.camp_id;
+		let context_id = body?.context_id;
+		const dateString = moment().startOf('day').format();
+		const endDate = moment().endOf('day').format();
+		let errorMessage;
+
+		if (body?.fields && !Array.isArray(body?.fields)) {
+			errorMessage = 'Fields Must Be Array';
+		}
+
+		// Validate the request parameters
+		if (!camp_id || !context_id) {
+			errorMessage = 'Required Camp-id and camp-day-activity-id';
+		}
+		if (errorMessage) {
+			return resp.status(422).json({
+				message: errorMessage,
+				data: {},
+			});
+		}
+
+		let queryFields = [];
+
+		// Determine which fields to include in the query
+		const fields = body?.fields;
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('beneficairesCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`beneficairesCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}}) {
+          aggregate {
+            count
+            }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('beneficairesAttendaceCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`beneficairesAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+          aggregate {
+          	count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('beneficairesPresentAttendaceCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`beneficairesPresentAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"},status:{_eq:"present"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+          aggregate {
+            count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('prerakPresentAttendaceCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`prerakPresentAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"owner"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"},status:{_eq:"present"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+          aggregate {
+            count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('today_session_count')
+		) {
+			queryFields = [
+				...queryFields,
+				`today_session_count:learning_sessions_tracker_aggregate(where: {camp_id: {_eq: ${camp_id}}, _or: [{created_at: {_gte: "${dateString}", _lte: "${endDate}"}}, {updated_at:{_gte: "${dateString}", _lte: "${endDate}"}}]}) {
+          aggregate{
+            count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('misc_activities')
+		) {
+			queryFields = [
+				...queryFields,
+				`misc_activities:camp_days_activities_tracker_by_pk(id: ${context_id}){
+					misc_activities
+				}`,
+			];
+		}
+
+		let data = {
+			query: `query MyQuery { ${queryFields.join(' ')} }`,
+		};
+
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+		const camps_data = hasura_response?.data;
+
+		if (camps_data) {
+			return resp.json({
+				status: 200,
+				message: 'Camp Data Found Successfully',
+				data: camps_data,
+			});
+		} else {
+			return resp.json({
+				status: 500,
+				message: 'IP_CAMP_LIST_ERROR',
 				data: {},
 			});
 		}

@@ -74,13 +74,83 @@ export class FacilitatorService {
 		body: any,
 		response: any,
 	) {
-		const user = await this.userService.ipUserInfo(request);
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
+		const user = await this.userService.getIpRoleUserById(
+			request.mw_userid,
+			{ program_id, academic_year_id },
+		);
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
 		let skip = page > 1 ? limit * (page - 1) : 0;
+		let filterQueryArray = [];
+
+		let status;
+		switch (body?.type) {
+			case 'pragati_orientation': {
+				status = `status: { _in: ["applied" ]}`;
+				break;
+			}
+			case 'gkp_training': {
+				status = `status: { _in: ["pragati_mobilizer" ]}`;
+				break;
+			}
+			case 'pcr_training': {
+				status = `status: { _in: ["pragati_mobilizer","selected_for_onboarding" ]}`;
+				break;
+			}
+			case 'main_camp_execution_training': {
+				status = `status: { _in: ["selected_for_onboarding" ]}`;
+				break;
+			}
+			case 'drip_training': {
+				status = `status: { _in: ["applied","pragati_mobilizer","selected_for_onboarding" ]}`;
+				break;
+			}
+		}
+
+		filterQueryArray.push(
+			`	program_faciltators: {
+				parent_ip: { _eq: "${user?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
+				${status}}`,
+		);
+
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				filterQueryArray.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+			  last_name: { _ilike: "%${last_name}%" } 
+				  `);
+			} else {
+				filterQueryArray.push(
+					`first_name: { _ilike: "%${first_name}%" }`,
+				);
+			}
+		}
+
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`district:{_in: ${JSON.stringify(body?.district)}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			filterQueryArray.push(
+				`block:{_in: ${JSON.stringify(body?.block)}}`,
+			);
+		}
+		if (body?.village && body?.village.length > 0) {
+			filterQueryArray.push(
+				`village:{_in: ${JSON.stringify(body?.village)}}`,
+			);
+		}
+
+		let filterQuery = '' + filterQueryArray.join(',') + '';
 
 		const data = {
 			query: `
@@ -89,10 +159,7 @@ export class FacilitatorService {
 						where: {
 							_and: [
 								{
-									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
-										status: { _eq: "shortlisted_for_orientation" }
-									}
+									${filterQuery}
 								},
 								{
 									attendances_aggregate: {
@@ -114,10 +181,7 @@ export class FacilitatorService {
 						where: {
 							_and: [
 								{
-									program_faciltators: {
-										parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}},
-										status: { _eq: "shortlisted_for_orientation" }
-									}
+									${filterQuery}
 								},
 								{
 									attendances_aggregate: {
@@ -1846,7 +1910,7 @@ export class FacilitatorService {
 			user_id
 			type
 		  }
-		  program_faciltators {
+		  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
 			parent_ip
 			availability
 			id
@@ -1895,7 +1959,7 @@ export class FacilitatorService {
 			  id
 			}
 		  }
-		  events {
+		  events(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
 			context
 			context_id
 			created_by
@@ -1913,6 +1977,7 @@ export class FacilitatorService {
 	  }`,
 			variables: variables,
 		};
+
 		let response;
 		try {
 			response = await this.hasuraService.getData(data);
@@ -2502,7 +2567,9 @@ export class FacilitatorService {
 		let status = 200;
 		if (userData?.aadhar_verified === 'yes') {
 			// Check and modify the gender field in the body if it's 'M' or 'F' with the utility function
-			body.gender = await this.method.transformGender(body.gender);
+			if (body?.gender) {
+				body.gender = await this.method.transformGender(body.gender);
+			}
 
 			okyc_response = await this.facilitatorCoreService.updateOkycDetails(
 				body,
@@ -2592,14 +2659,15 @@ export class FacilitatorService {
 			});
 		}
 
+		const { okyc_response, ...otherData } = program_faciltators[0] || {};
 		let program_faciltator_create = {
-			...program_faciltators[0],
+			...otherData,
 			user_id: user_id,
 			academic_year_id: academic_year_id,
 			parent_ip: parent_ip,
 			program_id: program_id,
 			qualification_ids: JSON.stringify(
-				JSON.parse(program_faciltators[0].qualification_ids),
+				JSON.parse(otherData.qualification_ids),
 			).replace(/"/g, '\\"'),
 		};
 
