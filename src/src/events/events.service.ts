@@ -112,7 +112,7 @@ export class EventsService {
 		if (count > 0) {
 			return response.status(200).send({
 				success: true,
-				message: 'Event Already create!',
+				message: 'Event Already created!',
 				data: {},
 			});
 		} else {
