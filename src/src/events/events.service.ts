@@ -100,6 +100,15 @@ export class EventsService {
 				do_id: doIds,
 			};
 		}
+		let optional = {};
+		if (req?.location && req?.location_type && req?.reminders) {
+			optional['location'] = req.location;
+			optional['reminders'] = JSON.stringify(req.reminders).replace(
+				/"/g,
+				'\\"',
+			);
+			optional['location_type'] = req.location_type;
+		}
 
 		let obj = {
 			...(req?.context_id && { context_id: req?.context_id }),
@@ -110,17 +119,16 @@ export class EventsService {
 			created_by: user_id,
 			end_date: req.end_date,
 			end_time: req.end_time,
-			location: req.location,
-			location_type: req.location_type,
 			start_date: req.start_date,
 			start_time: req.start_time,
 			updated_by: user_id,
 			type: req.type,
-			reminders: JSON.stringify(req.reminders).replace(/"/g, '\\"'),
 			program_id: program_id,
 			academic_year_id: academic_year_id,
 			params: paramId, //set  params to null if no param id found in the database
+			...optional, //set optional for remainders,location,location_type
 		};
+
 		//checking the event already created
 		let data = {
 			query: `query MyQuery {
@@ -151,7 +159,6 @@ export class EventsService {
 				[],
 				[{ key: 'params', type: 'json' }],
 			);
-
 			if (eventResult) {
 				const promises = [];
 				const query = [];
