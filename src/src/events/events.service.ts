@@ -74,6 +74,42 @@ export class EventsService {
 		let academic_year_id = header?.mw_academic_year_id;
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
+		//get do_id for event exam master data
+		let eventExamData = {
+			query: `query MyQuery {
+				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"}}){
+					id
+					do_id
+					event_type
+				}
+			}`,
+		};
+
+		const getExamId = await this.hasuraServiceFromServices.getData(
+			eventExamData,
+		);
+
+		let doIds = getExamId?.data?.event_exams_master?.map(
+			(exam) => exam.do_id,
+		);
+		let paramId = null;
+
+		if (doIds && doIds.length > 0) {
+			paramId = {
+				attendance_type: 'day',
+				do_id: doIds,
+			};
+		}
+		let optional = {};
+		if (req?.location && req?.location_type && req?.reminders) {
+			optional['location'] = req.location;
+			optional['reminders'] = JSON.stringify(req.reminders).replace(
+				/"/g,
+				'\\"',
+			);
+			optional['location_type'] = req.location_type;
+		}
+
 		let obj = {
 			...(req?.context_id && { context_id: req?.context_id }),
 			...(req?.context && { context: req?.context }),
@@ -83,17 +119,17 @@ export class EventsService {
 			created_by: user_id,
 			end_date: req.end_date,
 			end_time: req.end_time,
-			location: req.location,
-			location_type: req.location_type,
 			start_date: req.start_date,
 			start_time: req.start_time,
 			updated_by: user_id,
 			type: req.type,
-			reminders: JSON.stringify(req.reminders).replace(/"/g, '\\"'),
 			program_id: program_id,
 			academic_year_id: academic_year_id,
-			params: req.params,
+			params: paramId, //set  params to null if no param id found in the database
+			...optional, //set optional for remainders,location,location_type
 		};
+
+		//checking the event already created
 		let data = {
 			query: `query MyQuery {
 			events_aggregate(where: {start_date: {_gte: "${req.start_date}", _lte: "${req.start_date}"}, end_date: {_gte: "${req.end_date}", _lte: "${req.end_date}"}, program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, master_trainer: {_eq: "${req.master_trainer}"}, start_time: {_eq: "${req.start_time}"}, type: {_eq: "${req.type}"}, user_id: {_eq: ${user_id}}, name: {_eq: "${req.name}"}}) {
@@ -108,7 +144,7 @@ export class EventsService {
 		const geteventData = await this.hasuraServiceFromServices.getData(data);
 
 		const count = geteventData?.data?.events_aggregate?.aggregate?.count;
-
+		//if event created show this message
 		if (count > 0) {
 			return response.status(200).send({
 				success: true,
@@ -123,7 +159,6 @@ export class EventsService {
 				[],
 				[{ key: 'params', type: 'json' }],
 			);
-
 			if (eventResult) {
 				const promises = [];
 				const query = [];
