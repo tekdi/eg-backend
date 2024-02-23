@@ -102,7 +102,7 @@ export class EventsService {
 		}
 		let optional = {};
 		if (req?.location && req?.location_type && req?.reminders) {
-			optional['location'] = location;
+			optional['location'] = req.location;
 			optional['reminders'] = JSON.stringify(req.reminders).replace(
 				/"/g,
 				'\\"',
