@@ -130,16 +130,13 @@ export class EventsService {
 		};
 
 		// Check if the number of attendees falls within the configured limits
+		let errorMessage = '';
 		const numAttendees = req.attendees.length;
 		const minParticipants = 0; // Example: Minimum number of participants allowed
 		const maxParticipants = 50; // Example: Maximum number of participants allowed
 
 		if (numAttendees < minParticipants || numAttendees > maxParticipants) {
-			return response.status(400).send({
-				success: false,
-				message: `Number of attendees must be between ${minParticipants} and ${maxParticipants}.`,
-				data: {},
-			});
+			errorMessage += `Number of attendees must be between ${minParticipants} and ${maxParticipants}`;
 		}
 		// Check duration
 		const daysDiff = moment(req.start_date).diff(
@@ -148,9 +145,12 @@ export class EventsService {
 		);
 
 		if (daysDiff < 1 || daysDiff > 5) {
-			return response.status(400).send({
+			errorMessage += 'Event duration must be between 1 and 5 days.';
+		}
+		if (errorMessage) {
+			return response.status(200).send({
 				success: false,
-				message: 'Event duration must be between 1 and 5 days.',
+				message: errorMessage,
 				data: {},
 			});
 		}
