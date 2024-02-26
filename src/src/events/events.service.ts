@@ -129,6 +129,32 @@ export class EventsService {
 			...optional, //set optional for remainders,location,location_type
 		};
 
+		// Check if the number of attendees falls within the configured limits
+		const numAttendees = req.attendees.length;
+		const minParticipants = 0; // Example: Minimum number of participants allowed
+		const maxParticipants = 50; // Example: Maximum number of participants allowed
+
+		if (numAttendees < minParticipants || numAttendees > maxParticipants) {
+			return response.status(400).send({
+				success: false,
+				message: `Number of attendees must be between ${minParticipants} and ${maxParticipants}.`,
+				data: {},
+			});
+		}
+		// Check duration
+		const daysDiff = moment(req.start_date).diff(
+			moment(req.end_date),
+			'days',
+		);
+
+		if (daysDiff < 1 || daysDiff > 5) {
+			return response.status(400).send({
+				success: false,
+				message: 'Event duration must be between 1 and 5 days.',
+				data: {},
+			});
+		}
+
 		//checking the event already created
 		let data = {
 			query: `query MyQuery {

@@ -161,14 +161,6 @@ export class FacilitatorService {
 								{
 									${filterQuery}
 								},
-								{
-									attendances_aggregate: {
-										count: {
-											predicate: {_eq: 0},
-											filter: {event: {type: {_eq: "${body.type}"}}}
-										}
-									}
-								}
 							]
 						}
 					) {
@@ -183,14 +175,6 @@ export class FacilitatorService {
 								{
 									${filterQuery}
 								},
-								{
-									attendances_aggregate: {
-										count: {
-											predicate: {_eq: 0},
-											filter: {event: {type: {_eq: "${body.type}"}}}
-										}
-									}
-								}
 							]
 						},
 						limit: $limit,
@@ -204,55 +188,19 @@ export class FacilitatorService {
 						dob
 						aadhar_token
 						address
-						block_id
-						block_village_id
 						created_by
-						district_id
 						email_id
 						gender
 						lat
 						long
 						mobile
-						state_id
 						updated_by
-						profile_url
 						state
 						district
 						block
 						village
 						grampanchayat
-						program_users {
-							id
-							organisation_id
-							academic_year_id
-							program_id
-							role_id
-							status
-							user_id
-						}
-						core_faciltator {
-							created_by
-							device_ownership
-							device_type
-							id
-							pan_no
-							refreere
-							sourcing_channel
-							updated_by
-							user_id
-						}
-						experience {
-							description
-							end_year
-							experience_in_years
-							institution
-							start_year
-							organization
-							role_title
-							user_id
-							type
-						}
-						program_faciltators {
+						program_faciltators(where:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}) {
 							parent_ip
 							availability
 							has_social_work_exp
@@ -268,50 +216,6 @@ export class FacilitatorService {
 							updated_by
 							academic_year_id
 						}
-						qualifications {
-							created_by
-							end_year
-							id
-							institution
-							qualification_master_id
-							start_year
-							updated_by
-							user_id
-							qualification_master {
-							context
-							context_id
-							created_by
-							id
-							name
-							type
-							updated_by
-							}
-						}
-						interviews {
-							id
-							title
-							user_id
-							owner_user_id
-							date
-							start_time
-							end_time
-							interviewer_name
-							status
-							comment
-							reminder
-							rsvp
-							location_type
-							location
-							created_at
-							created_by
-							updated_at
-							updated_by
-							owner {
-							  first_name
-							  last_name
-							  id
-							}
-						  }
 						events {
 							context
 							context_id
