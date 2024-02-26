@@ -129,8 +129,8 @@ export class EventsService {
 			...optional, //set optional for remainders,location,location_type
 		};
 		// Check duration
-		const daysDiff = moment(req.start_date).diff(
-			moment(req.end_date),
+		const daysDiff = moment(req.end_date).diff(
+			moment(req.start_date),
 			'days',
 		);
 		// Check if the number of attendees falls within the configured limits
