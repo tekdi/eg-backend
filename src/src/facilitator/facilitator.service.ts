@@ -201,42 +201,10 @@ export class FacilitatorService {
 						village
 						grampanchayat
 						program_faciltators(where:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}) {
-							parent_ip
-							availability
-							has_social_work_exp
 							id
-							police_verification_done
-							program_id
-							social_background_verified_by_neighbours
 							user_id
-							village_knowledge_test
 							status
-							form_step_number
-							created_by
-							updated_by
-							academic_year_id
-						}
-						events {
-							context
-							context_id
-							created_by
-							end_date
-							end_time
-							id
-							location
-							location_type
-							start_date
-							start_time
-							updated_by
-							user_id
-						}
-						documents(order_by: {id: desc}){
-							id
-							user_id
-							name
-							doument_type
-							document_sub_type
-						}
+						}						
 					}
 				}
 			`,
