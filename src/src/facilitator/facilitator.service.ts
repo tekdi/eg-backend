@@ -210,12 +210,6 @@ export class FacilitatorService {
 
 		let usersList = hasuraResponse?.data?.users;
 
-		usersList = usersList.map((obj) => {
-			obj.program_faciltators = obj.program_faciltators?.[0] || {};
-			obj.qualifications = obj.qualifications?.[0] || {};
-			return obj;
-		});
-
 		const count =
 			hasuraResponse?.data?.users_aggregate?.aggregate?.count || 0;
 
