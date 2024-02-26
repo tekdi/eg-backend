@@ -128,6 +128,29 @@ export class EventsService {
 			params: paramId, //set  params to null if no param id found in the database
 			...optional, //set optional for remainders,location,location_type
 		};
+		// Check duration
+		const daysDiff = moment(req.end_date).diff(
+			moment(req.start_date),
+			'days',
+		);
+		// Check if the number of attendees falls within the configured limits
+		let errorMessage = '';
+		const numAttendees = req.attendees.length;
+		const minParticipants = 0; // Example: Minimum number of participants allowed
+		const maxParticipants = 50; // Example: Maximum number of participants allowed
+
+		if (numAttendees < minParticipants || numAttendees > maxParticipants) {
+			errorMessage += `Number of attendees must be between ${minParticipants} and ${maxParticipants}`;
+		} else if (daysDiff < 1 || daysDiff > 5) {
+			errorMessage += 'Event duration must be between 1 and 5 days.';
+		}
+		if (errorMessage) {
+			return response.status(200).send({
+				success: false,
+				message: errorMessage,
+				data: {},
+			});
+		}
 
 		//checking the event already created
 		let data = {
