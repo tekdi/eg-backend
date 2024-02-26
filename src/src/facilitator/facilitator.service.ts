@@ -185,16 +185,8 @@ export class FacilitatorService {
 						first_name
 						middle_name
 						last_name
-						dob
-						aadhar_token
-						address
-						created_by
-						email_id
 						gender
-						lat
-						long
 						mobile
-						updated_by
 						state
 						district
 						block
