@@ -1393,6 +1393,10 @@
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
 			"value": "miscellaneous_activities_school_teacher_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
+			"value": "miscellaneous_activities_e_pcp_activities"
 		}
 	],
 	"KIT_MATERIALS_CHECKLISTS": [
