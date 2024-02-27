@@ -762,7 +762,7 @@ export class UserService {
 			user_id
 			type
 			related_to_teaching
-			reference {
+			reference:references(where:{context:{_eq:"experience"}}) {
 			  id
 			  name
 			  context
@@ -933,12 +933,20 @@ export class UserService {
 				),
 			};
 
+			mappedResponse?.experience.forEach((exp) => {
+				exp.reference = exp?.reference?.[0] || {};
+			});
+
 			mappedResponse = {
 				...mappedResponse,
 				['vo_experience']: result?.experience.filter(
 					(e: any) => e.type == 'vo_experience',
 				),
 			};
+
+			mappedResponse?.vo_experience.forEach((vo_exp) => {
+				vo_exp.reference = vo_exp?.reference?.[0] || {};
+			});
 		}
 
 		if (mappedResponse.program_faciltators?.qualification_ids) {
