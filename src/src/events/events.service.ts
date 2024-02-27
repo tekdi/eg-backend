@@ -607,7 +607,7 @@ export class EventsService {
 				}
 				`,
 			};
-			console.log('dds', data.query);
+
 			const getAttendanceData =
 				await this.hasuraServiceFromServices.getData(data);
 			const count =
