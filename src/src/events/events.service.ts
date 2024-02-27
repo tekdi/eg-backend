@@ -145,17 +145,17 @@ export class EventsService {
 
 		if (numAttendees < minParticipants || numAttendees > maxParticipants) {
 			errorMessage = {
-				key: 'Participants_limit',
+				key: 'participants_limit',
 				massage: `Number of attendees must be between ${minParticipants} and ${maxParticipants}`,
 			};
 		} else if (daysDiff < 1 || daysDiff > 5) {
 			errorMessage = {
-				key: 'Event_days',
+				key: 'event_days',
 				message: 'Event duration must be between 1 and 5 days.',
 			};
 		} else if (moment(req.start_date).isBefore(currentDate, 'day')) {
 			errorMessage = {
-				key: 'Back_date',
+				key: 'back_date',
 				message: 'start date is before the current date',
 			};
 		}
