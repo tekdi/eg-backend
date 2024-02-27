@@ -426,7 +426,7 @@
 	"FACILITATOR_EVENT_TYPE": [
 		{
 			"title": "FACILITATOR_EVENT_TYPE_PRERAK_ORIENTATION",
-			"value": "pragat_orientation"
+			"value": "prerak_orientation"
 		},
 		{
 			"title": "FACILITATOR_EVENT_TYPE_GKP_TRAINING",
