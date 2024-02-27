@@ -579,6 +579,7 @@ export class EventsService {
 	}
 
 	public async updateAttendanceDetail(id: number, req: any, response: any) {
+		let attendance_id = id;
 		const tableName = 'attendance';
 		if (req?.status == 'present') {
 			let checkStringResult = this.checkStrings({});
@@ -592,6 +593,35 @@ export class EventsService {
 			}
 		}
 		try {
+			const format = 'YYYY-MM-DD';
+			const dateString = moment().startOf('day').format(format);
+			const currentTime = moment().format('HH:mm');
+
+			let data = {
+				query: `query MyQuery1 {
+					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTime}"}, end_time: {_gte: "${currentTime}"}}) {
+						aggregate {
+							count
+						}
+					}
+				}
+				`,
+			};
+
+			const getAttendanceData =
+				await this.hasuraServiceFromServices.getData(data);
+			const count =
+				getAttendanceData?.data?.events_aggregate?.aggregate?.count;
+
+			if (count === 0) {
+				return response.status(422).send({
+					success: false,
+					message:
+						'Attendance cannot be marked as today is not within the event date range.',
+					data: {},
+				});
+			}
+
 			let result = await this.hasuraService.update(
 				+id,
 				tableName,
