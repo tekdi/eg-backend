@@ -133,21 +133,36 @@ export class EventsService {
 			moment(req.start_date),
 			'days',
 		);
+
+		const currentDate = moment(); // Current date
+
 		// Check if the number of attendees falls within the configured limits
-		let errorMessage = '';
+		let errorMessage = {};
+
 		const numAttendees = req.attendees.length;
 		const minParticipants = 0; // Example: Minimum number of participants allowed
 		const maxParticipants = 50; // Example: Maximum number of participants allowed
 
 		if (numAttendees < minParticipants || numAttendees > maxParticipants) {
-			errorMessage += `Number of attendees must be between ${minParticipants} and ${maxParticipants}`;
+			errorMessage = {
+				key: 'Participants_limit',
+				massage: `Number of attendees must be between ${minParticipants} and ${maxParticipants}`,
+			};
 		} else if (daysDiff < 1 || daysDiff > 5) {
-			errorMessage += 'Event duration must be between 1 and 5 days.';
+			errorMessage = {
+				key: 'Event_days',
+				message: 'Event duration must be between 1 and 5 days.',
+			};
+		} else if (moment(req.start_date).isBefore(currentDate, 'day')) {
+			errorMessage = {
+				key: 'Back_date',
+				message: 'start date is before the current date',
+			};
 		}
 		if (errorMessage) {
-			return response.status(200).send({
+			return response.status(422).send({
 				success: false,
-				message: errorMessage,
+				...errorMessage,
 				data: {},
 			});
 		}
@@ -172,6 +187,7 @@ export class EventsService {
 			return response.status(422).send({
 				success: false,
 				message: 'Event Already created!',
+				key: 'batch_name',
 				data: {},
 			});
 		} else {
