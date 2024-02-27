@@ -694,6 +694,7 @@ export class EventsService {
 			});
 		}
 	}
+
 	async getParticipants(req, id, body, res) {
 		const auth_users = await this.userService.ipUserInfo(req, 'staff');
 
