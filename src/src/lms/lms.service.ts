@@ -604,6 +604,7 @@ export class LMSService {
 					attendance_count
 					events(where: {context: {_eq: "events"}}) {
 						name
+						id
 					}
 				}
 			  }
