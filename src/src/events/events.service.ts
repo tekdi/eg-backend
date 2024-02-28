@@ -159,7 +159,8 @@ export class EventsService {
 				message: 'Event duration must be between 1 and 5 days.',
 			};
 		}
-		if (errorMessage) {
+
+		if (Object.keys(errorMessage).length) {
 			return response.status(422).send({
 				success: false,
 				...errorMessage,
