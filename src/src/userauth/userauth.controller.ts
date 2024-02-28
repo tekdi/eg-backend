@@ -35,4 +35,13 @@ export class UserauthController {
 	public async isUserExists(@Body() body: Body, @Res() response: Response) {
 		return this.userauthService.isUserExists(body, response);
 	}
+
+	@Get('/user-info')
+	@UsePipes(ValidationPipe)
+	public async getUserInfoDetails(
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.userauthService.getUserInfoDetails(request, response);
+	}
 }

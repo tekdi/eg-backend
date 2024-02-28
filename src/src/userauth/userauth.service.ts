@@ -55,7 +55,6 @@ export class UserauthService {
 					(user) => user.program_faciltators.length > 0,
 				);
 
-				
 				if (facilitator_data.length > 0) {
 					return response.status(422).send({
 						success: false,
@@ -332,6 +331,212 @@ export class UserauthService {
 				status: 'success',
 				is_mobile_found: false,
 				is_data_found: result?.length > 0 ? true : false,
+			});
+		}
+	}
+
+	public async getUserInfoDetails(request, response) {
+		let user_id = request.mw_userid; //get user id from token
+		let program_id = request?.mw_program_id; // get program_id from token
+		let academic_year_id = request?.mw_academic_year_id; // get academic_year_id from token
+
+		//query to get user details information
+
+		let query = `query MyQuery {
+			users_by_pk(id:${user_id}) {
+			  first_name
+			  middle_name
+			  last_name
+			  dob
+			  mobile
+			  alternative_mobile_number
+			  email_id
+			  district
+			  block
+			  grampanchayat
+			  village
+			  pincode
+			  gender
+			  profile_photo_1
+			  profile_photo_1_documents: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+			  }
+			  profile_photo_2
+			  profile_photo_2_documents: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+			  }
+			  profile_photo_3
+			  profile_photo_3_documents: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+			  }
+			  core_faciltator {
+				device_type
+				device_ownership
+				has_diploma
+				diploma_details
+			  }
+			  extended_users {
+				marital_status
+				social_category
+				designation
+			  }
+			  references(where: {context: {_eq: "users"}}) {
+				name
+				designation
+				contact_number
+				context
+			  }
+			  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
+				availability
+				qualification_ids
+			  }
+			  experience(where: {type: {_eq: "experience"}}) {
+				id
+				type
+				role_title
+				organization
+				description
+				experience_in_years
+				related_to_teaching
+				references(where: {context: {_eq: "experience"}}) {
+				  name
+				  contact_number
+				  type_of_document
+				  document_reference {
+					document_id: id
+					name
+					document_sub_type
+					doument_type
+				  }
+				}
+			  }
+			  qualifications{
+				qualification_master_id
+				qualification_reference_document_id
+				document_reference{
+				  document_id:id
+				  name
+				  path
+				}
+			  }
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let user_data = hasura_response?.data;
+
+		// get profile photo document details
+		let profilePhoto1Documents =
+			user_data?.users_by_pk?.profile_photo_1_documents;
+
+		let profilePhoto2Documents =
+			user_data?.users_by_pk?.profile_photo_2_documents;
+
+		let profilePhoto3Documents =
+			user_data?.users_by_pk?.profile_photo_3_documents;
+
+		//  modifiy individual profile photo document details as required
+
+		let profile_photo_1 = {
+			name: user_data?.users_by_pk?.profile_photo_1,
+			documents: {
+				base64: null,
+				document_id: profilePhoto1Documents?.[0].document_id,
+				name: profilePhoto1Documents?.[0].name,
+				document_type: profilePhoto1Documents?.[0].doument_type,
+				document_sub_type:
+					profilePhoto1Documents?.[0].document_sub_type,
+			},
+		};
+
+		let profile_photo_2 = {
+			name: user_data?.users_by_pk?.profile_photo_1,
+			documents: {
+				base64: null,
+				document_id: profilePhoto2Documents?.[0].document_id,
+				name: profilePhoto2Documents?.[0].name,
+				document_type: profilePhoto2Documents?.[0].doument_type,
+				document_sub_type:
+					profilePhoto2Documents?.[0].document_sub_type,
+			},
+		};
+
+		let profile_photo_3 = {
+			name: user_data?.users_by_pk?.profile_photo_1,
+			documents: {
+				base64: null,
+				document_id: profilePhoto3Documents?.[0].document_id,
+				name: profilePhoto3Documents?.[0].name,
+				document_type: profilePhoto3Documents?.[0].doument_type || null,
+				document_sub_type:
+					profilePhoto3Documents?.[0].document_sub_type,
+			},
+		};
+
+		// Replacing profile_photo_documents with profile_photo for all details
+		user_data.users_by_pk.profile_photo_1 = profile_photo_1;
+		user_data.users_by_pk.profile_photo_2 = profile_photo_2;
+		user_data.users_by_pk.profile_photo_3 = profile_photo_3;
+
+		// Removing profile_photo_documents object
+		delete user_data.users_by_pk.profile_photo_1_documents;
+		delete user_data.users_by_pk.profile_photo_2_documents;
+		delete user_data.users_by_pk.profile_photo_3_documents;
+
+		// Iterate through the experience array and update references document_reference to documents
+		user_data?.users_by_pk?.experience.forEach((exp) => {
+			exp.references.forEach((ref) => {
+				ref.documents = ref.document_reference
+					? {
+							base64: null,
+							document_id: ref?.document_reference?.document_id,
+							name: ref?.document_reference?.name,
+							document_sub_type:
+								ref?.document_reference?.document_sub_type,
+							document_type:
+								ref?.document_reference?.doument_type,
+					  }
+					: {};
+				delete ref.document_reference; // Remove document_reference
+			});
+		});
+
+		user_data?.users_by_pk?.qualifications.forEach((q) => {
+			q.documents = q.document_reference
+				? {
+						qualification_master_id: q?.qualification_master_id,
+						qualification_reference_document_id:
+							q?.qualification_reference_document_id,
+						documents: {
+							base64: q?.document_reference?.base64,
+							document_id: q?.document_reference?.document_id,
+							name: q?.document_reference?.name,
+						},
+				  }
+				: {};
+			delete q.document_reference; // Remove document_reference
+		});
+
+		if (user_data) {
+			return response.status(200).json({
+				message: 'Data retrieved successfully!',
+				data: { users: user_data?.users_by_pk },
 			});
 		}
 	}
