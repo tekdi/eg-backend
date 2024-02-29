@@ -12,6 +12,22 @@ export class CohortMiddleware implements NestMiddleware {
 	async use(req: any, res: Response, next: () => void) {
 		let goToNextMw = false;
 
+		//check IP User ID is present or not [x-ip-user-id]
+		if (
+			(req?.headers && req?.headers?.['x-ip-user-id']) ||
+			req?.mw_roles?.includes('program_owner')
+		) {
+			req.mw_ip_user_id = req.headers['x-ip-user-id'];
+
+			const ip_user_id = parseInt(req.mw_ip_user_id, 10);
+			if (isNaN(ip_user_id)) {
+				return res.json({
+					success: false,
+					message: 'Invalid Ip User Id',
+				});
+			}
+		}
+
 		if (req?.headers && req?.headers?.['x-program-id']) {
 			req.mw_program_id = req.headers['x-program-id'];
 			const program_id = parseInt(req.mw_program_id, 10);

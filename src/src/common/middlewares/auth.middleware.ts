@@ -47,16 +47,25 @@ export class AuthMiddleware implements NestMiddleware {
 			try {
 				const decoded: any = jwt_decode(authToken);
 				let keycloak_id = decoded.sub;
+				let userId;
 
-				// const user = await this.userService.ipUserInfo(req);
-				const userId = await this.userService.getUserIdFromKeycloakId(
-					keycloak_id,
-				);
-
-				req.mw_userid = userId;
-
+				const roles = decoded.resource_access.hasura.roles || [];
+				//check if role is program_owner set x-ip-user-id in userId
+				if (roles.includes('program_owner')) {
+					if (req?.headers && req?.headers?.['x-ip-user-id']) {
+						userId = req.headers['x-ip-user-id'];
+						req.mw_userid = userId;
+					}
+					req.mw_roles = roles; //pass role if x-ip-user-id is not send
+				} else {
+					// const user = await this.userService.ipUserInfo(req);
+					userId = await this.userService.getUserIdFromKeycloakId(
+						keycloak_id,
+					);
+					req.mw_userid = userId;
+				}
 				if (userId) {
-					req.mw_roles = decoded.resource_access.hasura.roles || [];
+					req.mw_roles = roles;
 				}
 			} catch (error) {
 				req.mw_userid = null;
