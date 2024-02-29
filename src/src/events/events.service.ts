@@ -835,9 +835,93 @@ export class EventsService {
 
 	public async createEventAttendance(body: any, req: any, res: any) {
 		(body.status = body?.status || null),
-			(body.context = body?.context || 'events'),
+			(body.context = 'events'),
 			(body.created_by = req?.mw_userid),
 			(body.updated_by = req?.mw_userid);
+		const presentDate = body?.date_time;
+		//Taking event date and attendances count
+		let data = {
+			query: `query MyQuery {
+			events(where: {id: {_eq: ${body.context_id}}}){
+				start_date
+				start_time
+				end_date
+				end_time
+				id
+			}
+			attendance_aggregate(where:{
+				context_id:{_eq:${body?.context_id}},
+				context:{_eq:${body.context}},
+				date_time:{_gte:"${body?.date_time}",_lte:"${body?.date_time}"},
+				user_id:{_eq:${body?.user_id}}
+			}){
+				aggregate{
+					count
+				}
+			}
+		}
+		`,
+		};
+
+		const getAttendanceData = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		let event = getAttendanceData?.data?.events?.[0];
+		let count =
+			getAttendanceData?.data?.attendance_aggregate?.aggregate?.count;
+		//if attendances is present for that date
+		if (count > 0) {
+			return res.status(422).json({
+				success: false,
+				message: 'Attendance allready marked for this date',
+			});
+		}
+
+		const format = 'YYYY-MM-DD HH:mm';
+		const currentDate = moment();
+		let errorMessage = {};
+		const startDate = moment(
+			`${event?.start_date} ${event?.start_time}`,
+			format,
+		);
+
+		const endDate = moment(`${event?.end_date} ${event?.end_time}`, format);
+
+		const newPresentDate = moment(
+			`${presentDate} ${moment().format('HH:mm')}`,
+			format,
+		);
+		//current date is after start date of event and presnt date is after event start date
+		if (
+			startDate.isSameOrAfter(currentDate) ||
+			startDate.isSameOrAfter(newPresentDate)
+		) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_FUTURE_DATE_ERROR_MESSAGE',
+			};
+		} else if (
+			endDate.isSameOrBefore(currentDate) ||
+			endDate.isSameOrBefore(newPresentDate)
+		) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_PAST_DATE_ERROR_MESSAGE',
+			};
+		} else if (!newPresentDate.isSameOrBefore(currentDate)) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_FUTURE_DATE_ERROR_MESSAGE',
+			};
+		}
+
+		if (Object.keys(errorMessage).length > 0) {
+			return res.status(422).json({
+				success: false,
+				...errorMessage,
+			});
+		}
 
 		let response = await this.hasuraService.q(
 			'attendance',
