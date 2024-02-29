@@ -1768,7 +1768,7 @@ export class FacilitatorService {
 			user_id
 			type
 		  }
-		  program_faciltators {
+		  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
 			parent_ip
 			availability
 			id
@@ -1817,7 +1817,7 @@ export class FacilitatorService {
 			  id
 			}
 		  }
-		  events {
+		  events(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
 			context
 			context_id
 			created_by
@@ -1835,6 +1835,7 @@ export class FacilitatorService {
 	  }`,
 			variables: variables,
 		};
+
 		let response;
 		try {
 			response = await this.hasuraService.getData(data);
