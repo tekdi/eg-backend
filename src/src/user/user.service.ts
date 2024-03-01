@@ -1476,7 +1476,7 @@ export class UserService {
 		let cohort_academic_year_id;
 
 		if (cohort_type == 'academic_year') {
-			if (role.includes('staff')) {
+			if (role.includes('staff') || role.includes('program_owner')) {
 				const user = await this.ipUserInfo(req);
 				if (!user?.data?.program_users?.[0]?.organisation_id) {
 					return res.status(404).send({
@@ -1513,7 +1513,7 @@ export class UserService {
 		}
 
 		if (cohort_type == 'program') {
-			if (role.includes('staff')) {
+			if (role.includes('staff') || role.includes('program_owner')) {
 				const user = await this.ipUserInfo(req);
 				if (!user?.data?.program_users?.[0]?.organisation_id) {
 					return res.status(404).send({
@@ -1543,8 +1543,9 @@ export class UserService {
 			)?.result;
 		}
 		if (cohort_type == 'program_academic_year_id') {
-			if (role.includes('staff')) {
+			if (role.includes('staff') || role.includes('program_owner')) {
 				const user = await this.ipUserInfo(req);
+				console.log('user', user);
 				if (!user?.data?.program_users?.[0]?.organisation_id) {
 					return res.status(404).send({
 						success: false,
@@ -1555,7 +1556,7 @@ export class UserService {
 
 				cohort_academic_year_id = req?.query?.cohort_academic_year_id;
 				primary_table = 'program_users';
-
+				console.log('ss', cohort_academic_year_id);
 				program_organisation_condition =
 					'pu.organisation_id = po.organisation_id';
 			}
