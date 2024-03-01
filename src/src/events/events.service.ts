@@ -4,6 +4,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { log } from 'console';
 const moment = require('moment');
 
 @Injectable()
@@ -434,9 +435,9 @@ export class EventsService {
 	public async update(id: number, header: any, req: any, resp: any) {
 		try {
 			const userDetail = await this.userService.ipUserInfo(header);
-			let user_id = userDetail.data.id;
-			let attendees = req.attendees;
-			if (attendees && attendees.length > 0) {
+			const user_id = userDetail.data.id;
+			const attendees = req.attendees;
+			if (attendees) {
 				const data = {
 					query: `query MyQuery {
 		  events(where: {id: {_eq: ${id}}}){
@@ -456,16 +457,15 @@ export class EventsService {
 					data,
 				);
 				let eventDetails = response?.data.events[0];
-				let mappedData = response?.data.events.map(
-					(data) => data.attendances,
-				);
-				if (response) {
+				if (eventDetails?.id) {
+					let mappedData = eventDetails?.attendances;
 					//remove attendees in current event
 					const deletePromise = [];
-					const deleteAttendees = mappedData[0].filter(
-						(data) => !req.attendees.includes(data.user_id),
+					const deleteAttendees = mappedData.filter(
+						(data) => !attendees.includes(data.user_id),
 					);
 					if (deleteAttendees && deleteAttendees.length > 0) {
+						//remove for and add delete multiple query
 						for (const iterator of deleteAttendees) {
 							deletePromise.push(
 								this.hasuraService.delete('attendance', {
@@ -479,8 +479,8 @@ export class EventsService {
 					}
 
 					//add new attendees in current event
-					const tempArray = mappedData[0].map((data) => data.user_id);
-					const addAttendees = req.attendees.filter(
+					const tempArray = mappedData.map((data) => data.user_id);
+					const addAttendees = attendees.filter(
 						(data) => !tempArray.includes(data),
 					);
 					if (addAttendees && addAttendees.length > 0) {
