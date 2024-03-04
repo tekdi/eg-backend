@@ -41,6 +41,8 @@ export class UserModule implements NestModule {
 				'/users/cohorts/my/:type',
 				'/users/onboarding/validate',
 				'v2/users/is_user_exist/:role',
+				'users/ip/list',
+				'users/cohort/ip_list',
 			)
 			.forRoutes(UserController);
 	}

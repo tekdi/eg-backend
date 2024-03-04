@@ -1691,4 +1691,77 @@ export class UserService {
 
 		return hasura_response;
 	}
+
+	//Get IP lIST
+	public async getIpList(body: any, req: any, resp: any) {
+		let data = {
+			query: `query MyQuery {
+				organisations(order_by: {id: asc})
+				{
+					id
+					name
+				}
+			}
+			`,
+		};
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const organisations = response?.data?.organisations || [];
+		const list = organisations.map((item) => {
+			return { id: item.id, name: item.name };
+		});
+
+		if (list) {
+			return resp.status(200).send({
+				success: true,
+				message: 'Organisation list found successfully',
+				data: list,
+			});
+		} else {
+			return resp.status(422).send({
+				success: false,
+				message: 'Organisation List Not found',
+				data: {},
+			});
+		}
+	}
+
+	//Get Cohort wise  ip list
+	public async getCohortIpList(body: any, req: any, resp: any) {
+		const organisationId = body?.organisation_id;
+
+		let data = {
+			query: `query MyQuery {
+				program_organisation(where: {organisation_id: {_eq: ${organisationId}}}, order_by: {id: asc}) {
+				academic_year_id
+				program_id
+				organisation_id
+				academic_year {
+					name
+					}
+					program{
+						name
+					}
+				}
+			}
+			`,
+		};
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const list = response?.data?.program_organisation || [];
+
+		if (list) {
+			return resp.status(200).send({
+				success: true,
+				message: 'Academic Year Id and Program Id found successfully',
+				data: list,
+			});
+		} else {
+			return resp.status(422).send({
+				success: false,
+				message: 'Academic Year Id and Program Id Not found',
+				data: {},
+			});
+		}
+	}
 }
