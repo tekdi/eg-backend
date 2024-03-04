@@ -1691,4 +1691,83 @@ export class UserService {
 
 		return hasura_response;
 	}
+
+	//Get IP lIST
+	public async getIpList(body: any, req: any, resp: any) {
+		try {
+			let data = {
+				query: `query MyQuery {
+				organisations(order_by: {id: asc})
+				{
+					id
+					name
+				}
+			}
+			`,
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const organisations = response?.data?.organisations || [];
+
+			return resp.status(200).send({
+				success: true,
+				message: 'Organisation list found successfully',
+				data: organisations,
+			});
+		} catch (error) {
+			// Log error and return a generic error response
+			console.error('Error fetching organizations:', error);
+			return resp.status(500).send({
+				success: false,
+				message: 'An error occurred while fetching organizations',
+				data: {},
+			});
+		}
+	}
+
+	//Get Cohort wise  ip list
+	public async getCohortIpList(body: any, req: any, resp: any) {
+		const organisationId = body?.organisation_id;
+		if (!organisationId) {
+			return resp.status(422).send({
+				success: false,
+				message: 'organisation_id is required',
+				data: {},
+			});
+		}
+		try {
+			let data = {
+				query: `query MyQuery {
+				program_organisation(where: {organisation_id: {_eq: ${organisationId}}}, order_by: {id: asc}) {
+				academic_year_id
+				program_id
+				organisation_id
+				academic_year {
+					name
+					}
+					program{
+						name
+					}
+				}
+			}
+			`,
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const list = response?.data?.program_organisation || [];
+
+			return resp.status(200).send({
+				success: true,
+				message: 'Academic Year Id and Program Id found successfully',
+				data: list,
+			});
+		} catch (error) {
+			console.error('Error fetching cohort IP list:', error);
+			return resp.status(500).send({
+				success: false,
+				message: 'An error occurred while fetching cohort IP list',
+				data: {},
+			});
+		}
+	}
 }
