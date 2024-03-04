@@ -1708,17 +1708,12 @@ export class UserService {
 			const response = await this.hasuraServiceFromServices.getData(data);
 
 			const organisations = response?.data?.organisations || [];
-			const list = organisations.map((item) => {
-				return { id: item.id, name: item.name };
-			});
 
-			if (list) {
-				return resp.status(200).send({
-					success: true,
-					message: 'Organisation list found successfully',
-					data: list,
-				});
-			}
+			return resp.status(200).send({
+				success: true,
+				message: 'Organisation list found successfully',
+				data: organisations,
+			});
 		} catch (error) {
 			// Log error and return a generic error response
 			console.error('Error fetching organizations:', error);
@@ -1761,14 +1756,11 @@ export class UserService {
 
 			const list = response?.data?.program_organisation || [];
 
-			if (list) {
-				return resp.status(200).send({
-					success: true,
-					message:
-						'Academic Year Id and Program Id found successfully',
-					data: list,
-				});
-			}
+			return resp.status(200).send({
+				success: true,
+				message: 'Academic Year Id and Program Id found successfully',
+				data: list,
+			});
 		} catch (error) {
 			console.error('Error fetching cohort IP list:', error);
 			return resp.status(500).send({
