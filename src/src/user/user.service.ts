@@ -1694,8 +1694,9 @@ export class UserService {
 
 	//Get IP lIST
 	public async getIpList(body: any, req: any, resp: any) {
-		let data = {
-			query: `query MyQuery {
+		try {
+			let data = {
+				query: `query MyQuery {
 				organisations(order_by: {id: asc})
 				{
 					id
@@ -1703,24 +1704,27 @@ export class UserService {
 				}
 			}
 			`,
-		};
-		const response = await this.hasuraServiceFromServices.getData(data);
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
 
-		const organisations = response?.data?.organisations || [];
-		const list = organisations.map((item) => {
-			return { id: item.id, name: item.name };
-		});
-
-		if (list) {
-			return resp.status(200).send({
-				success: true,
-				message: 'Organisation list found successfully',
-				data: list,
+			const organisations = response?.data?.organisations || [];
+			const list = organisations.map((item) => {
+				return { id: item.id, name: item.name };
 			});
-		} else {
-			return resp.status(422).send({
+
+			if (list) {
+				return resp.status(200).send({
+					success: true,
+					message: 'Organisation list found successfully',
+					data: list,
+				});
+			}
+		} catch (error) {
+			// Log error and return a generic error response
+			console.error('Error fetching organizations:', error);
+			return resp.status(500).send({
 				success: false,
-				message: 'Organisation List Not found',
+				message: 'An error occurred while fetching organizations',
 				data: {},
 			});
 		}
@@ -1729,9 +1733,16 @@ export class UserService {
 	//Get Cohort wise  ip list
 	public async getCohortIpList(body: any, req: any, resp: any) {
 		const organisationId = body?.organisation_id;
-
-		let data = {
-			query: `query MyQuery {
+		if (!organisationId) {
+			return resp.status(422).send({
+				success: false,
+				message: 'organisation_id is required',
+				data: {},
+			});
+		}
+		try {
+			let data = {
+				query: `query MyQuery {
 				program_organisation(where: {organisation_id: {_eq: ${organisationId}}}, order_by: {id: asc}) {
 				academic_year_id
 				program_id
@@ -1745,21 +1756,24 @@ export class UserService {
 				}
 			}
 			`,
-		};
-		const response = await this.hasuraServiceFromServices.getData(data);
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
 
-		const list = response?.data?.program_organisation || [];
+			const list = response?.data?.program_organisation || [];
 
-		if (list) {
-			return resp.status(200).send({
-				success: true,
-				message: 'Academic Year Id and Program Id found successfully',
-				data: list,
-			});
-		} else {
-			return resp.status(422).send({
+			if (list) {
+				return resp.status(200).send({
+					success: true,
+					message:
+						'Academic Year Id and Program Id found successfully',
+					data: list,
+				});
+			}
+		} catch (error) {
+			console.error('Error fetching cohort IP list:', error);
+			return resp.status(500).send({
 				success: false,
-				message: 'Academic Year Id and Program Id Not found',
+				message: 'An error occurred while fetching cohort IP list',
 				data: {},
 			});
 		}
