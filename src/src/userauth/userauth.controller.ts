@@ -37,7 +37,7 @@ export class UserauthController {
 		return this.userauthService.isUserExists(body, response);
 	}
 
-	@Get('/user-info')
+	@Get('/facilitator/user-info')
 	@UsePipes(ValidationPipe)
 	public async getUserInfoDetails(
 		@Res() response: Response,
