@@ -1476,7 +1476,7 @@ export class UserService {
 		let cohort_academic_year_id;
 
 		if (cohort_type == 'academic_year') {
-			if (role.includes('staff')) {
+			if (role.includes('staff') || role.includes('program_owner')) {
 				const user = await this.ipUserInfo(req);
 				if (!user?.data?.program_users?.[0]?.organisation_id) {
 					return res.status(404).send({
@@ -1513,7 +1513,7 @@ export class UserService {
 		}
 
 		if (cohort_type == 'program') {
-			if (role.includes('staff')) {
+			if (role.includes('staff') || role.includes('program_owner')) {
 				const user = await this.ipUserInfo(req);
 				if (!user?.data?.program_users?.[0]?.organisation_id) {
 					return res.status(404).send({
@@ -1543,7 +1543,7 @@ export class UserService {
 			)?.result;
 		}
 		if (cohort_type == 'program_academic_year_id') {
-			if (role.includes('staff')) {
+			if (role.includes('staff') || role.includes('program_owner')) {
 				const user = await this.ipUserInfo(req);
 				if (!user?.data?.program_users?.[0]?.organisation_id) {
 					return res.status(404).send({
@@ -1769,5 +1769,23 @@ export class UserService {
 				data: {},
 			});
 		}
+	}
+
+	//get Ip-user user_id from organisation
+	public async getIPuser(req: any, res: any) {
+		let org_id = req.headers['x-ip-org-id'];
+		let data;
+		let tableName = 'program_users';
+		data = {
+			query: `query MyQuery {
+								${tableName}(where: {program_id: {_eq: ${req.mw_program_id}},academic_year_id: {_eq: ${req.mw_academic_year_id}},organisation_id:{_eq:${org_id}}, program_organisation: {status: {_eq: "active"}}}){
+									id
+									user_id
+								}
+							}`,
+		};
+
+		const result = await this.hasuraServiceFromServices.getData(data);
+		return result;
 	}
 }
