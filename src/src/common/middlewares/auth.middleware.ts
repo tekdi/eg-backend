@@ -61,6 +61,12 @@ export class AuthMiddleware implements NestMiddleware {
 						);
 						const data = result?.data?.program_users?.[0];
 						req.mw_userid = data?.user_id;
+					} else if (['/users/ip_user_info'].includes(req.baseUrl)) {
+						// const user = await this.userService.ipUserInfo(req);
+						userId = await this.userService.getUserIdFromKeycloakId(
+							keycloak_id,
+						);
+						req.mw_userid = userId;
 					}
 					req.mw_roles = roles; //pass role if x-ip-org-id is not send
 				} else {

@@ -256,9 +256,8 @@ export class UserService {
 
 	public async ipUserInfo(request: any, res?, role: any = '') {
 		let userData = null;
-
 		if (request.mw_userid) {
-			if (role === 'staff') {
+			if (role === 'staff' || role === 'program_owner') {
 				userData = await this.getIpRoleUserById(request.mw_userid);
 			} else {
 				userData = (
