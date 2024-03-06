@@ -370,6 +370,7 @@ export class UserauthService {
 			  middle_name
 			  last_name
 			  dob
+			  aadhar_no
 			  mobile
 			  alternative_mobile_number
 			  email_id
@@ -511,6 +512,9 @@ export class UserauthService {
 			},
 		};
 
+		if (!user_data.users_by_pk) {
+			user_data.users_by_pk = {}; // Initialize as an empty object if it doesn't exist
+		}
 		// Replacing profile_photo_documents with profile_photo for all details
 		user_data.users_by_pk.profile_photo_1 = profile_photo_1_info;
 		user_data.users_by_pk.profile_photo_2 = profile_photo_2_info;
@@ -543,7 +547,7 @@ export class UserauthService {
 		});
 
 		user_data.users_by_pk.qualifications =
-			user_data?.users_by_pk?.qualifications.reduce((acc, q) => {
+			user_data?.users_by_pk?.qualifications?.reduce((acc, q) => {
 				const documents = q.document_reference
 					? {
 							base64: q?.document_reference?.base64,
@@ -562,6 +566,7 @@ export class UserauthService {
 			middle_name,
 			last_name,
 			dob,
+			aadhar_no,
 			mobile,
 			alternative_mobile_number,
 			email_id,
@@ -582,6 +587,7 @@ export class UserauthService {
 				middle_name,
 				last_name,
 				dob,
+				aadhar_no,
 				mobile,
 				alternative_mobile_number,
 				email_id,
@@ -761,20 +767,47 @@ export class UserauthService {
 	public async processJsonArray(values, tableName, user_id) {
 		let set_update;
 		let update_id;
+		let referenceFields;
+		let referenceData;
+
 		for (const obj of values) {
-			const tableFields = Object.keys(obj);
+			let tableFields = Object.keys(obj);
 			tableFields.push('user_id');
 			obj.user_id = user_id;
 
-			let response = await this.findExisitingReccord(
-				tableName,
-				obj,
-				user_id,
-			);
-			set_update = response?.set_update;
-			update_id = response?.id;
+			set_update = obj?.id ? 1 : 0;
+			update_id = obj?.id;
 
-			await this.upsertRecords(
+			console.log('set->.', set_update);
+			if (set_update == 1) {
+				tableFields.push('id');
+			}
+
+			if (tableName == 'experience') {
+				if ('references' in obj) {
+					// Process 'references' array differently
+					referenceFields = [
+						'name',
+						'contact_number',
+						'type_of_document',
+						'user_id',
+					];
+					referenceData = {
+						name: obj?.references.name,
+						contact_number: obj?.references.contact_number,
+						type_of_document: obj?.references.type_of_document,
+						context: 'experience',
+					};
+
+					tableFields = tableFields.filter(
+						(field) => field !== 'references',
+					);
+					delete obj.references;
+				}
+			}
+
+			console.log('referenceData-->>', obj);
+			let result = await this.upsertRecords(
 				set_update,
 				tableName,
 				tableFields,
@@ -782,6 +815,19 @@ export class UserauthService {
 				user_id,
 				update_id,
 			);
+
+			console.log('result in array-->>', result);
+
+			// if (referenceData) {
+			// 	await this.upsertRecords(
+			// 		set_update,
+			// 		tableName,
+			// 		tableFields,
+			// 		obj,
+			// 		user_id,
+			// 		update_id,
+			// 	);
+			// }
 		}
 	}
 
@@ -924,8 +970,9 @@ export class UserauthService {
 		user_id,
 		id?,
 	) {
+		let result;
 		if (set_update == 1 && id) {
-			let result = await this.hasuraService.q(
+			result = await this.hasuraService.q(
 				tableName,
 				{
 					...value,
@@ -935,10 +982,8 @@ export class UserauthService {
 				true,
 				[tableFields],
 			);
-
-			console.log('result-->>', result);
 		} else {
-			await this.hasuraService.q(
+			result = await this.hasuraService.q(
 				tableName,
 				{
 					...value,
@@ -948,6 +993,8 @@ export class UserauthService {
 				[tableFields],
 			);
 		}
+
+		return result;
 	}
 
 	public async upsertProfileDocuments(profileDocumentArray) {
