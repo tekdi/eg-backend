@@ -500,9 +500,9 @@ export class UserauthService {
 		delete user_data.users_by_pk.profile_photo_3_documents;
 
 		// Iterate through the experience array and update references document_reference to documents
-		user_data?.users_by_pk?.experience.forEach((exp) => {
-			exp.references.forEach((ref) => {
-				ref.documents = ref.document_reference
+		user_data?.users_by_pk?.experience?.forEach((exp) => {
+			exp.references = exp?.references?.reduce((acc, ref) => {
+				const documents = ref?.document_reference
 					? {
 							base64: null,
 							document_id: ref?.document_reference?.document_id,
@@ -513,25 +513,27 @@ export class UserauthService {
 								ref?.document_reference?.doument_type,
 					  }
 					: {};
-				delete ref.document_reference; // Remove document_reference
-			});
+
+				delete ref?.document_reference; // Remove document_reference
+
+				return { ...acc, ...ref, documents };
+			}, {});
 		});
 
-		user_data?.users_by_pk?.qualifications.forEach((q) => {
-			q.documents = q.document_reference
-				? {
-						qualification_master_id: q?.qualification_master_id,
-						qualification_reference_document_id:
-							q?.qualification_reference_document_id,
-						documents: {
+		user_data.users_by_pk.qualifications =
+			user_data?.users_by_pk?.qualifications.reduce((acc, q) => {
+				const documents = q.document_reference
+					? {
 							base64: q?.document_reference?.base64,
 							document_id: q?.document_reference?.document_id,
 							name: q?.document_reference?.name,
-						},
-				  }
-				: {};
-			delete q.document_reference; // Remove document_reference
-		});
+					  }
+					: {};
+
+				delete q.document_reference; // Remove document_reference
+
+				return { ...acc, ...q, documents };
+			}, {});
 
 		const {
 			first_name,
@@ -606,6 +608,19 @@ export class UserauthService {
 		let tableName;
 		let set_update;
 		let update_id;
+		let profile_photo_fields_1;
+		let documents_fields_1;
+		let profile_photo_fields_2;
+		let documents_fields_2;
+		let profile_photo_fields_3;
+		let documents_fields_3;
+		let profile_photo_1_value;
+		let documents_values_1;
+		let profile_photo_2_value;
+		let documents_values_2;
+		let profile_photo_3_value;
+		let documents_values_3;
+		let profile_documents_array = [];
 
 		for (const key in json) {
 			const value = json[key];
@@ -613,6 +628,67 @@ export class UserauthService {
 			if (typeof value === 'object') {
 				tableName = key;
 				tableFields = Object.keys(value);
+				for (const subKey in value) {
+					const subValue = value[subKey];
+
+					if (typeof subValue === 'object') {
+						// Separate the subobjects of profile_photo_1 and documents
+						if (subKey === 'profile_photo_1') {
+							profile_photo_1_value = Object.values(subValue);
+
+							documents_values_1 = Object.values(
+								subValue.documents,
+							);
+
+							profile_documents_array.push({
+								document_id: documents_values_1?.[1],
+								name: documents_values_1?.[2],
+								doument_type: documents_values_1?.[3],
+								document_sub_type: documents_values_1?.[4],
+							});
+
+							// Add profile_photo_1 with its name value for inserting in users table
+							value['profile_photo_1'] =
+								profile_photo_1_value?.[0];
+						}
+						if (subKey === 'profile_photo_2') {
+							profile_photo_2_value = Object.values(subValue);
+
+							documents_values_2 = Object.values(
+								subValue.documents,
+							);
+
+							profile_documents_array.push({
+								document_id: documents_values_2?.[1],
+								name: documents_values_2?.[2],
+								doument_type: documents_values_2?.[3],
+								document_sub_type: documents_values_2?.[4],
+							});
+
+							// Add profile_photo_2 with its name value for inserting in users table
+							value['profile_photo_2'] =
+								profile_photo_2_value?.[0];
+						}
+						if (subKey === 'profile_photo_3') {
+							profile_photo_3_value = Object.values(subValue);
+
+							documents_values_3 = Object.values(
+								subValue.documents,
+							);
+
+							profile_documents_array.push({
+								document_id: documents_values_3?.[1],
+								name: documents_values_3?.[2],
+								doument_type: documents_values_3?.[3],
+								document_sub_type: documents_values_3?.[4],
+							});
+
+							// Add profile_photo_3 with its name value for inserting in users table
+							value['profile_photo_3'] =
+								profile_photo_3_value?.[0];
+						}
+					}
+				}
 			}
 
 			if (Array.isArray(value)) {
@@ -641,6 +717,8 @@ export class UserauthService {
 			set_update = response?.set_update;
 			update_id = response?.id;
 
+			console.log('update-->>', set_update, update_id);
+
 			await this.upsertRecords(
 				set_update,
 				tableName,
@@ -649,6 +727,10 @@ export class UserauthService {
 				user_id,
 				update_id,
 			);
+
+			if (tableName == 'users' && profile_documents_array?.length > 0) {
+				await this.upsertProfileDocuments(profile_documents_array);
+			}
 		}
 
 		return true;
@@ -821,7 +903,7 @@ export class UserauthService {
 		id?,
 	) {
 		if (set_update == 1 && id) {
-			await this.hasuraService.q(
+			let result = await this.hasuraService.q(
 				tableName,
 				{
 					...value,
@@ -831,6 +913,8 @@ export class UserauthService {
 				true,
 				[tableFields],
 			);
+
+			console.log('result-->>', result);
 		} else {
 			await this.hasuraService.q(
 				tableName,
@@ -841,6 +925,23 @@ export class UserauthService {
 				false,
 				[tableFields],
 			);
+		}
+	}
+
+	public async upsertProfileDocuments(profileDocumentArray) {
+		for (const profileDocument of profileDocumentArray) {
+			let result = await this.hasuraService.q(
+				'documents',
+				{
+					...profileDocument,
+					id: profileDocument.document_id,
+				},
+				['name', 'document_sub_type', 'doument_type', 'id'],
+				true,
+				['name', 'document_sub_type', 'doument_type', 'id'],
+			);
+
+			console.log('resuklt-->>', result);
 		}
 	}
 }
