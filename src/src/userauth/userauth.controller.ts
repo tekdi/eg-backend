@@ -46,14 +46,14 @@ export class UserauthController {
 		return this.userauthService.getUserInfoDetails(request, response);
 	}
 
-	// @Post('/onboarding')
-	// @UsePipes(ValidationPipe)
-	// @UseGuards(new AuthGuard())
-	// public async userOnboarding(
-	// 	@Body() body: Body,
-	// 	@Res() response: Response,
-	// 	@Req() request: Request,
-	// ) {
-	// 	return this.userauthService.userOnboarding(body, response, request);
-	// }
+	@Post('/onboarding')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async userOnboarding(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.userauthService.userOnboarding(body, response, request);
+	}
 }
