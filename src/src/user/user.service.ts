@@ -1773,11 +1773,13 @@ export class UserService {
 	//get Ip-user user_id from organisation
 	public async getIPuser(req: any, res: any) {
 		let org_id = req.headers['x-ip-org-id'];
-		let data;
+		let mw_program_id = req.headers['x-program-id'];
+		let mw_academic_year_id = req.headers['x-academic-year-id'];
 		let tableName = 'program_users';
-		data = {
+
+		const data = {
 			query: `query MyQuery {
-								${tableName}(where: {program_id: {_eq: ${req.mw_program_id}},academic_year_id: {_eq: ${req.mw_academic_year_id}},organisation_id:{_eq:${org_id}}, program_organisation: {status: {_eq: "active"}}}){
+								${tableName}(where: {program_id: {_eq: ${mw_program_id}},academic_year_id: {_eq: ${mw_academic_year_id}},organisation_id:{_eq:${org_id}}, program_organisation: {status: {_eq: "active"}}}){
 									id
 									user_id
 								}
