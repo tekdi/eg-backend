@@ -27,6 +27,7 @@ import { InterviewModule } from './interview/interview.module';
 import { KitMaterialsModule } from './kit-materials/kit-materials.module';
 import { LMSModule } from './lms/lms.module';
 import { MasterDataModule } from './master_data/master_data.module';
+import { BoardModule } from './modules/board/board.module';
 import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
 import { PcrscoresModule } from './pcrscores/pcrscores.module';
 import { ReferencesModule } from './references/references.module';
@@ -37,7 +38,6 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { UserauthModule } from './userauth/userauth.module';
-import { BoardModule } from './modules/board/board.module';
 @Module({
 	imports: [
 		ScheduleModule.forRoot(),
