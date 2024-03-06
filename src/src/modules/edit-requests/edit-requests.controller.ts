@@ -18,7 +18,7 @@ export class EditRequestController {
 	constructor(private editRequestService: EditRequestService) {}
 
 	@Post('/edit-requests')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	getEditRequestsList(
 		@Req() request: any,
@@ -33,7 +33,7 @@ export class EditRequestController {
 	}
 
 	@Post('/create-edit-requests')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	createEditRequests(
 		@Req() request: any,
 		@Body() body: any,
@@ -47,7 +47,7 @@ export class EditRequestController {
 	}
 
 	@Patch('/admin/update-edit-requests/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	updateEditRequests(
 		@Req() request: any,
 		@Body() body: any,
@@ -63,7 +63,7 @@ export class EditRequestController {
 	}
 
 	@Post('/admin/edit-requests')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getAdminEditRequests(
 		@Req() request: any,
 		@Body() body: any,

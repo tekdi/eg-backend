@@ -12,18 +12,18 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { KitMaterialsService } from './kit-materials.service';
 
 @Controller('kitmaterials')
-@UseGuards(new AuthGuard())
+@UseGuards(AuthGuard)
 export class KitMaterialsController {
 	constructor(private readonly kitMaterialsService: KitMaterialsService) {}
 
 	@Post('/create')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	create(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.kitMaterialsService.create(body, request, response);
 	}
 
 	@Get('/list/:camp_id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	list(
 		@Req() request: any,
 		@Body() body: any,

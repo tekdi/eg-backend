@@ -14,19 +14,19 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { ReferencesService } from './references.service';
 
 @Controller('references')
-@UseGuards(new AuthGuard())
+@UseGuards(AuthGuard)
 @UsePipes(ValidationPipe)
 export class ReferencesController {
 	constructor(private readonly referencesService: ReferencesService) {}
 
 	@Post('/create')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	create(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.referencesService.create(body, request, response);
 	}
 
 	@Post('/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	communityList(
 		@Req() request: any,
 		@Body() body: any,
@@ -36,7 +36,7 @@ export class ReferencesController {
 	}
 
 	@Post('/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	communityById(
 		@Req() request: any,
 		@Body() body: any,
@@ -52,7 +52,7 @@ export class ReferencesController {
 	}
 
 	@Patch('/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	update(
 		@Req() request: any,
 		@Body() body: any,

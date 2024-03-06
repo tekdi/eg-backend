@@ -61,7 +61,7 @@ export class AuthController {
 	}
 
 	@Post('/reset-password-admin')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	public resetPasswordUsingId(
 		@Body() req: ResetPasswordAdminDTO,
@@ -98,7 +98,7 @@ export class AuthController {
 	}
 
 	@Post('/okyc/')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	private async createOkycRequest(
 		@Body() body,
@@ -109,7 +109,7 @@ export class AuthController {
 	}
 
 	@Get('/okyc/:requestId/initiate/')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	private async initiateOkycRequest(
 		@Param('requestId') id: string,
@@ -120,7 +120,7 @@ export class AuthController {
 	}
 
 	@Post('/okyc/:requestId/verify/')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	private async verifyOkycRequest(
 		@Param('requestId') id: string,
@@ -132,7 +132,7 @@ export class AuthController {
 	}
 
 	@Post('/okyc/:requestId/complete/')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	private async completeOkycRequest(
 		@Param('requestId') id: string,
@@ -149,7 +149,7 @@ export class AuthController {
 	}
 
 	@Get('/okyc/:requestId/:shareCode/')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	private async getOkycStatusRequest(
 		@Param('requestId') id: string,
@@ -166,7 +166,7 @@ export class AuthController {
 	}
 
 	@Patch('/aadhaar-kyc/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	public async verifyAadhaarKyc(
 		@Param('id') id: string,
@@ -177,7 +177,7 @@ export class AuthController {
 	}
 
 	@Post('/okyc2/aadhaar/verify')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	private async okyc2AadhaarVerify(
 		@Body() body: any,
 		@Req() request: any,
@@ -187,7 +187,7 @@ export class AuthController {
 	}
 
 	@Get('/okyc2/aadhaar/verify/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	private async getOkyc2AadhaarVerificationStatus(
 		@Param('id') id: string,
 		@Req() request: any,

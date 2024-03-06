@@ -15,25 +15,25 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { PcrscoresService } from './pcrscores.service';
 
 @Controller('pcrscores')
-@UseGuards(new AuthGuard())
+@UseGuards(AuthGuard)
 @UsePipes(ValidationPipe)
 export class PcrscoresController {
 	constructor(private readonly pcrscoresService: PcrscoresService) {}
 
 	@Post('/create')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	create(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.pcrscoresService.create(body, request, response);
 	}
 
 	@Post('/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	pcrscoreList(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.pcrscoresService.pcrscoreList(body, request, response);
 	}
 
 	@Post('/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	pcrscoreById(
 		@Req() request: any,
 		@Body() body: any,
@@ -44,7 +44,7 @@ export class PcrscoresController {
 	}
 
 	@Get('/:user_id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	pcrscoreByUser_id(
 		@Req() request: any,
 		@Body() body: any,
@@ -60,7 +60,7 @@ export class PcrscoresController {
 	}
 
 	@Patch('/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	update(
 		@Req() request: any,
 		@Body() body: any,

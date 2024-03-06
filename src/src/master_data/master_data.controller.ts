@@ -7,7 +7,7 @@ export class MasterDataController {
 	constructor(private masterDataService: MasterDataService) {}
 
 	@Post('/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	async getList(@Req() req: any, @Body() body: Body, @Res() res: any) {
 		return this.masterDataService.getList(req, body, res);
 	}

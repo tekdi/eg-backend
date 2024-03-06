@@ -24,14 +24,14 @@ export class LMSController {
 
 	//user test allow
 	@Get('/testTracking')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getTestAllowStatus(@Req() header: Request, @Res() response: Response) {
 		return this.lmsService.getTestAllowStatus(header, response);
 	}
 
 	//create test tracking
 	@Post('/testTracking')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	createTestTracking(
 		@Body() lmsTestTrackingDto: LMSTestTrackingDto,
 		@Req() header: Request,
@@ -46,7 +46,7 @@ export class LMSController {
 
 	//get test tracking
 	@Get('/testTracking/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getTestTracking(
 		@Param('id') id: string,
 		@Req() header: Request,
@@ -57,7 +57,7 @@ export class LMSController {
 
 	//search test tracking
 	@Post('/testTracking/search')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async searchTestTracking(
 		@Body() searchLMSDto: SearchLMSDto,
 		@Res() response: Response,
@@ -67,7 +67,7 @@ export class LMSController {
 
 	//download certificate detail
 	@Post('/certificate/download')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async downloadCertificate(
 		@Body() lmsCertificateDto: LMSCertificateDto,
 		@Req() header: Request,
@@ -82,7 +82,7 @@ export class LMSController {
 
 	//verify certificate detail
 	@Post('/certificate/verify')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async verifyCertificate(
 		@Body() lmsCertificateDto: LMSCertificateDto,
 		@Req() header: Request,
@@ -96,7 +96,7 @@ export class LMSController {
 	}
 
 	@Get('/:id/get-certificates')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async getList(
 		@Req() req: any,
 		@Body() body: any,

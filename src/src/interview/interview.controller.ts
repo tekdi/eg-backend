@@ -26,7 +26,7 @@ export class InterviewController {
 	constructor(private readonly interviewService: InterviewService) {}
 
 	@Post('/createinterview')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	create(
 		@Body() body: CreateInterviewDto,
@@ -37,19 +37,19 @@ export class InterviewController {
 	}
 
 	@Get()
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	findAll(@Body() request: Record<string, any>, @Res() response: Response) {
 		return this.interviewService.findAll(request, response);
 	}
 
 	@Get(':id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	findOne(@Param('id') id: string, @Res() response: Response) {
 		return this.interviewService.findOne(+id, response);
 	}
 
 	@Patch(':id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	update(
 		@Param('id') id: string,
 		@Body() request: Record<string, any>,
@@ -59,7 +59,7 @@ export class InterviewController {
 	}
 
 	@Patch('/accept/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	update_rsvp(
 		@Param('id') id: string,

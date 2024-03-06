@@ -18,19 +18,19 @@ export class ActivitiesController {
 	constructor(private readonly activitiesService: ActivitiesService) {}
 
 	@Post('/create')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	create(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.activitiesService.create(request, body, response);
 	}
 
 	@Post('/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	list(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.activitiesService.List(body, request, response);
 	}
 
 	@Patch('/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	update(
 		@Req() request: any,
 		@Body() body: any,

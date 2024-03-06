@@ -25,7 +25,7 @@ export class EventsController {
 	constructor(private readonly eventsService: EventsService) {}
 
 	@Post('/create')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	create(
 		@Body() createEventDto: CreateEventDto,
@@ -36,7 +36,7 @@ export class EventsController {
 	}
 
 	@Get('/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getEventsList(@Req() header: Request, @Res() response: Response) {
 		return this.eventsService.getEventsList(header, response);
 	}
@@ -47,13 +47,13 @@ export class EventsController {
 	}
 
 	@Get(':id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	findOne(@Param('id') id: string, @Res() response: Response) {
 		return this.eventsService.findOne(+id, response);
 	}
 
 	@Patch(':id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	update(
 		@Param('id') id: string,
 		@Req() header: Request,
@@ -64,7 +64,7 @@ export class EventsController {
 	}
 
 	@Patch('/accept/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	updateEventAcceptDetail(
 		@Param('id') id: string,
@@ -79,7 +79,7 @@ export class EventsController {
 	}
 
 	@Patch('/attendance/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	updateAttendanceDetail(
 		@Param('id') id: string,
 		@Body() request: string,
@@ -93,7 +93,7 @@ export class EventsController {
 	}
 
 	@Delete(':id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	remove(
 		@Param('id') id: string,
 		@Req() header: Request,
@@ -103,7 +103,7 @@ export class EventsController {
 	}
 
 	@Post('/:id/get-participants')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getParticipants(
 		@Req() req: any,
 		@Param('id') id: any,
@@ -114,7 +114,7 @@ export class EventsController {
 	}
 
 	@Post('/add/attendance')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	createEventAttendance(
 		@Req() request: any,
@@ -129,7 +129,7 @@ export class EventsController {
 	}
 
 	@Get('/:id/get-events-by-user_id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getEventsListByUserId(
 		@Req() req: any,
 		@Param('id') id: any,
