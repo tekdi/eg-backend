@@ -3,26 +3,30 @@ import {
 	Get,
 	Post,
 	Body,
-	Patch,
-	Param,
 	Req,
 	Res,
 	Delete,
 	UseGuards,
 	Response,
+	UsePipes,
+	ValidationPipe,
 } from '@nestjs/common';
 import { OrganisationService } from './organisation.service';
-import { CreateOrganisationDto } from './dto/create-organisation.dto';
-import { UpdateOrganisationDto } from './dto/update-organisation.dto';
 import { AuthGuard } from '../modules/auth/auth.guard';
 @Controller('organisation')
 export class OrganisationController {
 	constructor(private readonly organisationService: OrganisationService) {}
 
-	// @Post()
-	// create(@Body() createOrganisationDto: CreateOrganisationDto) {
-	// 	return this.organisationService.create(createOrganisationDto);
-	// }
+	@Post('/create')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	registerCamp(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.organisationService.create(body, request, response);
+	}
 
 	@Post('/list')
 	@UseGuards(new AuthGuard())

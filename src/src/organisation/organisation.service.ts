@@ -1,12 +1,59 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { CreateOrganisationDto } from './dto/create-organisation.dto';
-import { UpdateOrganisationDto } from './dto/update-organisation.dto';
-
+import { Injectable } from '@nestjs/common';
+import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
 @Injectable()
 export class OrganisationService {
-	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
+	constructor(
+		private hasuraService: HasuraService,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
+	) {}
+
+	async create(body: any, request: any, response: any) {
+		const organisationData = {
+			name: body?.name,
+			mobile: body?.mobile,
+			contact_person: body?.contact_person,
+			address: body?.address,
+		};
+
+		const tableName = 'organisations';
+		const newOrganisation = await this.hasuraService.q(
+			tableName,
+			organisationData,
+			['name', 'mobile', 'contact_person', 'address'],
+		);
+
+		if (!newOrganisation || !newOrganisation?.organisations.id) {
+			throw new Error('Failed to create organisation.');
+		}
+		const organisation = newOrganisation?.organisations;
+
+		// Step 2: Insert data into the 'program_organisation' table
+		const programOrganisationData = {
+			organisation_id: organisation?.id,
+			program_id: request.mw_program_id,
+			academic_year_id: request.mw_academic_year_id,
+			status: 'active',
+			// Other fields as needed
+		};
+
+		const programOrganisationTableName = 'program_organisation';
+		const program_org = await this.hasuraService.q(
+			programOrganisationTableName,
+			programOrganisationData,
+		);
+
+		// Return success response
+		response.status(200).json({
+			success: true,
+			message: 'Organisation created successfully.',
+			data: {
+				organisation,
+				program_org: program_org?.program_organisation,
+			},
+		});
+	}
 
 	public async getOrganisation(body: any, req: any, resp: any) {
 		const academic_year_id = req?.mw_academic_year_id;
