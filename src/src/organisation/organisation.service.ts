@@ -8,17 +8,13 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 export class OrganisationService {
 	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
 
-	create(createOrganisationDto: CreateOrganisationDto) {
-		return 'This action adds a new organisation';
-	}
-
 	public async getOrganisation(body: any, req: any, resp: any) {
 		const academic_year_id = req?.mw_academic_year_id;
 		const program_id = req?.mw_program_id;
 
 		try {
 			const page = isNaN(body.page) ? 1 : parseInt(body.page);
-			const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+			const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 			let offset = page > 1 ? limit * (page - 1) : 0;
 			let order_by = '';
 			if (body?.order_by) {
@@ -90,15 +86,15 @@ export class OrganisationService {
 		}
 	}
 
-	findOne(id: number) {
-		return `This action returns a #${id} organisation`;
-	}
+	// findOne(id: number) {
+	// 	return `This action returns a #${id} organisation`;
+	// }
 
-	update(id: number, updateOrganisationDto: UpdateOrganisationDto) {
-		return `This action updates a #${id} organisation`;
-	}
+	// update(id: number, updateOrganisationDto: UpdateOrganisationDto) {
+	// 	return `This action updates a #${id} organisation`;
+	// }
 
-	remove(id: number) {
-		return `This action removes a #${id} organisation`;
-	}
+	// remove(id: number) {
+	// 	return `This action removes a #${id} organisation`;
+	// }
 }
