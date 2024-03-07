@@ -6,6 +6,7 @@ import jwt_decode from 'jwt-decode';
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
 	constructor(private userService: UserService) {}
+
 	async use(req: any, res: Response, next: NextFunction) {
 		req.mw_roles = [];
 		req.mw_userid = null;
@@ -47,16 +48,36 @@ export class AuthMiddleware implements NestMiddleware {
 			try {
 				const decoded: any = jwt_decode(authToken);
 				let keycloak_id = decoded.sub;
+				let userId;
 
-				// const user = await this.userService.ipUserInfo(req);
-				const userId = await this.userService.getUserIdFromKeycloakId(
-					keycloak_id,
-				);
-
-				req.mw_userid = userId;
-
+				const roles = decoded.resource_access.hasura.roles || [];
+				//check if role is program_owner set x-ip-org-id in userId
+				if (roles.includes('program_owner')) {
+					if (req?.headers && req?.headers?.['x-ip-org-id']) {
+						userId = req.headers['x-ip-org-id'];
+						const result = await this.userService.getIPuser(
+							req,
+							res,
+						);
+						const data = result?.data?.program_users?.[0];
+						req.mw_userid = data?.user_id;
+					} else if (['/users/ip_user_info'].includes(req.baseUrl)) {
+						// const user = await this.userService.ipUserInfo(req);
+						userId = await this.userService.getUserIdFromKeycloakId(
+							keycloak_id,
+						);
+						req.mw_userid = userId;
+					}
+					req.mw_roles = roles; //pass role if x-ip-org-id is not send
+				} else {
+					// const user = await this.userService.ipUserInfo(req);
+					userId = await this.userService.getUserIdFromKeycloakId(
+						keycloak_id,
+					);
+					req.mw_userid = userId;
+				}
 				if (userId) {
-					req.mw_roles = decoded.resource_access.hasura.roles || [];
+					req.mw_roles = roles;
 				}
 			} catch (error) {
 				req.mw_userid = null;

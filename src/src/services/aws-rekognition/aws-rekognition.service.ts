@@ -251,7 +251,7 @@ export class AwsRekognitionService {
 				Image: {
 					S3Object: {
 						Bucket: this.bucketName,
-						Name: modifiedImageName,
+						Name: originalImageName,
 					},
 				},
 				ExternalImageId: modifiedImageName,
@@ -345,8 +345,14 @@ export class AwsRekognitionService {
 			//console.dir(compareResponse, { depth: 99 });
 			return compareResponse.UserMatches;
 		} catch (error) {
-			console.log('searchUsersByImage:', error, error.stack);
-			return [];
+			console.log('code error ', error?.name);
+			if (error?.name == 'ProvisionedThroughputExceededException') {
+				console.log('ProvisionedThroughputExceededException');
+				return false;
+			} else {
+				console.log('searchUsersByImage:', error, error.stack);
+				return [];
+			}
 		}
 	}
 
