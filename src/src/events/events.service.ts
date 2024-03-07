@@ -74,6 +74,42 @@ export class EventsService {
 		let academic_year_id = header?.mw_academic_year_id;
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
+		//get do_id for event exam master data
+		let eventExamData = {
+			query: `query MyQuery {
+				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"}}){
+					id
+					do_id
+					event_type
+				}
+			}`,
+		};
+
+		const getExamId = await this.hasuraServiceFromServices.getData(
+			eventExamData,
+		);
+
+		let doIds = getExamId?.data?.event_exams_master?.map(
+			(exam) => exam.do_id,
+		);
+		let paramId = null;
+
+		if (doIds && doIds.length > 0) {
+			paramId = {
+				attendance_type: 'day',
+				do_id: doIds,
+			};
+		}
+		let optional = {};
+		if (req?.location && req?.location_type && req?.reminders) {
+			optional['location'] = req.location;
+			optional['reminders'] = JSON.stringify(req.reminders).replace(
+				/"/g,
+				'\\"',
+			);
+			optional['location_type'] = req.location_type;
+		}
+
 		let obj = {
 			...(req?.context_id && { context_id: req?.context_id }),
 			...(req?.context && { context: req?.context }),
@@ -83,17 +119,56 @@ export class EventsService {
 			created_by: user_id,
 			end_date: req.end_date,
 			end_time: req.end_time,
-			location: req.location,
-			location_type: req.location_type,
 			start_date: req.start_date,
 			start_time: req.start_time,
 			updated_by: user_id,
 			type: req.type,
-			reminders: JSON.stringify(req.reminders).replace(/"/g, '\\"'),
 			program_id: program_id,
 			academic_year_id: academic_year_id,
-			params: req.params,
+			params: paramId, //set  params to null if no param id found in the database
+			...optional, //set optional for remainders,location,location_type
 		};
+		// Check duration
+		const daysDiff = moment(req.end_date).diff(
+			moment(req.start_date),
+			'days',
+		);
+
+		const currentDate = moment(); // Current date
+
+		// Check if the number of attendees falls within the configured limits
+		let errorMessage = {};
+
+		const numAttendees = req.attendees.length;
+		const minParticipants = 0; // Example: Minimum number of participants allowed
+		const maxParticipants = 50; // Example: Maximum number of participants allowed
+
+		if (numAttendees < minParticipants || numAttendees > maxParticipants) {
+			errorMessage = {
+				key: 'participants_limit',
+				massage: `Number of attendees must be between ${minParticipants} and ${maxParticipants}`,
+			};
+		} else if (moment(req.start_date)?.isBefore(currentDate, 'day')) {
+			errorMessage = {
+				key: 'back_date',
+				message: 'start date is before the current date',
+			};
+		} else if (daysDiff < 0 || daysDiff > 5) {
+			errorMessage = {
+				key: 'event_days',
+				message: 'Event duration must be between 1 and 5 days.',
+			};
+		}
+
+		if (Object.keys(errorMessage).length) {
+			return response.status(422).send({
+				success: false,
+				...errorMessage,
+				data: {},
+			});
+		}
+
+		//checking the event already created
 		let data = {
 			query: `query MyQuery {
 			events_aggregate(where: {start_date: {_gte: "${req.start_date}", _lte: "${req.start_date}"}, end_date: {_gte: "${req.end_date}", _lte: "${req.end_date}"}, program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, master_trainer: {_eq: "${req.master_trainer}"}, start_time: {_eq: "${req.start_time}"}, type: {_eq: "${req.type}"}, user_id: {_eq: ${user_id}}, name: {_eq: "${req.name}"}}) {
@@ -108,11 +183,12 @@ export class EventsService {
 		const geteventData = await this.hasuraServiceFromServices.getData(data);
 
 		const count = geteventData?.data?.events_aggregate?.aggregate?.count;
-
+		//if event created show this message
 		if (count > 0) {
-			return response.status(200).send({
-				success: true,
+			return response.status(422).send({
+				success: false,
 				message: 'Event Already created!',
+				key: 'batch_name',
 				data: {},
 			});
 		} else {
@@ -123,7 +199,6 @@ export class EventsService {
 				[],
 				[{ key: 'params', type: 'json' }],
 			);
-
 			if (eventResult) {
 				const promises = [];
 				const query = [];
@@ -505,6 +580,7 @@ export class EventsService {
 	}
 
 	public async updateAttendanceDetail(id: number, req: any, response: any) {
+		let attendance_id = id;
 		const tableName = 'attendance';
 		if (req?.status == 'present') {
 			let checkStringResult = this.checkStrings({});
@@ -518,6 +594,35 @@ export class EventsService {
 			}
 		}
 		try {
+			const format = 'YYYY-MM-DD';
+			const dateString = moment().startOf('day').format(format);
+			const currentTime = moment().format('HH:mm');
+
+			let data = {
+				query: `query MyQuery1 {
+					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTime}"}, end_time: {_gte: "${currentTime}"}}) {
+						aggregate {
+							count
+						}
+					}
+				}
+				`,
+			};
+
+			const getAttendanceData =
+				await this.hasuraServiceFromServices.getData(data);
+			const count =
+				getAttendanceData?.data?.events_aggregate?.aggregate?.count;
+
+			if (count === 0) {
+				return response.status(422).send({
+					success: false,
+					message:
+						'Attendance cannot be marked as today is not within the event date range.',
+					data: {},
+				});
+			}
+
 			let result = await this.hasuraService.update(
 				+id,
 				tableName,
@@ -620,6 +725,7 @@ export class EventsService {
 			});
 		}
 	}
+
 	async getParticipants(req, id, body, res) {
 		const auth_users = await this.userService.ipUserInfo(req, 'staff');
 
@@ -729,9 +835,93 @@ export class EventsService {
 
 	public async createEventAttendance(body: any, req: any, res: any) {
 		(body.status = body?.status || null),
-			(body.context = body?.context || 'events'),
+			(body.context = 'events'),
 			(body.created_by = req?.mw_userid),
 			(body.updated_by = req?.mw_userid);
+		const presentDate = body?.date_time;
+		//Taking event date and attendances count
+		let data = {
+			query: `query MyQuery {
+			events(where: {id: {_eq: ${body.context_id}}}){
+				start_date
+				start_time
+				end_date
+				end_time
+				id
+			}
+			attendance_aggregate(where:{
+				context_id:{_eq:${body?.context_id}},
+				context:{_eq:${body.context}},
+				date_time:{_gte:"${body?.date_time}",_lte:"${body?.date_time}"},
+				user_id:{_eq:${body?.user_id}}
+			}){
+				aggregate{
+					count
+				}
+			}
+		}
+		`,
+		};
+
+		const getAttendanceData = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		let event = getAttendanceData?.data?.events?.[0];
+		let count =
+			getAttendanceData?.data?.attendance_aggregate?.aggregate?.count;
+		//if attendances is present for that date
+		if (count > 0) {
+			return res.status(422).json({
+				success: false,
+				message: 'Attendance allready marked for this date',
+			});
+		}
+
+		const format = 'YYYY-MM-DD HH:mm';
+		const currentDate = moment();
+		let errorMessage = {};
+		const startDate = moment(
+			`${event?.start_date} ${event?.start_time}`,
+			format,
+		);
+
+		const endDate = moment(`${event?.end_date} ${event?.end_time}`, format);
+
+		const newPresentDate = moment(
+			`${presentDate} ${moment().format('HH:mm')}`,
+			format,
+		);
+		//current date is after start date of event and presnt date is after event start date
+		if (
+			startDate.isSameOrAfter(currentDate) ||
+			startDate.isSameOrAfter(newPresentDate)
+		) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_FUTURE_DATE_ERROR_MESSAGE',
+			};
+		} else if (
+			endDate.isSameOrBefore(currentDate) ||
+			endDate.isSameOrBefore(newPresentDate)
+		) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_PAST_DATE_ERROR_MESSAGE',
+			};
+		} else if (!newPresentDate.isSameOrBefore(currentDate)) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_FUTURE_DATE_ERROR_MESSAGE',
+			};
+		}
+
+		if (Object.keys(errorMessage).length > 0) {
+			return res.status(422).json({
+				success: false,
+				...errorMessage,
+			});
+		}
 
 		let response = await this.hasuraService.q(
 			'attendance',

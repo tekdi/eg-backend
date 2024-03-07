@@ -20,6 +20,10 @@ export class Method {
 	}
 
 	public async isUserHasAccessForProgram(req: any) {
+		// if role is program_owner pass this access
+		if (req.mw_roles.includes('program_owner')) {
+			return true;
+		}
 		// Set a table name
 		let tableName;
 		if (req.mw_roles.includes('staff')) {
@@ -64,6 +68,10 @@ export class Method {
 	}
 
 	public async isUserHasAccessForAcademicYearId(req: any) {
+		// if role is program_owner pass this access
+		if (req.mw_roles.includes('program_owner')) {
+			return true;
+		}
 		// Set a table name
 		let tableName;
 		if (req.mw_roles.includes('staff')) {

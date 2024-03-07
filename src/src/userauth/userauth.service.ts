@@ -356,4 +356,661 @@ export class UserauthService {
 			});
 		}
 	}
+
+	public async getUserInfoDetails(request, response) {
+		let user_id = request.mw_userid; //get user id from token
+		let program_id = request?.mw_program_id; // get program_id from token
+		let academic_year_id = request?.mw_academic_year_id; // get academic_year_id from token
+
+		//query to get user details information
+
+		let query = `query MyQuery {
+			users_by_pk(id:${user_id}) {
+			  first_name
+			  middle_name
+			  last_name
+			  dob
+			  aadhar_no
+			  mobile
+			  alternative_mobile_number
+			  email_id
+			  district
+			  block
+			  grampanchayat
+			  village
+			  pincode
+			  gender
+			  profile_photo_1
+			  profile_photo_1_documents: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+			  }
+			  profile_photo_2
+			  profile_photo_2_documents: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+			  }
+			  profile_photo_3
+			  profile_photo_3_documents: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+			  }
+			  core_faciltator {
+				device_type
+				device_ownership
+				has_diploma
+				diploma_details
+			  }
+			  extended_users {
+				marital_status
+				social_category
+				designation
+			  }
+			  references(where: {context: {_eq: "users"}}) {
+				name
+				designation
+				contact_number
+				context
+			  }
+			  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
+				availability
+				qualification_ids
+			  }
+			  experience(where: {type: {_eq: "experience"}}) {
+				id
+				type
+				role_title
+				organization
+				description
+				experience_in_years
+				related_to_teaching
+				references(where: {context: {_eq: "experience"}}) {
+				  name
+				  contact_number
+				  type_of_document
+				  document_reference {
+					document_id: id
+					name
+					document_sub_type
+					doument_type
+				  }
+				}
+			  }
+			  qualifications{
+				qualification_master_id
+				qualification_reference_document_id
+				document_reference{
+				  document_id:id
+				  name
+				  path
+				}
+			  }
+			}
+		  }
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let user_data = hasura_response?.data;
+
+		// get profile photo document details
+		let profilePhoto1Documents =
+			user_data?.users_by_pk?.profile_photo_1_documents;
+
+		let profilePhoto2Documents =
+			user_data?.users_by_pk?.profile_photo_2_documents;
+
+		let profilePhoto3Documents =
+			user_data?.users_by_pk?.profile_photo_3_documents;
+
+		//  modifiy individual profile photo document details as required
+
+		let profile_photo_1_info = {
+			name: user_data?.users_by_pk?.profile_photo_1,
+			documents: {
+				base64: null,
+				document_id: profilePhoto1Documents?.[0].document_id,
+				name: profilePhoto1Documents?.[0].name,
+				document_type: profilePhoto1Documents?.[0].doument_type,
+				document_sub_type:
+					profilePhoto1Documents?.[0].document_sub_type,
+			},
+		};
+
+		let profile_photo_2_info = {
+			name: user_data?.users_by_pk?.profile_photo_1,
+			documents: {
+				base64: null,
+				document_id: profilePhoto2Documents?.[0].document_id,
+				name: profilePhoto2Documents?.[0].name,
+				document_type: profilePhoto2Documents?.[0].doument_type,
+				document_sub_type:
+					profilePhoto2Documents?.[0].document_sub_type,
+			},
+		};
+
+		let profile_photo_3_info = {
+			name: user_data?.users_by_pk?.profile_photo_1,
+			documents: {
+				base64: null,
+				document_id: profilePhoto3Documents?.[0].document_id,
+				name: profilePhoto3Documents?.[0].name,
+				document_type: profilePhoto3Documents?.[0].doument_type || null,
+				document_sub_type:
+					profilePhoto3Documents?.[0].document_sub_type,
+			},
+		};
+
+		if (!user_data.users_by_pk) {
+			user_data.users_by_pk = {}; // Initialize as an empty object if it doesn't exist
+		}
+		// Replacing profile_photo_documents with profile_photo for all details
+		user_data.users_by_pk.profile_photo_1 = profile_photo_1_info;
+		user_data.users_by_pk.profile_photo_2 = profile_photo_2_info;
+		user_data.users_by_pk.profile_photo_3 = profile_photo_3_info;
+
+		// Removing profile_photo_documents object
+		delete user_data.users_by_pk.profile_photo_1_documents;
+		delete user_data.users_by_pk.profile_photo_2_documents;
+		delete user_data.users_by_pk.profile_photo_3_documents;
+
+		// Iterate through the experience array and update references document_reference to documents
+		user_data?.users_by_pk?.experience?.forEach((exp) => {
+			exp.references = exp?.references?.reduce((acc, ref) => {
+				const documents = ref?.document_reference
+					? {
+							base64: null,
+							document_id: ref?.document_reference?.document_id,
+							name: ref?.document_reference?.name,
+							document_sub_type:
+								ref?.document_reference?.document_sub_type,
+							document_type:
+								ref?.document_reference?.doument_type,
+					  }
+					: {};
+
+				delete ref?.document_reference; // Remove document_reference
+
+				return { ...acc, ...ref, documents };
+			}, {});
+		});
+
+		user_data.users_by_pk.qualifications =
+			user_data?.users_by_pk?.qualifications?.reduce((acc, q) => {
+				const documents = q.document_reference
+					? {
+							base64: q?.document_reference?.base64,
+							document_id: q?.document_reference?.document_id,
+							name: q?.document_reference?.name,
+					  }
+					: {};
+
+				delete q.document_reference; // Remove document_reference
+
+				return { ...acc, ...q, documents };
+			}, {});
+
+		const {
+			first_name,
+			middle_name,
+			last_name,
+			dob,
+			aadhar_no,
+			mobile,
+			alternative_mobile_number,
+			email_id,
+			district,
+			block,
+			grampanchayat,
+			village,
+			pincode,
+			gender,
+			profile_photo_1,
+			profile_photo_2,
+			profile_photo_3,
+		} = user_data?.users_by_pk || {};
+
+		const formattedData = {
+			users: {
+				first_name,
+				middle_name,
+				last_name,
+				dob,
+				aadhar_no,
+				mobile,
+				alternative_mobile_number,
+				email_id,
+				district,
+				block,
+				grampanchayat,
+				village,
+				pincode,
+				gender,
+				profile_photo_1,
+				profile_photo_2,
+				profile_photo_3,
+			},
+			core_faciltator: user_data?.users_by_pk?.core_faciltator,
+			extended_users: user_data?.users_by_pk?.extended_users,
+			references: user_data?.users_by_pk?.references,
+			program_faciltators: user_data?.users_by_pk?.program_faciltators,
+			experience: user_data?.users_by_pk?.experience,
+			qualifications: user_data?.users_by_pk?.qualifications,
+		};
+
+		if (user_data) {
+			return response.status(200).json({
+				message: 'Data retrieved successfully!',
+				data: formattedData,
+			});
+		}
+	}
+
+	public async userOnboarding(body: any, response: any, request: any) {
+		//first check validations for all inputs
+
+		let user_id = request?.mw_userid;
+
+		let result = await this.processTable(body, user_id);
+
+		if (result) {
+			return response.status(200).json({
+				success: true,
+				message: 'Successfully updated data',
+			});
+		}
+	}
+	private async processTable(json: any, user_id: any) {
+		let tableFields;
+		let tableName;
+		let set_update;
+		let update_id;
+		let profile_photo_fields_1;
+		let documents_fields_1;
+		let profile_photo_fields_2;
+		let documents_fields_2;
+		let profile_photo_fields_3;
+		let documents_fields_3;
+		let profile_photo_1_value;
+		let documents_values_1;
+		let profile_photo_2_value;
+		let documents_values_2;
+		let profile_photo_3_value;
+		let documents_values_3;
+		let profile_documents_array = [];
+
+		for (const key in json) {
+			const value = json[key];
+
+			if (typeof value === 'object') {
+				tableName = key;
+				tableFields = Object.keys(value);
+				for (const subKey in value) {
+					const subValue = value[subKey];
+
+					if (typeof subValue === 'object') {
+						// Separate the subobjects of profile_photo_1 and documents
+						if (subKey === 'profile_photo_1') {
+							profile_photo_1_value = Object.values(subValue);
+
+							documents_values_1 = Object.values(
+								subValue.documents,
+							);
+
+							profile_documents_array.push({
+								document_id: documents_values_1?.[1],
+								name: documents_values_1?.[2],
+								doument_type: documents_values_1?.[3],
+								document_sub_type: documents_values_1?.[4],
+							});
+
+							// Add profile_photo_1 with its name value for inserting in users table
+							value['profile_photo_1'] =
+								profile_photo_1_value?.[0];
+						}
+						if (subKey === 'profile_photo_2') {
+							profile_photo_2_value = Object.values(subValue);
+
+							documents_values_2 = Object.values(
+								subValue.documents,
+							);
+
+							profile_documents_array.push({
+								document_id: documents_values_2?.[1],
+								name: documents_values_2?.[2],
+								doument_type: documents_values_2?.[3],
+								document_sub_type: documents_values_2?.[4],
+							});
+
+							// Add profile_photo_2 with its name value for inserting in users table
+							value['profile_photo_2'] =
+								profile_photo_2_value?.[0];
+						}
+						if (subKey === 'profile_photo_3') {
+							profile_photo_3_value = Object.values(subValue);
+
+							documents_values_3 = Object.values(
+								subValue.documents,
+							);
+
+							profile_documents_array.push({
+								document_id: documents_values_3?.[1],
+								name: documents_values_3?.[2],
+								doument_type: documents_values_3?.[3],
+								document_sub_type: documents_values_3?.[4],
+							});
+
+							// Add profile_photo_3 with its name value for inserting in users table
+							value['profile_photo_3'] =
+								profile_photo_3_value?.[0];
+						}
+					}
+				}
+			}
+
+			if (Array.isArray(value)) {
+				// Handle array
+				tableName = key;
+
+				await this.processJsonArray(value, tableName, user_id);
+			}
+
+			if (tableName != 'users' && tableName != 'references') {
+				value.user_id = user_id;
+				tableFields.push('user_id');
+			}
+
+			if (tableName == 'references') {
+				value.context_id = user_id;
+				tableFields.push('context_id');
+			}
+
+			let response = await this.findExisitingReccord(
+				tableName,
+				value,
+				user_id,
+			);
+
+			set_update = response?.set_update;
+			update_id = response?.id;
+
+			console.log('update-->>', set_update, update_id);
+
+			await this.upsertRecords(
+				set_update,
+				tableName,
+				tableFields,
+				value,
+				user_id,
+				update_id,
+			);
+
+			if (tableName == 'users' && profile_documents_array?.length > 0) {
+				await this.upsertProfileDocuments(profile_documents_array);
+			}
+		}
+
+		return true;
+	}
+
+	public async processJsonArray(values, tableName, user_id) {
+		let set_update;
+		let update_id;
+		let referenceFields;
+		let referenceData;
+
+		for (const obj of values) {
+			let tableFields = Object.keys(obj);
+			tableFields.push('user_id');
+			obj.user_id = user_id;
+
+			set_update = obj?.id ? 1 : 0;
+			update_id = obj?.id;
+
+			console.log('set->.', set_update);
+			if (set_update == 1) {
+				tableFields.push('id');
+			}
+
+			if (tableName == 'experience') {
+				if ('references' in obj) {
+					// Process 'references' array differently
+					referenceFields = [
+						'name',
+						'contact_number',
+						'type_of_document',
+						'user_id',
+					];
+					referenceData = {
+						name: obj?.references.name,
+						contact_number: obj?.references.contact_number,
+						type_of_document: obj?.references.type_of_document,
+						context: 'experience',
+					};
+
+					tableFields = tableFields.filter(
+						(field) => field !== 'references',
+					);
+					delete obj.references;
+				}
+			}
+
+			console.log('referenceData-->>', obj);
+			let result = await this.upsertRecords(
+				set_update,
+				tableName,
+				tableFields,
+				obj,
+				user_id,
+				update_id,
+			);
+
+			console.log('result in array-->>', result);
+
+			// if (referenceData) {
+			// 	await this.upsertRecords(
+			// 		set_update,
+			// 		tableName,
+			// 		tableFields,
+			// 		obj,
+			// 		user_id,
+			// 		update_id,
+			// 	);
+			// }
+		}
+	}
+
+	public async findExisitingReccord(tablename, value, user_id) {
+		let query;
+		let response;
+
+		switch (tablename) {
+			case 'users': {
+				query = `query MyQuery {
+					users(where: {mobile: {_eq:${value.mobile}}}){
+						id,
+						mobile
+					}
+				}`;
+
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update: response?.data?.users?.length > 0 ? 1 : 0,
+					id: response?.data?.users?.[0]?.id,
+				};
+			}
+			case 'core_faciltators': {
+				query = `query MyQuery {
+					core_faciltators(where: {user_id: {_eq:${user_id}}}){
+					  id
+					}
+				  }
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.core_faciltators?.length > 0 ? 1 : 0,
+					id: response?.data?.core_faciltators?.[0]?.id,
+				};
+			}
+			case 'extended_users': {
+				query = `query MyQuery {
+					extended_users(where: {user_id: {_eq:${user_id}}}){
+					  id
+					}
+				  }
+
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.extended_users?.length > 0 ? 1 : 0,
+					id: response?.data?.extended_users?.[0]?.id,
+				};
+			}
+			case 'program_faciltators': {
+				query = `query MyQuery {
+					program_faciltators(where: {user_id: {_eq:${user_id}},program_id:{_eq:${value?.program_id}},academic_year_id:{_eq:${value?.academic_year_id}}}){
+					  id
+					}
+				  }
+
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.program_faciltators?.length > 0 ? 1 : 0,
+					id: response?.data?.program_faciltators?.[0]?.id,
+				};
+			}
+			case 'references': {
+				query = `query MyQuery {
+					references(where: {contact_number: {_eq:${value?.contact_number}},context_id:{_eq:${user_id}}}){
+					  id
+					}
+				  }
+
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update: response?.data?.references?.length > 0 ? 1 : 0,
+					id: response?.data?.references?.[0]?.id,
+				};
+			}
+			case 'qualifications': {
+				query = `query MyQuery {
+					qualifications(where: {user_id: {_eq:${user_id}}}){
+					  id
+					}
+				  }
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update:
+						response?.data?.qualifications?.length > 0 ? 1 : 0,
+					id: response?.data?.qualifications?.[0]?.id,
+				};
+			}
+			case 'experience': {
+				query = `query MyQuery {
+					experience(where: {id: {_eq:${value?.id}}}){
+					  id
+					}
+				  }
+				  `;
+				response = await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+				return {
+					set_update: response?.data?.experience?.length > 0 ? 1 : 0,
+					id: response?.data?.experience?.[0]?.id,
+				};
+			}
+
+			default:
+				return undefined;
+		}
+	}
+
+	public async upsertRecords(
+		set_update,
+		tableName,
+		tableFields,
+		value,
+		user_id,
+		id?,
+	) {
+		let result;
+		if (set_update == 1 && id) {
+			result = await this.hasuraService.q(
+				tableName,
+				{
+					...value,
+					id: id,
+				},
+				tableFields,
+				true,
+				[tableFields],
+			);
+		} else {
+			result = await this.hasuraService.q(
+				tableName,
+				{
+					...value,
+				},
+				tableFields,
+				false,
+				[tableFields],
+			);
+		}
+
+		return result;
+	}
+
+	public async upsertProfileDocuments(profileDocumentArray) {
+		for (const profileDocument of profileDocumentArray) {
+			let result = await this.hasuraService.q(
+				'documents',
+				{
+					...profileDocument,
+					id: profileDocument.document_id,
+				},
+				['name', 'document_sub_type', 'doument_type', 'id'],
+				true,
+				['name', 'document_sub_type', 'doument_type', 'id'],
+			);
+
+			console.log('resuklt-->>', result);
+		}
+	}
 }

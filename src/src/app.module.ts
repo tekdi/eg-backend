@@ -29,6 +29,7 @@ import { LMSModule } from './lms/lms.module';
 import { MasterDataModule } from './master_data/master_data.module';
 import { BoardModule } from './modules/board/board.module';
 import { EditRequestModule } from './modules/edit-requests/edit-requests.module';
+import { OrganisationModule } from './organisation/organisation.module';
 import { PcrscoresModule } from './pcrscores/pcrscores.module';
 import { ReferencesModule } from './references/references.module';
 import { KeycloakModule } from './services/keycloak/keycloak.module';
@@ -85,6 +86,7 @@ import { UserauthModule } from './userauth/userauth.module';
 		UploadFileModule,
 		UserModule,
 		UserauthModule,
+		OrganisationModule,
 	],
 	controllers: [],
 	providers: [CacheCleanerProvider],

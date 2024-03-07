@@ -2112,7 +2112,7 @@ export class BeneficiariesService {
 					'previous_school_type',
 					'reason_of_leaving_education',
 					'education_10th_date',
-					'education_10th_exam_year'
+					'education_10th_exam_year',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2125,7 +2125,7 @@ export class BeneficiariesService {
 					'previous_school_type',
 					'reason_of_leaving_education',
 					'education_10th_date',
-					'education_10th_exam_year'
+					'education_10th_exam_year',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2736,10 +2736,10 @@ export class BeneficiariesService {
 				await this.hasuraService.q(
 					tableName,
 					{
-						career_aspiration: req?.career_aspiration,
+						career_aspiration: req?.career_aspiration || null,
 						career_aspiration_details:
-							req?.career_aspiration_details,
-						parent_support: req?.parent_support,
+							req?.career_aspiration_details || null,
+						parent_support: req?.parent_support || null,
 						id: beneficiaryUser?.core_beneficiaries?.id
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,

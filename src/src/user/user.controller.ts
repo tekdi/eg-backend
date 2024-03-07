@@ -233,6 +233,26 @@ export class UserController {
 		return this.userService.validateOnBoardingLink(body, request, response);
 	}
 
+	//get IP list
+	@Post('/ip/list')
+	@UseGuards(new AuthGuard())
+	getIpList(
+		@Body() request: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getIpList(request, req, response);
+	}
+	//get cohort list of ip
+	@Post('/cohort/ip_list')
+	@UseGuards(new AuthGuard())
+	getCohortIpList(
+		@Body() request: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getCohortIpList(request, req, response);
+	}
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
