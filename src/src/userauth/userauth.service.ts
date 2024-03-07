@@ -415,6 +415,7 @@ export class UserauthService {
 				  name
 				  contact_number
 				  type_of_document
+				  document_id
 				  document_reference {
 					document_id: id
 					name
@@ -490,7 +491,7 @@ export class UserauthService {
 			},
 		};
 
-		if (!user_data.users_by_pk) {
+		if (!user_data?.users_by_pk) {
 			user_data.users_by_pk = {}; // Initialize as an empty object if it doesn't exist
 		}
 		// Replacing profile_photo_documents with profile_photo for all details
@@ -627,6 +628,7 @@ export class UserauthService {
 		let profile_photo_3_value;
 		let documents_values_3;
 		let profile_documents_array = [];
+		let qualification_document_data;
 
 		for (const key in json) {
 			const value = json[key];
@@ -714,6 +716,24 @@ export class UserauthService {
 				tableFields.push('context_id');
 			}
 
+			if (tableName == 'qualifications') {
+				console.log('qualvalue-->', value);
+				if (value?.documents) {
+					qualification_document_data = {
+						document_id: value?.documents?.document_id,
+						name: value?.documents?.name,
+						document_sub_type: 'qualifications',
+						doument_type: 'qualifications',
+						context: 'qualifications',
+					};
+				}
+				tableFields = tableFields?.filter(
+					(field) => field !== 'documents',
+				);
+				delete value?.documents;
+				console.log('qualvalue123-->', value);
+			}
+
 			let response = await this.findExisitingReccord(
 				tableName,
 				value,
@@ -723,9 +743,7 @@ export class UserauthService {
 			set_update = response?.set_update;
 			update_id = response?.id;
 
-			console.log('update-->>', set_update, update_id);
-
-			await this.upsertRecords(
+			let upsert_records_result = await this.upsertRecords(
 				set_update,
 				tableName,
 				tableFields,
@@ -734,8 +752,30 @@ export class UserauthService {
 				update_id,
 			);
 
+			console.log('upsert_records_result-->>', upsert_records_result);
+
 			if (tableName == 'users' && profile_documents_array?.length > 0) {
 				await this.upsertProfileDocuments(profile_documents_array);
+			}
+
+			if (tableName == 'qualifications' && qualification_document_data) {
+				let result = await this.upsertRecords(
+					1,
+					'documents',
+					[
+						'name',
+						'document_sub_type',
+						'doument_type',
+						'context',
+						'context_id',
+						'user_id',
+					],
+					qualification_document_data,
+					user_id,
+					qualification_document_data?.document_id,
+				);
+
+				console.log('result doc-->>.', result);
 			}
 		}
 
@@ -747,6 +787,9 @@ export class UserauthService {
 		let update_id;
 		let referenceFields;
 		let referenceData;
+		let documentFields;
+		let documentData;
+		let result;
 
 		for (const obj of values) {
 			let tableFields = Object.keys(obj);
@@ -768,24 +811,45 @@ export class UserauthService {
 						'name',
 						'contact_number',
 						'type_of_document',
-						'user_id',
 					];
 					referenceData = {
 						name: obj?.references.name,
 						contact_number: obj?.references.contact_number,
 						type_of_document: obj?.references.type_of_document,
+						id: obj?.references?.id,
 						context: 'experience',
 					};
 
-					tableFields = tableFields.filter(
-						(field) => field !== 'references',
-					);
-					delete obj.references;
+					if (set_update == 1) {
+						referenceData.context_id = obj?.id;
+					}
 				}
+
+				if ('documents' in obj.references) {
+					documentFields = [
+						'name',
+						'document_sub_type',
+						'doument_type',
+						'context',
+					];
+					documentData = {
+						name: obj?.references?.documents?.name,
+						document_sub_type:
+							obj?.references?.documents?.document_sub_type,
+						doument_type: obj?.references?.documents?.document_type,
+						id: obj?.references?.documents?.document_id,
+						context: 'reference',
+					};
+				}
+
+				// remove references object from the main object to process the experience object
+				tableFields = tableFields?.filter(
+					(field) => field !== 'references',
+				);
+				delete obj?.references;
 			}
 
-			console.log('referenceData-->>', obj);
-			let result = await this.upsertRecords(
+			result = await this.upsertRecords(
 				set_update,
 				tableName,
 				tableFields,
@@ -794,18 +858,33 @@ export class UserauthService {
 				update_id,
 			);
 
-			console.log('result in array-->>', result);
+			if (tableName == 'experience' && referenceData) {
+				let update_id = referenceData?.id;
+				set_update = update_id ? 1 : 0;
+				if (!obj?.id) {
+					referenceData.context_id = result?.experience?.id;
+				}
+				let result1 = await this.upsertRecords(
+					set_update,
+					'references',
+					referenceFields,
+					referenceData,
+					user_id,
+					update_id,
+				);
 
-			// if (referenceData) {
-			// 	await this.upsertRecords(
-			// 		set_update,
-			// 		tableName,
-			// 		tableFields,
-			// 		obj,
-			// 		user_id,
-			// 		update_id,
-			// 	);
-			// }
+				if (documentData) {
+					let update_id = documentData?.id;
+					let result2 = await this.upsertRecords(
+						1,
+						'documents',
+						documentFields,
+						documentData,
+						user_id,
+						update_id,
+					);
+				}
+			}
 		}
 	}
 
