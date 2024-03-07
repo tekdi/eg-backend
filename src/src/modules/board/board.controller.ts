@@ -37,4 +37,17 @@ export class BoardController {
 	) {
 		return this.boardService.getSubjectsByBoard(id, response, request);
 	}
+
+	@Get('/:id')
+	@UsePipes(ValidationPipe)
+	// @UseInterceptors(CacheInterceptor)
+	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
+	@UseGuards(new AuthGuard())
+	public async getBoardNameById(
+		@Param('id') id: number,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		return this.boardService.getBoardNameById(id, response, request);
+	}
 }

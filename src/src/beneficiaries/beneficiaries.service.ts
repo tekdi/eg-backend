@@ -1416,6 +1416,8 @@ export class BeneficiariesService {
 				enrolled_for_board
 				enrollement_status
 				parent_support
+				education_10th_date
+				education_10th_exam_year
 			  }
 			  program_users {
 				organisation_id
@@ -2109,6 +2111,8 @@ export class BeneficiariesService {
 					'last_standard_of_education_year',
 					'previous_school_type',
 					'reason_of_leaving_education',
+					'education_10th_date',
+					'education_10th_exam_year'
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2120,6 +2124,8 @@ export class BeneficiariesService {
 					'last_standard_of_education_year',
 					'previous_school_type',
 					'reason_of_leaving_education',
+					'education_10th_date',
+					'education_10th_exam_year'
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2858,7 +2864,7 @@ export class BeneficiariesService {
 						);
 					}
 				}
-				if (req.enrollment_status == 'not_enrolled') {
+				if (req.enrollment_status == 'ready_to_enroll') {
 					myRequest['enrollment_status'] = req?.enrollment_status;
 					myRequest['enrollment_number'] = null;
 					myRequest['enrolled_for_board'] = null;

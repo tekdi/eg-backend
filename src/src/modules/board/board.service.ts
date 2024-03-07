@@ -64,4 +64,32 @@ export class BoardService {
 			});
 		}
 	}
+
+	public async getBoardNameById(id: any, response: any, request: any) {
+		let board_id = id;
+
+		let query = `query MyQuery {
+			boards_by_pk(id:${board_id}){
+			  id
+			  name
+			}
+		  }
+		  `;
+
+		let result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		if (result?.data) {
+			return response.status(200).json({
+				message: 'Data found successfully',
+				data: result.data.boards_by_pk,
+			});
+		} else {
+			return response.status(500).json({
+				message: 'Error getting data',
+				data: [],
+			});
+		}
+	}
 }
