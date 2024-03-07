@@ -32,23 +32,21 @@ export class OrganisationController {
 	@Post('/list')
 	@UseGuards(new AuthGuard())
 	getOrganisation(
-		@Body() request: Record<string, any>,
+		@Body() body: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Response,
 	) {
-		return this.organisationService.getOrganisation(request, req, response);
+		return this.organisationService.getOrganisation(body, req, response);
 	}
 
 	@Post('/details/:id')
 	@UseGuards(new AuthGuard())
 	getOrganisationDetails(
-		@Body() request: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Response,
 		@Param('id') id: number,
 	) {
 		return this.organisationService.getOrganisationDetails(
-			request,
 			req,
 			response,
 			id,

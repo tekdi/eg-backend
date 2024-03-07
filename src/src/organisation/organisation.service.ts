@@ -150,12 +150,7 @@ export class OrganisationService {
 		}
 	}
 
-	public async getOrganisationDetails(
-		body: any,
-		req: any,
-		resp: any,
-		id: any,
-	) {
+	public async getOrganisationDetails(req: any, resp: any, id: any) {
 		const academic_year_id = req?.mw_academic_year_id;
 		const program_id = req?.mw_program_id;
 		const org_id = id;
