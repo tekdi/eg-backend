@@ -167,15 +167,54 @@ export class OrganisationService {
 		}
 	}
 
-	// findOne(id: number) {
-	// 	return `This action returns a #${id} organisation`;
-	// }
+	public async getOrganisationDetails(req: any, resp: any, id: any) {
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
+		const org_id = id;
+		try {
+			let data = {
+				query: `query MyQuery {
+          organisations(where: {id:{_eq:${org_id}}
+          }) {
+            id
+            name
+            contact_person
+            mobile
+            program_organisations(where:{program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, status: {_eq: "active"}}){
+              program_id
+              academic_year_id
+              status
+            }
+          }
+        }
+			`,
+			};
 
-	// update(id: number, updateOrganisationDto: UpdateOrganisationDto) {
-	// 	return `This action updates a #${id} organisation`;
-	// }
+			const response = await this.hasuraServiceFromServices.getData(data);
 
-	// remove(id: number) {
-	// 	return `This action removes a #${id} organisation`;
-	// }
+			const organisations = response?.data?.organisations || [];
+
+			if (organisations.length == 0) {
+				return resp.status(422).send({
+					success: false,
+					message: 'Organisation Details Not found!',
+					data: organisations,
+				});
+			} else {
+				return resp.status(200).send({
+					success: true,
+					message: 'Organisation Details found successfully!',
+					data: organisations,
+				});
+			}
+		} catch (error) {
+			// Log error and return a generic error response
+			console.error('Error fetching organizations:', error);
+			return resp.status(422).send({
+				success: false,
+				message: 'An error occurred while fetching organizations',
+				data: {},
+			});
+		}
+	}
 }
