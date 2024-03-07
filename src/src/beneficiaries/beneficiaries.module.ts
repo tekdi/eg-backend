@@ -8,6 +8,7 @@ import { UserModule } from 'src/user/user.module';
 import { BeneficiariesController } from './beneficiaries.controller';
 
 import { HttpModule } from '@nestjs/axios';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 import { Method } from 'src/common/method/method';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { S3Module } from 'src/services/s3/s3.module';
@@ -20,6 +21,7 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import { BeneficiariesService } from './beneficiaries.service';
+
 @Module({
 	imports: [
 		UserModule,
@@ -34,7 +36,12 @@ import { BeneficiariesService } from './beneficiaries.service';
 		UploadFileModule,
 	],
 	controllers: [BeneficiariesController],
-	providers: [BeneficiariesService, BeneficiariesCoreService, Method],
+	providers: [
+		AclHelper,
+		BeneficiariesService,
+		BeneficiariesCoreService,
+		Method,
+	],
 	exports: [BeneficiariesService, BeneficiariesCoreService],
 })
 export class BeneficiariesModule implements NestModule {
@@ -44,7 +51,7 @@ export class BeneficiariesModule implements NestModule {
 		/*
 		consumer
 			.apply(CohortMiddleware)
-			
+
 			.exclude(
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/admin/list/deactivate-duplicates',
@@ -56,7 +63,7 @@ export class BeneficiariesModule implements NestModule {
 				'/beneficiaries/admin/verify-enrollment',
 			)
 			.forRoutes(
-				
+
 				//'/beneficiaries',
 				'/beneficiaries/getStatusWiseCount/',
 				'/beneficiaries/admin/list/deactivate-duplicates/',
@@ -70,7 +77,7 @@ export class BeneficiariesModule implements NestModule {
 				'/beneficiaries/admin/reassign/',
 				'/beneficiaries/beneficiaries-for-camp/',
 				{ path: '/beneficiaries', method: RequestMethod.POST },
-				
+
 
 			);
 		*/
@@ -80,7 +87,7 @@ export class BeneficiariesModule implements NestModule {
 			.exclude(
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/:id/is_enrollment_exists',
-				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+				//{ path: '/beneficiaries/:id', method: RequestMethod.GET },
 				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
 				'/beneficiaries/register',
 				'/beneficiaries/statusUpdate',
@@ -88,10 +95,9 @@ export class BeneficiariesModule implements NestModule {
 			)
 			.forRoutes(BeneficiariesController);
 
-		consumer
-			.apply(CohortMiddleware)
-			.forRoutes(
-				{path: '/beneficiaries/getStatusWiseCount', method: RequestMethod.GET,}
-			);
+		consumer.apply(CohortMiddleware).forRoutes({
+			path: '/beneficiaries/getStatusWiseCount',
+			method: RequestMethod.GET,
+		});
 	}
 }

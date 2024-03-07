@@ -1456,7 +1456,7 @@ export class BeneficiariesService {
 				return resp.status(404).send({
 					success: false,
 					status: 'Not Found',
-					message: 'Benificiaries Not Found',
+					message: 'Benificiary Not Found',
 					data: {},
 				});
 			} else {
@@ -1505,7 +1505,7 @@ export class BeneficiariesService {
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
-					message: 'Benificiaries found successfully!',
+					message: 'Benificiary found successfully!',
 					data: { result: mappedData },
 				});
 			} else {
