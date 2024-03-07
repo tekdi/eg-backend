@@ -39,7 +39,7 @@ export class OrganisationController {
 		return this.organisationService.getOrganisation(body, req, response);
 	}
 
-	@Post('/details/:id')
+	@Post('/:id')
 	@UseGuards(new AuthGuard())
 	getOrganisationDetails(
 		@Req() req: any,
