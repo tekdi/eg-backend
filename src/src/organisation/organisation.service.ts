@@ -90,9 +90,36 @@ export class OrganisationService {
 				}
 			}
 
+			let searchQuery = '';
+			if (body.search && !isNaN(body.search)) {
+				let id = parseInt(body.search);
+				searchQuery = `id: {_eq: ${id}}`;
+			} else if (body.search) {
+				if (body.search && body.search !== '') {
+					let first_name = body.search.split(' ')[0];
+					let last_name = body.search.split(' ')[1] || '';
+
+					if (last_name?.length > 0) {
+						searchQuery = `_and:[{name: { _ilike: "%${first_name}%" }}, {name: { _ilike: "%${last_name}%" }}],`;
+					} else {
+						searchQuery = `_or:[{name: { _ilike: "%${first_name}%" }}, {name: { _ilike: "%${first_name}%" }}],`;
+					}
+				}
+			}
+
 			let data = {
 				query: `query MyQuery($limit:Int, $offset:Int) {
-          organisations(where: {
+					organisations_aggregate(where: {${searchQuery}
+            program_organisations: {
+              program_id:{_eq:${program_id}},
+              academic_year_id:{_eq:${academic_year_id}}
+              status:{_eq:"active"}
+            }}){
+						aggregate{
+							count
+						}
+				}
+          organisations(where: {${searchQuery}
             program_organisations: {
               program_id:{_eq:${program_id}},
               academic_year_id:{_eq:${academic_year_id}}
@@ -116,11 +143,18 @@ export class OrganisationService {
 			const response = await this.hasuraServiceFromServices.getData(data);
 
 			const organisations = response?.data?.organisations || [];
+			const count =
+				response?.data?.organisations_aggregate?.aggregate?.count;
+			const totalPages = Math.ceil(count / limit);
 
 			return resp.status(200).send({
 				success: true,
 				message: 'Organisation list found successfully',
 				data: organisations,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: totalPages,
 			});
 		} catch (error) {
 			// Log error and return a generic error response
