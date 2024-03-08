@@ -352,12 +352,25 @@ export class UserauthService {
 			  mobile
 			  alternative_mobile_number
 			  email_id
+			  state
 			  district
 			  block
 			  grampanchayat
 			  village
 			  pincode
 			  gender
+			  username
+			  mobile_no_verified
+			  long
+			  lat
+			  keycloak_id
+			  is_deactivated
+			  is_duplicate
+			  email_verified
+			  duplicate_reason
+			  aadhar_verified
+			  aadhar_token
+			  aadhaar_verification_mode
 			  profile_photo_1
 			  profile_photo_1_documents: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 				name
@@ -387,11 +400,14 @@ export class UserauthService {
 				device_ownership
 				has_diploma
 				diploma_details
+				pan_no
+				sourcing_channel
 			  }
 			  extended_users {
 				marital_status
 				social_category
 				designation
+				qualification_id
 			  }
 			  references(where: {context: {_eq: "users"}}) {
 				name
@@ -400,6 +416,15 @@ export class UserauthService {
 				context
 			  }
 			  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
+				id
+				parent_ip
+				documents_status
+				has_social_work_exp
+                police_verification_done
+				social_background_verified_by_neighbours
+				village_knowledge_test
+				status
+				form_step_number 
 				availability
 				qualification_ids
 			  }
@@ -412,6 +437,7 @@ export class UserauthService {
 				experience_in_years
 				related_to_teaching
 				references(where: {context: {_eq: "experience"}}) {
+			      id
 				  name
 				  contact_number
 				  type_of_document
@@ -421,19 +447,39 @@ export class UserauthService {
 					name
 					document_sub_type
 					doument_type
+					path
+					provider
+					context
+					context_id
 				  }
 				}
 			  }
 			  qualifications{
+				id
+				end_year
+				institution
+				start_year
 				qualification_master_id
 				qualification_reference_document_id
 				document_reference{
 				  document_id:id
 				  name
 				  path
+				  provider
+				  context
+				  context_id
 				}
+			    qualification_master{
+				context
+				context_id
+				created_by
+				id
+				name
+				type
+				updated_by
 			  }
 			}
+		}
 		  }
 		  `;
 
@@ -540,6 +586,20 @@ export class UserauthService {
 				return { ...acc, ...q, documents };
 			}, {});
 
+		user_data.users_by_pk.program_faciltators =
+			user_data?.users_by_pk?.program_faciltators?.reduce((acc, pf) => {
+				pf ? pf : {};
+
+				return { ...acc, ...pf };
+			}, {});
+
+		user_data.users_by_pk.references =
+			user_data?.users_by_pk?.references?.reduce((acc, rf) => {
+				rf ? rf : {};
+
+				return { ...acc, ...rf };
+			}, {});
+
 		const {
 			first_name,
 			middle_name,
@@ -586,6 +646,7 @@ export class UserauthService {
 			program_faciltators: user_data?.users_by_pk?.program_faciltators,
 			experience: user_data?.users_by_pk?.experience,
 			qualifications: user_data?.users_by_pk?.qualifications,
+			qualification_master: user_data?.users_by_pk?.qualification_master,
 		};
 
 		if (user_data) {
