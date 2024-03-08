@@ -251,6 +251,7 @@ export class QueryGeneratorService {
 			) {
 				str += '(';
 				let paramArr = [];
+
 				if (filters && Object.keys(filters).length > 0) {
 					let filterStr = `where: {`;
 					let strArr = Object.keys(filters).map((e) => {
