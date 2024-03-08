@@ -109,6 +109,16 @@ export class OrganisationService {
 
 			let data = {
 				query: `query MyQuery($limit:Int, $offset:Int) {
+					organisations_aggregate(where: {${searchQuery}
+            program_organisations: {
+              program_id:{_eq:${program_id}},
+              academic_year_id:{_eq:${academic_year_id}}
+              status:{_eq:"active"}
+            }}){
+						aggregate{
+							count
+						}
+				}
           organisations(where: {${searchQuery}
             program_organisations: {
               program_id:{_eq:${program_id}},
@@ -133,11 +143,17 @@ export class OrganisationService {
 			const response = await this.hasuraServiceFromServices.getData(data);
 
 			const organisations = response?.data?.organisations || [];
-
+			const count =
+				response?.data?.organisations_aggregate?.aggregate?.count;
+			const totalPages = Math.ceil(count / limit);
 			return resp.status(200).send({
 				success: true,
 				message: 'Organisation list found successfully',
 				data: organisations,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: totalPages,
 			});
 		} catch (error) {
 			// Log error and return a generic error response
