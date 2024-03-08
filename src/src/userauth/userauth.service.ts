@@ -344,6 +344,7 @@ export class UserauthService {
 
 		let query = `query MyQuery {
 			users_by_pk(id:${user_id}) {
+			  id
 			  first_name
 			  middle_name
 			  last_name
@@ -618,6 +619,19 @@ export class UserauthService {
 			profile_photo_1,
 			profile_photo_2,
 			profile_photo_3,
+			username,
+			mobile_no_verified,
+			long,
+			lat,
+			keycloak_id,
+			is_deactivated,
+			is_duplicate,
+			email_verified,
+			duplicate_reason,
+			aadhar_verified,
+			aadhar_token,
+			aadhaar_verification_mode,
+			id,
 		} = user_data?.users_by_pk || {};
 
 		const formattedData = {
@@ -639,6 +653,19 @@ export class UserauthService {
 				profile_photo_1,
 				profile_photo_2,
 				profile_photo_3,
+				username,
+				mobile_no_verified,
+				long,
+				lat,
+				keycloak_id,
+				is_deactivated,
+				is_duplicate,
+				email_verified,
+				duplicate_reason,
+				aadhar_verified,
+				aadhar_token,
+				aadhaar_verification_mode,
+				id,
 			},
 			core_faciltator: user_data?.users_by_pk?.core_faciltator,
 			extended_users: user_data?.users_by_pk?.extended_users,
