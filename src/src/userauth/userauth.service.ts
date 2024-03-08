@@ -374,12 +374,25 @@ export class UserauthService {
 			  mobile
 			  alternative_mobile_number
 			  email_id
+			  state
 			  district
 			  block
 			  grampanchayat
 			  village
 			  pincode
 			  gender
+			  username
+			  mobile_no_verified
+			  long
+			  lat
+			  keycloak_id
+			  is_deactivated
+			  is_duplicate
+			  email_verified
+			  duplicate_reason
+			  aadhar_verified
+			  aadhar_token
+			  aadhaar_verification_mode
 			  profile_photo_1
 			  profile_photo_1_documents: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 				name
@@ -409,11 +422,14 @@ export class UserauthService {
 				device_ownership
 				has_diploma
 				diploma_details
+				pan_no
+				sourcing_channel
 			  }
 			  extended_users {
 				marital_status
 				social_category
 				designation
+				qualification_id
 			  }
 			  references(where: {context: {_eq: "users"}}) {
 				name
@@ -422,6 +438,15 @@ export class UserauthService {
 				context
 			  }
 			  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
+				id
+				parent_ip
+				documents_status
+				has_social_work_exp
+                police_verification_done
+				social_background_verified_by_neighbours
+				village_knowledge_test
+				status
+				form_step_number 
 				availability
 				qualification_ids
 			  }
@@ -434,27 +459,49 @@ export class UserauthService {
 				experience_in_years
 				related_to_teaching
 				references(where: {context: {_eq: "experience"}}) {
+			      id
 				  name
 				  contact_number
 				  type_of_document
+				  document_id
 				  document_reference {
 					document_id: id
 					name
 					document_sub_type
 					doument_type
+					path
+					provider
+					context
+					context_id
 				  }
 				}
 			  }
 			  qualifications{
+				id
+				end_year
+				institution
+				start_year
 				qualification_master_id
 				qualification_reference_document_id
 				document_reference{
 				  document_id:id
 				  name
 				  path
+				  provider
+				  context
+				  context_id
 				}
+			    qualification_master{
+				context
+				context_id
+				created_by
+				id
+				name
+				type
+				updated_by
 			  }
 			}
+		}
 		  }
 		  `;
 
@@ -512,7 +559,7 @@ export class UserauthService {
 			},
 		};
 
-		if (!user_data.users_by_pk) {
+		if (!user_data?.users_by_pk) {
 			user_data.users_by_pk = {}; // Initialize as an empty object if it doesn't exist
 		}
 		// Replacing profile_photo_documents with profile_photo for all details
@@ -561,6 +608,20 @@ export class UserauthService {
 				return { ...acc, ...q, documents };
 			}, {});
 
+		user_data.users_by_pk.program_faciltators =
+			user_data?.users_by_pk?.program_faciltators?.reduce((acc, pf) => {
+				pf ? pf : {};
+
+				return { ...acc, ...pf };
+			}, {});
+
+		user_data.users_by_pk.references =
+			user_data?.users_by_pk?.references?.reduce((acc, rf) => {
+				rf ? rf : {};
+
+				return { ...acc, ...rf };
+			}, {});
+
 		const {
 			first_name,
 			middle_name,
@@ -607,6 +668,7 @@ export class UserauthService {
 			program_faciltators: user_data?.users_by_pk?.program_faciltators,
 			experience: user_data?.users_by_pk?.experience,
 			qualifications: user_data?.users_by_pk?.qualifications,
+			qualification_master: user_data?.users_by_pk?.qualification_master,
 		};
 
 		if (user_data) {
@@ -649,6 +711,7 @@ export class UserauthService {
 		let profile_photo_3_value;
 		let documents_values_3;
 		let profile_documents_array = [];
+		let qualification_document_data;
 
 		for (const key in json) {
 			const value = json[key];
@@ -736,6 +799,24 @@ export class UserauthService {
 				tableFields.push('context_id');
 			}
 
+			if (tableName == 'qualifications') {
+				console.log('qualvalue-->', value);
+				if (value?.documents) {
+					qualification_document_data = {
+						document_id: value?.documents?.document_id,
+						name: value?.documents?.name,
+						document_sub_type: 'qualifications',
+						doument_type: 'qualifications',
+						context: 'qualifications',
+					};
+				}
+				tableFields = tableFields?.filter(
+					(field) => field !== 'documents',
+				);
+				delete value?.documents;
+				console.log('qualvalue123-->', value);
+			}
+
 			let response = await this.findExisitingReccord(
 				tableName,
 				value,
@@ -745,9 +826,7 @@ export class UserauthService {
 			set_update = response?.set_update;
 			update_id = response?.id;
 
-			console.log('update-->>', set_update, update_id);
-
-			await this.upsertRecords(
+			let upsert_records_result = await this.upsertRecords(
 				set_update,
 				tableName,
 				tableFields,
@@ -756,8 +835,30 @@ export class UserauthService {
 				update_id,
 			);
 
+			console.log('upsert_records_result-->>', upsert_records_result);
+
 			if (tableName == 'users' && profile_documents_array?.length > 0) {
 				await this.upsertProfileDocuments(profile_documents_array);
+			}
+
+			if (tableName == 'qualifications' && qualification_document_data) {
+				let result = await this.upsertRecords(
+					1,
+					'documents',
+					[
+						'name',
+						'document_sub_type',
+						'doument_type',
+						'context',
+						'context_id',
+						'user_id',
+					],
+					qualification_document_data,
+					user_id,
+					qualification_document_data?.document_id,
+				);
+
+				console.log('result doc-->>.', result);
 			}
 		}
 
@@ -769,6 +870,9 @@ export class UserauthService {
 		let update_id;
 		let referenceFields;
 		let referenceData;
+		let documentFields;
+		let documentData;
+		let result;
 
 		for (const obj of values) {
 			let tableFields = Object.keys(obj);
@@ -790,24 +894,45 @@ export class UserauthService {
 						'name',
 						'contact_number',
 						'type_of_document',
-						'user_id',
 					];
 					referenceData = {
 						name: obj?.references.name,
 						contact_number: obj?.references.contact_number,
 						type_of_document: obj?.references.type_of_document,
+						id: obj?.references?.id,
 						context: 'experience',
 					};
 
-					tableFields = tableFields.filter(
-						(field) => field !== 'references',
-					);
-					delete obj.references;
+					if (set_update == 1) {
+						referenceData.context_id = obj?.id;
+					}
 				}
+
+				if ('documents' in obj.references) {
+					documentFields = [
+						'name',
+						'document_sub_type',
+						'doument_type',
+						'context',
+					];
+					documentData = {
+						name: obj?.references?.documents?.name,
+						document_sub_type:
+							obj?.references?.documents?.document_sub_type,
+						doument_type: obj?.references?.documents?.document_type,
+						id: obj?.references?.documents?.document_id,
+						context: 'reference',
+					};
+				}
+
+				// remove references object from the main object to process the experience object
+				tableFields = tableFields?.filter(
+					(field) => field !== 'references',
+				);
+				delete obj?.references;
 			}
 
-			console.log('referenceData-->>', obj);
-			let result = await this.upsertRecords(
+			result = await this.upsertRecords(
 				set_update,
 				tableName,
 				tableFields,
@@ -816,18 +941,33 @@ export class UserauthService {
 				update_id,
 			);
 
-			console.log('result in array-->>', result);
+			if (tableName == 'experience' && referenceData) {
+				let update_id = referenceData?.id;
+				set_update = update_id ? 1 : 0;
+				if (!obj?.id) {
+					referenceData.context_id = result?.experience?.id;
+				}
+				let result1 = await this.upsertRecords(
+					set_update,
+					'references',
+					referenceFields,
+					referenceData,
+					user_id,
+					update_id,
+				);
 
-			// if (referenceData) {
-			// 	await this.upsertRecords(
-			// 		set_update,
-			// 		tableName,
-			// 		tableFields,
-			// 		obj,
-			// 		user_id,
-			// 		update_id,
-			// 	);
-			// }
+				if (documentData) {
+					let update_id = documentData?.id;
+					let result2 = await this.upsertRecords(
+						1,
+						'documents',
+						documentFields,
+						documentData,
+						user_id,
+						update_id,
+					);
+				}
+			}
 		}
 	}
 
