@@ -12,6 +12,7 @@ import {
 	UsePipes,
 	ValidationPipe,
 	Response,
+	Request,
 } from '@nestjs/common';
 
 import { AuthGuard } from 'src/modules/auth/auth.guard';
