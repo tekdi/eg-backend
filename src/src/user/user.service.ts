@@ -1797,6 +1797,15 @@ export class UserService {
 	public async getIpUserList(body: any, req: any, resp: any) {
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
+		const organisation_id = body?.organisation_id;
+		if (!organisation_id) {
+			return resp.status(422).send({
+				success: false,
+				message: 'Organisation ID required',
+			});
+		}
+		const programUserFilter = `academic_year_id: { _eq: ${academic_year_id} },
+		program_id: { _eq: ${program_id}},organisation_id:{_eq:${organisation_id}}`;
 		let onlyfilter = [
 			'id',
 			'first_name',
@@ -1808,8 +1817,7 @@ export class UserService {
 			...(body.filter || {}),
 			core: `
 			program_users: {
-				academic_year_id: { _eq: ${academic_year_id} },
-				program_id: { _eq: ${program_id} },
+				${programUserFilter}
 			}`,
 		};
 
@@ -1818,8 +1826,7 @@ export class UserService {
 			[
 				...onlyfilter,
 				`program_users(where:{
-					academic_year_id: { _eq: ${academic_year_id} },
-					program_id: { _eq: ${program_id} }
+					${programUserFilter}
 				}){academic_year_id	program_id	status organisation_id role_id}`,
 			],
 			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
@@ -1831,6 +1838,7 @@ export class UserService {
 			message: 'IP User List Found  Successfully',
 		});
 	}
+
 	public async getIpDetails(id: any, body: any, req: any, resp) {
 		const ip_id = id;
 		const program_id = req.mw_program_id;
