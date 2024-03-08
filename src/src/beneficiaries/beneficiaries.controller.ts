@@ -18,6 +18,7 @@ import {
 import { Response } from 'express';
 import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { UserService } from 'src/user/user.service';
@@ -31,6 +32,7 @@ export class BeneficiariesController {
 	constructor(
 		private beneficiariesService: BeneficiariesService,
 		private userService: UserService,
+		private aclHelper: AclHelper,
 	) {}
 
 	/*@Get('/list')
@@ -48,6 +50,8 @@ export class BeneficiariesController {
 
 	@Post()
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read', 'read.own'])
 	findAll(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -174,12 +178,15 @@ export class BeneficiariesController {
 	}
 
 	@Get('/getStatuswiseCount')
-	getStatuswiseCount(
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read', 'read.own'])
+	async getStatuswiseCount(
 		@Body() body: any,
 		@Req() request: any,
 		@Res() response: Response,
 	) {
-		return this.beneficiariesService.getStatuswiseCount(
+		return await this.beneficiariesService.getStatuswiseCount(
 			body,
 			request,
 			response,
@@ -241,6 +248,9 @@ export class BeneficiariesController {
 
 	@Post('/register')
 	@UsePipes(ValidationPipe)
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['create'])
 	private async registerBeneficiary(
 		@Body() body: RegisterBeneficiaryDto,
 		@Req() request: any,
@@ -250,6 +260,8 @@ export class BeneficiariesController {
 
 	@Patch(':id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit', 'edit.own'])
 	public async updateBeneficiary(
 		@Param('id') id: string,
 		@Body() req: Record<string, any>,
@@ -270,18 +282,34 @@ export class BeneficiariesController {
 	}
 
 	@Put('statusUpdate')
-	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit.status', 'edit.status.own'])
 	async statusUpdate(
 		@Body() body: StatusUpdateDTO,
 		@Res() response: any,
 		@Req() request: any,
 	) {
+		// Bcoz record ID is getting passed in req body, we need to add extra ownership check
+		if (
+			!(await this.aclHelper.doIHaveAccess(
+				request,
+				'beneficiary',
+				parseInt(body?.user_id, 10),
+			))
+		) {
+			return response.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const result = await this.beneficiariesService.statusUpdate(
 			body,
-
 			request,
 		);
+
 		return response.status(result.status).json({
 			success: result.success,
 			message: result.message,
@@ -290,8 +318,10 @@ export class BeneficiariesController {
 	}
 
 	@Put('admin/statusUpdate')
-	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit.status', 'edit.status.own'])
 	async statusUpdateByIp(
 		@Body() body: StatusUpdateDTO,
 		@Res() response: any,
@@ -299,7 +329,6 @@ export class BeneficiariesController {
 	) {
 		const result = await this.beneficiariesService.statusUpdateByIp(
 			body,
-
 			request,
 		);
 		return response.status(result.status).json({
@@ -311,6 +340,8 @@ export class BeneficiariesController {
 
 	@Post('/admin/export-csv')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['export.csv', 'export.csv.own'])
 	async exportCsv(
 		@Req() request: any,
 		@Body() body: any,
@@ -321,6 +352,8 @@ export class BeneficiariesController {
 
 	@Post('/admin/export-subjects-csv')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['export.csv', 'export.csv.own'])
 	async exportSubjectsCsv(
 		@Req() request: any,
 		@Body() body: any,
@@ -335,11 +368,28 @@ export class BeneficiariesController {
 
 	@Post('admin/verify-enrollment')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit.enrollement', 'edit.enrollement.own'])
 	async verifyEnrollment(
 		@Body() body: any,
 		@Res() response: any,
 		@Req() request: any,
 	) {
+		// Bcoz record ID is getting passed in req body, we need to add extra ownership check
+		if (
+			!(await this.aclHelper.doIHaveAccess(
+				request,
+				'beneficiary',
+				parseInt(body?.user_id, 10),
+			))
+		) {
+			return response.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
 		let result;
 
 		const payload = {
@@ -352,6 +402,7 @@ export class BeneficiariesController {
 				  )
 				: '',
 		};
+
 		result = await this.beneficiariesService.setEnrollmentStatus(
 			payload,
 			request,
@@ -366,11 +417,15 @@ export class BeneficiariesController {
 
 	@Post('admin/reassign')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['reassign', 'reassign.own'])
 	async reassignBeneficiary(
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
 	) {
+		// @TODO - validate access for all beneficiaryIds (if not checked below)
+
 		const result = {
 			success: false,
 			message: '',

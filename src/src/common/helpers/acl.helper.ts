@@ -15,7 +15,7 @@ export class AclHelper {
 	) {}
 
 	private async getRoleActionsMapping() {
-		let roleActions;
+		let roleActions = {};
 
 		// 1. Check if data is in cache
 		const cachedRoleToActionMapping = await this.cacheService.get(
@@ -24,13 +24,50 @@ export class AclHelper {
 
 		if (cachedRoleToActionMapping) {
 			roleActions = cachedRoleToActionMapping;
+			console.log('### Using Cache for roleActions: ' + JSON.stringify(roleActions));
 		} else {
-			// @TODO - Get this from DB
-			const aclEnumJsonFile = fs.readFileSync(
-				'src/common/data/acl.enum.json',
+			// Get roles, actions from DB
+			let query = {
+				query: `query GetRolesAndActions {
+					roles {
+						id
+						slug
+						actions
+					}
+				}`,
+			};
+
+			const rolesResult = await this.hasuraServiceFromService.postData(
+				query,
 			);
 
-			roleActions = JSON.parse(aclEnumJsonFile.toString());
+			// Convert into following format
+			/*
+			{
+				"program_owner": [
+				  {"entity": "beneficiary", "actions": ["read", "export.csv"] },
+				  {"entity": "camp", "actions": ["read"] },
+				  {"entity": "facilitator", "actions": ["read"] }
+				],
+				"staff": [
+				  {"entity": "beneficiary", "actions": [ "create", "edit.own", "edit.status.own", "edit.enrollement.own", "export.csv.own", "read.own", "reassign.own"]},
+				  {"entity": "camp", "actions": ["create", "edit.own", "read.own"]},
+				  {"entity": "facilitator", "actions": ["create", "edit.own", "edit.status.own", "read.own"]}
+				],
+				"facilitator": [
+				  {"entity": "beneficiary", "actions": ["create", "edit.own", "edit.status.own", "read.own"]},
+				  { "entity": "camp", "actions": ["create", "edit.own", "read.own"]}
+				]
+			  }
+			*/
+
+			rolesResult.data.roles.forEach((role) => {
+				if (role.actions) {
+					roleActions[role.slug] = role.actions;
+				}
+			});
+
+			console.log(JSON.stringify(roleActions));
 
 			// 2. Add aclRoleToActionMapping into cache
 			await this.cacheService.set(
@@ -77,37 +114,13 @@ export class AclHelper {
 		return actions.every((action) => action.includes('.own'));
 	}
 
-	private async doIHaveAccess(
-		req: any,
-		entity: string,
-		entity_id: integer,
-	): Promise<boolean> {
-		switch (entity) {
-			case 'beneficiary': {
-				return await this.doIHaveBeneficiaryAccess(req, entity_id);
-			}
-
-			case 'facilitator': {
-				return await this.doIHavefacilitatorAccess(req, entity_id);
-			}
-
-			case 'camp': {
-				return await this.doIHaveCampAccess(req, entity_id);
-			}
-
-			default:
-				return false;
-		}
-	}
-
 	private async doIHaveBeneficiaryAccess(
 		request: any,
 		beneficiary_id: integer,
 	): Promise<boolean> {
-		const user_roles = request.mw_roles;
-		console.log(user_roles);
-
 		let gqlQuery;
+		const user_roles = request.mw_roles;
+		console.log('### Use roles: ' + user_roles);
 
 		// Validate for PO role
 		if (user_roles.includes('program_owners')) {
@@ -178,12 +191,12 @@ export class AclHelper {
 		// Fetch data
 		console.log(gqlQuery);
 		const result = await this.hasuraServiceFromService.getData(gqlQuery);
-		console.log(result);
 
 		if (result?.data && result.data['program_beneficiaries'].length > 0) {
-			console.log(result.data['program_beneficiaries']);
+			console.log('I have access: true');
 			return true;
 		} else {
+			console.log('I have access: false');
 			return false;
 		}
 	}
@@ -284,6 +297,29 @@ export class AclHelper {
 		}
 	}
 
+	public async doIHaveAccess(
+		request: any,
+		entity: string,
+		entity_id: integer,
+	): Promise<boolean> {
+		switch (entity) {
+			case 'beneficiary': {
+				return await this.doIHaveBeneficiaryAccess(request, entity_id);
+			}
+
+			case 'facilitator': {
+				return await this.doIHavefacilitatorAccess(request, entity_id);
+			}
+
+			case 'camp': {
+				return await this.doIHaveCampAccess(request, entity_id);
+			}
+
+			default:
+				return false;
+		}
+	}
+
 	public async validateAccess(
 		request: any,
 		entity: string,
@@ -303,6 +339,7 @@ export class AclHelper {
 		console.log('### Allowed actions : ', allowedActionsForThisEntity);
 
 		// 2 - Validate of user has one of the permission from permissionsRequired for this action
+		console.log('### Required Actions: ', permissionsRequired);
 		const allowedActionsListFromRequiredActions =
 			await this.getAllowedActionsListFromRequiredActions(
 				permissionsRequired,
@@ -346,4 +383,19 @@ export class AclHelper {
 
 		return true;
 	}
+
+	/*public async validateOwnershipAndThrowError(
+		request: any,
+		response: any,
+		entity: string,
+		entity_id: integer,
+	) {
+		if (!(await this.doIHaveAccess(request, entity, entity_id))) {
+			return response.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+	}*/
 }
