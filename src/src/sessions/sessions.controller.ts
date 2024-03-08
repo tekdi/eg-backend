@@ -21,7 +21,7 @@ export class SessionsController {
 
 	@Post('/add')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	createSession(
 		@Body() body: any,
 		@Req() request: any,
@@ -32,7 +32,7 @@ export class SessionsController {
 
 	@Patch('/update/:id')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	updateSession(
 		@Body() body: any,
 		@Req() request: any,
@@ -44,7 +44,7 @@ export class SessionsController {
 
 	@Get('/list/:id')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getSessionsListByCampId(
 		@Req() request: any,
 		@Res() response: Response,
@@ -59,7 +59,7 @@ export class SessionsController {
 
 	@Post('/details/:id')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getSessionDetailsById(
 		@Req() request: any,
 		@Res() response: Response,
@@ -76,7 +76,7 @@ export class SessionsController {
 
 	@Post('/get-one/:id')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getSessionDetailsByIdGetOne(
 		@Req() request: any,
 		@Res() response: Response,

@@ -48,7 +48,7 @@ export class UserauthController {
 
 	@Post('/onboarding')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async userOnboarding(
 		@Body() body: Body,
 		@Res() response: Response,

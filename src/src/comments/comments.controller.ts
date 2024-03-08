@@ -22,7 +22,7 @@ export class CommentsController {
 	constructor(private readonly commentsService: CommentsService) {}
 
 	@Post('/:context/:context_id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	create(
 		@Body() body: CreateCommentDto,
@@ -41,7 +41,7 @@ export class CommentsController {
 	}
 
 	@Get('/:context/:context_id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	findAll(
 		@Req() request: any,
 		@Param('context') context: string,
@@ -75,7 +75,7 @@ export class CommentsController {
 	}
 
 	@Patch('/:context/:context_id/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	update(
 		@Param('id') id: number,
@@ -87,7 +87,7 @@ export class CommentsController {
 	}
 
 	@Delete('/:context/:context_id/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	remove(
 		@Param('id') id: number,
 		@Req() request: any,

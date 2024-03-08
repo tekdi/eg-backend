@@ -270,7 +270,7 @@ export class AuthService {
 					roles {
 					  id
 					  role_type
-					  slag
+					  slug
 					}
 				  }
 				}

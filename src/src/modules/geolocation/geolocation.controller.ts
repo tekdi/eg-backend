@@ -66,7 +66,7 @@ export class GeolocationController {
 	@UseInterceptors(CacheInterceptor)
 	@CacheTTL(parseInt(process.env.CACHE_GEOLOCATION_TTL, 10))
 	@Post('/multipleblocks')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	public async getBlocksFromDistricts(
 		@Body() districts: MultipleBlocksDto,

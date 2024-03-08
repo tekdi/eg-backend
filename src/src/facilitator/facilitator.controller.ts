@@ -47,13 +47,13 @@ export class FacilitatorController {
 	// }
 
 	@Get('/getStatuswiseCount')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.facilitatorService.getStatuswiseCount(request, response);
 	}
 
 	@Post('/forOrientation')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	async getFacilitatorsForOrientation(
 		@Req() request: any,
 		@Body() body: any,
@@ -67,7 +67,7 @@ export class FacilitatorController {
 	}
 
 	@Delete('/experience/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	removeExperience(
 		@Param('id') id: string,
 		@Req() request: any,
@@ -77,7 +77,7 @@ export class FacilitatorController {
 	}
 
 	@Patch('/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	update(
 		@Param('id') id: string,
@@ -89,14 +89,14 @@ export class FacilitatorController {
 	}
 
 	@Patch('admin/okyc_details_override')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	okyc_update(@Req() req: any, @Body() body: any, @Res() response: any) {
 		return this.facilitatorService.okyc_update(body, req, response);
 	}
 
 	@Post('/')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	async getFacilitators(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -106,7 +106,7 @@ export class FacilitatorController {
 	}
 
 	@Post('/admin/search-by-ids')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	async getFacilitatorsFromIds(@Body() body: any, @Res() res: any) {
 		const result = await this.facilitatorService.getFacilitatorsFromIds(
@@ -121,7 +121,7 @@ export class FacilitatorController {
 	}
 
 	@Post('/admin/filter-by-beneficiaries')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	async getFilter_By_Beneficiaries(
 		@Body() body: any,
@@ -136,7 +136,7 @@ export class FacilitatorController {
 	}
 
 	@Post('/exportCsv')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	async exportFileToCsv(
 		@Req() request: any,
@@ -147,7 +147,7 @@ export class FacilitatorController {
 	}
 
 	@Patch('update-facilitator-aadhar/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	updatePrerakAadhar(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -163,7 +163,7 @@ export class FacilitatorController {
 	}
 
 	@Post('/admin/learner-status-distribution')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
 	async getLearnerStatusDistribution(
 		@Req() req: any,
@@ -195,13 +195,13 @@ export class FacilitatorController {
 	}
 
 	@Post('/update-okyc-response')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	updateOkycResponse(@Req() req: any, @Body() body: any, @Res() res: any) {
 		return this.facilitatorService.updateOkycResponse(req, body, res);
 	}
 
 	@Post('/program-facilitator/add')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	createProgramFacilitator(
 		@Req() req: any,
 		@Body() body: any,

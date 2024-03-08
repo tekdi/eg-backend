@@ -898,7 +898,7 @@ export class BeneficiariesService {
 
 			return resp.status(200).json({
 				success: true,
-				message: 'Benificiaries found success!',
+				message: 'Beneficiaries found success!',
 				data: {
 					totalCount: count,
 					data: mappedResponse,
@@ -1232,7 +1232,7 @@ export class BeneficiariesService {
 			);
 			return resp.status(200).json({
 				success: true,
-				message: 'Benificiaries found success!',
+				message: 'Beneficiaries found success!',
 				data: {
 					totalCount: count,
 					data: mappedResponse,
@@ -1458,7 +1458,7 @@ export class BeneficiariesService {
 				return resp.status(404).send({
 					success: false,
 					status: 'Not Found',
-					message: 'Benificiaries Not Found',
+					message: 'Beneficiary Not Found',
 					data: {},
 				});
 			} else {
@@ -1507,7 +1507,7 @@ export class BeneficiariesService {
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
-					message: 'Benificiaries found successfully!',
+					message: 'Beneficiary found successfully!',
 					data: { result: mappedData },
 				});
 			} else {
@@ -1686,7 +1686,6 @@ export class BeneficiariesService {
 		const status_response =
 			await this.beneficiariesCoreService.statusUpdate(
 				body,
-
 				request,
 			);
 

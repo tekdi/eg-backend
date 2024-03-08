@@ -20,7 +20,7 @@ export class BoardController {
 	@UsePipes(ValidationPipe)
 	// @UseInterceptors(CacheInterceptor)
 	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async getBoardList(@Res() response: any, @Req() request: any) {
 		return this.boardService.getBoardList(response, request);
 	}
@@ -29,7 +29,7 @@ export class BoardController {
 	@UsePipes(ValidationPipe)
 	// @UseInterceptors(CacheInterceptor)
 	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async getSubjectsByBoard(
 		@Param('id') id: number,
 		@Res() response: any,
@@ -42,7 +42,7 @@ export class BoardController {
 	@UsePipes(ValidationPipe)
 	// @UseInterceptors(CacheInterceptor)
 	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async getBoardNameById(
 		@Param('id') id: number,
 		@Res() response: any,

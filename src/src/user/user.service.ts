@@ -95,7 +95,7 @@ export class UserService {
 				  id
 				}
 			  }
-				  
+
 			  `;
 
 			const validation_data =

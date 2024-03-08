@@ -126,7 +126,7 @@ export class UserController {
 
 	// users/update_facilitator/:id update facilitator status.
 	@Put('update_facilitator/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async updateUser(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -147,7 +147,7 @@ export class UserController {
 
 	// users/ip_user_info by auth token.
 	@Get('/ip_user_info')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	ipUserInfo(@Req() request: Request, @Res() response: Response) {
 		this.userService
 			.ipUserInfo(request, response)
@@ -178,7 +178,7 @@ export class UserController {
 	}
 
 	@Get('/aadhaarDetails/:userId')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	private async getAadhaarDetails(
 		@Param('userId') id: string,
 		@Res() response: Response,
@@ -187,7 +187,7 @@ export class UserController {
 	}
 
 	@Get('/audit/:context/:context_id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getAuditLogs(
 		@Req() request: any,
 		@Res() response: Response,
@@ -203,7 +203,7 @@ export class UserController {
 	}
 
 	@Post('/is-camp-exist/:id')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async userCampExist(
 		@Param('id') id: any,
 		@Req() request: any,
@@ -214,7 +214,7 @@ export class UserController {
 	}
 
 	@Get('cohorts/my/:type')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async getUserCohorts(
 		@Param('type') type: any,
 		@Req() request: any,
@@ -235,7 +235,7 @@ export class UserController {
 
 	//get IP list
 	@Post('/ip/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getIpList(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -245,7 +245,7 @@ export class UserController {
 	}
 	//get cohort list of ip
 	@Post('/cohort/ip_list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getCohortIpList(
 		@Body() request: Record<string, any>,
 		@Req() req: any,

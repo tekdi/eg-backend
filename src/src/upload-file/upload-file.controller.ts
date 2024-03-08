@@ -40,7 +40,7 @@ export class UploadFileController {
 	}
 
 	@Post('/attendance')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	@UseInterceptors(FileInterceptor('file'))
 	async addFileNoMock(
 		@UploadedFile() file: Express.Multer.File,
