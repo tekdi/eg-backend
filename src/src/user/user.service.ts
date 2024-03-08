@@ -1793,4 +1793,34 @@ export class UserService {
 		const result = await this.hasuraServiceFromServices.getData(data);
 		return result;
 	}
+
+	public async getIpUserList(body: any, req: any, resp: any) {
+		body.filters = {
+			...(body.filters || {}),
+			core: `
+			program_users: {
+				academic_year_id: { _eq: 1 },
+				program_id: { _eq: 1 },
+			}`,
+		};
+
+		const result = await this.hasuraServiceFromServices.getAll(
+			'users',
+			[
+				'id',
+				'first_name',
+				'last_name',
+				'email_id',
+				'mobile',
+				' program_users {				academic_year_id				program_id				status				organisation_id				role_id			}',
+			],
+			body,
+		);
+
+		return resp.status(200).send({
+			...result,
+			success: true,
+			message: 'IP User List Found  Successfully',
+		});
+	}
 }

@@ -254,17 +254,21 @@ export class QueryGeneratorService {
 				if (filters && Object.keys(filters).length > 0) {
 					let filterStr = `where: {`;
 					let strArr = Object.keys(filters).map((e) => {
-						if (this.isEmptyObject(filters[e])) {
+						let qData = '';
+						if (e === 'core') {
+							qData = filters[e];
+						} else if (this.isEmptyObject(filters[e])) {
 							let data = this.objectConvert(
 								filters[e],
 								([key, val]) => {
 									return `${key}: "${val}"`;
 								},
 							);
-							return `${e}:{${data.join(',')}}`;
+							qData = `${e}:{${data.join(',')}}`;
 						} else if (filters && filters[e] != '') {
-							return `${e}:{_eq:"${filters[e]}"}`;
+							qData = `${e}:{_eq:"${filters[e]}"}`;
 						}
+						return qData;
 					});
 					filterStr += strArr.join();
 					filterStr += `}`;

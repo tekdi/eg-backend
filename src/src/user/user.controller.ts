@@ -253,6 +253,16 @@ export class UserController {
 	) {
 		return this.userService.getCohortIpList(request, req, response);
 	}
+
+	@Post('/ip_users/list')
+	@UseGuards(new AuthGuard())
+	getIpUserList(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getIpUserList(body, req, response);
+	}
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
