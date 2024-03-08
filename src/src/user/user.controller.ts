@@ -264,17 +264,6 @@ export class UserController {
 	) {
 		return this.userService.getIpDetails(id, body, request, response);
 	}
-
-	@Post('/ip_users/list')
-	@UseGuards(new AuthGuard())
-	getIpUserList(
-		@Body() body: Record<string, any>,
-		@Req() req: any,
-		@Res() response: Response,
-	) {
-		return this.userService.getIpUserList(body, req, response);
-	}
-
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
