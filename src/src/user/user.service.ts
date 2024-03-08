@@ -1794,6 +1794,43 @@ export class UserService {
 		return result;
 	}
 
+	public async getIpUserList(body: any, req: any, resp: any) {
+		const academic_year_id = req.mw_academic_year_id;
+		const program_id = req.mw_program_id;
+		let onlyfilter = [
+			'id',
+			'first_name',
+			'last_name',
+			'email_id',
+			'mobile',
+		];
+		body.filter = {
+			...(body.filter || {}),
+			core: `
+			program_users: {
+				academic_year_id: { _eq: ${academic_year_id} },
+				program_id: { _eq: ${program_id} },
+			}`,
+		};
+
+		const result = await this.hasuraServiceFromServices.getAll(
+			'users',
+			[
+				...onlyfilter,
+				`program_users(where:{
+					academic_year_id: { _eq: ${academic_year_id} },
+					program_id: { _eq: ${program_id} }
+				}){academic_year_id	program_id	status organisation_id role_id}`,
+			],
+			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
+		);
+
+		return resp.status(200).send({
+			...result,
+			success: true,
+			message: 'IP User List Found  Successfully',
+		});
+	}
 	public async getIpDetails(id: any, body: any, req: any, resp) {
 		const ip_id = id;
 		const program_id = req.mw_program_id;
