@@ -1795,26 +1795,34 @@ export class UserService {
 	}
 
 	public async getIpUserList(body: any, req: any, resp: any) {
-		body.filters = {
-			...(body.filters || {}),
+		const academic_year_id = req.mw_academic_year_id;
+		const program_id = req.mw_program_id;
+		let onlyfilter = [
+			'id',
+			'first_name',
+			'last_name',
+			'email_id',
+			'mobile',
+		];
+		body.filter = {
+			...(body.filter || {}),
 			core: `
 			program_users: {
-				academic_year_id: { _eq: 1 },
-				program_id: { _eq: 1 },
+				academic_year_id: { _eq: ${academic_year_id} },
+				program_id: { _eq: ${program_id} },
 			}`,
 		};
 
 		const result = await this.hasuraServiceFromServices.getAll(
 			'users',
 			[
-				'id',
-				'first_name',
-				'last_name',
-				'email_id',
-				'mobile',
-				' program_users {				academic_year_id				program_id				status				organisation_id				role_id			}',
+				...onlyfilter,
+				`program_users(where:{
+					academic_year_id: { _eq: ${academic_year_id} },
+					program_id: { _eq: ${program_id} }
+				}){academic_year_id	program_id	status organisation_id role_id}`,
 			],
-			body,
+			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
 		);
 
 		return resp.status(200).send({

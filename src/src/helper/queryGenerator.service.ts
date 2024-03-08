@@ -20,6 +20,17 @@ export class QueryGeneratorService {
 		return str;
 	};
 
+	filterObjectByKeyArray = (obj: any, desiredKeys: []) => {
+		const filteredObject = desiredKeys.reduce((acc: any, key) => {
+			if (key in obj) {
+				acc[key] = obj[key];
+			}
+			return acc;
+		}, {});
+
+		return filteredObject;
+	};
+
 	// create
 	create(tName: String, item: any, onlyFields: any = [], fields: any = []) {
 		let tableName = `insert_${tName}_one`;
@@ -242,7 +253,12 @@ export class QueryGeneratorService {
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
 		const getObjStr = (request: any) => {
-			const { filters, page, limit, order_by } = request;
+			const { filter, page, limit, order_by, onlyfilter } = request;
+			const filters = this.filterObjectByKeyArray(
+				filter || {},
+				onlyfilter || [],
+			);
+
 			let str = '';
 			if (
 				(limit && limit != '0') ||
@@ -251,6 +267,7 @@ export class QueryGeneratorService {
 			) {
 				str += '(';
 				let paramArr = [];
+
 				if (filters && Object.keys(filters).length > 0) {
 					let filterStr = `where: {`;
 					let strArr = Object.keys(filters).map((e) => {
@@ -296,7 +313,7 @@ export class QueryGeneratorService {
 			return str;
 		};
 
-		return `query MyQuery {
+		const query = `query MyQuery {
 	  ${tableName}_aggregate${getObjStr(request)} {
 		aggregate {
 		  count
@@ -307,6 +324,8 @@ export class QueryGeneratorService {
 	  }
 	}
 	`;
+
+		return query;
 	}
 
 	findOne(id: number, tName: String, onlyFields: any = []) {
