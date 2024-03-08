@@ -1831,4 +1831,47 @@ export class UserService {
 			message: 'IP User List Found  Successfully',
 		});
 	}
+	public async getIpDetails(id: any, body: any, req: any, resp) {
+		const ip_id = id;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+
+		let qury = `query MyQuery {
+			users(where: {id: {_eq: ${ip_id}}, program_users: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}){
+				id
+				first_name
+				middle_name
+				last_name
+				mobile
+				program_users(where:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
+					id
+					user_id
+					academic_year_id
+					program_id
+					role_id
+					organisation_id
+				 
+				}
+				
+			}
+		}
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.users;
+
+		if (newQdata.length == 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Data Not found!',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata || {},
+			});
+		}
+	}
 }
