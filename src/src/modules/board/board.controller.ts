@@ -42,7 +42,7 @@ export class BoardController {
 	@UsePipes(ValidationPipe)
 	// @UseInterceptors(CacheInterceptor)
 	// @CacheTTL(parseInt(process.env.CACHE_ENUM_TTL, 10))
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	public async getBoardNameById(
 		@Param('id') id: number,
 		@Res() response: any,

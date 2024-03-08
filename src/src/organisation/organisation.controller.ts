@@ -19,7 +19,7 @@ export class OrganisationController {
 
 	@Post('/create')
 	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	registerCamp(
 		@Body() body: any,
 		@Req() request: any,
@@ -29,7 +29,7 @@ export class OrganisationController {
 	}
 
 	@Post('/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getOrganisation(
 		@Body() request: Record<string, any>,
 		@Req() req: any,

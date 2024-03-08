@@ -1,6 +1,5 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
-import { integer } from 'aws-sdk/clients/cloudfront';
 import { Cache } from 'cache-manager';
 import * as fs from 'fs';
 import { UserService } from 'src/user/user.service';
@@ -116,7 +115,7 @@ export class AclHelper {
 
 	private async doIHaveBeneficiaryAccess(
 		request: any,
-		beneficiary_id: integer,
+		beneficiary_id: number,
 	): Promise<boolean> {
 		let gqlQuery;
 		const user_roles = request.mw_roles;
@@ -203,7 +202,7 @@ export class AclHelper {
 
 	private async doIHavefacilitatorAccess(
 		req: any,
-		facilitatorId: integer,
+		facilitatorId: number,
 	): Promise<boolean> {
 		/*let gqlQuery = {
 			query: `query MyQuery {
@@ -239,7 +238,7 @@ export class AclHelper {
 		return true;
 	}
 
-	private async doIHaveCampAccess(req: any, camp_id: integer) {
+	private async doIHaveCampAccess(req: any, camp_id: number) {
 		const user_roles = req.mw_roles;
 
 		// 1 - PO
@@ -300,7 +299,7 @@ export class AclHelper {
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
-		entity_id: integer,
+		entity_id: number,
 	): Promise<boolean> {
 		switch (entity) {
 			case 'beneficiary': {
@@ -388,7 +387,7 @@ export class AclHelper {
 		request: any,
 		response: any,
 		entity: string,
-		entity_id: integer,
+		entity_id: number,
 	) {
 		if (!(await this.doIHaveAccess(request, entity, entity_id))) {
 			return response.status(403).json({

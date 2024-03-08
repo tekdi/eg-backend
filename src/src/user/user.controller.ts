@@ -235,7 +235,7 @@ export class UserController {
 
 	//get IP list
 	@Post('/ip/list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getIpList(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -245,7 +245,7 @@ export class UserController {
 	}
 	//get cohort list of ip
 	@Post('/cohort/ip_list')
-	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
 	getCohortIpList(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
