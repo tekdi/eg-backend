@@ -451,7 +451,7 @@ export class UserauthService {
 				availability
 				qualification_ids
 			  }
-			  experience(where: {type: {_eq: "experience"}}) {
+			  experience(where: {type: {_in: ["experience","vo_experience"]}}) {
 				id
 				type
 				role_title
