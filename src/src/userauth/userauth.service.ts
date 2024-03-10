@@ -911,20 +911,18 @@ export class UserauthService {
 				update_id,
 			);
 
-			if (
-				upsert_records_result?.[tableName]?.extensions?.code ==
-				'validation-failed'
-			) {
-				console.log('herer');
+			if (upsert_records_result?.[tableName]?.extensions) {
 				resultArray.push({
 					[tableName]: {
 						status: false,
+						message: upsert_records_result?.[tableName]?.message,
 					},
 				});
 			} else {
 				resultArray.push({
 					[tableName]: {
 						status: true,
+						message: 'successfully updated the value',
 					},
 				});
 			}
