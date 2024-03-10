@@ -401,6 +401,9 @@ export class UserauthService {
 				document_sub_type
 				document_id: id
 				path
+				provider
+				context
+				context_id
 			  }
 			  profile_photo_2
 			  profile_photo_2_documents: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
@@ -409,6 +412,9 @@ export class UserauthService {
 				document_sub_type
 				document_id: id
 				path
+				provider
+				context
+				context_id
 			  }
 			  profile_photo_3
 			  profile_photo_3_documents: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
@@ -417,6 +423,9 @@ export class UserauthService {
 				document_sub_type
 				document_id: id
 				path
+				provider
+				context
+				context_id
 			  }
 			  core_faciltator {
 				device_type
@@ -533,6 +542,10 @@ export class UserauthService {
 				document_type: profilePhoto1Documents?.[0].doument_type,
 				document_sub_type:
 					profilePhoto1Documents?.[0].document_sub_type,
+				path: profilePhoto1Documents?.[0]?.path,
+				provider: profilePhoto1Documents?.[0]?.provider,
+				context: profilePhoto1Documents?.[0]?.context,
+				context_id: profilePhoto1Documents?.[0]?.context_id,
 			},
 		};
 
@@ -545,6 +558,10 @@ export class UserauthService {
 				document_type: profilePhoto2Documents?.[0].doument_type,
 				document_sub_type:
 					profilePhoto2Documents?.[0].document_sub_type,
+				path: profilePhoto2Documents?.[0]?.path,
+				provider: profilePhoto2Documents?.[0]?.provider,
+				context: profilePhoto2Documents?.[0]?.context,
+				context_id: profilePhoto2Documents?.[0]?.context_id,
 			},
 		};
 
@@ -557,6 +574,10 @@ export class UserauthService {
 				document_type: profilePhoto3Documents?.[0].doument_type || null,
 				document_sub_type:
 					profilePhoto3Documents?.[0].document_sub_type,
+				path: profilePhoto3Documents?.[0]?.path,
+				provider: profilePhoto3Documents?.[0]?.provider,
+				context: profilePhoto3Documents?.[0]?.context,
+				context_id: profilePhoto3Documents?.[0]?.context_id,
 			},
 		};
 
@@ -585,6 +606,10 @@ export class UserauthService {
 								ref?.document_reference?.document_sub_type,
 							document_type:
 								ref?.document_reference?.doument_type,
+							path: ref?.document_reference?.path,
+							provider: ref?.document_reference?.provider,
+							context: ref?.document_reference?.context,
+							context_id: ref?.document_reference?.context_id,
 					  }
 					: {};
 
@@ -601,6 +626,10 @@ export class UserauthService {
 							base64: q?.document_reference?.base64,
 							document_id: q?.document_reference?.document_id,
 							name: q?.document_reference?.name,
+							path: q?.document_reference?.path,
+							provider: q?.document_reference?.provider,
+							context: q?.document_reference?.context,
+							context_id: q?.document_reference?.context_id,
 					  }
 					: {};
 
@@ -1005,7 +1034,7 @@ export class UserauthService {
 		switch (tablename) {
 			case 'users': {
 				query = `query MyQuery {
-					users(where: {mobile: {_eq:${value.mobile}}}){
+					users(where: {id: {_eq:${user_id}}}){
 						id,
 						mobile
 					}
