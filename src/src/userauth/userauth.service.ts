@@ -251,6 +251,24 @@ export class UserauthService {
 					);
 				}
 
+				if (role === 'beneficiary' && body?.career_aspiration) {
+					let core_beneficiary_body = {
+						career_aspiration: body?.career_aspiration,
+						career_aspiration_details:
+							body?.career_aspiration_details,
+						user_id: user_id,
+					};
+					await this.hasuraService.q(
+						'core_beneficiaries',
+						{
+							...core_beneficiary_body,
+						},
+						[],
+						false,
+						['id'],
+					);
+				}
+
 				return response.status(200).send({
 					success: true,
 					message: 'User created successfully',
@@ -282,15 +300,19 @@ export class UserauthService {
 		let filterQueryArray = [];
 
 		filterQueryArray.push(
-			`first_name = '${first_name}'  AND dob = '${dob}'`,
+			`soundex(first_name) = soundex('${first_name}')  AND dob = '${dob}'`,
 		);
 
 		if (body?.last_name) {
-			filterQueryArray.push(`last_name = '${body.last_name}'`);
+			filterQueryArray.push(
+				`soundex(last_name) = soundex('${body.last_name}')`,
+			);
 		}
 
 		if (body?.middle_name) {
-			filterQueryArray.push(`middle_name = '${body.middle_name}'`);
+			filterQueryArray.push(
+				`soundex(middle_name) = soundex('${body.middle_name}')`,
+			);
 		}
 
 		const filterQuery = `SELECT mobile,id FROM users WHERE ${filterQueryArray.join(

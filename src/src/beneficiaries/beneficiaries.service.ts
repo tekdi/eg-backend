@@ -1149,6 +1149,7 @@ export class BeneficiariesService {
 						document_id
 						enrolled_for_board
 						enrollement_status
+						parent_support
 					}
 					extended_users {
 						marital_status
@@ -1364,6 +1365,7 @@ export class BeneficiariesService {
 				is_eligible
 				enrollment_verification_status
 				enrollment_verification_reason
+				enrollment_mobile_no
 				document {
 					context
 					context_id
@@ -1413,6 +1415,9 @@ export class BeneficiariesService {
 				document_id
 				enrolled_for_board
 				enrollement_status
+				parent_support
+				education_10th_date
+				education_10th_exam_year
 			  }
 			  program_users {
 				organisation_id
@@ -2064,6 +2069,7 @@ export class BeneficiariesService {
 					'block',
 					'village',
 					'grampanchayat',
+					'pincode',
 				],
 			},
 			edit_address: {
@@ -2076,6 +2082,7 @@ export class BeneficiariesService {
 					'village',
 					'grampanchayat',
 					'address',
+					'pincode',
 				],
 			},
 			personal: {
@@ -2104,6 +2111,8 @@ export class BeneficiariesService {
 					'last_standard_of_education_year',
 					'previous_school_type',
 					'reason_of_leaving_education',
+					'education_10th_date',
+					'education_10th_exam_year',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2115,6 +2124,8 @@ export class BeneficiariesService {
 					'last_standard_of_education_year',
 					'previous_school_type',
 					'reason_of_leaving_education',
+					'education_10th_date',
+					'education_10th_exam_year',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2135,6 +2146,7 @@ export class BeneficiariesService {
 					'user_id',
 					'career_aspiration',
 					'career_aspiration_details',
+					'parent_support',
 				],
 				program_beneficiaries: [
 					'learning_motivation',
@@ -2156,7 +2168,8 @@ export class BeneficiariesService {
 					'enrollment_middle_name',
 					'enrollment_last_name',
 					'enrollment_dob',
-					'enrollment_aadhaar_no',
+					//	'enrollment_aadhaar_no',
+					'enrollment_mobile_no',
 					'is_eligible',
 				],
 			},
@@ -2723,9 +2736,10 @@ export class BeneficiariesService {
 				await this.hasuraService.q(
 					tableName,
 					{
-						career_aspiration: req?.career_aspiration,
+						career_aspiration: req?.career_aspiration || null,
 						career_aspiration_details:
-							req?.career_aspiration_details,
+							req?.career_aspiration_details || null,
+						parent_support: req?.parent_support || null,
 						id: beneficiaryUser?.core_beneficiaries?.id
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
@@ -2781,26 +2795,39 @@ export class BeneficiariesService {
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 				let myRequest = {};
+				// if (
+				// 	!beneficiaryUser.aadhar_no ||
+				// 	beneficiaryUser.aadhar_no == 'null'
+				// ) {
+				// 	return response.status(400).send({
+				// 		success: false,
+				// 		message: 'Aadhaar Number Not Found',
+				// 		data: {},
+				// 	});
+				// }
+
 				if (
-					!beneficiaryUser.aadhar_no ||
-					beneficiaryUser.aadhar_no == 'null'
+					!beneficiaryUser.mobile ||
+					beneficiaryUser.mobile == 'null'
 				) {
 					return response.status(400).send({
 						success: false,
-						message: 'Aadhaar Number Not Found',
+						message: 'mobile Number Not Found',
 						data: {},
 					});
 				}
+
 				if (req.enrollment_status == 'enrolled') {
 					let messageArray = [];
 					let tempArray = [
 						'enrollment_number',
 						'enrollment_status',
-						'enrollment_aadhaar_no',
+						//	'enrollment_aadhaar_no',
 						'enrolled_for_board',
 						'subjects',
 						'enrollment_date',
 						'payment_receipt_document_id',
+						'enrollment_mobile_no',
 					];
 					for (let info of tempArray) {
 						if (req[info] === undefined || req[info] === '') {
@@ -2816,40 +2843,28 @@ export class BeneficiariesService {
 					} else {
 						const { edit_page_type, ...copiedRequest } = req;
 
-						if (
-							req?.enrollment_aadhaar_no &&
-							req?.enrollment_aadhaar_no ==
-								beneficiaryUser?.aadhar_no
-						) {
-							myRequest = {
-								...copiedRequest,
-								subjects:
-									typeof req.subjects == 'object'
-										? JSON.stringify(req.subjects).replace(
-												/"/g,
-												'\\"',
-										  )
-										: null,
-							};
-							// const status = await this.statusUpdate(
-							// 	{
-							// 		user_id: req.id,
-							// 		status: 'enrolled',
-							// 		reason_for_status_update: 'enrolled',
-							// 	},
-							// 	request,
-							// );
-						} else {
-							return response.status(400).send({
-								success: false,
-								message:
-									'Enrollment Aadhaar number Not matching with your Aadhaar Number',
-								data: {},
-							});
-						}
+						myRequest = {
+							...copiedRequest,
+							subjects:
+								typeof req.subjects == 'object'
+									? JSON.stringify(req.subjects).replace(
+											/"/g,
+											'\\"',
+									  )
+									: null,
+						};
+
+						await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: 'enrolled',
+								reason_for_status_update: 'enrolled',
+							},
+							request,
+						);
 					}
 				}
-				if (req.enrollment_status == 'not_enrolled') {
+				if (req.enrollment_status == 'ready_to_enroll') {
 					myRequest['enrollment_status'] = req?.enrollment_status;
 					myRequest['enrollment_number'] = null;
 					myRequest['enrolled_for_board'] = null;
@@ -2938,6 +2953,7 @@ export class BeneficiariesService {
 				//     req.academic_year_id == 1,
 				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
+
 				let tableName = 'program_beneficiaries';
 				let myRequest = {};
 				if (programDetails?.enrollment_status !== 'enrolled') {
@@ -2948,20 +2964,7 @@ export class BeneficiariesService {
 						data: {},
 					});
 				}
-				if (
-					!(
-						programDetails.enrollment_number &&
-						programDetails.enrollment_aadhaar_no ==
-							beneficiaryUser?.aadhar_no
-					)
-				) {
-					return response.status(400).json({
-						success: false,
-						message:
-							'Invalid Enrollment number or Enrollment Aadhaar number',
-						data: {},
-					});
-				}
+
 				let messageArray = [];
 				let tempArray = [
 					'enrollment_first_name',

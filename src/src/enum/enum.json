@@ -239,8 +239,8 @@
 	],
 	"TYPE_OF_LEARNER": [
 		{
-			"title": "DROPOUT",
-			"value": "dropout"
+			"title": "SCHOOL_DROPOUT",
+			"value": "school_dropout"
 		},
 		{
 			"title": "NEVER_ENROLLED",
@@ -257,10 +257,6 @@
 		{
 			"title": "STREAM_2_(MAINSTREAM_SYC)",
 			"value": "stream_2_mainstream_syc"
-		},
-		{
-			"title": "PRAGATI_SYC",
-			"value": "pragati_syc"
 		}
 	],
 	"LAST_STANDARD_OF_EDUCATION": [
@@ -315,8 +311,8 @@
 			"value": "enrolled"
 		},
 		{
-			"title": "NOT_ENROLLED",
-			"value": "not_enrolled"
+			"title": "READY_TO_ENROLL",
+			"value": "ready_to_enroll"
 		},
 		{
 			"title": "ENROLLMENT_AWAITED",
@@ -441,6 +437,22 @@
 		{
 			"title": "BENEFICIARY_REASONS_FOR_REJECTING_LEARNER_BEHAVIOURAL_ISSUES",
 			"value": "behavioural_issues"
+		},
+		{
+			"title": "WRONG_ENTRY",
+			"value": "wrong_entry"
+		},
+		{
+			"title": "NOT_ELIGIBLE",
+			"value": "not_eligible"
+		},
+		{
+			"title": "NOT_TARGET_GROUP",
+			"value": "not_target_group"
+		},
+		{
+			"title": "NOT_INTERESTED",
+			"value": "not_interested"
 		}
 	],
 	"FACILITATOR_REASONS_FOR_QUIT": [
@@ -1469,6 +1481,20 @@
 		{
 			"title": "SESSION_COMPLETED_SESSION_SUCCESSFULLY_IMPLEMENTED",
 			"value": "session_completed_session_successfully_implemented"
+		}
+	],
+	"PARENT_SUPPORT": [
+		{
+			"title": "PARENT_SUPPORT_YES",
+			"value": "yes"
+		},
+		{
+			"title": "PARENT_SUPPORT_NO",
+			"value": "no"
+		},
+		{
+			"title": "PARENT_SUPPORT_MAY_BE",
+			"value": "may_be"
 		}
 	]
 }
