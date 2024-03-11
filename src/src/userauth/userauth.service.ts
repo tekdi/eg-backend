@@ -661,6 +661,7 @@ export class UserauthService {
 			mobile,
 			alternative_mobile_number,
 			email_id,
+			state,
 			district,
 			block,
 			grampanchayat,
@@ -695,6 +696,7 @@ export class UserauthService {
 				mobile,
 				alternative_mobile_number,
 				email_id,
+				state,
 				district,
 				block,
 				grampanchayat,
@@ -739,17 +741,29 @@ export class UserauthService {
 		//first check validations for all inputs
 
 		let user_id = request?.mw_userid;
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.academic_year_id;
 
-		let result = await this.processTable(body, user_id);
+		let result = await this.processTable(
+			body,
+			user_id,
+			program_id,
+			academic_year_id,
+		);
 
+		console.log('result-->>', result);
 		if (result) {
 			return response.status(200).json({
-				success: true,
-				message: 'Successfully updated data',
+				result: result,
 			});
 		}
 	}
-	private async processTable(json: any, user_id: any) {
+	private async processTable(
+		json: any,
+		user_id: any,
+		program_id: any,
+		academic_year_id: any,
+	) {
 		let tableFields;
 		let tableName;
 		let set_update;
@@ -768,6 +782,7 @@ export class UserauthService {
 		let documents_values_3;
 		let profile_documents_array = [];
 		let qualification_document_data;
+		let resultArray = [];
 
 		for (const key in json) {
 			const value = json[key];
@@ -850,6 +865,13 @@ export class UserauthService {
 				tableFields.push('user_id');
 			}
 
+			if (tableName == 'program_faciltators') {
+				value.program_id = program_id;
+				value.academic_year_id = academic_year_id;
+				tableFields.push('program_id');
+				tableFields.push('academic_year_id');
+			}
+
 			if (tableName == 'references') {
 				value.context_id = user_id;
 				tableFields.push('context_id');
@@ -891,6 +913,22 @@ export class UserauthService {
 				update_id,
 			);
 
+			if (upsert_records_result?.[tableName]?.extensions) {
+				resultArray.push({
+					[tableName]: {
+						status: false,
+						message: upsert_records_result?.[tableName]?.message,
+					},
+				});
+			} else {
+				resultArray.push({
+					[tableName]: {
+						status: true,
+						message: 'successfully updated the value',
+					},
+				});
+			}
+
 			console.log('upsert_records_result-->>', upsert_records_result);
 
 			if (tableName == 'users' && profile_documents_array?.length > 0) {
@@ -918,7 +956,7 @@ export class UserauthService {
 			}
 		}
 
-		return true;
+		return resultArray;
 	}
 
 	public async processJsonArray(values, tableName, user_id) {
