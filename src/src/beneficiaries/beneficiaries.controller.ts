@@ -220,11 +220,25 @@ export class BeneficiariesController {
 
 	@Get(':id')
 	@UseGuards(new AuthGuard())
-	findOne(
+	public async findOne(
 		@Param('id') id: string,
 		@Req() req: any,
 		@Res() response: Response,
 	) {
+		if (req.mw_roles?.includes('program_owner')) {
+			req.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			req.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		}
+		if (!req.parent_ip_id) {
+			return response.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
 		return this.beneficiariesService.findOne(+id, response);
 	}
 
