@@ -1897,7 +1897,6 @@ export class UserService {
 					academic_year_id
 					program_id
 					user_id
-					role_slug
 				}
 			}
 		}
