@@ -216,4 +216,47 @@ export class OrganisationService {
 			});
 		}
 	}
+
+	public async getOrganisationexists(body: any, req: any, resp: any) {
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
+
+		try {
+			let data = {
+				query: `query MyQuery {
+					organisations(where: {_not: {program_organisations: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}) {
+						id
+						name
+					}
+				}
+			`,
+			};
+
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const organisations = response?.data?.organisations || [];
+
+			if (organisations.length > 0) {
+				return resp.status(200).send({
+					success: true,
+					message: 'Organisation exists',
+					data: organisations,
+				});
+			} else {
+				return resp.status(422).send({
+					success: true,
+					message: 'Organisation not exists',
+					data: organisations,
+				});
+			}
+		} catch (error) {
+			// Log error and return a generic error response
+			console.error('Error fetching organizations:', error);
+			return resp.status(422).send({
+				success: false,
+				message: 'An error occurred while fetching organizations',
+				data: {},
+			});
+		}
+	}
 }

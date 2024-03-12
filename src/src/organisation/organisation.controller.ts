@@ -52,4 +52,18 @@ export class OrganisationController {
 			id,
 		);
 	}
+
+	@Get('/exist_list')
+	@UseGuards(new AuthGuard())
+	getOrganisationexists(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.organisationService.getOrganisationexists(
+			body,
+			req,
+			response,
+		);
+	}
 }
