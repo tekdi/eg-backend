@@ -80,7 +80,7 @@ export class BeneficiariesModule implements NestModule {
 			.exclude(
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/:id/is_enrollment_exists',
-				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+
 				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
 				'/beneficiaries/register',
 				'/beneficiaries/statusUpdate',
@@ -88,10 +88,9 @@ export class BeneficiariesModule implements NestModule {
 			)
 			.forRoutes(BeneficiariesController);
 
-		consumer
-			.apply(CohortMiddleware)
-			.forRoutes(
-				{path: '/beneficiaries/getStatusWiseCount', method: RequestMethod.GET,}
-			);
+		consumer.apply(CohortMiddleware).forRoutes({
+			path: '/beneficiaries/getStatusWiseCount',
+			method: RequestMethod.GET,
+		});
 	}
 }

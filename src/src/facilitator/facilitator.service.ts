@@ -1567,16 +1567,23 @@ export class FacilitatorService {
 	}
 
 	async getFacilitators(req: any, body: any, resp: any) {
-		const user: any = await this.userService.ipUserInfo(req);
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
-			return resp.status(400).send({
+
+		if (req.mw_roles?.includes('program_owner')) {
+			body.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		}
+		if (!body.parent_ip_id) {
+			return resp.status(404).send({
 				success: false,
-				message: 'Invalid User',
+				message: 'Invalid Ip',
 				data: {},
 			});
 		}
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
@@ -1648,7 +1655,7 @@ export class FacilitatorService {
 		}
 
 		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}}}`,
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${body.parent_ip_id}"}, academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}}}`,
 		);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
