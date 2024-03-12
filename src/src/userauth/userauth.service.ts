@@ -783,6 +783,7 @@ export class UserauthService {
 		let profile_documents_array = [];
 		let qualification_document_data;
 		let resultArray = [];
+		let upsert_records_result;
 
 		for (const key in json) {
 			const value = json[key];
@@ -857,7 +858,12 @@ export class UserauthService {
 				// Handle array
 				tableName = key;
 
-				await this.processJsonArray(value, tableName, user_id);
+				await this.processJsonArray(
+					value,
+					tableName,
+					user_id,
+					resultArray,
+				);
 			}
 
 			if (tableName != 'users' && tableName != 'references') {
@@ -904,29 +910,32 @@ export class UserauthService {
 			set_update = response?.set_update;
 			update_id = response?.id;
 
-			let upsert_records_result = await this.upsertRecords(
-				set_update,
-				tableName,
-				tableFields,
-				value,
-				user_id,
-				update_id,
-			);
+			if (tableName != 'experience') {
+				upsert_records_result = await this.upsertRecords(
+					set_update,
+					tableName,
+					tableFields,
+					value,
+					user_id,
+					update_id,
+				);
 
-			if (upsert_records_result?.[tableName]?.extensions) {
-				resultArray.push({
-					[tableName]: {
-						status: false,
-						message: upsert_records_result?.[tableName]?.message,
-					},
-				});
-			} else {
-				resultArray.push({
-					[tableName]: {
-						status: true,
-						message: 'successfully updated the value',
-					},
-				});
+				if (upsert_records_result?.[tableName]?.extensions) {
+					resultArray.push({
+						[tableName]: {
+							status: false,
+							message:
+								upsert_records_result?.[tableName]?.message,
+						},
+					});
+				} else {
+					resultArray.push({
+						[tableName]: {
+							status: true,
+							message: 'successfully updated the value',
+						},
+					});
+				}
 			}
 
 			console.log('upsert_records_result-->>', upsert_records_result);
@@ -959,7 +968,7 @@ export class UserauthService {
 		return resultArray;
 	}
 
-	public async processJsonArray(values, tableName, user_id) {
+	public async processJsonArray(values, tableName, user_id, resultArray?) {
 		let set_update;
 		let update_id;
 		let referenceFields;
@@ -1061,6 +1070,22 @@ export class UserauthService {
 						update_id,
 					);
 				}
+			}
+
+			if (result?.[tableName]?.extensions) {
+				resultArray.push({
+					[tableName]: {
+						status: false,
+						message: result?.[tableName]?.message,
+					},
+				});
+			} else {
+				resultArray.push({
+					[tableName]: {
+						status: true,
+						message: 'successfully updated the value',
+					},
+				});
 			}
 		}
 	}
