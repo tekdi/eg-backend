@@ -29,7 +29,7 @@ export class OrganisationService {
 			return response.status(422).send({
 				success: false,
 				key: 'email_id',
-				message: 'Email ID Alreday Exists',
+				message: 'Email ID Already Exists',
 				data: {},
 			});
 		}
