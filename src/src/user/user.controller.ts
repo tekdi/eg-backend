@@ -300,6 +300,26 @@ export class UserController {
 	) {
 		return this.userService.getRoleList(body, req, response);
 	}
+
+	@Get('/cohort/academic_list')
+	@UseGuards(new AuthGuard())
+	getCohortAcademicList(
+		@Body() request: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getCohortAcademicList(request, req, response);
+	}
+
+	@Get('/cohort/program_list')
+	@UseGuards(new AuthGuard())
+	getCohortProgramList(
+		@Body() request: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getCohortProgramList(request, req, response);
+	}
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
