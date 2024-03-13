@@ -82,7 +82,7 @@ export class CampCoreService {
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
-		let parent_ip_id = body?.parent_ip_id;
+		let parent_ip_id = req?.parent_ip_id;
 		let status = body?.status;
 
 		filterQueryArray.push(

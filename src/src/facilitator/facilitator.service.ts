@@ -1571,12 +1571,17 @@ export class FacilitatorService {
 		const program_id = req.mw_program_id;
 
 		if (req.mw_roles?.includes('program_owner')) {
-			body.parent_ip_id = req.mw_ip_user_id;
+			req.parent_ip_id = req.mw_ip_user_id;
 		} else {
 			const user = await this.userService.ipUserInfo(req);
-			body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+			if (req.mw_roles?.includes('staff')) {
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			} else if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			}
 		}
-		if (!body.parent_ip_id) {
+		if (!req.parent_ip_id) {
 			return resp.status(404).send({
 				success: false,
 				message: 'Invalid Ip',
@@ -1655,7 +1660,7 @@ export class FacilitatorService {
 		}
 
 		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${body.parent_ip_id}"}, academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}}}`,
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${req.parent_ip_id}"}, academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}}}`,
 		);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
