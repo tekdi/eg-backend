@@ -537,11 +537,11 @@ export class UserauthService {
 			name: user_data?.users_by_pk?.profile_photo_1,
 			documents: {
 				base64: null,
-				document_id: profilePhoto1Documents?.[0].document_id,
-				name: profilePhoto1Documents?.[0].name,
-				document_type: profilePhoto1Documents?.[0].doument_type,
+				document_id: profilePhoto1Documents?.[0]?.document_id,
+				name: profilePhoto1Documents?.[0]?.name,
+				document_type: profilePhoto1Documents?.[0]?.doument_type,
 				document_sub_type:
-					profilePhoto1Documents?.[0].document_sub_type,
+					profilePhoto1Documents?.[0]?.document_sub_type,
 				path: profilePhoto1Documents?.[0]?.path,
 				provider: profilePhoto1Documents?.[0]?.provider,
 				context: profilePhoto1Documents?.[0]?.context,
@@ -550,14 +550,14 @@ export class UserauthService {
 		};
 
 		let profile_photo_2_info = {
-			name: user_data?.users_by_pk?.profile_photo_1,
+			name: user_data?.users_by_pk?.profile_photo_2,
 			documents: {
 				base64: null,
-				document_id: profilePhoto2Documents?.[0].document_id,
-				name: profilePhoto2Documents?.[0].name,
-				document_type: profilePhoto2Documents?.[0].doument_type,
+				document_id: profilePhoto2Documents?.[0]?.document_id,
+				name: profilePhoto2Documents?.[0]?.name,
+				document_type: profilePhoto2Documents?.[0]?.doument_type,
 				document_sub_type:
-					profilePhoto2Documents?.[0].document_sub_type,
+					profilePhoto2Documents?.[0]?.document_sub_type,
 				path: profilePhoto2Documents?.[0]?.path,
 				provider: profilePhoto2Documents?.[0]?.provider,
 				context: profilePhoto2Documents?.[0]?.context,
@@ -566,14 +566,15 @@ export class UserauthService {
 		};
 
 		let profile_photo_3_info = {
-			name: user_data?.users_by_pk?.profile_photo_1,
+			name: user_data?.users_by_pk?.profile_photo_3,
 			documents: {
 				base64: null,
-				document_id: profilePhoto3Documents?.[0].document_id,
-				name: profilePhoto3Documents?.[0].name,
-				document_type: profilePhoto3Documents?.[0].doument_type || null,
+				document_id: profilePhoto3Documents?.[0]?.document_id,
+				name: profilePhoto3Documents?.[0]?.name,
+				document_type:
+					profilePhoto3Documents?.[0]?.doument_type || null,
 				document_sub_type:
-					profilePhoto3Documents?.[0].document_sub_type,
+					profilePhoto3Documents?.[0]?.document_sub_type,
 				path: profilePhoto3Documents?.[0]?.path,
 				provider: profilePhoto3Documents?.[0]?.provider,
 				context: profilePhoto3Documents?.[0]?.context,
@@ -1270,6 +1271,306 @@ export class UserauthService {
 			);
 
 			console.log('resuklt-->>', result);
+		}
+	}
+
+	public async getUserInfoDetailsForBeneficiary(
+		request,
+		response,
+		userid: any,
+	) {
+		let user_id = userid; //get user id from token
+		let program_id = request?.mw_program_id; // get program_id from token
+		let academic_year_id = request?.mw_academic_year_id; // get academic_year_id from token
+
+		//query to get user details information
+
+		let query = `query MyQuery {
+			users_by_pk(id:${user_id}) {
+			  first_name
+			  middle_name
+			  last_name
+			  dob
+			  aadhar_no
+			  mobile
+			  alternative_mobile_number
+			  email_id
+			  state
+			  district
+			  block
+			  grampanchayat
+			  village
+			  pincode
+			  gender
+			  profile_photo_1
+			  profile_photo_2
+			  profile_photo_3
+			  username
+			  mobile_no_verified
+			  long
+			  lat
+			  keycloak_id
+			  is_deactivated
+			  is_duplicate
+			  email_verified
+			  duplicate_reason
+			  aadhar_verified
+			  aadhar_token
+			  aadhaar_verification_mode
+			  id
+			  profile_photo_1
+			  profile_photo_1_documents: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+				provider
+				context
+				context_id
+			  }
+			  profile_photo_2
+			  profile_photo_2_documents: documents(where: {document_sub_type: {_eq: "profile_photo_2"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+				provider
+				context
+				context_id
+			  }
+			  profile_photo_3
+			  profile_photo_3_documents: documents(where: {document_sub_type: {_eq: "profile_photo_3"}}) {
+				name
+				doument_type
+				document_sub_type
+				document_id: id
+				path
+				provider
+				context
+				context_id
+			  }
+			  core_beneficiaries {
+				career_aspiration
+				career_aspiration_details
+				device_ownership
+				device_type
+				type_of_learner
+				last_standard_of_education_year
+				last_standard_of_education
+				previous_school_type
+				reason_of_leaving_education
+				education_10th_exam_year
+				alternative_device_ownership
+				alternative_device_type
+				mother_first_name
+				mother_middle_name
+				mother_last_name
+				father_first_name
+				father_middle_name
+				father_last_name
+			  }
+			  extended_users {
+				marital_status
+				social_category
+			  }
+			  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
+				learning_level
+				learning_motivation
+				type_of_support_needed
+				facilitator_id
+				status
+			  }
+			  references {
+				first_name
+				last_name
+				middle_name
+				relation
+				contact_number
+				context
+				context_id
+			  }
+			}
+		  }
+		  
+		  
+		  `;
+
+		const hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let user_data = hasura_response?.data;
+
+		// get profile photo document details
+		let profilePhoto1Documents =
+			user_data?.users_by_pk?.profile_photo_1_documents;
+
+		let profilePhoto2Documents =
+			user_data?.users_by_pk?.profile_photo_2_documents;
+
+		let profilePhoto3Documents =
+			user_data?.users_by_pk?.profile_photo_3_documents;
+
+		//  modifiy individual profile photo document details as required
+
+		let profile_photo_1_info = {
+			name: user_data?.users_by_pk?.profile_photo_1,
+			documents: {
+				base64: null,
+				document_id: profilePhoto1Documents?.[0]?.document_id,
+				name: profilePhoto1Documents?.[0]?.name,
+				document_type: profilePhoto1Documents?.[0]?.doument_type,
+				document_sub_type:
+					profilePhoto1Documents?.[0]?.document_sub_type,
+				path: profilePhoto1Documents?.[0]?.path,
+				provider: profilePhoto1Documents?.[0]?.provider,
+				context: profilePhoto1Documents?.[0]?.context,
+				context_id: profilePhoto1Documents?.[0]?.context_id,
+			},
+		};
+
+		let profile_photo_2_info = {
+			name: user_data?.users_by_pk?.profile_photo_2,
+			documents: {
+				base64: null,
+				document_id: profilePhoto2Documents?.[0]?.document_id,
+				name: profilePhoto2Documents?.[0]?.name,
+				document_type: profilePhoto2Documents?.[0]?.doument_type,
+				document_sub_type:
+					profilePhoto2Documents?.[0]?.document_sub_type,
+				path: profilePhoto2Documents?.[0]?.path,
+				provider: profilePhoto2Documents?.[0]?.provider,
+				context: profilePhoto2Documents?.[0]?.context,
+				context_id: profilePhoto2Documents?.[0]?.context_id,
+			},
+		};
+
+		let profile_photo_3_info = {
+			name: user_data?.users_by_pk?.profile_photo_3,
+			documents: {
+				base64: null,
+				document_id: profilePhoto3Documents?.[0]?.document_id,
+				name: profilePhoto3Documents?.[0]?.name,
+				document_type:
+					profilePhoto3Documents?.[0]?.doument_type || null,
+				document_sub_type:
+					profilePhoto3Documents?.[0]?.document_sub_type,
+				path: profilePhoto3Documents?.[0]?.path,
+				provider: profilePhoto3Documents?.[0]?.provider,
+				context: profilePhoto3Documents?.[0]?.context,
+				context_id: profilePhoto3Documents?.[0]?.context_id,
+			},
+		};
+
+		if (!user_data?.users_by_pk) {
+			user_data.users_by_pk = {}; // Initialize as an empty object if it doesn't exist
+		}
+		// Replacing profile_photo_documents with profile_photo for all details
+		user_data.users_by_pk.profile_photo_1 = profile_photo_1_info;
+		user_data.users_by_pk.profile_photo_2 = profile_photo_2_info;
+		user_data.users_by_pk.profile_photo_3 = profile_photo_3_info;
+
+		// Removing profile_photo_documents object
+		delete user_data.users_by_pk.profile_photo_1_documents;
+		delete user_data.users_by_pk.profile_photo_2_documents;
+		delete user_data.users_by_pk.profile_photo_3_documents;
+
+		user_data.users_by_pk.program_beneficiaries =
+			user_data?.users_by_pk?.program_beneficiaries?.reduce((acc, pb) => {
+				pb ? pb : {};
+
+				return { ...acc, ...pb };
+			}, {});
+
+		user_data.users_by_pk.references =
+			user_data?.users_by_pk?.references?.reduce((acc, rf) => {
+				rf ? rf : {};
+
+				return { ...acc, ...rf };
+			}, {});
+
+		const {
+			first_name,
+			middle_name,
+			last_name,
+			dob,
+			aadhar_no,
+			mobile,
+			alternative_mobile_number,
+			email_id,
+			state,
+			district,
+			block,
+			grampanchayat,
+			village,
+			pincode,
+			gender,
+			profile_photo_1,
+			profile_photo_2,
+			profile_photo_3,
+			username,
+			mobile_no_verified,
+			long,
+			lat,
+			keycloak_id,
+			is_deactivated,
+			is_duplicate,
+			email_verified,
+			duplicate_reason,
+			aadhar_verified,
+			aadhar_token,
+			aadhaar_verification_mode,
+			id,
+		} = user_data?.users_by_pk || {};
+
+		const formattedData = {
+			users: {
+				first_name,
+				middle_name,
+				last_name,
+				dob,
+				aadhar_no,
+				mobile,
+				alternative_mobile_number,
+				email_id,
+				state,
+				district,
+				block,
+				grampanchayat,
+				village,
+				pincode,
+				gender,
+				profile_photo_1,
+				profile_photo_2,
+				profile_photo_3,
+				username,
+				mobile_no_verified,
+				long,
+				lat,
+				keycloak_id,
+				is_deactivated,
+				is_duplicate,
+				email_verified,
+				duplicate_reason,
+				aadhar_verified,
+				aadhar_token,
+				aadhaar_verification_mode,
+				id,
+			},
+			core_beneficiaries: user_data?.users_by_pk?.core_beneficiaries,
+			extended_users: user_data?.users_by_pk?.extended_users,
+			references: user_data?.users_by_pk?.references,
+			program_beneficiaries:
+				user_data?.users_by_pk?.program_beneficiaries,
+		};
+
+		if (user_data) {
+			return response.status(200).json({
+				message: 'Data retrieved successfully!',
+				data: formattedData,
+			});
 		}
 	}
 }
