@@ -2247,6 +2247,7 @@ export class CampService {
 				data: {},
 			});
 		}
+
 		const data = await this.campcoreservice.list(body, req);
 
 		if (data) {
