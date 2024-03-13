@@ -1786,6 +1786,7 @@ export class UserService {
 								${tableName}(where: {program_id: {_eq: ${mw_program_id}},academic_year_id: {_eq: ${mw_academic_year_id}},organisation_id:{_eq:${org_id}}, program_organisation: {status: {_eq: "active"}}}){
 									id
 									user_id
+									role_slug
 								}
 							}`,
 		};
@@ -1797,6 +1798,15 @@ export class UserService {
 	public async getIpUserList(body: any, req: any, resp: any) {
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
+		const organisation_id = body?.organisation_id;
+		if (!organisation_id) {
+			return resp.status(422).send({
+				success: false,
+				message: 'Organisation ID required',
+			});
+		}
+		const programUserFilter = `academic_year_id: { _eq: ${academic_year_id} },
+		program_id: { _eq: ${program_id}},organisation_id:{_eq:${organisation_id}}`;
 		let onlyfilter = [
 			'id',
 			'first_name',
@@ -1808,8 +1818,7 @@ export class UserService {
 			...(body.filter || {}),
 			core: `
 			program_users: {
-				academic_year_id: { _eq: ${academic_year_id} },
-				program_id: { _eq: ${program_id} },
+				${programUserFilter}
 			}`,
 		};
 
@@ -1818,9 +1827,8 @@ export class UserService {
 			[
 				...onlyfilter,
 				`program_users(where:{
-					academic_year_id: { _eq: ${academic_year_id} },
-					program_id: { _eq: ${program_id} }
-				}){academic_year_id	program_id	status organisation_id role_id}`,
+					${programUserFilter}
+				}){academic_year_id	program_id	status organisation_id role_id role_slug}`,
 			],
 			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
 		);
@@ -1831,6 +1839,7 @@ export class UserService {
 			message: 'IP User List Found  Successfully',
 		});
 	}
+
 	public async getIpDetails(id: any, body: any, req: any, resp) {
 		const ip_id = id;
 		const program_id = req.mw_program_id;
@@ -1850,7 +1859,7 @@ export class UserService {
 					program_id
 					role_id
 					organisation_id
-				 
+					role_slug
 				}
 				
 			}
@@ -1859,6 +1868,71 @@ export class UserService {
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.users;
+
+		if (newQdata.length == 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Data Not found!',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata || {},
+			});
+		}
+	}
+
+	public async getIpUserListExists(id: any, body: any, req: any, resp) {
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+
+		let qury = `query MyQuery {
+			users(where: {program_users:{},_not: {program_users: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}) {
+				id
+				first_name
+				last_name
+				middle_name
+				program_users {
+					academic_year_id
+					program_id
+					user_id
+				}
+
+				`;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.users;
+		if (newQdata.length == 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Data Not found!',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata || {},
+			});
+		}
+	}
+
+	public async getRoleList(body: any, req: any, resp) {
+		let qury = `query MyQuery {
+			roles {
+				id
+				role_type
+				slug
+				actions
+			}
+		}
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const newQdata = response?.data?.roles;
 
 		if (newQdata.length == 0) {
 			return resp.status(422).json({

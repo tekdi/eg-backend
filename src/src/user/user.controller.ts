@@ -263,6 +263,7 @@ export class UserController {
 	) {
 		return this.userService.getIpUserList(body, req, response);
 	}
+
 	@Post('/ip/:id')
 	@UseGuards(new AuthGuard())
 	getIpDetails(
@@ -272,6 +273,32 @@ export class UserController {
 		@Res() response: any,
 	) {
 		return this.userService.getIpDetails(id, body, request, response);
+	}
+
+	@Get('/ip_users/exist_list')
+	@UseGuards(new AuthGuard())
+	getIpUserListExists(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.userService.getIpUserListExists(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/roles/list')
+	@UseGuards(new AuthGuard())
+	getRoleList(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getRoleList(body, req, response);
 	}
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/

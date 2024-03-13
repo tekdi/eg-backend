@@ -2229,15 +2229,19 @@ export class CampService {
 	}
 
 	async getCampList(body: any, req: any, resp: any) {
-		const user = await this.userService.ipUserInfo(req);
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
+		if (req.mw_roles?.includes('program_owner')) {
+			body.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		}
+		if (!body.parent_ip_id) {
 			return resp.status(404).send({
 				success: false,
 				message: 'Invalid Ip',
 				data: {},
 			});
 		}
-		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		const data = await this.campcoreservice.list(body, req);
 
 		if (data) {
@@ -2265,9 +2269,14 @@ export class CampService {
 					data: [],
 				});
 			}
-			const user = await this.userService.ipUserInfo(req);
-
-			if (!user?.data?.program_users?.[0]?.organisation_id) {
+			if (req.mw_roles?.includes('program_owner')) {
+				req.parent_ip_id = req.mw_ip_user_id;
+			} else {
+				const user = await this.userService.ipUserInfo(req);
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			}
+			if (!req.parent_ip_id) {
 				return resp.status(404).send({
 					success: false,
 					message: 'Invalid Ip',
