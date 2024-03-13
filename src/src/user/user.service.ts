@@ -1921,7 +1921,7 @@ export class UserService {
 
 	public async getRoleList(body: any, req: any, resp) {
 		let qury = `query MyQuery {
-			roles {
+			roles(where: {_not: {slug: {_in: ["program_owner","facilitator","beneficiary","staff"]}}}) {
 				id
 				role_type
 				slug
