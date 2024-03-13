@@ -55,12 +55,12 @@ export class OrganisationController {
 
 	@Get('/exist_list')
 	@UseGuards(new AuthGuard())
-	getOrganisationexists(
+	getOrganisationExists(
 		@Body() body: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Response,
 	) {
-		return this.organisationService.getOrganisationexists(
+		return this.organisationService.getOrganisationExists(
 			body,
 			req,
 			response,

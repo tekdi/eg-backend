@@ -217,7 +217,7 @@ export class OrganisationService {
 		}
 	}
 
-	public async getOrganisationexists(body: any, req: any, resp: any) {
+	public async getOrganisationExists(body: any, req: any, resp: any) {
 		const academic_year_id = req?.mw_academic_year_id;
 		const program_id = req?.mw_program_id;
 
