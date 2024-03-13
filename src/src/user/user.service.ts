@@ -1921,7 +1921,7 @@ export class UserService {
 
 	public async getRoleList(body: any, req: any, resp) {
 		let qury = `query MyQuery {
-			roles {
+			roles(where: {_not: {slug: {_in: ["program_owner","facilitator","beneficiary","staff"]}}}) {
 				id
 				role_type
 				slug
@@ -1945,6 +1945,68 @@ export class UserService {
 				success: true,
 				message: 'Data found successfully!',
 				data: newQdata || {},
+			});
+		}
+	}
+
+	public async getCohortAcademicList(body: any, req: any, resp: any) {
+		try {
+			let data = {
+				query: `query MyQuery {
+					academic_years{
+						id
+						name
+					}
+				}
+			`,
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const list = response?.data?.academic_years || [];
+
+			return resp.status(200).send({
+				success: true,
+				message: 'Academic Year Id found successfully',
+				data: list,
+			});
+		} catch (error) {
+			console.error('Error fetching cohort IP list:', error);
+			return resp.status(500).send({
+				success: false,
+				message: 'An error occurred while fetching cohort IP list',
+				data: {},
+			});
+		}
+	}
+
+	public async getCohortProgramList(body: any, req: any, resp: any) {
+		try {
+			let data = {
+				query: `query MyQuery {
+					programs{
+						id name
+						state{
+							state_name
+						}
+					}
+				}
+			`,
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const list = response?.data?.programs || [];
+
+			return resp.status(200).send({
+				success: true,
+				message: 'Program Id found successfully',
+				data: list,
+			});
+		} catch (error) {
+			console.error('Error fetching cohort IP list:', error);
+			return resp.status(500).send({
+				success: false,
+				message: 'An error occurred while fetching cohort IP list',
+				data: {},
 			});
 		}
 	}
