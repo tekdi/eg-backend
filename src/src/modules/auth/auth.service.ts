@@ -504,7 +504,8 @@ export class AuthService {
 			if (
 				!body.role_fields.organisation_id ||
 				!body.role_fields.program_id ||
-				!body.role_fields.academic_year_id
+				!body.role_fields.academic_year_id ||
+				!body.role_fields.role_slug
 			) {
 				misssingFieldsFlag = true;
 			}
@@ -627,6 +628,9 @@ export class AuthService {
 				}
 				if (body.role_fields.organisation_id) {
 					body.organisation_id = body.role_fields.organisation_id;
+				}
+				if (body.role_fields.role_slug) {
+					body.role_slug = body.role_fields.role_slug;
 				}
 				if (body.role === 'facilitator' && body.hasOwnProperty('dob')) {
 					delete body.dob;
@@ -797,6 +801,7 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
+		let other = [];
 		const newR = await this.hasuraService.q(
 			tableName,
 			{ ...req, aadhar_verified: 'pending' },
@@ -841,7 +846,8 @@ export class AuthService {
 			req.organisation_id = `${req.role_fields.organisation_id}`;
 			req.program_id = req.role_fields.program_id;
 			req.academic_year_id = req.role_fields.academic_year_id;
-			req.status = null;
+			req.role_slug = req.role_fields.role_slug;
+			other = [...other, 'role_slug'];
 		}
 		console.log('tableName', programRoleTableName);
 		console.log('groupId', groupId);
@@ -861,6 +867,7 @@ export class AuthService {
 					'program_id',
 					'academic_year_id',
 					'status',
+					...(other || []),
 				],
 			);
 		}
