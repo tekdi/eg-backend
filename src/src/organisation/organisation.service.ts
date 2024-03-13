@@ -10,18 +10,50 @@ export class OrganisationService {
 	) {}
 
 	async create(body: any, request: any, response: any) {
+		let checkemail = {
+			query: `query MyQuery {
+			organisations_aggregate(where: {email_id: {_eq: "${body?.email_id}"}}){
+				aggregate{
+					count
+				}
+			}
+		}`,
+		};
+		const emailcount = await this.hasuraServiceFromServices.getData(
+			checkemail,
+		);
+		const count =
+			emailcount?.data?.organisations_aggregate?.aggregate?.count;
+
+		if (count > 0) {
+			return response.status(422).send({
+				success: false,
+				key: 'email_id',
+				message: 'Email ID Alreday Exists',
+				data: {},
+			});
+		}
 		const organisationData = {
 			name: body?.name,
 			mobile: body?.mobile,
 			contact_person: body?.contact_person,
 			address: body?.address,
+			email_id: body?.email_id,
+			learner_target: body?.learner_target,
 		};
 
 		const tableName = 'organisations';
 		const newOrganisation = await this.hasuraService.q(
 			tableName,
 			organisationData,
-			['name', 'mobile', 'contact_person', 'address'],
+			[
+				'name',
+				'mobile',
+				'contact_person',
+				'address',
+				'email_id',
+				'learner_target',
+			],
 		);
 
 		if (!newOrganisation || !newOrganisation?.organisations.id) {
