@@ -1786,6 +1786,7 @@ export class UserService {
 								${tableName}(where: {program_id: {_eq: ${mw_program_id}},academic_year_id: {_eq: ${mw_academic_year_id}},organisation_id:{_eq:${org_id}}, program_organisation: {status: {_eq: "active"}}}){
 									id
 									user_id
+									role_slug
 								}
 							}`,
 		};
@@ -1827,7 +1828,7 @@ export class UserService {
 				...onlyfilter,
 				`program_users(where:{
 					${programUserFilter}
-				}){academic_year_id	program_id	status organisation_id role_id}`,
+				}){academic_year_id	program_id	status organisation_id role_id role_slug}`,
 			],
 			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
 		);
@@ -1858,6 +1859,7 @@ export class UserService {
 					program_id
 					role_id
 					organisation_id
+					role_slug
 				}
 				
 			}
@@ -1883,7 +1885,6 @@ export class UserService {
 	}
 
 	public async getIpUserListExists(id: any, body: any, req: any, resp) {
-		const ip_id = id;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
 
@@ -1898,12 +1899,40 @@ export class UserService {
 					program_id
 					user_id
 				}
+
+				`;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.users;
+		if (newQdata.length == 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Data Not found!',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata || {},
+			});
+		}
+	}
+
+	public async getRoleList(body: any, req: any, resp) {
+		let qury = `query MyQuery {
+			roles {
+				id
+				role_type
+				slug
+				actions
 			}
 		}
 		  `;
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const newQdata = response?.data?.users;
+
+		const newQdata = response?.data?.roles;
 
 		if (newQdata.length == 0) {
 			return resp.status(422).json({

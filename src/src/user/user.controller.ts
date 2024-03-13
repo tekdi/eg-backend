@@ -290,6 +290,16 @@ export class UserController {
 			response,
 		);
 	}
+
+	@Post('/roles/list')
+	@UseGuards(new AuthGuard())
+	getRoleList(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getRoleList(body, req, response);
+	}
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
