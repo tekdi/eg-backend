@@ -16,7 +16,7 @@ export class OrganisationModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
 			.apply(CohortMiddleware)
-			.exclude('organisation/list')
+			.exclude()
 			.forRoutes(OrganisationController);
 	}
 }

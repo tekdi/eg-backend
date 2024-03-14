@@ -20,6 +20,7 @@ import { CampController } from './camp.controller';
 import { CampCoreService } from './camp.core.service';
 import { CampService } from './camp.service';
 import { Method } from 'src/common/method/method';
+import { IpMiddleware } from 'src/common/middlewares/ip.middleware';
 
 @Module({
 	imports: [
@@ -41,6 +42,9 @@ import { Method } from 'src/common/method/method';
 })
 export class CampModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
+		consumer
+			.apply(IpMiddleware)
+			.forRoutes('admin/camp-details/:id', '/camp/admin/');
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(
