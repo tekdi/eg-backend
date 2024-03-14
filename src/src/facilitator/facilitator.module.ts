@@ -38,7 +38,7 @@ import { IpMiddleware } from 'src/common/middlewares/ip.middleware';
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
-		consumer.apply(IpMiddleware).forRoutes('/facilitators/');
+		consumer.apply(IpMiddleware).forRoutes('/facilitators');
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(

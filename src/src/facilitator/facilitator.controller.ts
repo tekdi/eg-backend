@@ -94,7 +94,7 @@ export class FacilitatorController {
 		return this.facilitatorService.okyc_update(body, req, response);
 	}
 
-	@Post('/')
+	@Post('')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	async getFacilitators(
