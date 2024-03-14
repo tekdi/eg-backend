@@ -77,7 +77,7 @@ export class BeneficiariesModule implements NestModule {
 		*/
 		consumer
 			.apply(IpMiddleware)
-			.forRoutes('/beneficiaries//admin/list', '/beneficiaries/:id');
+			.forRoutes('/beneficiaries/admin/list', '/beneficiaries/:id');
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(
