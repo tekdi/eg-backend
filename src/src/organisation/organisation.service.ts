@@ -307,7 +307,7 @@ export class OrganisationService {
 		};
 
 		const programOrganisationTableName = 'program_organisation';
-		const program_org = await this.hasuraService.q(
+		const program_organisation = await this.hasuraService.q(
 			programOrganisationTableName,
 			programOrganisationData,
 		);
@@ -316,9 +316,7 @@ export class OrganisationService {
 		response.status(200).json({
 			success: true,
 			message: 'Existing Organisation created successfully.',
-			data: {
-				program_org: program_org?.program_organisation,
-			},
+			data: program_organisation,
 		});
 	}
 }
