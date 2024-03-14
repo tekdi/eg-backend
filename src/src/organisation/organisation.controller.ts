@@ -21,11 +21,7 @@ export class OrganisationController {
 	@Post('/create')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
-	registerCamp(
-		@Body() body: any,
-		@Req() request: any,
-		@Res() response: Response,
-	) {
+	create(@Body() body: any, @Req() request: any, @Res() response: Response) {
 		return this.organisationService.create(body, request, response);
 	}
 
@@ -65,5 +61,16 @@ export class OrganisationController {
 			req,
 			response,
 		);
+	}
+
+	@Post('/add/existing')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	addExisting(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.organisationService.addExisting(body, request, response);
 	}
 }
