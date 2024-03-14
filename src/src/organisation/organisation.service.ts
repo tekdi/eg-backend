@@ -67,6 +67,7 @@ export class OrganisationService {
 			program_id: request.mw_program_id,
 			academic_year_id: request.mw_academic_year_id,
 			status: 'active',
+			document_id: body?.document_id,
 			// Other fields as needed
 		};
 
@@ -88,8 +89,8 @@ export class OrganisationService {
 	}
 
 	public async getOrganisation(body: any, req: any, resp: any) {
-		const academic_year_id = req?.mw_academic_year_id;
-		const program_id = req?.mw_program_id;
+		const academic_year_id = body?.academic_year_id;
+		const program_id = body?.program_id;
 
 		try {
 			const page = isNaN(body.page) ? 1 : parseInt(body.page);
@@ -171,7 +172,6 @@ export class OrganisationService {
 					offset: offset,
 				},
 			};
-
 			const response = await this.hasuraServiceFromServices.getData(data);
 
 			const organisations = response?.data?.organisations || [];
@@ -215,6 +215,7 @@ export class OrganisationService {
               program_id
               academic_year_id
               status
+							document_id
             }
           }
         }
