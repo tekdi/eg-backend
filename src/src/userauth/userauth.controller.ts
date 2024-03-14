@@ -55,4 +55,18 @@ export class UserauthController {
 	) {
 		return this.userauthService.userOnboarding(body, response, request);
 	}
+
+	@Get('/beneficiary/user-info/:id')
+	@UsePipes(ValidationPipe)
+	public async getUserInfoDetailsForBeneficiary(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.userauthService.getUserInfoDetailsForBeneficiary(
+			request,
+			response,
+			id,
+		);
+	}
 }
