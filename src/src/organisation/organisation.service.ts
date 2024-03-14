@@ -10,18 +10,50 @@ export class OrganisationService {
 	) {}
 
 	async create(body: any, request: any, response: any) {
+		let checkemail = {
+			query: `query MyQuery {
+			organisations_aggregate(where: {email_id: {_eq: "${body?.email_id}"}}){
+				aggregate{
+					count
+				}
+			}
+		}`,
+		};
+		const emailcount = await this.hasuraServiceFromServices.getData(
+			checkemail,
+		);
+		const count =
+			emailcount?.data?.organisations_aggregate?.aggregate?.count;
+
+		if (count > 0) {
+			return response.status(422).send({
+				success: false,
+				key: 'email_id',
+				message: 'Email ID Already Exists',
+				data: {},
+			});
+		}
 		const organisationData = {
 			name: body?.name,
 			mobile: body?.mobile,
 			contact_person: body?.contact_person,
 			address: body?.address,
+			email_id: body?.email_id,
+			learner_target: body?.learner_target,
 		};
 
 		const tableName = 'organisations';
 		const newOrganisation = await this.hasuraService.q(
 			tableName,
 			organisationData,
-			['name', 'mobile', 'contact_person', 'address'],
+			[
+				'name',
+				'mobile',
+				'contact_person',
+				'address',
+				'email_id',
+				'learner_target',
+			],
 		);
 
 		if (!newOrganisation || !newOrganisation?.organisations.id) {
@@ -90,9 +122,36 @@ export class OrganisationService {
 				}
 			}
 
+			let searchQuery = '';
+			if (body.search && !isNaN(body.search)) {
+				let id = parseInt(body.search);
+				searchQuery = `id: {_eq: ${id}}`;
+			} else if (body.search) {
+				if (body.search && body.search !== '') {
+					let first_name = body.search.split(' ')[0];
+					let last_name = body.search.split(' ')[1] || '';
+
+					if (last_name?.length > 0) {
+						searchQuery = `_and:[{name: { _ilike: "%${first_name}%" }}, {name: { _ilike: "%${last_name}%" }}],`;
+					} else {
+						searchQuery = `_or:[{name: { _ilike: "%${first_name}%" }}, {name: { _ilike: "%${first_name}%" }}],`;
+					}
+				}
+			}
+
 			let data = {
 				query: `query MyQuery($limit:Int, $offset:Int) {
-          organisations(where: {
+					organisations_aggregate(where: {${searchQuery}
+            program_organisations: {
+              program_id:{_eq:${program_id}},
+              academic_year_id:{_eq:${academic_year_id}}
+              status:{_eq:"active"}
+            }}){
+						aggregate{
+							count
+						}
+				}
+          organisations(where: {${searchQuery}
             program_organisations: {
               program_id:{_eq:${program_id}},
               academic_year_id:{_eq:${academic_year_id}}
@@ -116,11 +175,17 @@ export class OrganisationService {
 			const response = await this.hasuraServiceFromServices.getData(data);
 
 			const organisations = response?.data?.organisations || [];
-
+			const count =
+				response?.data?.organisations_aggregate?.aggregate?.count;
+			const totalPages = Math.ceil(count / limit);
 			return resp.status(200).send({
 				success: true,
 				message: 'Organisation list found successfully',
 				data: organisations,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: totalPages,
 			});
 		} catch (error) {
 			// Log error and return a generic error response
@@ -133,15 +198,97 @@ export class OrganisationService {
 		}
 	}
 
-	// findOne(id: number) {
-	// 	return `This action returns a #${id} organisation`;
-	// }
+	public async getOrganisationDetails(req: any, resp: any, id: any) {
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
+		const org_id = id;
+		try {
+			let data = {
+				query: `query MyQuery {
+          organisations(where: {id:{_eq:${org_id}}
+          }) {
+            id
+            name
+            contact_person
+            mobile
+            program_organisations(where:{program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, status: {_eq: "active"}}){
+              program_id
+              academic_year_id
+              status
+            }
+          }
+        }
+			`,
+			};
 
-	// update(id: number, updateOrganisationDto: UpdateOrganisationDto) {
-	// 	return `This action updates a #${id} organisation`;
-	// }
+			const response = await this.hasuraServiceFromServices.getData(data);
 
-	// remove(id: number) {
-	// 	return `This action removes a #${id} organisation`;
-	// }
+			const organisations = response?.data?.organisations || [];
+
+			if (organisations.length == 0) {
+				return resp.status(422).send({
+					success: false,
+					message: 'Organisation Details Not found!',
+					data: organisations,
+				});
+			} else {
+				return resp.status(200).send({
+					success: true,
+					message: 'Organisation Details found successfully!',
+					data: organisations,
+				});
+			}
+		} catch (error) {
+			// Log error and return a generic error response
+			console.error('Error fetching organizations:', error);
+			return resp.status(422).send({
+				success: false,
+				message: 'An error occurred while fetching organizations',
+				data: {},
+			});
+		}
+	}
+
+	public async getOrganisationExists(body: any, req: any, resp: any) {
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
+
+		try {
+			let data = {
+				query: `query MyQuery {
+					organisations(where: {_not: {program_organisations: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}) {
+						id
+						name
+					}
+				}
+			`,
+			};
+
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const organisations = response?.data?.organisations || [];
+
+			if (organisations.length > 0) {
+				return resp.status(200).send({
+					success: true,
+					message: 'Organisation exists',
+					data: organisations,
+				});
+			} else {
+				return resp.status(422).send({
+					success: true,
+					message: 'Organisation not exists',
+					data: organisations,
+				});
+			}
+		} catch (error) {
+			// Log error and return a generic error response
+			console.error('Error fetching organizations:', error);
+			return resp.status(422).send({
+				success: false,
+				message: 'An error occurred while fetching organizations',
+				data: {},
+			});
+		}
+	}
 }

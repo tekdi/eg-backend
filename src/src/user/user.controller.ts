@@ -253,6 +253,73 @@ export class UserController {
 	) {
 		return this.userService.getCohortIpList(request, req, response);
 	}
+
+	@Post('/ip_users/list')
+	@UseGuards(new AuthGuard())
+	getIpUserList(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getIpUserList(body, req, response);
+	}
+
+	@Post('/ip/:id')
+	@UseGuards(new AuthGuard())
+	getIpDetails(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.userService.getIpDetails(id, body, request, response);
+	}
+
+	@Get('/ip_users/exist_list')
+	@UseGuards(new AuthGuard())
+	getIpUserListExists(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.userService.getIpUserListExists(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/roles/list')
+	@UseGuards(new AuthGuard())
+	getRoleList(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getRoleList(body, req, response);
+	}
+
+	@Get('/cohort/academic_list')
+	@UseGuards(new AuthGuard())
+	getCohortAcademicList(
+		@Body() request: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getCohortAcademicList(request, req, response);
+	}
+
+	@Get('/cohort/program_list')
+	@UseGuards(new AuthGuard())
+	getCohortProgramList(
+		@Body() request: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.userService.getCohortProgramList(request, req, response);
+	}
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
