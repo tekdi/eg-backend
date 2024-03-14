@@ -1,12 +1,15 @@
-//import { Body } from '@nestjs/common';
 import { HouseKeepingService } from './housekeeping.service';
+//import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+//import { AuthGuard } from '../auth/auth.guard';
 
+//@Controller('hk')
 export class HouseKeepingController {
 	constructor(private houseKeepingService: HouseKeepingService) {}
 	/*
-	@UseGuards(new AuthGuard())
+	@Post('/download-files')
+	//@UseGuards(new AuthGuard())
 	public async downloadFiles(@Body() body) {
-		await this.downloadFiles(body);
+		await this.houseKeepingService.downloadFiles(body);
 	}
 	*/
 }
