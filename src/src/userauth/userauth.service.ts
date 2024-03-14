@@ -8,6 +8,11 @@ import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
 import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
 import { UserService } from 'src/user/user.service';
+import { S3Service } from 'src/services/s3/s3.service';
+const axios = require('axios');
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
 
 @Injectable()
 export class UserauthService {
@@ -24,6 +29,7 @@ export class UserauthService {
 		private authService: AuthService,
 		private acknowledgementService: AcknowledgementService,
 		private userService: UserService,
+		private readonly s3Service: S3Service,
 		private method: Method,
 	) {}
 
@@ -357,6 +363,24 @@ export class UserauthService {
 		}
 	}
 
+	async fetchFileAndConvertToBase64(fileUrl, agent) {
+		try {
+			const file = await axios.get(fileUrl, {
+				responseType: 'arraybuffer',
+				httpsAgent: agent,
+			});
+
+			const extension = path.extname(fileUrl.split('/').pop()).substr(1);
+			const base64 = Buffer.from(file?.data, 'binary').toString('base64');
+			const dataUrl = `data:image/${extension};base64,${base64}`;
+
+			return dataUrl;
+		} catch (error) {
+			console.error('Error fetching file and converting to base64:');
+			return null;
+		}
+	}
+
 	public async getUserInfoDetails(request, response) {
 		let user_id = request.mw_userid; //get user id from token
 		let program_id = request?.mw_program_id; // get program_id from token
@@ -533,10 +557,45 @@ export class UserauthService {
 
 		//  modifiy individual profile photo document details as required
 
+		const agent = new https.Agent({
+			rejectUnauthorized: false, // Ignore SSL certificate validation
+		});
+
+		// get file url and convert to base64
+		const profile_photo_1_file_Url = await this.s3Service.getFileUrl(
+			profilePhoto1Documents?.[0]?.name,
+		);
+
+		const profile_photo_2_file_Url = await this.s3Service.getFileUrl(
+			profilePhoto2Documents?.[0]?.name,
+		);
+
+		const profile_photo_3_file_Url = await this.s3Service.getFileUrl(
+			profilePhoto3Documents?.[0]?.name,
+		);
+
+		const profilePhotoUrls = [
+			profile_photo_1_file_Url,
+			profile_photo_2_file_Url,
+			profile_photo_3_file_Url,
+		];
+
+		const base64Profiles = await Promise.all(
+			profilePhotoUrls.map((url) =>
+				this.fetchFileAndConvertToBase64(url, agent),
+			),
+		);
+
+		const [
+			data_base64_profile_1,
+			data_base64_profile_2,
+			data_base64_profile_3,
+		] = base64Profiles;
+
 		let profile_photo_1_info = {
 			name: user_data?.users_by_pk?.profile_photo_1,
 			documents: {
-				base64: null,
+				base64: data_base64_profile_1,
 				document_id: profilePhoto1Documents?.[0]?.document_id,
 				name: profilePhoto1Documents?.[0]?.name,
 				document_type: profilePhoto1Documents?.[0]?.doument_type,
@@ -552,7 +611,7 @@ export class UserauthService {
 		let profile_photo_2_info = {
 			name: user_data?.users_by_pk?.profile_photo_2,
 			documents: {
-				base64: null,
+				base64: data_base64_profile_2,
 				document_id: profilePhoto2Documents?.[0]?.document_id,
 				name: profilePhoto2Documents?.[0]?.name,
 				document_type: profilePhoto2Documents?.[0]?.doument_type,
@@ -568,7 +627,7 @@ export class UserauthService {
 		let profile_photo_3_info = {
 			name: user_data?.users_by_pk?.profile_photo_3,
 			documents: {
-				base64: null,
+				base64: data_base64_profile_3,
 				document_id: profilePhoto3Documents?.[0]?.document_id,
 				name: profilePhoto3Documents?.[0]?.name,
 				document_type:
@@ -622,9 +681,18 @@ export class UserauthService {
 
 		user_data.users_by_pk.qualifications =
 			user_data?.users_by_pk?.qualifications?.reduce((acc, q) => {
+				const qualification_file_url = this.s3Service.getFileUrl(
+					q?.document_reference?.name,
+				);
+
+				const base64Qualifications = this.fetchFileAndConvertToBase64(
+					qualification_file_url,
+					agent,
+				);
+
 				const documents = q.document_reference
 					? {
-							base64: q?.document_reference?.base64,
+							base64: null,
 							document_id: q?.document_reference?.document_id,
 							name: q?.document_reference?.name,
 							path: q?.document_reference?.path,
@@ -636,6 +704,7 @@ export class UserauthService {
 
 				delete q.document_reference; // Remove document_reference
 
+				// Update accumulator with updated qualification object
 				return { ...acc, ...q, documents };
 			}, {});
 
