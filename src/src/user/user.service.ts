@@ -1852,6 +1852,7 @@ export class UserService {
 				middle_name
 				last_name
 				mobile
+				username
 				program_users(where:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
 					id
 					user_id
@@ -1899,7 +1900,7 @@ export class UserService {
 					program_id
 					user_id
 				}
-
+			}}
 				`;
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
