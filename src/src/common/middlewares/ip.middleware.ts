@@ -10,7 +10,6 @@ import { Method } from '../method/method';
 export class IpMiddleware implements NestMiddleware {
 	constructor(private method: Method) {}
 	async use(req: any, res: Response, next: () => void) {
-		let goToNextMw = true;
 		//check IP User ID is present or not [x-ip-user-id]
 		if (
 			req?.headers?.['x-ip-org-id'] ||

@@ -44,7 +44,7 @@ export class CampModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
 			.apply(IpMiddleware)
-			.forRoutes('admin/camp-details/:id', '/camp/admin/');
+			.forRoutes('admin/camp-details/:id', '/camp/admin/camp-list');
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(
