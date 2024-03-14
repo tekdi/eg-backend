@@ -230,6 +230,8 @@ export class UploadFileService {
 			}
 		}
 
+		console.log('name---->>', documentData.name);
+
 		const fileUrl = await this.s3Service.getFileUrl(documentData.name);
 		let result;
 		if (fileUrl) {
