@@ -32,6 +32,8 @@ export class ObservationsService {
 		'data_type',
 		'description',
 		'extra_all_info',
+		'title',
+		'enum',
 	];
 	public FieldReturnFields = [
 		'id',
@@ -43,6 +45,8 @@ export class ObservationsService {
 		'data_type',
 		'description',
 		'extra_all_info',
+		'title',
+		'enum',
 	];
 	constructor(
 		private readonly hasuraService: HasuraService,
@@ -92,6 +96,11 @@ export class ObservationsService {
 
 		body.created_by = user_id;
 		body.updated_by = user_id;
+
+		body.enum = body?.enum
+			? JSON.stringify(body?.enum).replace(/"/g, '\\"')
+			: '';
+
 		if (!user_id) {
 			return resp.status(422).json({
 				message: 'Invalid User Entity',
@@ -171,6 +180,10 @@ export class ObservationsService {
 				data: null,
 			});
 		}
+
+		body.enum = body?.enum
+			? JSON.stringify(body?.enum).replace(/"/g, '\\"')
+			: '';
 
 		let result = await this.hasuraService.q(
 			this.FieldTableName,

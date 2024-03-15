@@ -9,11 +9,13 @@ export class CreateFieldDto {
 	@IsString()
 	data_type: string;
 
-	@IsNotEmpty()
-	@IsString()
 	description: string;
+
+	extra_all_info: string;
 
 	@IsNotEmpty()
 	@IsString()
-	extra_all_info: string;
+	title: string;
+
+	enum: string;
 }

@@ -17,9 +17,7 @@ import {
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { ObservationsService } from './observations.service';
 import { CreateObservationDto } from './dto/create-observation.dto';
-import { UpdateObservationDto } from './dto/update-observation.dto';
 import { CreateFieldDto } from './dto/create-field.dto';
-import { UpdateFieldDto } from './dto/update-field.dto';
 
 @Controller('observations')
 export class ObservationsController {
@@ -44,7 +42,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async updateObservation(
-		@Body() body: UpdateObservationDto,
+		@Body() body: CreateObservationDto,
 		@Res() response: Response,
 		@Req() request: Request,
 		@Param('id') id: number,
@@ -132,7 +130,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async updateFields(
-		@Body() body: UpdateFieldDto,
+		@Body() body: CreateFieldDto,
 		@Res() response: Response,
 		@Req() request: Request,
 		@Param('id') id: number,
