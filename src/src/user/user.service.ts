@@ -1813,6 +1813,7 @@ export class UserService {
 			'last_name',
 			'email_id',
 			'mobile',
+			'username',
 		];
 		body.filter = {
 			...(body.filter || {}),
