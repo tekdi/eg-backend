@@ -223,6 +223,12 @@ export class OrganisationService {
 							doc_per_cohort_id
 							doc_per_monthly_id
 							doc_quarterly_id
+							program{
+								name
+								state{
+									state_name
+								}
+							}
             }
           }
         }
