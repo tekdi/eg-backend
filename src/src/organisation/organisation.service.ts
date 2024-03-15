@@ -160,8 +160,7 @@ export class OrganisationService {
             contact_person
             mobile
 						email_id
-						address
-						program_organisations{
+						program_organisations(where:{program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, status: {_eq: "active"}}){
 							learner_target
 						}
 					
