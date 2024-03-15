@@ -52,6 +52,10 @@ export class BeneficiariesController {
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read', 'read.own'])
+	@UseGuards(new AuthGuard())
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	findAll(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -62,6 +66,9 @@ export class BeneficiariesController {
 
 	@Post('/admin/list/duplicates-by-aadhaar')
 	@UseGuards(AuthGuard)
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async getBeneficiariesDuplicatesByAadhaar(
 		@Body() body: Record<string, any>,
 		@Query() query: any,
@@ -100,6 +107,8 @@ export class BeneficiariesController {
 
 	@Post('admin/list/deactivate-duplicates')
 	@UseGuards(AuthGuard)
+	@UseGuards(AuthGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async deactivateDuplicateBeneficiaries(
 		@Body() body: Record<string, any>,
 		@Req() req: any,
@@ -155,6 +164,9 @@ export class BeneficiariesController {
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read', 'read.own'])
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	findAllBeneficiariesForIp(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -165,6 +177,8 @@ export class BeneficiariesController {
 
 	@Post('/:id/is_enrollment_exists')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async isEnrollmentNumberExists(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -195,6 +209,8 @@ export class BeneficiariesController {
 
 	@Get('admin/list/duplicates-count-by-aadhaar')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async getAllDuplicateCountsByAadhaar(
 		@Req() request: any,
 		@Query() query: any,
@@ -526,6 +542,8 @@ export class BeneficiariesController {
 
 	@Patch('update-Beneficiaries-aadhar/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit', 'edit.own'])
 	updateBeneficiariesAadhar(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -542,6 +560,8 @@ export class BeneficiariesController {
 
 	@Post('/beneficiaries-for-camp')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read', 'read.own'])
 	notRegisteredBeneficiaries(
 		@Req() request: any,
 		@Body() body: any,
