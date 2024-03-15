@@ -248,7 +248,7 @@ export class OrganisationService {
 				return resp.status(200).send({
 					success: true,
 					message: 'Organisation Details found successfully!',
-					data: organisations[0],
+					data: organisations?.[0],
 				});
 			}
 		} catch (error) {
