@@ -1854,13 +1854,20 @@ export class UserService {
 				mobile
 				username
 				program_users(where:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
-					id
 					user_id
 					academic_year_id
 					program_id
-					role_id
 					organisation_id
 					role_slug
+					programs{
+						name
+						state{
+							state_name
+						}
+					}
+					organisations{
+						name
+					}
 				}
 				
 			}
@@ -1869,7 +1876,6 @@ export class UserService {
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.users;
-
 		if (newQdata.length == 0) {
 			return resp.status(422).json({
 				success: false,
@@ -2008,6 +2014,80 @@ export class UserService {
 				success: false,
 				message: 'An error occurred while fetching cohort IP list',
 				data: {},
+			});
+		}
+	}
+
+	async addExistingIp(body: any, request: any, response: any) {
+		const user_id = body?.user_id;
+		const organisationId = body?.organisation_id;
+		const roleSlug = body?.role_slug;
+		// Check if required fields are present in the payload
+		if (!user_id) {
+			return response.status(422).send({
+				success: false,
+				message: 'Required fields are missing in the payload.',
+				data: {},
+			});
+		}
+		let data = {
+			query: `query MyQuery {
+				program_users(where: {program_id: {_eq: ${request.mw_program_id}}, user_id: {_eq: ${user_id}}})
+			{
+				academic_year_id
+				program_id
+				user_id
+			}
+		}`,
+		};
+
+		const existing = await this.hasuraServiceFromServices.getData(data);
+
+		const pu_academic_year =
+			existing?.data?.program_users?.[0]?.academic_year_id;
+
+		if (!pu_academic_year) {
+			response.status(422).json({
+				success: false,
+				key: 'user_id',
+				message: 'IP Users Does Not Have state Access',
+				data: {},
+			});
+		} else if (pu_academic_year == request.mw_academic_year_id) {
+			response.status(422).json({
+				success: false,
+				key: 'academic_year_id',
+				message: 'IP Users Already Exists in This Academic Year',
+				data: {},
+			});
+		} else {
+			// Check if required fields are present in the payload
+			if (!organisationId || !roleSlug || !user_id) {
+				return response.status(422).send({
+					success: false,
+					message: 'Required fields are missing in the payload.',
+					data: {},
+				});
+			}
+			const programUsersData = {
+				organisation_id: body?.organisation_id,
+				program_id: request.mw_program_id,
+				academic_year_id: request.mw_academic_year_id,
+				user_id: user_id,
+				role_slug: body?.role_slug,
+			};
+
+			const programUserTableName = 'program_users';
+			const program_users = await this.hasuraService.q(
+				programUserTableName,
+				programUsersData,
+			);
+
+			// 	// Return success response
+			response.status(200).json({
+				success: true,
+				message: 'Existing IP User created successfully.',
+				data: program_users,
 			});
 		}
 	}
