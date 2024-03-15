@@ -320,6 +320,17 @@ export class UserController {
 	) {
 		return this.userService.getCohortProgramList(request, req, response);
 	}
+
+	@Post('/add/existing_ip')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	addExistingIp(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.userService.addExistingIp(body, request, response);
+	}
 	/**************************************************************************/
 	/******************************* V2 APIs **********************************/
 	/**************************************************************************/
