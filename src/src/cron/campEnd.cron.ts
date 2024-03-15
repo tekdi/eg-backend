@@ -8,7 +8,7 @@ export class CampEndCron {
 	constructor(private hasuraService: HasuraService) {}
 
 	// Cronjob runs every day at 12am
-	@Cron('0 00 * * * ')
+	// @Cron('0 00 * * * ')
 	async updateEndCamp() {
 		// Get today's date
 		const today = moment().format('YYYY-MM-DDTHH:mm:ss');

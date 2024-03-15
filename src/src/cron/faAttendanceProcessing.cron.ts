@@ -19,7 +19,7 @@ export class FaAttendanceProcessingCron {
 	}
 
 	//3rd cron runs for each hour's 25th minute eg: 10:25am, 11::25am
-	@Cron('25 * * * *')
+	// @Cron('25 * * * *')
 	async markAttendanceCron() {
 		try {
 			/*----------------------- Mark attendance of from face index of users in collection -----------------------*/

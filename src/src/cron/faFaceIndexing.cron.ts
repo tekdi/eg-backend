@@ -19,7 +19,7 @@ export class FaFaceIndexingCron {
 	}
 
 	//2nd cron runs for each hour's 15th minute eg: 10:15am, 11::15am
-	@Cron('15 * * * *')
+	// @Cron('15 * * * *')
 	async indexRekognitionUsers() {
 		try {
 			/*----------------------- Create face index of users in collection -----------------------*/
