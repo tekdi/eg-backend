@@ -39,21 +39,13 @@ export class OrganisationService {
 			contact_person: body?.contact_person,
 			address: body?.address,
 			email_id: body?.email_id,
-			learner_target: body?.learner_target,
 		};
 
 		const tableName = 'organisations';
 		const newOrganisation = await this.hasuraService.q(
 			tableName,
 			organisationData,
-			[
-				'name',
-				'mobile',
-				'contact_person',
-				'address',
-				'email_id',
-				'learner_target',
-			],
+			['name', 'mobile', 'contact_person', 'address', 'email_id'],
 		);
 
 		if (!newOrganisation || !newOrganisation?.organisations.id) {
@@ -67,6 +59,7 @@ export class OrganisationService {
 			program_id: request.mw_program_id,
 			academic_year_id: request.mw_academic_year_id,
 			status: 'active',
+			learner_target: body?.learner_target,
 			doc_per_cohort_id: body?.doc_per_cohort_id,
 			doc_per_monthly_id: body?.doc_per_monthly_id,
 			doc_quarterly_id: body?.doc_quarterly_id,
@@ -166,6 +159,11 @@ export class OrganisationService {
             name
             contact_person
             mobile
+						email_id
+						program_organisations(where:{program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, status: {_eq: "active"}}){
+							learner_target
+						}
+					
           }
         }
 			`,
@@ -213,13 +211,23 @@ export class OrganisationService {
             name
             contact_person
             mobile
+						email_id
+						address
             program_organisations(where:{program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, status: {_eq: "active"}}){
               program_id
               academic_year_id
               status
+							organisation_id
+							learner_target
 							doc_per_cohort_id
 							doc_per_monthly_id
 							doc_quarterly_id
+							program{
+								name
+								state{
+									state_name
+								}
+							}
             }
           }
         }
@@ -240,7 +248,7 @@ export class OrganisationService {
 				return resp.status(200).send({
 					success: true,
 					message: 'Organisation Details found successfully!',
-					data: organisations,
+					data: organisations?.[0],
 				});
 			}
 		} catch (error) {
@@ -299,29 +307,54 @@ export class OrganisationService {
 
 	async addExisting(body: any, request: any, response: any) {
 		const org_id = body?.organisation_id;
-
-		const programOrganisationData = {
-			organisation_id: org_id,
-			program_id: request.mw_program_id,
-			academic_year_id: request.mw_academic_year_id,
-			status: 'active',
-			doc_per_cohort_id: body?.doc_per_cohort_id,
-			doc_per_monthly_id: body?.doc_per_monthly_id,
-			doc_quarterly_id: body?.doc_quarterly_id,
-			// Other fields as needed
+		let data = {
+			query: `query MyQuery {
+				program_organisation_aggregate(where: {academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}, organisation_id: {_eq: ${org_id}}})
+					{
+						aggregate{
+							count
+						}
+					}
+			}`,
 		};
+		const existing = await this.hasuraServiceFromServices.getData(data);
 
-		const programOrganisationTableName = 'program_organisation';
-		const program_organisation = await this.hasuraService.q(
-			programOrganisationTableName,
-			programOrganisationData,
-		);
+		const program_organisation =
+			existing?.data?.program_organisation_aggregate?.aggregate?.count;
 
-		// Return success response
-		response.status(200).json({
-			success: true,
-			message: 'Existing Organisation created successfully.',
-			data: program_organisation,
-		});
+		if (program_organisation == 0) {
+			const programOrganisationData = {
+				organisation_id: org_id,
+				program_id: request.mw_program_id,
+				academic_year_id: request.mw_academic_year_id,
+				status: 'active',
+				doc_per_cohort_id: body?.doc_per_cohort_id,
+				doc_per_monthly_id: body?.doc_per_monthly_id,
+				doc_quarterly_id: body?.doc_quarterly_id,
+				learner_target: body?.learner_target,
+				// Other fields as needed
+			};
+
+			const programOrganisationTableName = 'program_organisation';
+			const program_organisation = await this.hasuraService.q(
+				programOrganisationTableName,
+				programOrganisationData,
+			);
+
+			// Return success response
+			response.status(200).json({
+				success: true,
+				message: 'Existing Organisation created successfully.',
+				data: program_organisation,
+			});
+		} else {
+			response.status(422).json({
+				success: false,
+				key: 'organisation_id',
+				message:
+					'Organisation ALready Exists for the Program and Academic Year.',
+				data: {},
+			});
+		}
 	}
 }
