@@ -309,20 +309,20 @@ export class OrganisationService {
 		const org_id = body?.organisation_id;
 		let data = {
 			query: `query MyQuery {
-		program_organisation(where: {academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}, organisation_id: {_eq: ${org_id}}})
-	{
-		id
-		academic_year_id
-		program_id
-		organisation_id
-	}
-	}`,
+				program_organisation_aggregate(where: {academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}, organisation_id: {_eq: ${org_id}}})
+					{
+						aggregate{
+							count
+						}
+					}
+			}`,
 		};
 		const existing = await this.hasuraServiceFromServices.getData(data);
 
-		const program_organisation = existing?.data?.program_organisation || [];
+		const program_organisation =
+			existing?.data?.program_organisation_aggregate?.aggregate?.count;
 
-		if (program_organisation.length == 0) {
+		if (program_organisation == 0) {
 			const programOrganisationData = {
 				organisation_id: org_id,
 				program_id: request.mw_program_id,
@@ -350,6 +350,7 @@ export class OrganisationService {
 		} else {
 			response.status(422).json({
 				success: false,
+				key: 'organisation_id',
 				message:
 					'Organisation ALready Exists for the Program and Academic Year.',
 				data: {},
