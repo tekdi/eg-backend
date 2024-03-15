@@ -252,7 +252,7 @@ export class QueryGeneratorService {
 		onlyFields: any = [],
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
-		const getObjStr = (request: any) => {
+		const getObjStr = (request: any, is_aggregate = false) => {
 			const { filter, page, limit, order_by, onlyfilter } = request;
 			const filters = this.filterObjectByKeyArray(
 				filter || {},
@@ -291,7 +291,7 @@ export class QueryGeneratorService {
 					filterStr += `}`;
 					paramArr = [...paramArr, filterStr];
 				}
-				if (limit) {
+				if (limit && !is_aggregate) {
 					let offset = 0;
 					if (page > 1 && limit) {
 						offset = parseInt(limit) * (page - 1);
@@ -312,9 +312,8 @@ export class QueryGeneratorService {
 			}
 			return str;
 		};
-
 		const query = `query MyQuery {
-	  ${tableName}_aggregate${getObjStr(request)} {
+	  ${tableName}_aggregate${getObjStr(request, true)} {
 		aggregate {
 		  count
 		}
