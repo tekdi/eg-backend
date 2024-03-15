@@ -1854,13 +1854,20 @@ export class UserService {
 				mobile
 				username
 				program_users(where:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
-					id
 					user_id
 					academic_year_id
 					program_id
-					role_id
 					organisation_id
 					role_slug
+					programs{
+						name
+						state{
+							state_name
+						}
+					}
+					organisations{
+						name
+					}
 				}
 				
 			}
@@ -1869,7 +1876,6 @@ export class UserService {
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.users;
-
 		if (newQdata.length == 0) {
 			return resp.status(422).json({
 				success: false,
