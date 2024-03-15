@@ -52,10 +52,6 @@ export class BeneficiariesController {
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read', 'read.own'])
-	@UseGuards(new AuthGuard())
-	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['read.own'])
 	findAll(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -65,7 +61,6 @@ export class BeneficiariesController {
 	}
 
 	@Post('/admin/list/duplicates-by-aadhaar')
-	@UseGuards(AuthGuard)
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read.own'])
@@ -107,7 +102,7 @@ export class BeneficiariesController {
 
 	@Post('admin/list/deactivate-duplicates')
 	@UseGuards(AuthGuard)
-	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read.own'])
 	async deactivateDuplicateBeneficiaries(
 		@Body() body: Record<string, any>,
@@ -164,9 +159,6 @@ export class BeneficiariesController {
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read', 'read.own'])
-	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['read.own'])
 	findAllBeneficiariesForIp(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
