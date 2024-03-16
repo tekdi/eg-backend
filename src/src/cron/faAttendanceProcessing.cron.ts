@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 
@@ -20,7 +20,7 @@ export class FaAttendanceProcessingCron {
 
 	//3rd cron runs for each hour's 25th minute eg: 10:25am, 11::25am
 	@Cron('25 * * * *')
-	async markAttendanceCron() {
+		async markAttendanceCron() {
 		try {
 			/*----------------------- Mark attendance of from face index of users in collection -----------------------*/
 			console.log(
@@ -41,7 +41,7 @@ export class FaAttendanceProcessingCron {
 			//console.dir(usersForAttendance, { depth: 99 });
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
-				const userId = String(user.id);
+								const userId = String(user.id);
 				// Iterate through attendance documents and mark attendance
 				for (const attendanceObj of user.attendances) {
 					if (
@@ -62,50 +62,56 @@ export class FaAttendanceProcessingCron {
 							);
 						//console.log('matchedUser', matchedUser);
 						// Check if the user matched
-						let matchingPercentage = null;
-						const isMatchFound = (matchedUser as any[]).some(
-							(obj) => {
-								//console.log('obj', obj);
-								if (
-									obj?.User?.UserId.replace(
-										this.prefixed,
-										'',
-									) === userId
-								) {
-									matchingPercentage = obj.Similarity;
-									return true;
-								}
-							},
-						);
-						//console.log('matchingPercentage', matchingPercentage);
-						// Set attendance verified as true or false based on results
-						let isAttendanceVerified = false;
-						if (isMatchFound) isAttendanceVerified = true;
-						/*console.log(
-							'-------------------------------------------------------------------------',
-						);
-						console.log(
-							`------------------------------ Verified: ${isMatchFound} ----------------------------`,
-						);
-						console.log(
-							'-------------------------------------------------------------------------',
-						);*/
-						// Update in attendance data in database
-						await this.markAttendance(attendanceObj.id, {
-							isAttendanceVerified,
-							matchingPercentage,
-						});
-						// Set delay between two attendance process
-						await new Promise((resolve, reject) =>
-							setTimeout(
-								resolve,
-								parseInt(
-									this.configService.get<string>(
-										'AWS_REKOGNITION_MARK_ATTENDANCE_PROCESS_INTERVAL_TIME',
+						if (matchedUser === false) {
+							console.log(
+								'------------------------------ Verified: ProvisionedThroughputExceededException',
+							);
+						} else {
+							let matchingPercentage = null;
+							const isMatchFound = (matchedUser as any[]).some(
+								(obj) => {
+									//console.log('obj', obj);
+									if (
+										obj?.User?.UserId.replace(
+											this.prefixed,
+											'',
+										) === userId
+									) {
+										matchingPercentage = obj.Similarity;
+										return true;
+									}
+								},
+							);
+							//console.log('matchingPercentage', matchingPercentage);
+							// Set attendance verified as true or false based on results
+							let isAttendanceVerified = false;
+							if (isMatchFound) isAttendanceVerified = true;
+							/*console.log(
+								'-------------------------------------------------------------------------',
+							);
+							console.log(
+								`------------------------------ Verified: ${isMatchFound} ----------------------------`,
+							);
+							console.log(
+								'-------------------------------------------------------------------------',
+							);*/
+							// Update in attendance data in database
+							await this.markAttendance(attendanceObj.id, {
+								isAttendanceVerified,
+								matchingPercentage,
+							});
+							// Set delay between two attendance process
+							await new Promise((resolve, reject) =>
+								setTimeout(
+									resolve,
+									parseInt(
+										this.configService.get<string>(
+											'AWS_REKOGNITION_MARK_ATTENDANCE_PROCESS_INTERVAL_TIME',
+										),
 									),
 								),
-							),
-						);
+							);
+						}
 					} else {
 						// Update in attendance data in database
 						await this.markProcessed(attendanceObj.id);
@@ -191,14 +197,14 @@ export class FaAttendanceProcessingCron {
 							_and: [
 								{ fa_user_indexed: {_eq: true} },
 								{ attendances_aggregate: {count: {predicate: {_gt: 0}}} },
-								{ attendances: { fa_is_processed: {_is_null: true} } },
+								{ attendances: { fa_is_processed: {_is_null: true}, photo_1: {_is_null: false,_neq: "-"} } },
 							]
 						},
 						limit: ${limit}
 					) {
 						id
 						attendances ( where: {
-							fa_is_processed: {_is_null: true},
+							fa_is_processed: {_is_null: true}, photo_1: {_is_null: false,_neq: "-"},
 						}) {
 							id
 							photo_1
