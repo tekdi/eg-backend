@@ -16,8 +16,10 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { ObservationsService } from './observations.service';
-import { CreateObservationDto } from './dto/create-observation.dto';
-import { CreateFieldDto } from './dto/create-field.dto';
+import { ObservationDto } from './dto/observation.dto';
+import { FieldDto } from './dto/field.dto';
+import { FieldSearchDto } from './dto/field-search.dto';
+import { ObservationSearchDto } from './dto/observation-search.dto';
 
 @Controller('observations')
 export class ObservationsController {
@@ -27,7 +29,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async createObservation(
-		@Body() body: CreateObservationDto,
+		@Body() body: ObservationDto,
 		@Res() response: Response,
 		@Req() request: Request,
 	) {
@@ -42,7 +44,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async updateObservation(
-		@Body() body: CreateObservationDto,
+		@Body() body: ObservationDto,
 		@Res() response: Response,
 		@Req() request: Request,
 		@Param('id') id: number,
@@ -104,7 +106,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async getObservationListByName(
-		@Body() body: Body,
+		@Body() body: ObservationSearchDto,
 		@Res() response: Response,
 		@Req() request: Request,
 	) {
@@ -119,7 +121,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async createFields(
-		@Body() body: CreateFieldDto,
+		@Body() body: FieldDto,
 		@Res() response: Response,
 		@Req() request: Request,
 	) {
@@ -130,7 +132,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async updateFields(
-		@Body() body: CreateFieldDto,
+		@Body() body: FieldDto,
 		@Res() response: Response,
 		@Req() request: Request,
 		@Param('id') id: number,
@@ -180,7 +182,7 @@ export class ObservationsController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async getFieldListByName(
-		@Body() body: Body,
+		@Body() body: FieldSearchDto,
 		@Res() response: Response,
 		@Req() request: Request,
 	) {

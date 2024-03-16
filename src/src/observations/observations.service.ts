@@ -56,7 +56,8 @@ export class ObservationsService {
 
 	async createObservation(body: any, resp: any, request: any) {
 		let user_id = request?.mw_userid;
-
+		let response;
+		let data;
 		body.created_by = user_id;
 		body.updated_by = user_id;
 		if (!user_id) {
@@ -66,15 +67,33 @@ export class ObservationsService {
 			});
 		}
 
-		let result = await this.hasuraService.q(
-			this.tableName,
-			{
-				...body,
-			},
-			this.fillable,
-			false,
-			this.returnFields,
-		);
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		data = {
+			query: `mutation CreateObservations {
+			insert_observations_one(object: {${query}}) {
+			  id
+			  name
+			}
+		  }
+		  `,
+			variables: {},
+		};
+
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		let result = response?.data?.data?.insert_observations_one;
 
 		if (result) {
 			return resp.status(200).json({
@@ -92,6 +111,7 @@ export class ObservationsService {
 	}
 
 	async createFields(body: any, resp: any, request: any) {
+		let data;
 		let user_id = request?.mw_userid;
 
 		body.created_by = user_id;
@@ -108,16 +128,39 @@ export class ObservationsService {
 			});
 		}
 
-		let result = await this.hasuraService.q(
-			this.FieldTableName,
-			{
-				...body,
-			},
-			this.FieldFillable,
-			false,
-			this.FieldReturnFields,
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		data = {
+			query: `mutation CreateFields {
+			insert_fields_one(object: {${query}}) {
+			  id
+			  name
+			  title
+			  enum
+
+
+			}
+		  }
+		  `,
+			variables: {},
+		};
+
+		let response = await this.hasuraServiceFromServices.queryWithVariable(
+			data,
 		);
 
+		let result = response?.data?.data?.insert_fields_one;
 		if (result) {
 			return resp.status(200).json({
 				success: true,
@@ -215,6 +258,8 @@ export class ObservationsService {
 		let response;
 		let newQdata;
 		let query;
+		let obj_filters;
+		let data;
 		let user_id = request?.mw_userid;
 
 		if (!user_id) {
@@ -224,38 +269,52 @@ export class ObservationsService {
 			});
 		}
 
-		if (body?.name) {
-			query = `query MyQuery {
-                observations(where: {name: {_ilike: "%${body?.name}%"}}) {
-                  created_at
-                  created_by
-                  id
-                  name
-                  updated_at
-                  updated_by
-                }
-              }
-              
-              
-              `;
+		if (body?.filters) {
+			let filters = new Object(body);
+
+			Object.keys(body.filters).forEach((item) => {
+				Object.keys(body.filters[item]).forEach((e) => {
+					if (!e.startsWith('_')) {
+						filters[item][`_${e}`] = filters[item][e];
+						delete filters[item][e];
+					}
+				});
+			});
+
+			data = {
+				query: `query Searchobservations($filters:observations_bool_exp) {
+					observations(where:$filters) {
+						created_at
+						created_by
+						id
+						name
+						updated_at
+						updated_by
+					  }
+					}`,
+				variables: {
+					filters: body.filters,
+				},
+			};
 		} else {
-			query = `query MyQuery {
-                observations{
-                  id
-                  name
-                  created_at
-                  created_by
-                  updated_by
-                }
-              }
-              
-              `;
+			data = {
+				query: `query MyQuery {
+					observations{
+					  id
+					  name
+					  created_at
+					  created_by
+					  updated_by
+					}
+				  }
+				  
+				  `,
+			};
 		}
 
-		response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-		newQdata = response?.data?.observations;
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		newQdata = response?.data?.data?.observations;
 
 		if (newQdata.length > 0) {
 			return resp.status(200).json({
@@ -277,6 +336,7 @@ export class ObservationsService {
 		let newQdata;
 		let query;
 		let user_id = request?.mw_userid;
+		let data;
 
 		if (!user_id) {
 			return resp.status(422).json({
@@ -285,47 +345,64 @@ export class ObservationsService {
 			});
 		}
 
-		if (body?.name) {
-			query = `query MyQuery {
-                fields(where: {name: {_ilike: "%${body?.name}%"}}) {
-                  created_at
-                  created_by
-                  id
-                  name
-                  updated_at
-                  updated_by
-                  data_type
-                  description
-                  extra_all_info
-                }
-              }
-              
-              
-              
-              `;
+		if (body?.filters) {
+			let filters = new Object(body);
+
+			Object.keys(body.filters).forEach((item) => {
+				Object.keys(body.filters[item]).forEach((e) => {
+					if (!e.startsWith('_')) {
+						filters[item][`_${e}`] = filters[item][e];
+						delete filters[item][e];
+					}
+				});
+			});
+
+			data = {
+				query: `query Searchfields($filters:fields_bool_exp) {
+					fields(where:$filters) {
+						created_at
+						created_by
+						id
+						name
+						updated_at
+						updated_by
+						data_type
+						description
+						extra_all_info
+						title
+						enum
+					  }
+					}`,
+				variables: {
+					filters: body.filters,
+				},
+			};
 		} else {
-			query = `query MyQuery {
-                fields {
-                  created_at
-                  created_by
-                  id
-                  name
-                  updated_at
-                  updated_by
-                  data_type
-                  description
-                  extra_all_info
-                }
-              }
-              
-              
-              `;
+			data = {
+				query: `query MyQuery {
+					fields {
+					  created_at
+					  created_by
+					  id
+					  name
+					  updated_at
+					  updated_by
+					  data_type
+					  description
+					  extra_all_info
+					  title
+					  enum
+					}
+				  }
+				  
+				  
+				  `,
+			};
 		}
 
-		response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-		newQdata = response?.data?.fields;
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		newQdata = response?.data?.data?.fields;
 
 		if (newQdata.length > 0) {
 			return resp.status(200).json({

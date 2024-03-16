@@ -1,6 +1,6 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsObject } from 'class-validator';
 
-export class CreateFieldDto {
+export class FieldDto {
 	@IsNotEmpty()
 	@IsString()
 	name: string;
