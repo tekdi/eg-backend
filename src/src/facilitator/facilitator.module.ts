@@ -19,6 +19,7 @@ import { FacilitatorCoreService } from './facilitator.core.service';
 import { FacilitatorService } from './facilitator.service';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { Method } from '../common/method/method';
+import { IpMiddleware } from 'src/common/middlewares/ip.middleware';
 
 @Module({
 	imports: [
@@ -37,6 +38,7 @@ import { Method } from '../common/method/method';
 export class FacilitatorModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer.apply(IpMiddleware).forRoutes('/facilitators');
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(
