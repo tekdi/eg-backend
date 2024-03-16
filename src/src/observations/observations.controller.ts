@@ -20,6 +20,10 @@ import { ObservationDto } from './dto/observation.dto';
 import { FieldDto } from './dto/field.dto';
 import { FieldSearchDto } from './dto/field-search.dto';
 import { ObservationSearchDto } from './dto/observation-search.dto';
+import { ObservationFieldsDto } from './dto/observation-fields.dto';
+import { ObservationFieldSearchDto } from './dto/observation-fields-search.dto';
+import { FieldResponsesDto } from './dto/field-responses.dto';
+import { FieldResponsesSearchDto } from './dto/field-responses-search.dto';
 
 @Controller('observations')
 export class ObservationsController {
@@ -34,6 +38,21 @@ export class ObservationsController {
 		@Req() request: Request,
 	) {
 		return this.observationsService.createObservation(
+			body,
+			response,
+			request,
+		);
+	}
+
+	@Post('/observation-fields')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async createObservationFields(
+		@Body() body: ObservationFieldsDto,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.observationsService.createObservationFields(
 			body,
 			response,
 			request,
@@ -57,6 +76,23 @@ export class ObservationsController {
 		);
 	}
 
+	@Patch('/observation-fields/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async updateObservationField(
+		@Body() body: ObservationFieldsDto,
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.observationsService.updateObservationField(
+			body,
+			response,
+			request,
+			id,
+		);
+	}
+
 	@Get('/list')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
@@ -66,6 +102,21 @@ export class ObservationsController {
 		@Req() request: Request,
 	) {
 		return this.observationsService.getObservationList(
+			body,
+			response,
+			request,
+		);
+	}
+
+	@Get('/observation-fields/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getObservationFieldList(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.observationsService.getObservationFieldList(
 			body,
 			response,
 			request,
@@ -87,6 +138,21 @@ export class ObservationsController {
 		);
 	}
 
+	@Get('/observation-fields/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getObservationFieldById(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.observationsService.getObservationFieldById(
+			response,
+			request,
+			id,
+		);
+	}
+
 	@Delete('/:id')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
@@ -102,6 +168,21 @@ export class ObservationsController {
 		);
 	}
 
+	@Delete('observation-fields/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async deleteObservationFieldById(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.observationsService.deleteObservationFieldById(
+			response,
+			request,
+			id,
+		);
+	}
+
 	@Post('/list')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
@@ -111,6 +192,21 @@ export class ObservationsController {
 		@Req() request: Request,
 	) {
 		return this.observationsService.getObservationList(
+			body,
+			response,
+			request,
+		);
+	}
+
+	@Post('observation-fields/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getObservationFieldsListByName(
+		@Body() body: ObservationFieldSearchDto,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.observationsService.getObservationFieldList(
 			body,
 			response,
 			request,
@@ -187,5 +283,99 @@ export class ObservationsController {
 		@Req() request: Request,
 	) {
 		return this.observationsService.getFieldsList(body, response, request);
+	}
+
+	//
+
+	@Post('/field-responses')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async createFieldResponses(
+		@Body() body: FieldResponsesDto,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.observationsService.createFieldResponses(
+			body,
+			response,
+			request,
+		);
+	}
+
+	@Patch('/field-responses/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async updateFieldResponses(
+		@Body() body: FieldResponsesDto,
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.observationsService.updateFieldResponses(
+			body,
+			response,
+			request,
+			id,
+		);
+	}
+
+	@Get('/field-responses/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getFieldResponsesList(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.observationsService.getFieldResponsesList(
+			body,
+			response,
+			request,
+		);
+	}
+
+	@Get('/field-responses/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getFieldResponsesById(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.observationsService.getFieldResponsesById(
+			response,
+			request,
+			id,
+		);
+	}
+
+	@Delete('/field-responses/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async deleteFieldResponsesById(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.observationsService.deleteFieldResponsesById(
+			response,
+			request,
+			id,
+		);
+	}
+
+	@Post('/field-responses/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getFieldResponsesListByName(
+		@Body() body: FieldResponsesSearchDto,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.observationsService.getFieldResponsesList(
+			body,
+			response,
+			request,
+		);
 	}
 }

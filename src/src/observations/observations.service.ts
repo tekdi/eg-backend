@@ -176,6 +176,124 @@ export class ObservationsService {
 		}
 	}
 
+	async createObservationFields(body: any, resp: any, request: any) {
+		let user_id = request?.mw_userid;
+		let response;
+		let data;
+		body.created_by = user_id;
+		body.updated_by = user_id;
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		data = {
+			query: `mutation CreateObservationFields {
+			insert_observation_fields_one(object: {${query}}) {
+			  id
+			  observation_id
+			  context
+			  context_id
+			  field_id
+			}
+		  }
+		  `,
+			variables: {},
+		};
+
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		let result = response?.data?.data?.insert_observation_fields_one;
+
+		if (result) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Observation Field created successfully!',
+				data: result,
+			});
+		} else {
+			return resp.status(500).json({
+				success: false,
+				message: 'Unable to create obsevation Field!',
+				data: {},
+			});
+		}
+	}
+
+	async createFieldResponses(body: any, resp: any, request: any) {
+		let user_id = request?.mw_userid;
+		let response;
+		let data;
+		body.created_by = user_id;
+		body.updated_by = user_id;
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		data = {
+			query: `mutation CreateFieldsResponses {
+			insert_field_responses_one(object: {${query}}) {
+			  id
+			  observation_id
+			  context
+			  context_id
+			  response_value
+			}
+		  }
+		  `,
+			variables: {},
+		};
+
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		let result = response?.data?.data?.insert_field_responses_one;
+
+		if (result) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Observation Field created successfully!',
+				data: result,
+			});
+		} else {
+			return resp.status(500).json({
+				success: false,
+				message: 'Unable to create obsevation Field!',
+				data: {},
+			});
+		}
+	}
+
 	async updateObservation(body: any, resp: any, request: any, id: any) {
 		let user_id = request?.mw_userid;
 
@@ -187,16 +305,44 @@ export class ObservationsService {
 			});
 		}
 
-		let result = await this.hasuraService.q(
-			this.tableName,
-			{
-				...body,
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		var data = {
+			query: `
+      mutation UpdateObservations($id:Int!) {
+        update_observations_by_pk(
+            pk_columns: {
+              id: $id
+            },
+            _set: {
+                ${query}
+            }
+        ) {
+          id
+        }
+    }
+    `,
+			variables: {
 				id: id,
 			},
-			this.fillable,
-			true,
-			this.returnFields,
+		};
+
+		let response = await this.hasuraServiceFromServices.queryWithVariable(
+			data,
 		);
+
+		let result = response?.data?.data?.update_observations_by_pk;
 
 		if (result) {
 			return resp.status(200).json({
@@ -228,16 +374,44 @@ export class ObservationsService {
 			? JSON.stringify(body?.enum).replace(/"/g, '\\"')
 			: '';
 
-		let result = await this.hasuraService.q(
-			this.FieldTableName,
-			{
-				...body,
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		var data = {
+			query: `
+		  mutation UpdateFields($id:Int!) {
+			update_fields_by_pk(
+				pk_columns: {
+				  id: $id
+				},
+				_set: {
+					${query}
+				}
+			) {
+			  id
+			}
+		}
+		`,
+			variables: {
 				id: id,
 			},
-			this.FieldFillable,
-			true,
-			this.FieldReturnFields,
+		};
+
+		let response = await this.hasuraServiceFromServices.queryWithVariable(
+			data,
 		);
+
+		let result = response?.data?.data?.update_fields_by_pk;
 
 		if (result) {
 			return resp.status(200).json({
@@ -249,6 +423,136 @@ export class ObservationsService {
 			return resp.status(500).json({
 				success: false,
 				message: 'Unable to update Field !',
+				data: {},
+			});
+		}
+	}
+
+	async updateObservationField(body: any, resp: any, request: any, id: any) {
+		let user_id = request?.mw_userid;
+
+		body.updated_by = user_id;
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		var data = {
+			query: `
+      mutation UpdateObservationFields($id:Int!) {
+        update_observation_fields_by_pk(
+            pk_columns: {
+              id: $id
+            },
+            _set: {
+                ${query}
+            }
+        ) {
+          id
+        }
+    }
+    `,
+			variables: {
+				id: id,
+			},
+		};
+
+		let response = await this.hasuraServiceFromServices.queryWithVariable(
+			data,
+		);
+
+		let result = response?.data?.data?.update_observation_fields_by_pk;
+
+		if (result) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Observation-Field updated successfully!',
+				data: result,
+			});
+		} else {
+			return resp.status(500).json({
+				success: false,
+				message: 'Unable to update obsevation-field !',
+				data: {},
+			});
+		}
+	}
+
+	async updateFieldResponses(body: any, resp: any, request: any, id: any) {
+		let user_id = request?.mw_userid;
+
+		body.updated_by = user_id;
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e])}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		var data = {
+			query: `
+      mutation UpdateFieldResponses($id:Int!) {
+        update_field_responses_by_pk(
+            pk_columns: {
+              id: $id
+            },
+            _set: {
+                ${query}
+            }
+        ) {
+          id
+        }
+    }
+    `,
+			variables: {
+				id: id,
+			},
+		};
+
+		let response = await this.hasuraServiceFromServices.queryWithVariable(
+			data,
+		);
+
+		let result = response?.data?.data?.update_field_responses_by_pk;
+
+		if (result) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Field Responses updated successfully!',
+				data: result,
+			});
+		} else {
+			return resp.status(500).json({
+				success: false,
+				message: 'Unable to update field Responses !',
 				data: {},
 			});
 		}
@@ -419,6 +723,174 @@ export class ObservationsService {
 		}
 	}
 
+	async getObservationFieldList(body: any, resp: any, request: any) {
+		let response;
+		let newQdata;
+		let query;
+		let obj_filters;
+		let data;
+		let user_id = request?.mw_userid;
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		if (body?.filters) {
+			let filters = new Object(body);
+
+			Object.keys(body.filters).forEach((item) => {
+				Object.keys(body.filters[item]).forEach((e) => {
+					if (!e.startsWith('_')) {
+						filters[item][`_${e}`] = filters[item][e];
+						delete filters[item][e];
+					}
+				});
+			});
+
+			data = {
+				query: `query Searchobservation_fields($filters:observation_fields_bool_exp) {
+					observation_fields(where:$filters) {
+						created_at
+						created_by
+						id
+						observation_id
+						context
+						context_id
+						field_id
+						updated_at
+						updated_by
+					  }
+					}`,
+				variables: {
+					filters: body.filters,
+				},
+			};
+		} else {
+			data = {
+				query: `query MyQuery {
+					observation_fields{
+						created_at
+						created_by
+						id
+						observation_id
+						context
+						context_id
+						field_id
+						updated_at
+						updated_by
+					}
+				  }
+				  
+				  `,
+			};
+		}
+
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		newQdata = response?.data?.data?.observation_fields;
+
+		if (newQdata.length > 0) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
+	async getFieldResponsesList(body: any, resp: any, request: any) {
+		let response;
+		let newQdata;
+		let query;
+		let obj_filters;
+		let data;
+		let user_id = request?.mw_userid;
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		if (body?.filters) {
+			let filters = new Object(body);
+
+			Object.keys(body.filters).forEach((item) => {
+				Object.keys(body.filters[item]).forEach((e) => {
+					if (!e.startsWith('_')) {
+						filters[item][`_${e}`] = filters[item][e];
+						delete filters[item][e];
+					}
+				});
+			});
+
+			data = {
+				query: `query Searchfield_responses($filters:field_responses_bool_exp) {
+					field_responses(where:$filters) {
+						created_at
+						created_by
+						id
+						observation_id
+						context
+						context_id
+						response_value
+						updated_at
+						updated_by
+					  }
+					}`,
+				variables: {
+					filters: body.filters,
+				},
+			};
+		} else {
+			data = {
+				query: `query MyQuery {
+					field_responses{
+						created_at
+						created_by
+						id
+						observation_id
+						context
+						context_id
+						response_value
+						updated_at
+						updated_by
+					}
+				  }
+				  
+				  `,
+			};
+		}
+
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		newQdata = response?.data?.data?.field_responses;
+
+		if (newQdata.length > 0) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
 	async getObservationById(resp: any, request: any, id: any) {
 		let user_id = request?.mw_userid;
 
@@ -525,6 +997,114 @@ export class ObservationsService {
 		}
 	}
 
+	async getObservationFieldById(resp: any, request: any, id: any) {
+		let user_id = request?.mw_userid;
+
+		if (!id) {
+			return resp.status(422).json({
+				message: 'Please provide a valid get id',
+				data: null,
+			});
+		}
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = `query MyQuery {
+            observation_fields_by_pk(id:${id}) {
+				created_at
+				created_by
+				id
+				observation_id
+				context
+				context_id
+				field_id
+				updated_at
+				updated_by
+            }
+          }
+          
+          
+          `;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const newQdata = response?.data?.observation_fields_by_pk;
+
+		if (newQdata) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
+	async getFieldResponsesById(resp: any, request: any, id: any) {
+		let user_id = request?.mw_userid;
+
+		if (!id) {
+			return resp.status(422).json({
+				message: 'Please provide a valid get id',
+				data: null,
+			});
+		}
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = `query MyQuery {
+            field_responses_by_pk(id:${id}) {
+				created_at
+				created_by
+				id
+				observation_id
+				context
+				context_id
+				response_value
+				updated_at
+				updated_by
+            }
+          }
+          
+          
+          `;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const newQdata = response?.data?.field_responses_by_pk;
+
+		if (newQdata) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
 	async deleteObservationById(resp: any, request: any, id: any) {
 		let user_id = request?.mw_userid;
 
@@ -612,6 +1192,112 @@ export class ObservationsService {
 			query: query,
 		});
 		const newQdata = response?.data?.delete_fields_by_pk;
+
+		if (newQdata) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data deleted successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
+	async deleteObservationFieldById(resp: any, request: any, id: any) {
+		let user_id = request?.mw_userid;
+
+		if (!id) {
+			return resp.status(422).json({
+				message: 'Please provide a valid get id',
+				data: null,
+			});
+		}
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = `mutation MyMutation {
+            delete_observation_fields_by_pk(id:${id}) {
+				created_at
+				created_by
+				id
+				observation_id
+				context
+				context_id
+				field_id
+				updated_at
+				updated_by
+            }
+          }
+                      
+          `;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const newQdata = response?.data?.delete_observation_fields_by_pk;
+
+		if (newQdata) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data deleted successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
+	async deleteFieldResponsesById(resp: any, request: any, id: any) {
+		let user_id = request?.mw_userid;
+
+		if (!id) {
+			return resp.status(422).json({
+				message: 'Please provide a valid get id',
+				data: null,
+			});
+		}
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = `mutation MyMutation {
+            delete_fields_responses_by_pk(id:${id}) {
+				created_at
+				created_by
+				id
+				observation_id
+				context
+				context_id
+				response_value
+				updated_at
+				updated_by
+            }
+          }
+                      
+          `;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const newQdata = response?.data?.delete_fields_responses_by_pk;
 
 		if (newQdata) {
 			return resp.status(200).json({
