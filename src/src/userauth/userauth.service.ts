@@ -8,6 +8,15 @@ import { AuthService } from 'src/modules/auth/auth.service';
 import { Method } from '../common/method/method';
 import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
 import { UserService } from 'src/user/user.service';
+import { S3Service } from 'src/services/s3/s3.service';
+const axios = require('axios');
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
+
+//url to base64
+import fetch from 'node-fetch';
+import { Buffer } from 'buffer';
 
 @Injectable()
 export class UserauthService {
@@ -24,6 +33,7 @@ export class UserauthService {
 		private authService: AuthService,
 		private acknowledgementService: AcknowledgementService,
 		private userService: UserService,
+		private readonly s3Service: S3Service,
 		private method: Method,
 	) {}
 
@@ -357,12 +367,45 @@ export class UserauthService {
 		}
 	}
 
+	async fetchFileAndConvertToBase64(fileUrl, agent) {
+		try {
+			const file = await axios.get(fileUrl, {
+				responseType: 'arraybuffer',
+				httpsAgent: agent,
+			});
+
+			const extension = path.extname(fileUrl.split('/').pop()).substr(1);
+			const base64 = Buffer.from(file?.data, 'binary').toString('base64');
+			const dataUrl = `data:image/${extension};base64,${base64}`;
+
+			return dataUrl;
+		} catch (error) {
+			console.error('Error fetching file and converting to base64:');
+			return null;
+		}
+	}
+	public async fileUrlToBase64(imageUrl: string): Promise<string> {
+		try {
+			const response = await fetch(imageUrl);
+			const arrayBuffer = await response.arrayBuffer();
+			const buffer = Buffer.from(arrayBuffer);
+			const base64Data = buffer.toString('base64');
+			const fileType = response.headers.get('content-type'); // Get the content type from the response headers
+			const base64String = `data:${fileType};base64,${base64Data}`; // Include the content type in the Base64 string
+			return base64String;
+		} catch (error) {
+			console.error('Error converting image to Base64:', error);
+			throw error;
+		}
+	}
+
 	public async getUserInfoDetails(request, response) {
 		let user_id = request.mw_userid; //get user id from token
 		let program_id = request?.mw_program_id; // get program_id from token
 		let academic_year_id = request?.mw_academic_year_id; // get academic_year_id from token
 
 		//query to get user details information
+		//console.log('user_id', user_id);
 
 		let query = `query MyQuery {
 			users_by_pk(id:${user_id}) {
@@ -521,6 +564,8 @@ export class UserauthService {
 
 		let user_data = hasura_response?.data;
 
+		//console.log('user_data', JSON.stringify(user_data));
+
 		// get profile photo document details
 		let profilePhoto1Documents =
 			user_data?.users_by_pk?.profile_photo_1_documents;
@@ -533,10 +578,47 @@ export class UserauthService {
 
 		//  modifiy individual profile photo document details as required
 
+		const agent = new https.Agent({
+			rejectUnauthorized: false, // Ignore SSL certificate validation
+		});
+
+		// get file url and convert to base64
+		const profile_photo_1_file_Url = await this.s3Service.getFileUrl(
+			profilePhoto1Documents?.[0]?.name,
+		);
+
+		const profile_photo_2_file_Url = await this.s3Service.getFileUrl(
+			profilePhoto2Documents?.[0]?.name,
+		);
+
+		const profile_photo_3_file_Url = await this.s3Service.getFileUrl(
+			profilePhoto3Documents?.[0]?.name,
+		);
+
+		const profilePhotoUrls = [
+			profile_photo_1_file_Url,
+			profile_photo_2_file_Url,
+			profile_photo_3_file_Url,
+		];
+
+		const base64Profiles = await Promise.all(
+			profilePhotoUrls.map(
+				async (url) =>
+					//this.fetchFileAndConvertToBase64(url, agent),
+					await this.fileUrlToBase64(url),
+			),
+		);
+
+		const [
+			data_base64_profile_1,
+			data_base64_profile_2,
+			data_base64_profile_3,
+		] = base64Profiles;
+
 		let profile_photo_1_info = {
 			name: user_data?.users_by_pk?.profile_photo_1,
 			documents: {
-				base64: null,
+				base64: data_base64_profile_1,
 				document_id: profilePhoto1Documents?.[0]?.document_id,
 				name: profilePhoto1Documents?.[0]?.name,
 				document_type: profilePhoto1Documents?.[0]?.doument_type,
@@ -552,7 +634,7 @@ export class UserauthService {
 		let profile_photo_2_info = {
 			name: user_data?.users_by_pk?.profile_photo_2,
 			documents: {
-				base64: null,
+				base64: data_base64_profile_2,
 				document_id: profilePhoto2Documents?.[0]?.document_id,
 				name: profilePhoto2Documents?.[0]?.name,
 				document_type: profilePhoto2Documents?.[0]?.doument_type,
@@ -568,7 +650,7 @@ export class UserauthService {
 		let profile_photo_3_info = {
 			name: user_data?.users_by_pk?.profile_photo_3,
 			documents: {
-				base64: null,
+				base64: data_base64_profile_3,
 				document_id: profilePhoto3Documents?.[0]?.document_id,
 				name: profilePhoto3Documents?.[0]?.name,
 				document_type:
@@ -595,36 +677,85 @@ export class UserauthService {
 		delete user_data.users_by_pk.profile_photo_2_documents;
 		delete user_data.users_by_pk.profile_photo_3_documents;
 
-		// Iterate through the experience array and update references document_reference to documents
-		user_data?.users_by_pk?.experience?.forEach((exp) => {
-			exp.references = exp?.references?.reduce((acc, ref) => {
-				const documents = ref?.document_reference
-					? {
-							base64: null,
-							document_id: ref?.document_reference?.document_id,
-							name: ref?.document_reference?.name,
-							document_sub_type:
-								ref?.document_reference?.document_sub_type,
-							document_type:
-								ref?.document_reference?.doument_type,
-							path: ref?.document_reference?.path,
-							provider: ref?.document_reference?.provider,
-							context: ref?.document_reference?.context,
-							context_id: ref?.document_reference?.context_id,
-					  }
-					: {};
+		// update experience format
+		let experience_format = [];
+		if (user_data?.users_by_pk?.experience) {
+			for (
+				let i = 0;
+				i <= user_data?.users_by_pk?.experience.length;
+				i++
+			) {
+				let obj_experience = user_data?.users_by_pk?.experience[i];
+				let obj_reference = obj_experience?.references[0];
+				let temp_reference = {};
+				if (obj_reference) {
+					let obj_document = obj_reference?.document_reference;
+					let temp_document = {};
+					if (obj_document) {
+						let exp_document_base64 = null;
+						let obj_document_name = obj_document?.name;
+						if (obj_document_name) {
+							let obj_document_url =
+								await this.s3Service.getFileUrl(
+									obj_document_name,
+								);
+							exp_document_base64 = await this.fileUrlToBase64(
+								obj_document_url,
+							);
+						}
+						temp_document = {
+							base64: exp_document_base64,
+							document_id: obj_document?.document_id,
+							name: obj_document?.name,
+							document_sub_type: obj_document?.document_sub_type,
+							doument_type: obj_document?.doument_type,
+							path: obj_document?.path,
+							provider: obj_document?.provider,
+							context: obj_document?.context,
+							context_id: obj_document?.context_id,
+						};
+					}
+					temp_reference = {
+						id: obj_reference?.id,
+						name: obj_reference?.name,
+						contact_number: obj_reference?.contact_number,
+						type_of_document: obj_reference?.type_of_document,
+						document_id: obj_reference?.document_id,
+						documents: temp_document,
+					};
+				}
+				let temp_experience = {
+					id: obj_experience?.id,
+					type: obj_experience?.type,
+					role_title: obj_experience?.role_title,
+					organization: obj_experience?.organization,
+					description: obj_experience?.description,
+					experience_in_years: obj_experience?.experience_in_years,
+					related_to_teaching: obj_experience?.related_to_teaching,
+					references: temp_reference,
+				};
+				experience_format.push(temp_experience);
+			}
+		}
+		user_data.users_by_pk.experience = experience_format;
 
-				delete ref?.document_reference; // Remove document_reference
-
-				return { ...acc, ...ref, documents };
-			}, {});
-		});
-
+		//update qualification format
+		let base64Qualifications = null;
+		let qualification_doc_name =
+			user_data.users_by_pk?.qualifications[0]?.document_reference?.name;
+		if (qualification_doc_name) {
+			let qualification_file_url = await this.s3Service.getFileUrl(
+				qualification_doc_name,
+			);
+			base64Qualifications = await this.fileUrlToBase64(
+				qualification_file_url,
+			);
+		}
 		user_data.users_by_pk.qualifications =
 			user_data?.users_by_pk?.qualifications?.reduce((acc, q) => {
 				const documents = q.document_reference
 					? {
-							base64: q?.document_reference?.base64,
+							base64: base64Qualifications,
 							document_id: q?.document_reference?.document_id,
 							name: q?.document_reference?.name,
 							path: q?.document_reference?.path,
@@ -636,6 +767,7 @@ export class UserauthService {
 
 				delete q.document_reference; // Remove document_reference
 
+				// Update accumulator with updated qualification object
 				return { ...acc, ...q, documents };
 			}, {});
 
