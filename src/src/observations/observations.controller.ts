@@ -302,6 +302,21 @@ export class ObservationsController {
 		);
 	}
 
+	@Post('/field-responses')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async createFieldResponsesMany(
+		@Body() body: FieldResponsesDto,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.observationsService.createFieldResponsesMany(
+			body,
+			response,
+			request,
+		);
+	}
+
 	@Patch('/field-responses/:id')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())

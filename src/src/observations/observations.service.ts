@@ -67,6 +67,31 @@ export class ObservationsService {
 			});
 		}
 
+		//check for duplicate name validation
+
+		let vquery = `query MyQuery {
+			observations_aggregate(where: {name: {_eq:"${body?.name}"}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata =
+			vresponse?.data?.observations_aggregate?.aggregate?.count;
+
+		console.log('newQdata-->>', vresponse);
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate name encountered !',
+				data: {},
+			});
+		}
+
 		let query = '';
 		Object.keys(body).forEach((e) => {
 			if (body[e] && body[e] != '') {
@@ -125,6 +150,27 @@ export class ObservationsService {
 			return resp.status(422).json({
 				message: 'Invalid User Entity',
 				data: null,
+			});
+		}
+
+		let vquery = `query MyQuery {
+			fields_aggregate(where: {title: {_eq:"${body?.title}"}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata = vresponse?.data?.fields_aggregate?.aggregate?.count;
+
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate title encountered !',
+				data: {},
 			});
 		}
 
@@ -189,6 +235,28 @@ export class ObservationsService {
 			});
 		}
 
+		let vquery = `query MyQuery {
+			observation_fields_aggregate(where: {observation_id: {_eq:${body?.observation_id}}, field_id: {_eq:${body?.field_id}}, context_id: {_eq:${body?.context_id}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata =
+			vresponse?.data?.observation_fields_aggregate?.aggregate?.count;
+
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate observation field encountered !',
+				data: {},
+			});
+		}
+
 		let query = '';
 		Object.keys(body).forEach((e) => {
 			if (body[e] && body[e] != '') {
@@ -248,6 +316,28 @@ export class ObservationsService {
 			});
 		}
 
+		let vquery = `query MyQuery {
+			field_responses_aggregate(where: {context_id: {_eq:${body?.context_id}},observation_fields_id:{_eq:${body?.observation_fields_id}}, field_id: {_eq:${body?.field_id}}, observation_id: {_eq:${body?.observation_id}}, response_value: {_eq:"${body?.response_value}"}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata =
+			vresponse?.data?.field_responses_aggregate?.aggregate?.count;
+
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate field responses encountered !',
+				data: {},
+			});
+		}
+
 		let query = '';
 		Object.keys(body).forEach((e) => {
 			if (body[e] && body[e] != '') {
@@ -302,6 +392,28 @@ export class ObservationsService {
 			return resp.status(422).json({
 				message: 'Invalid User Entity',
 				data: null,
+			});
+		}
+
+		let vquery = `query MyQuery {
+			observations_aggregate(where: {name: {_eq:"${body?.name}"}, id: {_neq:${id}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata =
+			vresponse?.data?.observations_aggregate?.aggregate?.count;
+
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate name encountered !',
+				data: {},
 			});
 		}
 
@@ -374,6 +486,27 @@ export class ObservationsService {
 			? JSON.stringify(body?.enum).replace(/"/g, '\\"')
 			: '';
 
+		let vquery = `query MyQuery {
+				fields_aggregate(where: {title: {_eq:"${body?.title}"}, id: {_neq:${id}}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata = vresponse?.data?.fields_aggregate?.aggregate?.count;
+
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate title encountered !',
+				data: {},
+			});
+		}
+
 		let query = '';
 		Object.keys(body).forEach((e) => {
 			if (body[e] && body[e] != '') {
@@ -439,6 +572,28 @@ export class ObservationsService {
 			});
 		}
 
+		let vquery = `query MyQuery {
+			observation_fields_aggregate(where: {observation_id: {_eq:${body?.observation_id}}, field_id: {_eq:${body?.field_id}}, context_id: {_eq:${body?.context_id}}, id: {_neq:${id}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata =
+			vresponse?.data?.observation_fields_aggregate?.aggregate?.count;
+
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate observation field encountered !',
+				data: {},
+			});
+		}
+
 		let query = '';
 		Object.keys(body).forEach((e) => {
 			if (body[e] && body[e] != '') {
@@ -501,6 +656,28 @@ export class ObservationsService {
 			return resp.status(422).json({
 				message: 'Invalid User Entity',
 				data: null,
+			});
+		}
+
+		let vquery = `query MyQuery {
+			field_responses_aggregate(where: {context_id: {_eq:${body?.context_id}},observation_fields_id:{_eq:${body?.observation_fields_id}}, field_id: {_eq:${body?.field_id}}, observation_id: {_eq:${body?.observation_id}}, response_value: {_eq:"${body?.response_value}"}, id: {_neq:${id}}}) {
+			  aggregate {
+				count
+			  }
+			}
+		  }`;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+		const newQdata =
+			vresponse?.data?.field_responses_aggregate?.aggregate?.count;
+
+		if (newQdata > 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Duplicate field responses encountered !',
+				data: {},
 			});
 		}
 
@@ -757,6 +934,17 @@ export class ObservationsService {
 						created_by
 						id
 						observation_id
+						observations {
+							id
+							name
+						  }
+						  fields {
+							id
+							name
+							description
+							data_type
+							extra_all_info
+						  }
 						context
 						context_id
 						field_id
@@ -771,18 +959,30 @@ export class ObservationsService {
 		} else {
 			data = {
 				query: `query MyQuery {
-					observation_fields{
-						created_at
-						created_by
+					observation_fields {
+					  created_at
+					  created_by
+					  id
+					  observation_id
+					  observations{
 						id
-						observation_id
-						context
-						context_id
-						field_id
-						updated_at
-						updated_by
+						name
+					  }
+					  fields{
+						id
+						name
+						description
+						data_type
+						extra_all_info
+					  }
+					  context
+					  context_id
+					  field_id
+					  updated_at
+					  updated_by
 					}
 				  }
+				  
 				  
 				  `,
 			};
@@ -841,6 +1041,20 @@ export class ObservationsService {
 						created_by
 						id
 						observation_id
+						observation_fields_id
+						observation_fields{
+							observations{
+							  id
+							  name
+							}
+							fields{
+							  id
+							  data_type
+							  description
+							  title
+							  
+							}
+						  }
 						context
 						context_id
 						response_value
@@ -860,6 +1074,20 @@ export class ObservationsService {
 						created_by
 						id
 						observation_id
+						observation_fields_id
+						observation_fields{
+							observations{
+							  id
+							  name
+							}
+							fields{
+							  id
+							  data_type
+							  description
+							  title
+							  
+							}
+						  }
 						context
 						context_id
 						response_value
@@ -1020,6 +1248,17 @@ export class ObservationsService {
 				created_by
 				id
 				observation_id
+				observations {
+					id
+					name
+				  }
+				  fields {
+					id
+					name
+					description
+					data_type
+					extra_all_info
+				  }
 				context
 				context_id
 				field_id
@@ -1074,6 +1313,19 @@ export class ObservationsService {
 				created_by
 				id
 				observation_id
+				observation_fields_id
+				observation_fields {
+				  observations {
+					id
+					name
+				  }
+				  fields {
+					id
+					data_type
+					description
+					title
+				  }
+				}
 				context
 				context_id
 				response_value
@@ -1312,5 +1564,91 @@ export class ObservationsService {
 				data: {},
 			});
 		}
+	}
+
+	async createFieldResponsesMany(bodyArray: any, resp: any, request: any) {
+		let user_id = request?.mw_userid;
+		let response;
+		let data;
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		for (let body of bodyArray) {
+			body.created_by = user_id;
+			body.updated_by = user_id;
+
+			let vquery = `query MyQuery {
+				field_responses_aggregate(where: {context_id: {_eq:${body?.context_id}},observation_fields_id:{_eq:${body?.observation_fields_id}}, field_id: {_eq:${body?.field_id}}, observation_id: {_eq:${body?.observation_id}}, response_value: {_eq:"${body?.response_value}"}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }`;
+
+			const vresponse = await this.hasuraServiceFromServices.getData({
+				query: vquery,
+			});
+			const newQdata =
+				vresponse?.data?.field_responses_aggregate?.aggregate?.count;
+
+			if (newQdata > 0) {
+				return resp.status(422).json({
+					success: false,
+					message: 'Duplicate field responses encountered !',
+					data: {},
+				});
+			}
+
+			let query = '';
+			Object.keys(body).forEach((e) => {
+				if (body[e] && body[e] !== '') {
+					if (e === 'render') {
+						query += `${e}: ${body[e]}, `;
+					} else if (Array.isArray(body[e])) {
+						query += `${e}: "${JSON.stringify(body[e])}", `;
+					} else {
+						query += `${e}: "${body[e]}", `;
+					}
+				}
+			});
+
+			data = {
+				query: `mutation CreateFieldsResponses {
+				insert_field_responses_one(object: {${query}}) {
+				  id
+				  observation_id
+				  context
+				  context_id
+				  response_value
+				}
+			  }
+			  `,
+				variables: {},
+			};
+
+			response = await this.hasuraServiceFromServices.queryWithVariable(
+				data,
+			);
+
+			let result = response?.data?.data?.insert_field_responses_one;
+
+			if (!result) {
+				return resp.status(500).json({
+					success: false,
+					message: 'Unable to create observation Field!',
+					data: {},
+				});
+			}
+		}
+
+		return resp.status(200).json({
+			success: true,
+			message: 'Observation Field(s) created successfully!',
+			data: response?.data?.data,
+		});
 	}
 }
