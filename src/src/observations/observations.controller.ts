@@ -302,11 +302,11 @@ export class ObservationsController {
 		);
 	}
 
-	@Post('/field-responses')
+	@Post('/field-responses/bulk')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async createFieldResponsesMany(
-		@Body() body: FieldResponsesDto,
+		@Body() body: Body,
 		@Res() response: Response,
 		@Req() request: Request,
 	) {

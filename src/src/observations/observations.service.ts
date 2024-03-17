@@ -1581,28 +1581,6 @@ export class ObservationsService {
 			body.created_by = user_id;
 			body.updated_by = user_id;
 
-			let vquery = `query MyQuery {
-				field_responses_aggregate(where: {context_id: {_eq:${body?.context_id}},observation_fields_id:{_eq:${body?.observation_fields_id}}, field_id: {_eq:${body?.field_id}}, observation_id: {_eq:${body?.observation_id}}, response_value: {_eq:"${body?.response_value}"}}) {
-				  aggregate {
-					count
-				  }
-				}
-			  }`;
-
-			const vresponse = await this.hasuraServiceFromServices.getData({
-				query: vquery,
-			});
-			const newQdata =
-				vresponse?.data?.field_responses_aggregate?.aggregate?.count;
-
-			if (newQdata > 0) {
-				return resp.status(422).json({
-					success: false,
-					message: 'Duplicate field responses encountered !',
-					data: {},
-				});
-			}
-
 			let query = '';
 			Object.keys(body).forEach((e) => {
 				if (body[e] && body[e] !== '') {
