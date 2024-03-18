@@ -37,7 +37,7 @@ export class OrganisationService {
 			name: body?.name,
 			mobile: body?.mobile,
 			contact_person: body?.contact_person,
-			address: body?.address,
+			address: body?.address || null,
 			email_id: body?.email_id,
 		};
 
@@ -53,19 +53,37 @@ export class OrganisationService {
 		}
 		const organisation = newOrganisation?.organisations;
 
+		const organisation_id = organisation?.id;
+		const learner_target = body?.learner_target;
+		const doc_per_cohort_id = body?.doc_per_cohort_id;
+		const doc_per_monthly_id = body?.doc_per_monthly_id;
+		const doc_quarterly_id = body?.doc_quarterly_id;
+
+		if (
+			!organisation_id ||
+			!learner_target ||
+			!doc_per_monthly_id ||
+			!doc_per_cohort_id ||
+			!doc_quarterly_id
+		) {
+			return response.status(422).send({
+				success: false,
+				message: 'Required fields are missing in the payload.',
+				data: {},
+			});
+		}
 		// Step 2: Insert data into the 'program_organisation' table
 		const programOrganisationData = {
-			organisation_id: organisation?.id,
+			organisation_id,
 			program_id: request.mw_program_id,
 			academic_year_id: request.mw_academic_year_id,
 			status: 'active',
-			learner_target: body?.learner_target,
-			doc_per_cohort_id: body?.doc_per_cohort_id,
-			doc_per_monthly_id: body?.doc_per_monthly_id,
-			doc_quarterly_id: body?.doc_quarterly_id,
+			learner_target,
+			doc_per_cohort_id,
+			doc_per_monthly_id,
+			doc_quarterly_id,
 			// Other fields as needed
 		};
-
 		const programOrganisationTableName = 'program_organisation';
 		const program_org = await this.hasuraService.q(
 			programOrganisationTableName,
@@ -322,16 +340,36 @@ export class OrganisationService {
 		const program_organisation =
 			existing?.data?.program_organisation_aggregate?.aggregate?.count;
 
+		const organisation_id = org_id;
+		const learner_target = body?.learner_target;
+		const doc_per_cohort_id = body?.doc_per_cohort_id;
+		const doc_per_monthly_id = body?.doc_per_monthly_id;
+		const doc_quarterly_id = body?.doc_quarterly_id;
+
+		if (
+			!organisation_id ||
+			!learner_target ||
+			!doc_per_monthly_id ||
+			!doc_per_cohort_id ||
+			!doc_quarterly_id
+		) {
+			return response.status(422).send({
+				success: false,
+				message: 'Required fields are missing in the payload.',
+				data: {},
+			});
+		}
+
 		if (program_organisation == 0) {
 			const programOrganisationData = {
-				organisation_id: org_id,
+				organisation_id,
 				program_id: request.mw_program_id,
 				academic_year_id: request.mw_academic_year_id,
 				status: 'active',
-				doc_per_cohort_id: body?.doc_per_cohort_id,
-				doc_per_monthly_id: body?.doc_per_monthly_id,
-				doc_quarterly_id: body?.doc_quarterly_id,
-				learner_target: body?.learner_target,
+				learner_target,
+				doc_per_cohort_id,
+				doc_per_monthly_id,
+				doc_quarterly_id,
 				// Other fields as needed
 			};
 
