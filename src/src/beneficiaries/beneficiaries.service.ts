@@ -3293,18 +3293,19 @@ export class BeneficiariesService {
 			dynamicRoleBasedQuery = `
 				{
 					program_beneficiaries: {
-						program_id: {_eq: "${programId}"},
+						program_id: {_eq: ${programId}},
 						facilitator_user: {
 							program_faciltators: { parent_ip: { _eq: "${ipUser.program_users[0].organisation_id}" } }
 						}
 					}
 				}
 			`;
+			
 		} else if (role === 'facilitator') {
 			dynamicRoleBasedQuery = `
 				{
 					program_faciltators: {
-						program_id: { _eq: "${programId}" },
+						program_id: { _eq: ${programId} },
 						parent_ip: { _eq: "${ipUser.program_users[0].organisation_id}" }
 					}
 				}
@@ -3333,7 +3334,8 @@ export class BeneficiariesService {
 				}
 			}`,
 		};
-
+		console.log(data.query);
+		
 		const hasuraResult = (
 			await this.hasuraServiceFromServices.getData(data)
 		)?.data?.users;
