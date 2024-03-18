@@ -751,16 +751,20 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
-			let filters = new Object(body);
-
-			Object.keys(body.filters).forEach((item) => {
-				Object.keys(body.filters[item]).forEach((e) => {
-					if (!e.startsWith('_')) {
-						filters[item][`_${e}`] = filters[item][e];
-						delete filters[item][e];
+			const traverseFilters = (filters) => {
+				Object.keys(filters).forEach((key) => {
+					if (typeof filters[key] === 'object') {
+						traverseFilters(filters[key]);
+					} else {
+						if (!key.startsWith('_')) {
+							filters[`_${key}`] = filters[key];
+							delete filters[key];
+						}
 					}
 				});
-			});
+			};
+
+			traverseFilters(body?.filters);
 
 			data = {
 				query: `query Searchobservations($filters:observations_bool_exp) {
@@ -769,6 +773,20 @@ export class ObservationsService {
 						created_by
 						id
 						name
+						observation_fields{
+							id
+							observation_id
+							field_id
+							context
+							context_id
+							fields{
+							  id
+							  data_type
+							  description
+							  title
+							  enum
+							}
+						  }
 						updated_at
 						updated_by
 					  }
