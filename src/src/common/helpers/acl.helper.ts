@@ -23,7 +23,10 @@ export class AclHelper {
 
 		if (cachedRoleToActionMapping) {
 			roleActions = cachedRoleToActionMapping;
-			console.log('### Using Cache for roleActions: ' + JSON.stringify(roleActions));
+			console.log(
+				'### Using Cache for roleActions: ' +
+					JSON.stringify(roleActions),
+			);
 		} else {
 			// Get roles, actions from DB
 			let query = {
@@ -275,8 +278,8 @@ export class AclHelper {
 						program_id: {_eq: ${program_id}}
 					},
 					group_users: {
-						member_type: {_eq: ${member_type}},
-						status: {_eq: ${status}},
+						member_type: {_eq: "${member_type}"},
+						status: {_eq: "${status}"},
 						${rolesQuery}
 					}
 				}) {
@@ -285,6 +288,7 @@ export class AclHelper {
 				  }
 				}
 			}`;
+
 		const response = await this.hasuraServiceFromService.getData({
 			query,
 		});
