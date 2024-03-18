@@ -19,12 +19,16 @@ import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { AuthGuard } from '../modules/auth/auth.guard';
 import { FilterFacilitatorDto } from './dto/filter-facilitator.dto';
 import { FacilitatorService } from './facilitator.service';
+import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/facilitators')
 export class FacilitatorController {
 	public url = process.env.HASURA_BASE_URL;
-	constructor(public facilitatorService: FacilitatorService) {}
+	constructor(public facilitatorService: FacilitatorService,
+		public aclHelper : AclHelper) {}
 
 	// @Post('/create')
 	// create(@Body() createFacilitatorDto: CreateFacilitatorDto) {
@@ -48,12 +52,16 @@ export class FacilitatorController {
 
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['read','read.own'])
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.facilitatorService.getStatuswiseCount(request, response);
 	}
 
 	@Post('/forOrientation')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['edit.own'])
 	async getFacilitatorsForOrientation(
 		@Req() request: any,
 		@Body() body: any,
@@ -65,9 +73,10 @@ export class FacilitatorController {
 			response,
 		);
 	}
-
 	@Delete('/experience/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['delete.own'])
 	removeExperience(
 		@Param('id') id: string,
 		@Req() request: any,
@@ -78,6 +87,8 @@ export class FacilitatorController {
 
 	@Patch('/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['edit','edit.own'])
 	@UsePipes(ValidationPipe)
 	update(
 		@Param('id') id: string,
@@ -90,6 +101,8 @@ export class FacilitatorController {
 
 	@Patch('admin/okyc_details_override')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['edit.own'])
 	okyc_update(@Req() req: any, @Body() body: any, @Res() response: any) {
 		return this.facilitatorService.okyc_update(body, req, response);
 	}
@@ -97,6 +110,8 @@ export class FacilitatorController {
 	@Post('/')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['read','read.own'])
 	async getFacilitators(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -107,8 +122,23 @@ export class FacilitatorController {
 
 	@Post('/admin/search-by-ids')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['read', 'read.own'])
 	@UsePipes(ValidationPipe)
 	async getFacilitatorsFromIds(@Body() body: any, @Res() res: any) {
+		// if (
+		// 	!(await this.aclHelper.doIHaveAccess(
+		// 		null,
+		// 		'facilitator',
+		// 		parseInt(body?.user_id, 10),
+		// 	))
+		// ) {
+		// 	return res.status(403).json({
+		// 		success: false,
+		// 		message: 'FORBIDDEN',
+		// 		data: {},
+		// 	});
+		//}
 		const result = await this.facilitatorService.getFacilitatorsFromIds(
 			body.Ids,
 			body.search,
@@ -123,6 +153,8 @@ export class FacilitatorController {
 	@Post('/admin/filter-by-beneficiaries')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['read', 'read.own'])
 	async getFilter_By_Beneficiaries(
 		@Body() body: any,
 		@Res() res: any,
@@ -138,6 +170,8 @@ export class FacilitatorController {
 	@Post('/exportCsv')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['read.own','read'])
 	async exportFileToCsv(
 		@Req() request: any,
 		@Body() body: FilterFacilitatorDto,
@@ -148,6 +182,8 @@ export class FacilitatorController {
 
 	@Patch('update-facilitator-aadhar/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['edit.own'])
 	updatePrerakAadhar(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -165,6 +201,8 @@ export class FacilitatorController {
 	@Post('/admin/learner-status-distribution')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['read','read.own'])
 	async getLearnerStatusDistribution(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -179,6 +217,8 @@ export class FacilitatorController {
 
 	@Get('/admin/prerak-learner-list/:id')
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['read','read.own'])
 	async getLearnerListByPrerakId(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -196,12 +236,16 @@ export class FacilitatorController {
 
 	@Post('/update-okyc-response')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['edit.own'])
 	updateOkycResponse(@Req() req: any, @Body() body: any, @Res() res: any) {
 		return this.facilitatorService.updateOkycResponse(req, body, res);
 	}
 
 	@Post('/program-facilitator/add')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator',['create'])
 	createProgramFacilitator(
 		@Req() req: any,
 		@Body() body: any,

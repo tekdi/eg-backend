@@ -19,6 +19,7 @@ import { FacilitatorCoreService } from './facilitator.core.service';
 import { FacilitatorService } from './facilitator.service';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { Method } from '../common/method/method';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 
 @Module({
 	imports: [
@@ -30,7 +31,7 @@ import { Method } from '../common/method/method';
 		S3Module,
 		UploadFileModule,
 	],
-	providers: [FacilitatorService, FacilitatorCoreService, Method],
+	providers: [FacilitatorService, FacilitatorCoreService, Method,AclHelper],
 	controllers: [FacilitatorController],
 	//exports: [FacilitatorCoreService,FacilitatorService],
 })
