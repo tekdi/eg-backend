@@ -198,6 +198,23 @@ export class ObservationsController {
 		);
 	}
 
+	@Post('/list/type/:type')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getObservationListByType(
+		@Body() body: ObservationSearchDto,
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('type') type: string,
+	) {
+		return this.observationsService.getObservationByType(
+			body,
+			response,
+			request,
+			type,
+		);
+	}
+
 	@Post('observation-fields/list')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())

@@ -830,6 +830,127 @@ export class ObservationsService {
 		}
 	}
 
+	async getObservationByType(body: any, resp: any, request: any, type: any) {
+		let response;
+		let newQdata;
+		let query;
+		let obj_filters;
+		let data;
+		let user_id = request?.mw_userid;
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		if (body?.filters) {
+			const traverseFilters = (filters) => {
+				Object.keys(filters).forEach((key) => {
+					if (typeof filters[key] === 'object') {
+						traverseFilters(filters[key]);
+					} else {
+						if (!key.startsWith('_')) {
+							filters[`_${key}`] = filters[key];
+							delete filters[key];
+						}
+					}
+				});
+			};
+
+			traverseFilters(body?.filters);
+
+			if (type == 'forms') {
+				data = {
+					query: `query Searchobservations($filters:observations_bool_exp) {
+					observations(where:$filters) {
+						created_at
+						created_by
+						id
+						name
+						title
+						observation_fields{
+							id
+							observation_id
+							field_id
+							context
+							context_id
+							fields{
+							  id
+							  data_type
+							  description
+							  title
+							  enum
+							}
+						  }
+						updated_at
+						updated_by
+					  }
+					}`,
+					variables: {
+						filters: body.filters,
+					},
+				};
+			} else if (type == 'submissons') {
+				data = {
+					query: `query Searchobservations($filters:observations_bool_exp) {
+					observations(where:$filters) {
+						created_at
+						created_by
+						id
+						name
+						title
+						observation_fields{
+							id
+							observation_id
+							field_id
+							context
+							context_id
+							fields{
+							  id
+							  data_type
+							  description
+							  title
+							  enum
+							}
+							field_responses {
+								id
+								context
+								context_id
+								observation_fields_id
+							  }
+						  }
+						updated_at
+						updated_by
+					  }
+					}`,
+					variables: {
+						filters: body.filters,
+					},
+				};
+			}
+		}
+
+		response = await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		newQdata = response?.data?.data?.observations;
+
+		if (newQdata.length > 0) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
 	async getFieldsList(body: any, resp: any, request: any) {
 		let response;
 		let newQdata;
