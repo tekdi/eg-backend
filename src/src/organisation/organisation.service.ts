@@ -59,7 +59,7 @@ export class OrganisationService {
 		const doc_per_monthly_id = body?.doc_per_monthly_id;
 		const doc_quarterly_id = body?.doc_quarterly_id;
 		const learner_per_camp = body?.learner_per_camp;
-		const camp_count = body?.camp_count;
+		const camp_target = body?.camp_target;
 		if (
 			!organisation_id ||
 			!learner_target ||
@@ -67,7 +67,7 @@ export class OrganisationService {
 			!doc_per_cohort_id ||
 			!doc_quarterly_id ||
 			!learner_per_camp ||
-			!camp_count
+			!camp_target
 		) {
 			return response.status(422).send({
 				success: false,
@@ -77,7 +77,7 @@ export class OrganisationService {
 		}
 
 		// Calculate learner_target per camp and round up to nearest whole number
-		if (Math.ceil(learner_target / learner_per_camp) !== camp_count) {
+		if (Math.ceil(learner_target / learner_per_camp) !== camp_target) {
 			return response.status(422).send({
 				success: false,
 				message: 'Camp count is wrong',
@@ -96,7 +96,7 @@ export class OrganisationService {
 			doc_per_monthly_id,
 			doc_quarterly_id,
 			learner_per_camp,
-			camp_count,
+			camp_target,
 		};
 		const programOrganisationTableName = 'program_organisation';
 		const program_org = await this.hasuraService.q(
@@ -255,7 +255,7 @@ export class OrganisationService {
 							doc_per_monthly_id
 							doc_quarterly_id
 							learner_per_camp
-							camp_count
+							camp_target
 							program{
 								name
 								state{
@@ -362,7 +362,7 @@ export class OrganisationService {
 		const doc_per_monthly_id = body?.doc_per_monthly_id;
 		const doc_quarterly_id = body?.doc_quarterly_id;
 		const learner_per_camp = body?.learner_per_camp;
-		const camp_count = body?.camp_count;
+		const camp_target = body?.camp_target;
 		if (
 			!organisation_id ||
 			!learner_target ||
@@ -370,7 +370,7 @@ export class OrganisationService {
 			!doc_per_cohort_id ||
 			!doc_quarterly_id ||
 			!learner_per_camp ||
-			!camp_count
+			!camp_target
 		) {
 			return response.status(422).send({
 				success: false,
@@ -379,7 +379,7 @@ export class OrganisationService {
 			});
 		}
 		// Calculate learner_target per camp and round up to nearest whole number
-		if (Math.ceil(learner_target / learner_per_camp) !== camp_count) {
+		if (Math.ceil(learner_target / learner_per_camp) !== camp_target) {
 			return response.status(422).send({
 				success: false,
 				message: 'Camp count is wrong',
@@ -398,7 +398,7 @@ export class OrganisationService {
 				doc_per_monthly_id,
 				doc_quarterly_id,
 				learner_per_camp,
-				camp_count,
+				camp_target,
 			};
 
 			const programOrganisationTableName = 'program_organisation';
