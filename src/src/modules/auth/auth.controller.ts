@@ -68,6 +68,8 @@ export class AuthController {
 		@Req() header: Request,
 		@Res() response: Response,
 	) {
+		console.log('tushar');
+
 		return this.authService.resetPasswordUsingId(req, header, response);
 	}
 

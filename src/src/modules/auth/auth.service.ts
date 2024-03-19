@@ -256,6 +256,7 @@ export class AuthService {
 	}
 
 	public async resetPasswordUsingId(req, header, response) {
+		const { mw_roles } = header;
 		const authToken = header.header('authorization');
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
@@ -277,9 +278,7 @@ export class AuthService {
 		};
 
 		const userRole = await this.hasuraService.postData(query2);
-		if (
-			userRole.data.users[0].program_users[0].roles.role_type === 'staff'
-		) {
+		if (mw_roles.includes('staff')) {
 			let query = {
 				query: `query MyQuery {
 					users_by_pk(id: ${req.id}) {
