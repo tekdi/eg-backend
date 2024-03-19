@@ -831,6 +831,7 @@ export class AuthService {
 			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'identified';
 			req.org_id = req?.role_fields?.org_id;
+			other = [...other, 'org_id'];
 		}
 
 		if (req.role === 'facilitator' || req.role === 'facilitators') {
@@ -861,14 +862,12 @@ export class AuthService {
 					user_id,
 					program_id: req.program_id,
 					academic_year_id: req.academic_year_id,
-					org_id: req?.org_id,
 				},
 				[
 					`${groupId}`,
 					'user_id',
 					'program_id',
 					'academic_year_id',
-					'org_id',
 					'status',
 					...(other || []),
 				],
