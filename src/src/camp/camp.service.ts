@@ -48,7 +48,7 @@ export class CampService {
 
 	public returnFieldsProperties = ['id'];
 
-	public returnFieldsGroups = ['status', 'id'];
+	public returnFieldsGroups = ['status', 'id', 'org_id'];
 
 	async create(body: any, request: any, response: any) {
 		try {
@@ -57,8 +57,18 @@ export class CampService {
 			const program_id = request.mw_program_id;
 			const academic_year_id = request.mw_academic_year_id;
 			let beneficiary_status = 'enrolled_ip_verified';
+			const org_id = body?.org_id;
 			let createcampResponse: any;
 			let creategroupwoner: any;
+
+			if (!org_id || org_id == '') {
+				return response.status(422).json({
+					success: false,
+					key: 'org_id',
+					data: {},
+					message: 'CAMP_ACCESS_ERROR',
+				});
+			}
 
 			let facilitator_status = await this.checkFaciltatorStatus(
 				facilitator_id,
@@ -158,6 +168,7 @@ export class CampService {
 			const campName = `camp${formattedCount}`;
 
 			let create_group_object = {
+				org_id,
 				name: campName,
 				type: 'camp',
 				status: 'camp_initiated',
