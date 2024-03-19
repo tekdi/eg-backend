@@ -86,7 +86,7 @@ export class OrganisationService {
 		if (Math.ceil(learner_target / learner_per_camp) !== camp_target) {
 			return response.status(422).send({
 				success: false,
-				message: 'Camp count is wrong',
+				message: 'Camp target is wrong',
 				data: {},
 			});
 		}
@@ -400,7 +400,7 @@ export class OrganisationService {
 		if (Math.ceil(learner_target / learner_per_camp) !== camp_target) {
 			return response.status(422).send({
 				success: false,
-				message: 'Camp count is wrong',
+				message: 'Camp target is wrong',
 				data: {},
 			});
 		}
