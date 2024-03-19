@@ -58,13 +58,16 @@ export class OrganisationService {
 		const doc_per_cohort_id = body?.doc_per_cohort_id;
 		const doc_per_monthly_id = body?.doc_per_monthly_id;
 		const doc_quarterly_id = body?.doc_quarterly_id;
-
+		const learner_per_camp = body?.learner_per_camp;
+		const camp_count = body?.camp_count;
 		if (
 			!organisation_id ||
 			!learner_target ||
 			!doc_per_monthly_id ||
 			!doc_per_cohort_id ||
-			!doc_quarterly_id
+			!doc_quarterly_id ||
+			!learner_per_camp ||
+			!camp_count
 		) {
 			return response.status(422).send({
 				success: false,
@@ -72,6 +75,16 @@ export class OrganisationService {
 				data: {},
 			});
 		}
+
+		// Calculate learner_target per camp and round up to nearest whole number
+		if (Math.ceil(learner_target / learner_per_camp) !== camp_count) {
+			return response.status(422).send({
+				success: false,
+				message: 'Camp count is wrong',
+				data: {},
+			});
+		}
+
 		// Step 2: Insert data into the 'program_organisation' table
 		const programOrganisationData = {
 			organisation_id,
@@ -82,7 +95,8 @@ export class OrganisationService {
 			doc_per_cohort_id,
 			doc_per_monthly_id,
 			doc_quarterly_id,
-			// Other fields as needed
+			learner_per_camp,
+			camp_count,
 		};
 		const programOrganisationTableName = 'program_organisation';
 		const program_org = await this.hasuraService.q(
@@ -240,6 +254,8 @@ export class OrganisationService {
 							doc_per_cohort_id
 							doc_per_monthly_id
 							doc_quarterly_id
+							learner_per_camp
+							camp_count
 							program{
 								name
 								state{
@@ -345,17 +361,28 @@ export class OrganisationService {
 		const doc_per_cohort_id = body?.doc_per_cohort_id;
 		const doc_per_monthly_id = body?.doc_per_monthly_id;
 		const doc_quarterly_id = body?.doc_quarterly_id;
-
+		const learner_per_camp = body?.learner_per_camp;
+		const camp_count = body?.camp_count;
 		if (
 			!organisation_id ||
 			!learner_target ||
 			!doc_per_monthly_id ||
 			!doc_per_cohort_id ||
-			!doc_quarterly_id
+			!doc_quarterly_id ||
+			!learner_per_camp ||
+			!camp_count
 		) {
 			return response.status(422).send({
 				success: false,
 				message: 'Required fields are missing in the payload.',
+				data: {},
+			});
+		}
+		// Calculate learner_target per camp and round up to nearest whole number
+		if (Math.ceil(learner_target / learner_per_camp) !== camp_count) {
+			return response.status(422).send({
+				success: false,
+				message: 'Camp count is wrong',
 				data: {},
 			});
 		}
@@ -370,7 +397,8 @@ export class OrganisationService {
 				doc_per_cohort_id,
 				doc_per_monthly_id,
 				doc_quarterly_id,
-				// Other fields as needed
+				learner_per_camp,
+				camp_count,
 			};
 
 			const programOrganisationTableName = 'program_organisation';
