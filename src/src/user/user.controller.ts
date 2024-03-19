@@ -275,20 +275,14 @@ export class UserController {
 		return this.userService.getIpDetails(id, body, request, response);
 	}
 
-	@Get('/ip_users/exist_list')
+	@Post('/ip_users/exist_list')
 	@UseGuards(new AuthGuard())
 	getIpUserListExists(
 		@Req() request: any,
 		@Body() body: any,
-		@Param('id') id: number,
 		@Res() response: any,
 	) {
-		return this.userService.getIpUserListExists(
-			id,
-			body,
-			request,
-			response,
-		);
+		return this.userService.getIpUserListExists(body, request, response);
 	}
 
 	@Post('/roles/list')
