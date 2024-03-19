@@ -66,7 +66,7 @@ export class CampService {
 					success: false,
 					key: 'org_id',
 					data: {},
-					message: 'CAMP_ACCESS_ERROR',
+					message: 'Required Org_id',
 				});
 			}
 
