@@ -7,17 +7,19 @@ import { EventsService } from './events.service';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { Method } from '../common/method/method';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 
 @Module({
 	imports: [UserModule, HasuraModule, HasuraModuleFromServices],
 	controllers: [EventsController],
-	providers: [EventsService, Method],
+	providers: [EventsService, Method, AclHelper],
 })
 export class EventsModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
 		consumer
 			.apply(CohortMiddleware)
+
 			.exclude(
 				'/events/camp-question-list',
 				'events/questionset/hierarchy/:id',
@@ -35,10 +37,10 @@ export class EventsModule {
 					path: '/accept/:id',
 					method: RequestMethod.PATCH,
 				},
-				{
-					path: '/:id',
-					method: RequestMethod.PATCH,
-				},
+				// {
+				// 	path: '/:id',
+				// 	method: RequestMethod.PATCH,
+				// },
 				{
 					path: '/:id',
 					method: RequestMethod.GET,
@@ -48,6 +50,7 @@ export class EventsModule {
 					method: RequestMethod.POST,
 				},
 			)
+
 			.forRoutes(EventsController);
 	}
 }
