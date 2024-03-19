@@ -1892,25 +1892,36 @@ export class UserService {
 		}
 	}
 
-	public async getIpUserListExists(id: any, body: any, req: any, resp) {
+	public async getIpUserListExists(body: any, req: any, resp) {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
+		if (!body?.organisation_id || body?.organisation_id == '') {
+			return resp.status(422).json({
+				success: false,
+				key: 'organisation_id',
+				message: 'organisation_id Not found!',
+				data: {},
+			});
+		}
 
-		let qury = `query MyQuery {
-			users(where: {program_users:{},_not: {program_users: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}) {
-				id
-				first_name
-				last_name
-				middle_name
-				program_users {
-					academic_year_id
-					program_id
-					user_id
-				}
-			}}
-				`;
-		const data = { query: qury };
-		const response = await this.hasuraServiceFromServices.getData(data);
+		const query = `query MyQuery {
+			users(where: {program_users: {program_id: {_eq: ${program_id}},organisation_id:{_eq:${body?.organisation_id}}, academic_year_id: {_neq: ${academic_year_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  middle_name
+			  program_users(where: {program_id: {_eq: ${program_id}},organisation_id:{_eq:${body?.organisation_id}}, academic_year_id: {_neq: ${academic_year_id}}}) {
+				academic_year_id
+				organisation_id
+				program_id
+				user_id
+			  }
+			}
+		  }
+		`;
+		const response = await this.hasuraServiceFromServices.getData({
+			query,
+		});
 		const newQdata = response?.data?.users;
 		if (newQdata.length == 0) {
 			return resp.status(422).json({
