@@ -15,6 +15,10 @@ export class ObservationFieldsDto {
 
 	@IsNotEmpty()
 	@IsNumber()
+	fields_sequence: string;
+
+	@IsNotEmpty()
+	@IsNumber()
 	context_id: number;
 
 	@IsNotEmpty()

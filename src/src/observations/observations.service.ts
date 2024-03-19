@@ -780,6 +780,7 @@ export class ObservationsService {
 							field_id
 							context
 							context_id
+							fields_sequence
 							fields{
 							  id
 							  data_type
@@ -803,6 +804,21 @@ export class ObservationsService {
 					  id
 					  name
 					  title
+					  observation_fields{
+						id
+						observation_id
+						field_id
+						context
+						context_id
+						fields_sequence
+						fields{
+						  id
+						  data_type
+						  description
+						  title
+						  enum
+						}
+					  }
 					  created_at
 					  created_by
 					  updated_by
@@ -878,6 +894,7 @@ export class ObservationsService {
 							field_id
 							context
 							context_id
+							fields_sequence
 							fields{
 							  id
 							  data_type
@@ -895,40 +912,44 @@ export class ObservationsService {
 					},
 				};
 			} else if (type == 'submissons') {
+				let field_responses_filter =
+					body?.filters?.observation_fields?.field_responses;
 				data = {
-					query: `query Searchobservations($filters:observations_bool_exp) {
-					observations(where:$filters) {
-						created_at
-						created_by
-						id
-						name
-						title
-						observation_fields{
+					query: `query SearchObservations($filters: observations_bool_exp, $field_responses_filter: field_responses_bool_exp) {
+						observations(where: $filters) {
+							created_at
+							created_by
 							id
-							observation_id
-							field_id
-							context
-							context_id
-							fields{
-							  id
-							  data_type
-							  description
-							  title
-							  enum
-							}
-							field_responses {
+							name
+							title
+							observation_fields {
 								id
+								observation_id
+								field_id
 								context
 								context_id
-								observation_fields_id
-							  }
-						  }
-						updated_at
-						updated_by
-					  }
+								fields_sequence
+								fields {
+									id
+									data_type
+									description
+									title
+									enum
+								}
+								field_responses(where: $field_responses_filter) {
+									id
+									context
+									context_id
+									observation_fields_id
+								}
+							}
+							updated_at
+							updated_by
+						}
 					}`,
 					variables: {
 						filters: body.filters,
+						field_responses_filter: field_responses_filter,
 					},
 				};
 			}
@@ -1088,6 +1109,7 @@ export class ObservationsService {
 						  }
 						context
 						context_id
+						fields_sequence
 						field_id
 						updated_at
 						updated_by
@@ -1118,6 +1140,7 @@ export class ObservationsService {
 					  }
 					  context
 					  context_id
+					  fields_sequence
 					  field_id
 					  updated_at
 					  updated_by
@@ -1403,6 +1426,7 @@ export class ObservationsService {
 				  }
 				context
 				context_id
+				fields_sequence
 				field_id
 				updated_at
 				updated_by
