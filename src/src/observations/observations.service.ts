@@ -773,6 +773,7 @@ export class ObservationsService {
 						created_by
 						id
 						name
+						title
 						observation_fields{
 							id
 							observation_id
@@ -801,6 +802,7 @@ export class ObservationsService {
 					observations{
 					  id
 					  name
+					  title
 					  created_at
 					  created_by
 					  updated_by
@@ -1279,6 +1281,7 @@ export class ObservationsService {
             observations_by_pk(id:${id}) {
               id
               name
+			  title
               created_by
               created_at
               updated_at

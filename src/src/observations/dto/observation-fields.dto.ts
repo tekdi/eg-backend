@@ -10,6 +10,10 @@ export class ObservationFieldsDto {
 	context: string;
 
 	@IsNotEmpty()
+	@IsString()
+	title: string;
+
+	@IsNotEmpty()
 	@IsNumber()
 	context_id: number;
 
