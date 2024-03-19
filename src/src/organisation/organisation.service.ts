@@ -54,24 +54,30 @@ export class OrganisationService {
 		const organisation = newOrganisation?.organisations;
 
 		const organisation_id = organisation?.id;
-		const learner_target = body?.learner_target;
-		const doc_per_cohort_id = body?.doc_per_cohort_id;
-		const doc_per_monthly_id = body?.doc_per_monthly_id;
-		const doc_quarterly_id = body?.doc_quarterly_id;
-		const learner_per_camp = body?.learner_per_camp;
-		const camp_target = body?.camp_target;
-		if (
-			!organisation_id ||
-			!learner_target ||
-			!doc_per_monthly_id ||
-			!doc_per_cohort_id ||
-			!doc_quarterly_id ||
-			!learner_per_camp ||
-			!camp_target
-		) {
+		const {
+			learner_target,
+			doc_per_cohort_id,
+			doc_per_monthly_id,
+			doc_quarterly_id,
+			learner_per_camp,
+			camp_target,
+		} = body;
+		const missingFields = [
+			'learner_target',
+			'doc_per_cohort_id',
+			'doc_per_monthly_id',
+			'doc_quarterly_id',
+			'learner_per_camp',
+			'camp_target',
+		].filter((field) => !body[field] && body[field] != '');
+
+		if (missingFields.length > 0) {
 			return response.status(422).send({
 				success: false,
-				message: 'Required fields are missing in the payload.',
+				key: missingFields?.[0],
+				message: `Required fields are missing in the payload. ${missingFields.join(
+					',',
+				)}`,
 				data: {},
 			});
 		}
@@ -86,22 +92,28 @@ export class OrganisationService {
 		}
 
 		// Step 2: Insert data into the 'program_organisation' table
-		const programOrganisationData = {
-			organisation_id,
-			program_id: request.mw_program_id,
-			academic_year_id: request.mw_academic_year_id,
-			status: 'active',
-			learner_target,
-			doc_per_cohort_id,
-			doc_per_monthly_id,
-			doc_quarterly_id,
-			learner_per_camp,
-			camp_target,
-		};
 		const programOrganisationTableName = 'program_organisation';
 		const program_org = await this.hasuraService.q(
 			programOrganisationTableName,
-			programOrganisationData,
+			{
+				organisation_id,
+				program_id: request.mw_program_id,
+				academic_year_id: request.mw_academic_year_id,
+				status: 'active',
+				...body,
+			},
+			[
+				'organisation_id',
+				'program_id',
+				'academic_year_id',
+				'status',
+				'learner_target',
+				'doc_per_cohort_id',
+				'doc_per_monthly_id',
+				'doc_quarterly_id',
+				'learner_per_camp',
+				'camp_target',
+			],
 		);
 
 		// Return success response
@@ -340,10 +352,18 @@ export class OrganisationService {
 	}
 
 	async addExisting(body: any, request: any, response: any) {
-		const org_id = body?.organisation_id;
+		const {
+			organisation_id,
+			learner_target,
+			doc_per_cohort_id,
+			doc_per_monthly_id,
+			doc_quarterly_id,
+			learner_per_camp,
+			camp_target,
+		} = body;
 		let data = {
 			query: `query MyQuery {
-				program_organisation_aggregate(where: {academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}, organisation_id: {_eq: ${org_id}}})
+				program_organisation_aggregate(where: {academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}, organisation_id: {_eq: ${organisation_id}}})
 					{
 						aggregate{
 							count
@@ -356,25 +376,23 @@ export class OrganisationService {
 		const program_organisation =
 			existing?.data?.program_organisation_aggregate?.aggregate?.count;
 
-		const organisation_id = org_id;
-		const learner_target = body?.learner_target;
-		const doc_per_cohort_id = body?.doc_per_cohort_id;
-		const doc_per_monthly_id = body?.doc_per_monthly_id;
-		const doc_quarterly_id = body?.doc_quarterly_id;
-		const learner_per_camp = body?.learner_per_camp;
-		const camp_target = body?.camp_target;
-		if (
-			!organisation_id ||
-			!learner_target ||
-			!doc_per_monthly_id ||
-			!doc_per_cohort_id ||
-			!doc_quarterly_id ||
-			!learner_per_camp ||
-			!camp_target
-		) {
+		const missingFields = [
+			'organisation_id',
+			'learner_target',
+			'doc_per_cohort_id',
+			'doc_per_monthly_id',
+			'doc_quarterly_id',
+			'learner_per_camp',
+			'camp_target',
+		].filter((field) => !body[field] && body[field] != '');
+
+		if (missingFields.length > 0) {
 			return response.status(422).send({
 				success: false,
-				message: 'Required fields are missing in the payload.',
+				key: missingFields?.[0],
+				message: `Required fields are missing in the payload. ${missingFields.join(
+					',',
+				)}`,
 				data: {},
 			});
 		}
@@ -388,23 +406,27 @@ export class OrganisationService {
 		}
 
 		if (program_organisation == 0) {
-			const programOrganisationData = {
-				organisation_id,
-				program_id: request.mw_program_id,
-				academic_year_id: request.mw_academic_year_id,
-				status: 'active',
-				learner_target,
-				doc_per_cohort_id,
-				doc_per_monthly_id,
-				doc_quarterly_id,
-				learner_per_camp,
-				camp_target,
-			};
-
 			const programOrganisationTableName = 'program_organisation';
 			const program_organisation = await this.hasuraService.q(
 				programOrganisationTableName,
-				programOrganisationData,
+				{
+					program_id: request.mw_program_id,
+					academic_year_id: request.mw_academic_year_id,
+					status: 'active',
+					...body,
+				},
+				[
+					'organisation_id',
+					'program_id',
+					'academic_year_id',
+					'status',
+					'learner_target',
+					'doc_per_cohort_id',
+					'doc_per_monthly_id',
+					'doc_quarterly_id',
+					'learner_per_camp',
+					'camp_target',
+				],
 			);
 
 			// Return success response
