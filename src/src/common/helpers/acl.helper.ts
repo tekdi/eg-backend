@@ -330,6 +330,41 @@ export class AclHelper {
 			}
 		}
 	}
+	private async doIHaveReferenceAccess(req: any, entity_id: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('program_owner')) {
+			return true;
+		}
+		if (
+			user_roles.includes('facilitator') ||
+			user_roles.includes('staff')
+		) {
+			gqlquery = {
+				query: `query MyQuery {
+					references_aggregate(where: {context_id: {_eq: ${req.mw_userid}}, id: {_eq: ${entity_id}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+			console.log(gqlquery.query);
+
+			const result = await this.hasuraServiceFromService.getData(
+				gqlquery,
+			);
+			if (
+				result?.data &&
+				result.data.references_aggregate.aggregate.count > 0
+			) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
 
 	public async doIHaveAccess(
 		request: any,
@@ -352,6 +387,9 @@ export class AclHelper {
 				return await this.doIHaveKitMaterialAccess(request, entity_id);
 			}
 
+			case 'reference': {
+				return await this.doIHaveReferenceAccess(request, entity_id);
+			}
 			default:
 				return false;
 		}
