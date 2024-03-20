@@ -256,11 +256,11 @@ export class AuthService {
 	}
 
 	public async resetPasswordUsingId(req, header, response) {
-		console.log('req', req);
+		const { mw_roles } = header;
 		const authToken = header.header('authorization');
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
-		console.log('keycloak_id', keycloak_id);
+
 		let query2 = {
 			query: `query MyQuery {
 				users(where: {keycloak_id: {_eq: "${keycloak_id}" }}) {
@@ -276,12 +276,9 @@ export class AuthService {
 				}
 			  }`,
 		};
+
 		const userRole = await this.hasuraService.postData(query2);
-		console.log(
-			'userRole',
-			userRole.data.users[0].program_users[0].roles.role_type,
-		);
-		if (userRole.data.users[0].program_users[0].roles.role_type === 'IP') {
+		if (mw_roles.includes('staff')) {
 			let query = {
 				query: `query MyQuery {
 					users_by_pk(id: ${req.id}) {
@@ -294,7 +291,6 @@ export class AuthService {
 			};
 
 			const userRes = await this.hasuraService.postData(query);
-			console.log('userRes', userRes);
 
 			if (userRes) {
 				const token =
