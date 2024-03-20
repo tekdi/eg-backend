@@ -1,7 +1,6 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import * as fs from 'fs';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../../services/hasura/hasura.service';
 
@@ -23,7 +22,10 @@ export class AclHelper {
 
 		if (cachedRoleToActionMapping) {
 			roleActions = cachedRoleToActionMapping;
-			console.log('### Using Cache for roleActions: ' + JSON.stringify(roleActions));
+			console.log(
+				'### Using Cache for roleActions: ' +
+					JSON.stringify(roleActions),
+			);
 		} else {
 			// Get roles, actions from DB
 			let query = {
@@ -295,6 +297,39 @@ export class AclHelper {
 			return false;
 		}
 	}
+	private async doIHaveKitMaterialAccess(req, camp_id) {
+		const user_roles = req.mw_roles;
+		let gqlQuery;
+		if (user_roles.includes('program_owners')) {
+			return true;
+		}
+		if (user_roles.includes('facilitator')) {
+			gqlQuery = {
+				query: `query MyQuery {
+					kit_materials_checklist_aggregate(where: {camp_id: {_eq: ${camp_id}}, user_id: {_eq: ${req.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+			console.log(gqlQuery.query);
+
+			const result = await this.hasuraServiceFromService.getData(
+				gqlQuery,
+			);
+			if (
+				result?.data &&
+				result.data.kit_materials_checklist_aggregate.aggregate.count >
+					0
+			) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
 
 	public async doIHaveAccess(
 		request: any,
@@ -312,6 +347,9 @@ export class AclHelper {
 
 			case 'camp': {
 				return await this.doIHaveCampAccess(request, entity_id);
+			}
+			case 'kit-material': {
+				return await this.doIHaveKitMaterialAccess(request, entity_id);
 			}
 
 			default:
