@@ -430,7 +430,7 @@ export class ObservationsService {
 			}
 		});
 
-		var data = {
+		let data = {
 			query: `
       mutation UpdateObservations($id:Int!) {
         update_observations_by_pk(
@@ -1736,6 +1736,7 @@ export class ObservationsService {
 		let user_id = request?.mw_userid;
 		let response;
 		let data;
+		let result;
 		if (!user_id) {
 			return resp.status(422).json({
 				message: 'Invalid User Entity',
@@ -1744,8 +1745,35 @@ export class ObservationsService {
 		}
 
 		for (let body of bodyArray) {
+			const {
+				observation_id,
+				context,
+				context_id,
+				field_id,
+				observation_fields_id,
+				...rest
+			} = body; // Extract fields for querying
 			body.created_by = user_id;
 			body.updated_by = user_id;
+
+			data = {
+				query: `  query GetFieldResponse {
+					field_responses(
+					  where: { observation_id: { _eq: ${observation_id} }, context: { _eq: ${context} }, context_id: { _eq: ${context_id} },field_id:{_eq:${field_id}},observation_fields_id:{_eq:${observation_fields_id}} }
+					) {
+					  id
+					}
+				  }
+				`,
+			};
+
+			const existingData =
+				await this.hasuraServiceFromServices.queryWithVariable(data);
+
+			const action =
+				existingData?.data?.data?.field_responses?.length > 0
+					? 'update'
+					: 'insert';
 
 			let query = '';
 			Object.keys(body).forEach((e) => {
@@ -1760,25 +1788,56 @@ export class ObservationsService {
 				}
 			});
 
-			data = {
-				query: `mutation CreateFieldsResponses {
-				insert_field_responses_one(object: {${query}}) {
-				  id
-				  observation_id
-				  context
-				  context_id
-				  response_value
-				}
-			  }
-			  `,
-				variables: {},
-			};
+			if (action == 'update') {
+				const id = existingData?.data?.data?.field_responses?.[0]?.id;
 
-			response = await this.hasuraServiceFromServices.queryWithVariable(
-				data,
-			);
+				data = {
+					query: ` mutation UpdateObservations($id:Int!) {
+								update_field_responses_by_pk(
+									pk_columns: {
+									id: $id
+									},
+									_set: {
+										${query}
+									}
+								) {
+								id
+								}
+							}
+   							 `,
+					variables: {
+						id: id,
+					},
+				};
 
-			let result = response?.data?.data?.insert_field_responses_one;
+				response =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						data,
+					);
+
+				result = response?.data?.data?.update_field_responses_by_pk;
+			} else {
+				data = {
+					query: `mutation CreateFieldsResponses {
+					insert_field_responses_one(object: {${query}}) {
+					  id
+					  observation_id
+					  context
+					  context_id
+					  response_value
+					}
+				  }
+				  `,
+					variables: {},
+				};
+
+				response =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						data,
+					);
+
+				result = response?.data?.data?.insert_field_responses_one;
+			}
 
 			if (!result) {
 				return resp.status(500).json({
@@ -1792,7 +1851,7 @@ export class ObservationsService {
 		return resp.status(200).json({
 			success: true,
 			message: 'Observation Field(s) created successfully!',
-			data: response?.data?.data,
+			data: result,
 		});
 	}
 }
