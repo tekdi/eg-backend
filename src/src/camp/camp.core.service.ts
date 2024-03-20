@@ -78,7 +78,7 @@ export class CampCoreService {
 			.data.map((item) => item.value);
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
