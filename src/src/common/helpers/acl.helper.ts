@@ -239,7 +239,6 @@ export class AclHelper {
 		// @TODO - update code above
 		return true;
 	}
-
 	private async doIHaveCampAccess(req: any, camp_id: number) {
 		const user_roles = req.mw_roles;
 
@@ -366,6 +365,49 @@ export class AclHelper {
 		}
 	}
 
+	private async doIHavePcrScoreAccess(request, entity, entity_id) {
+		const user_roles = request.mw_roles;
+		let gqlQuery;
+		if (user_roles.includes('program_owner')) {
+			return true;
+		}
+		let filterQuery;
+		if (entity.hasOwnProperty('user_id')) {
+			filterQuery = `user_id: {_eq: ${entity_id}},`;
+		} else if (entity.hasOwnProperty('id')) {
+			filterQuery = `id: {_eq: ${entity_id}},`;
+		} else {
+			filterQuery = ``;
+		}
+
+		if (user_roles.includes('facilitator')) {
+			gqlQuery = {
+				query: `query MyQuery {
+					pcr_scores_aggregate(where: {${filterQuery} updated_by: {_eq: ${request.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+			console.log(gqlQuery.query);
+
+			const result = await this.hasuraServiceFromService.getData(
+				gqlQuery,
+			);
+			if (
+				result?.data &&
+				result.data.kit_materials_checklist_aggregate.aggregate.count >
+					0
+			) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
@@ -385,6 +427,15 @@ export class AclHelper {
 			}
 			case 'kit-material': {
 				return await this.doIHaveKitMaterialAccess(request, entity_id);
+			}
+			case 'pcrscore': {
+				console.log(request.params);
+
+				return await this.doIHavePcrScoreAccess(
+					request,
+					request?.params,
+					entity_id,
+				);
 			}
 
 			case 'reference': {
@@ -440,9 +491,9 @@ export class AclHelper {
 		if (!ownershipCheckRequired) {
 			return true;
 		}
-
 		if (entity_id) {
 			// 4 - Validate ownership
+
 			const iHaveAccess = await this.doIHaveAccess(
 				request,
 				entity,
