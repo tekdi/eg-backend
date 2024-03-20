@@ -703,7 +703,7 @@ export class BeneficiariesService {
 		}
 		const sortType = body?.sortType ? body?.sortType : 'desc';
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let status = body?.status;
 		let filterQueryArray = [];
