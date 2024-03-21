@@ -7,10 +7,11 @@ import { HasuraModule as HasuraModuleFromServices } from '../../services/hasura/
 import { EditRequestController } from './edit-requests.controller';
 import { EditRequestCoreService } from './edit-requests.core.service';
 import { EditRequestService } from './edit-requests.service';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 
 @Module({
 	imports: [HasuraModuleFromServices, HasuraModule, UserModule],
-	providers: [EditRequestService, EditRequestCoreService, Method],
+	providers: [EditRequestService, EditRequestCoreService, Method, AclHelper],
 	controllers: [EditRequestController],
 })
 export class EditRequestModule implements NestModule {

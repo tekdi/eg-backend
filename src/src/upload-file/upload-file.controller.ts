@@ -14,6 +14,8 @@ import { Request, Response } from 'express';
 import { SentryInterceptor } from 'src/common/interceptors/sentry.interceptor';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { UploadFileService } from './upload-file.service';
+import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('uploadFile')
@@ -22,6 +24,9 @@ export class UploadFileController {
 
 	@Post('/:id/upload-file')
 	@UseInterceptors(FileInterceptor('file'))
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('upload-file', ['create'])
 	async addFile(
 		@UploadedFile() file: Express.Multer.File,
 		@Param('id') id: number,
@@ -42,6 +47,8 @@ export class UploadFileController {
 	@Post('/attendance')
 	@UseGuards(AuthGuard)
 	@UseInterceptors(FileInterceptor('file'))
+	@UseGuards(AclGuard)
+	@AclGuardData('upload-file', ['create'])
 	async addFileNoMock(
 		@UploadedFile() file: Express.Multer.File,
 		@Res() response: Response,
@@ -51,6 +58,8 @@ export class UploadFileController {
 
 	@Get('/:id/get-file')
 	@UseInterceptors(FileInterceptor('file'))
+	// @UseGuards(AclGuard)
+	// @AclGuardData('upload-file',['read.own'])
 	async getFileUrl(
 		@Param('id') id: string,
 		@Res() request: Request,
@@ -61,6 +70,8 @@ export class UploadFileController {
 	}
 
 	@Get('/getDocumentById/:id')
+	@UseGuards(AclGuard)
+	@AclGuardData('upload-file', ['read.own'])
 	async getDocumentById(@Param('id') id: string, @Res() response: Response) {
 		await this.uploadFileService.getDocumentById(id, response);
 	}
