@@ -215,6 +215,22 @@ export class ObservationsController {
 		);
 	}
 
+	@Post('/report')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getObservationReport(
+		@Body() body: ObservationSearchDto,
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('type') type: string,
+	) {
+		return this.observationsService.getObservationReport(
+			body,
+			response,
+			request,
+		);
+	}
+
 	@Post('observation-fields/list')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())

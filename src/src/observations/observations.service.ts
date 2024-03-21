@@ -912,17 +912,15 @@ export class ObservationsService {
 					},
 				};
 			} else if (type == 'submissons') {
-				let field_responses_filter =
-					body?.filters?.observation_fields?.field_responses;
 				data = {
-					query: `query SearchObservations($filters: observations_bool_exp, $field_responses_filter: field_responses_bool_exp) {
-						observations(where: $filters) {
+					query: `query SearchObservations($observations: observations_bool_exp, $observation_fields: observation_fields_bool_exp,$field_responses: field_responses_bool_exp) {
+						observations(where: $observations) {
 							created_at
 							created_by
 							id
 							name
 							title
-							observation_fields {
+							observation_fields(where: $observation_fields) {
 								id
 								observation_id
 								field_id
@@ -936,11 +934,12 @@ export class ObservationsService {
 									title
 									enum
 								}
-								field_responses(where: $field_responses_filter) {
+								field_responses(where: $field_responses) {
 									id
 									context
 									context_id
 									observation_fields_id
+									response_value
 								}
 							}
 							updated_at
@@ -948,18 +947,21 @@ export class ObservationsService {
 						}
 					}`,
 					variables: {
-						filters: body.filters,
-						field_responses_filter: field_responses_filter,
+						observations: body.filters?.observations,
+						observation_fields: body.filters?.observation_fields,
+						field_responses: body.filters?.field_responses,
 					},
 				};
 			}
+
+			console.log('query-->>', JSON.stringify(data));
 		}
 
 		response = await this.hasuraServiceFromServices.queryWithVariable(data);
 
 		newQdata = response?.data?.data?.observations;
 
-		if (newQdata.length > 0) {
+		if (newQdata?.length > 0) {
 			return resp.status(200).json({
 				success: true,
 				message: 'Data found successfully!',
@@ -1757,7 +1759,7 @@ export class ObservationsService {
 			body.updated_by = user_id;
 
 			data = {
-				query: `  query GetFieldResponse {
+				query: ` query GetFieldResponse {
 					field_responses(
 					  where: { observation_id: { _eq: ${observation_id} }, context: { _eq: ${context} }, context_id: { _eq: ${context_id} },field_id:{_eq:${field_id}},observation_fields_id:{_eq:${observation_fields_id}} }
 					) {
@@ -1853,5 +1855,151 @@ export class ObservationsService {
 			message: 'Observation Field(s) created successfully!',
 			data: result,
 		});
+	}
+
+	async getObservationReport(body: any, resp: any, req: any) {
+		let sql;
+		let dataWithStatus;
+		let observationFieldsResultCount;
+
+		//get observation data from filters
+
+		let observation_body = body?.filters?.observations;
+		let observation_fields_body = body?.filters?.observation_fields;
+
+		sql = `select * from observations where name = '${observation_body?.name}'`;
+
+		const observationData = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		).result;
+
+		let observationResult =
+			this.hasuraServiceFromServices.getFormattedData(observationData);
+
+		let observation_id = observationResult?.[0]?.id;
+
+		//get observation_fields_data;
+
+		sql = `select * from observation_fields where observation_id='${observation_id}' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'`;
+		const observationFieldsData = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
+
+		if (observationFieldsData == undefined) {
+			return resp.status(422).json({
+				message: 'Data Not Found',
+				data: [],
+			});
+		}
+
+		let observationFieldsResult =
+			this.hasuraServiceFromServices.getFormattedData(
+				observationFieldsData,
+			);
+
+		let observationFieldIds = '';
+
+		observationFieldsResult.forEach((item) => {
+			observationFieldIds += `'${item.id}',`;
+		});
+
+		observationFieldIds = observationFieldIds.slice(0, -1); // Remove the trailing comma
+
+		//get count of observation_fields
+		sql = `SELECT COUNT(*) FROM observation_fields WHERE observation_id='${observation_id}' AND context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'
+		`;
+
+		const observationFieldsDataCount = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
+
+		if (observationFieldsDataCount == undefined) {
+			return resp.status(422).json({
+				message: 'Data Not Found',
+				data: [],
+			});
+		}
+
+		observationFieldsResultCount =
+			this.hasuraServiceFromServices.getFormattedData(
+				observationFieldsDataCount,
+			);
+
+		//get data for fields_response
+
+		let fields_response_body = body?.filters?.field_responses;
+		let fields_response_context = fields_response_body?.context;
+		let field_responses_context_id = fields_response_body?.context_id;
+
+		sql = `SELECT
+		COALESCE(COUNT(fr.observation_id), 0) AS count,
+		all_combinations.observation_id,
+		all_combinations.context,
+		all_combinations.context_id
+	FROM
+		(
+			
+			SELECT DISTINCT
+				observation_id,
+				'${fields_response_context}' AS context,
+				unnest(ARRAY[${field_responses_context_id}]) AS context_id
+			FROM
+				field_responses
+			WHERE
+				observation_id = ${observation_id}
+				AND observation_fields_id IN (${observationFieldIds})
+		) AS all_combinations
+	LEFT JOIN
+		field_responses AS fr
+	ON
+		all_combinations.observation_id = fr.observation_id
+		AND all_combinations.context = fr.context
+		AND all_combinations.context_id = fr.context_id
+	GROUP BY
+		all_combinations.observation_id,
+		all_combinations.context,
+		all_combinations.context_id;
+	`;
+
+		const fieldResponsesData = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
+
+		if (fieldResponsesData == undefined) {
+			return resp.status(422).json({
+				message: 'Data Not Found',
+				data: [],
+			});
+		}
+		let fieldResponsesResult =
+			this.hasuraServiceFromServices.getFormattedData(fieldResponsesData);
+
+		if (fieldResponsesResult.length > 0) {
+			dataWithStatus = this.addStatus(
+				fieldResponsesResult,
+				observationFieldsResultCount?.[0]?.count,
+			);
+		}
+
+		if (fieldResponsesResult?.length > 0) {
+			return resp.status(200).json({
+				message: 'Data retrieved',
+				data: dataWithStatus,
+			});
+		}
+	}
+
+	addStatus(data, observationFieldsResultCount) {
+		for (const item of data) {
+			const count = parseInt(item.count);
+			if (count == observationFieldsResultCount) {
+				item.status = 'completed';
+			} else if (count == 0) {
+				item.status = 'not_started';
+			} else {
+				item.status = 'incomplete';
+			}
+		}
+		return data;
 	}
 }
