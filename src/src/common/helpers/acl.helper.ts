@@ -408,6 +408,39 @@ export class AclHelper {
 		}
 	}
 
+	private async doIHaveSessionAccess(request, entity_id) {
+		const user_roles = request.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('program_owner')) {
+			return true;
+		}
+		console.log(request.params);
+
+		if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					learning_sessions_tracker_aggregate(where: {updated_by: {_eq: ${request.mw_userid}}, id: {_eq: ${entity_id}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		console.log(gqlquery.query);
+
+		const result = await this.hasuraServiceFromService.getData(gqlquery);
+		if (
+			result?.data &&
+			result.data.learning_sessions_tracker_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
@@ -440,6 +473,9 @@ export class AclHelper {
 
 			case 'reference': {
 				return await this.doIHaveReferenceAccess(request, entity_id);
+			}
+			case 'session': {
+				return await this.doIHaveSessionAccess(request, entity_id);
 			}
 			default:
 				return false;
