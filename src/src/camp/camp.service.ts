@@ -3525,6 +3525,7 @@ export class CampService {
 		let camp_day_happening = body?.camp_day_happening;
 		let camp_day_not_happening_reason = body?.camp_day_not_happening_reason;
 		let mood = body?.mood;
+		const camp_type = 'pcr';
 		let object;
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
@@ -3565,9 +3566,9 @@ export class CampService {
 		}
 
 		if (camp_day_happening === 'no') {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}",camp_type:"${camp_type}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
 		} else {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}",camp_type:"${camp_type}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
 		}
 
 		const data = {
@@ -3583,7 +3584,7 @@ export class CampService {
 				mood
 				start_date
 				end_date
-
+				camp_type
 			}
 		}`,
 		};
