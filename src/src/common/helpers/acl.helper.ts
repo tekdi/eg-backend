@@ -476,6 +476,36 @@ export class AclHelper {
 		}
 	}
 
+	private async doIHaveEditRequestAccess(request, entity_id) {
+		const user_roles = request.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('program_owner')) {
+			return true;
+		}
+		if (user_roles.includes('staff')) {
+			gqlquery = {
+				query: `query MyQuery {
+					edit_requests_aggregate(where: {id: {_eq: ${entity_id}}, edit_req_approved_by: {_eq: ${request.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		console.log(gqlquery.query);
+
+		const result = await this.hasuraServiceFromService.getData(gqlquery);
+		if (
+			result?.data &&
+			result.data.edit_requests_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
@@ -514,6 +544,9 @@ export class AclHelper {
 			}
 			case 'upload-file': {
 				return await this.doIHaveUploadFileAccess(request, entity_id);
+			}
+			case 'edit-request': {
+				return await this.doIHaveEditRequestAccess(request, entity_id);
 			}
 			default:
 				return false;
