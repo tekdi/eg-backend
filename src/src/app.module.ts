@@ -39,6 +39,7 @@ import { UserModule } from './user/user.module';
 import { UserauthModule } from './userauth/userauth.module';
 import { BoardModule } from './modules/board/board.module';
 import { OrganisationModule } from './organisation/organisation.module';
+import { ObservationsModule } from './observations/observations.module';
 @Module({
 	imports: [
 		ScheduleModule.forRoot(),
@@ -87,6 +88,7 @@ import { OrganisationModule } from './organisation/organisation.module';
 		UserModule,
 		UserauthModule,
 		OrganisationModule,
+		ObservationsModule,
 	],
 	controllers: [],
 	providers: [CacheCleanerProvider],
