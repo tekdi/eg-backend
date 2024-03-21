@@ -2001,4 +2001,48 @@ export class ObservationsService {
 		}
 		return data;
 	}
+
+	async getCampLearnersListForEPCP(response: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		let user_id = request?.mw_userid;
+		let query = `query MyQuery {
+			camps(where: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, status: {_eq: "registered"}, group_users: {user_id: {_eq:${user_id}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}}}) {
+			  camp_id: id
+			  group {
+				group_id: id
+				group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}, user: {program_beneficiaries: {status: {_eq: "registered_in_camp"}}}}) {
+				  user {
+					user_id: id
+					first_name
+					middle_name
+					last_name
+				  }
+				}
+			  }
+			}
+		  }
+		  
+          
+          `;
+
+		const result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const newQdata = result?.data?.camps;
+
+		if (newQdata) {
+			return response.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return response.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
 }
