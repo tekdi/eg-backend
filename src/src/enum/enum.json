@@ -1581,52 +1581,52 @@
 	],
 	"PCR_MISCELLANEOUS_ACTIVITIES": [
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
-			"value": "pcr_miscellaneous_activities_communication_skills"
+			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
+			"value": "miscellaneous_activities_communication_skills"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
-			"value": "pcr_miscellaneous_activities_role_model_intervention"
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
+			"value": "miscellaneous_activities_role_model_intervention"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
-			"value": "pcr_miscellaneous_activities_aspiration_mapping"
+			"title": "MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
+			"value": "miscellaneous_activities_aspiration_mapping"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
-			"value": "pcr_miscellaneous_activities_digital_literacy"
+			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
+			"value": "miscellaneous_activities_digital_literacy"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
-			"value": "pcr_miscellaneous_activities_financial_literacy"
+			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
+			"value": "miscellaneous_activities_financial_literacy"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_LINKAGES",
-			"value": "pcr_miscellaneous_activities_linkages"
+			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
+			"value": "miscellaneous_activities_linkages"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
-			"value": "pcr_miscellaneous_activities_family_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
+			"value": "miscellaneous_activities_family_visit"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
-			"value": "pcr_miscellaneous_activities_role_model_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
+			"value": "miscellaneous_activities_role_model_visit"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
-			"value": "pcr_miscellaneous_activities_stakeholder_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_visit"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
-			"value": "pcr_miscellaneous_activities_school_teacher_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
+			"value": "miscellaneous_activities_school_teacher_visit"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
-			"value": "pcr_miscellaneous_activities_e_pcp_activities"
+			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
+			"value": "miscellaneous_activities_e_pcp_activities"
 		},
 		{
-			"title": "PCR_MISCELLANEOUS_ACTIVITIES_PCR",
-			"value": "pcr_miscellaneous_activities_pcr"
+			"title": "MISCELLANEOUS_ACTIVITIES_PCR",
+			"value": "miscellaneous_activities_pcr"
 		}
 	]
 }
