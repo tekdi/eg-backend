@@ -84,7 +84,7 @@ export class CampCoreService {
 		const academic_year_id = req.mw_academic_year_id;
 		let parent_ip_id = req?.parent_ip_id;
 		let status = body?.status;
-		let type = [];
+		const type = [];
 		filterQueryArray.push(
 			`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
 		);
