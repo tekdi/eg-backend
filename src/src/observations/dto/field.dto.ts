@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsObject } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class FieldDto {
 	@IsNotEmpty()
@@ -9,13 +9,7 @@ export class FieldDto {
 	@IsString()
 	data_type: string;
 
-	description: string;
-
-	extra_all_info: string;
-
 	@IsNotEmpty()
 	@IsString()
 	title: string;
-
-	enum: string;
 }

@@ -83,7 +83,6 @@ export class ObservationsService {
 		const newQdata =
 			vresponse?.data?.observations_aggregate?.aggregate?.count;
 
-		console.log('newQdata-->>', vresponse);
 		if (newQdata > 0) {
 			return resp.status(422).json({
 				success: false,
