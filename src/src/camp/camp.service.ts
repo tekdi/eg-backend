@@ -36,6 +36,7 @@ export class CampService {
 		'kit_ratings',
 		'kit_feedback',
 		'group_id',
+		'type',
 	];
 
 	public returnFieldsconsents = [
@@ -182,6 +183,7 @@ export class CampService {
 					group_id: createresponse?.groups?.id,
 					created_by: facilitator_id,
 					updated_by: facilitator_id,
+					type: 'pcr',
 				};
 
 				createcampResponse = await this.hasuraService.q(
@@ -380,6 +382,7 @@ export class CampService {
 				preferred_start_time
 				preferred_end_time
 				week_off
+				type
 			  group{
 				name
 				description
@@ -424,6 +427,7 @@ export class CampService {
 			  preferred_start_time
 			  preferred_end_time
 			  week_off
+				type
 			  group{
 				name
 				description
@@ -776,6 +780,7 @@ export class CampService {
 			  preferred_start_time
 			  preferred_end_time
 			  week_off
+				type
 			  properties {
 				lat
 				long
