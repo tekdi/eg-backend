@@ -371,7 +371,7 @@ export class CampService {
 		let status = 'active';
 
 		let qury = `query MyQuery {
-			camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}},order_by: {id: asc}) {
+			main_camp:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"main"}},order_by: {id: asc}) {
 			  id
 			  kit_ratings
 			  kit_feedback
@@ -393,16 +393,42 @@ export class CampService {
 
 			  }
 			}
+			pcr_camp:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"pcr"}},order_by: {id: asc}) {
+			  id
+			  kit_ratings
+			  kit_feedback
+			  kit_received
+			  kit_was_sufficient
+				preferred_start_time
+				preferred_end_time
+				week_off
+				type
+			  group{
+				name
+				description
+				status
+			  }
+			  group_users(where: {member_type: {_neq: "owner"}}) {
+				user_id
+				status
+				member_type
+
+			  }
+			}
 		  }`;
 
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const newQdata = response?.data;
+		const main_camp = response?.data?.main_camp || [];
+		const pcr_camp = response?.data?.pcr_camp || [];
 
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: newQdata || { camps: [] },
+			data: {
+				main_camp,
+				pcr_camp,
+			},
 		});
 	}
 
