@@ -36,6 +36,7 @@ export class CampService {
 		'kit_ratings',
 		'kit_feedback',
 		'group_id',
+		'type',
 	];
 
 	public returnFieldsconsents = [
@@ -182,6 +183,7 @@ export class CampService {
 					group_id: createresponse?.groups?.id,
 					created_by: facilitator_id,
 					updated_by: facilitator_id,
+					type: 'pcr',
 				};
 
 				createcampResponse = await this.hasuraService.q(
@@ -371,7 +373,7 @@ export class CampService {
 		let status = 'active';
 
 		let qury = `query MyQuery {
-			camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}},order_by: {id: asc}) {
+			main_camp:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"main"}},order_by: {id: asc}) {
 			  id
 			  kit_ratings
 			  kit_feedback
@@ -380,6 +382,7 @@ export class CampService {
 				preferred_start_time
 				preferred_end_time
 				week_off
+				type
 			  group{
 				name
 				description
@@ -393,16 +396,42 @@ export class CampService {
 
 			  }
 			}
+			pcr_camp:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"pcr"}},order_by: {id: asc}) {
+			  id
+			  kit_ratings
+			  kit_feedback
+			  kit_received
+			  kit_was_sufficient
+				preferred_start_time
+				preferred_end_time
+				week_off
+				type
+			  group{
+				name
+				description
+				status
+			  }
+			  group_users(where: {member_type: {_neq: "owner"}}) {
+				user_id
+				status
+				member_type
+
+			  }
+			}
 		  }`;
 
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const newQdata = response?.data;
+		const main_camp = response?.data?.main_camp || [];
+		const pcr_camp = response?.data?.pcr_camp || [];
 
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: newQdata || { camps: [] },
+			data: {
+				main_camp,
+				pcr_camp,
+			},
 		});
 	}
 
@@ -424,6 +453,7 @@ export class CampService {
 			  preferred_start_time
 			  preferred_end_time
 			  week_off
+				type
 			  group{
 				name
 				description
@@ -776,6 +806,7 @@ export class CampService {
 			  preferred_start_time
 			  preferred_end_time
 			  week_off
+				type
 			  properties {
 				lat
 				long
@@ -2019,9 +2050,19 @@ export class CampService {
 		let facilitator_id = body?.facilitator_id;
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 50 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 
-		let query = `query MyQuery {
-			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
+		let data = {
+			query: `query MyQuery($limit:Int, $offset:Int) {
+			consents_aggregate(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}})  {
+					aggregate {
+						count
+					  }
+				}
+			consents(limit: $limit,
+				offset: $offset,where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
 			  id
 			  document_id
 			  user_id
@@ -2030,12 +2071,23 @@ export class CampService {
 				name
 			  }
 			}
-		  }`;
+		  }`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
 
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
 		const consent_response = hasura_response?.data;
+
+		const count =
+			hasura_response?.data?.consents_aggregate?.aggregate?.count;
+
+		const totalPages = Math.ceil(count / limit);
+
 		if (!consent_response?.consents?.length) {
 			return resp.status(200).json({
 				success: true,
@@ -2057,13 +2109,16 @@ export class CampService {
 				status: 200,
 				message: 'Successfully updated consents details',
 				data: resultData,
+				totalCount: count,
+				limit: limit,
+				currentPage: page,
+				totalPages: totalPages,
 			});
 		}
 	}
 
 	async getAdminConsentBenficiaries(body: any, request: any, resp: any) {
 		let camp_id = body?.camp_id;
-
 		const user = await this.userService.ipUserInfo(request);
 
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
@@ -2080,15 +2135,13 @@ export class CampService {
 
 		// get facilitator for the provided camp id
 
-		let query = `query MyQuery {
+		let query = `query MyQuery{
 			camps(where: {id: {_eq:${camp_id}}, group_users: {user: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}}}}) {
 			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
 				user_id
 			  }
 			}
-		  }
-
-		  `;
+		  }`;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -3472,6 +3525,7 @@ export class CampService {
 		let camp_day_happening = body?.camp_day_happening;
 		let camp_day_not_happening_reason = body?.camp_day_not_happening_reason;
 		let mood = body?.mood;
+		const camp_type = 'pcr';
 		let object;
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
@@ -3512,9 +3566,9 @@ export class CampService {
 		}
 
 		if (camp_day_happening === 'no') {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}",camp_type:"${camp_type}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
 		} else {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}",camp_type:"${camp_type}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
 		}
 
 		const data = {
@@ -3530,7 +3584,7 @@ export class CampService {
 				mood
 				start_date
 				end_date
-
+				camp_type
 			}
 		}`,
 		};
