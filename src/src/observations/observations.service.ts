@@ -2007,7 +2007,7 @@ export class ObservationsService {
 		let academic_year_id = request?.mw_academic_year_id;
 		let user_id = request?.mw_userid;
 		let query = `query MyQuery {
-			camps(where: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, status: {_eq: "registered"}, group_users: {user_id: {_eq:${user_id}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}}}) {
+			camps(where: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},status: {_in: ["registered","camp_ip_verified","change_required"]}, group_users: {user_id: {_eq:${user_id}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}}}) {
 			  camp_id: id
 			  group {
 				group_id: id
