@@ -4602,7 +4602,7 @@ export class CampService {
 		const pcr_response = await this.hasuraServiceFromServices.getData(data);
 		//check camps type is  PCR or not!
 		const camps = pcr_response?.data?.camps[0]?.type;
-		const camp_type = 'main';
+		const type = 'main';
 		if (camps === 'pcr') {
 			let update_body = ['type'];
 			let camp_day_response = await this.hasuraService.q(
@@ -4635,7 +4635,7 @@ export class CampService {
 				},
 				subject: 'pcr_camp',
 				subject_id: camp_id,
-				log_transaction_text: `IP ${request.mw_userid} change pcr camps type pcr to  ${camp_type}.`,
+				log_transaction_text: `IP ${request.mw_userid} change pcr camps type pcr to  ${type}.`,
 				tempArray: ['camp_id', 'camps'],
 				action: 'update',
 				sortedData: true,
