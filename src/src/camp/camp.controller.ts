@@ -384,4 +384,20 @@ export class CampController {
 	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campDetails(body, request, response);
 	}
+
+	@Post('admin/end_pcr')
+	@UseGuards(new AuthGuard())
+	pcrCampEnd(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.campService.pcrCampEnd(id, body, request, response);
+	}
+	// @Post('admin/end_pcr')
+	// @UseGuards(new AuthGuard())
+	// pcrCampEnd(@Req() req: any, @Res() response: any, @Body() body: any) {
+	// 	return this.campService.pcrCampEnd(body, req, response);
+	// }
 }

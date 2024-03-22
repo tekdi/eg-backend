@@ -2355,6 +2355,7 @@ export class CampService {
 					kit_was_sufficient
 					kit_ratings
 					kit_feedback
+					type
 				  group {
 						name
 						status
@@ -4572,6 +4573,79 @@ export class CampService {
 			return resp.json({
 				status: 500,
 				message: 'IP_CAMP_LIST_ERROR',
+				data: {},
+			});
+		}
+	}
+
+	public async pcrCampEnd(id: any, body: any, request: any, response: any) {
+		const camp_id = body?.camp_id;
+		//validation check is camp type and camp-day-activity is PCR type
+		let data = {
+			query: `query MyQuery {
+		camps:camps(where: {id: {_eq: ${camp_id}}}){
+			id
+			type
+		}
+		camp_days_activities_tracker:camp_days_activities_tracker(where:{camp_id:{_eq:${camp_id}}}){
+			camp_type
+			id
+		}
+	}`,
+		};
+
+		const pcr_response = await this.hasuraServiceFromServices.getData(data);
+		//check camps type is  PCR or not!
+		const camps = pcr_response?.data?.camps[0]?.type;
+		//check camp-day-activity camp_type is pcr  or not.
+		const camp_day =
+			pcr_response?.data?.camp_days_activities_tracker[0]?.camp_type;
+		const camp_type = 'main';
+		if (camp_day === 'pcr' && camps === 'pcr') {
+			//update camp-day-activity camp_type =main
+			const data = {
+				query: `mutation MyQuery {
+				update_camp_days_activities_tracker(where: {camp_id: {_eq: ${camp_id}}}, _set: {camp_type:${camp_type}}) {
+					affected_rows
+					returning {
+						id
+						camp_id
+						camp_type
+						}
+				}
+			}`,
+			};
+			const result = await this.hasuraServiceFromServices.getData(data);
+			const campDayActivity =
+				result?.data?.update_camp_days_activities_tracker?.returning;
+
+			let update_body = ['type'];
+			let camp_day_response = await this.hasuraService.q(
+				'camps',
+				{
+					...body,
+					id: camp_id,
+					type: 'main',
+				},
+				update_body,
+				true,
+				['id', 'type'],
+			);
+			let camp = camp_day_response?.camps;
+			if (camp && campDayActivity) {
+				return response.status(200).json({
+					success: true,
+					message: 'PCR camp updated successfully!',
+					data: {
+						camp,
+						campDayActivity,
+					},
+				});
+			}
+		} else {
+			return response.status(422).json({
+				success: false,
+				message: 'PCR Camp is Already close',
 				data: {},
 			});
 		}
