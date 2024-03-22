@@ -4578,7 +4578,7 @@ export class CampService {
 		}
 	}
 
-	public async pcrCampEnd(id: any, body: any, request: any, response: any) {
+	public async pcrCampEnd(body: any, request: any, response: any) {
 		const camp_id = body?.camp_id;
 		//validation check is camp type and camp-day-activity is PCR type
 		let data = {
