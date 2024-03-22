@@ -4596,38 +4596,14 @@ export class CampService {
 			id
 			type
 		}
-		camp_days_activities_tracker:camp_days_activities_tracker(where:{camp_id:{_eq:${camp_id}}}){
-			camp_type
-			id
-		}
 	}`,
 		};
 
 		const pcr_response = await this.hasuraServiceFromServices.getData(data);
 		//check camps type is  PCR or not!
 		const camps = pcr_response?.data?.camps[0]?.type;
-		//check camp-day-activity camp_type is pcr  or not.
-		const camp_day =
-			pcr_response?.data?.camp_days_activities_tracker[0]?.camp_type;
 		const camp_type = 'main';
-		if (camp_day === 'pcr' && camps === 'pcr') {
-			//update camp-day-activity camp_type =main
-			const data = {
-				query: `mutation MyQuery {
-				update_camp_days_activities_tracker(where: {camp_id: {_eq: ${camp_id}}}, _set: {camp_type:${camp_type}}) {
-					affected_rows
-					returning {
-						id
-						camp_id
-						camp_type
-						}
-				}
-			}`,
-			};
-			const result = await this.hasuraServiceFromServices.getData(data);
-			const campDayActivity =
-				result?.data?.update_camp_days_activities_tracker?.returning;
-
+		if (camps === 'pcr') {
 			let update_body = ['type'];
 			let camp_day_response = await this.hasuraService.q(
 				'camps',
@@ -4650,29 +4626,28 @@ export class CampService {
 				context: 'pcr_camp.update.camp_type',
 				context_id: camp_id,
 				oldData: {
-					camp_type: camp_day,
+					camp_id: camp_id,
 					type: camps,
 				},
 				newData: {
-					camp_type: 'main',
+					camp_id: camp_id,
 					type: 'main',
 				},
 				subject: 'pcr_camp',
 				subject_id: camp_id,
-				log_transaction_text: `IP ${request.mw_userid} change pcr camp_day_activity_tracker camp_type pcr to ${camp_type}  and camps type pcr to  ${camp_type}.`,
-				tempArray: ['camp_type', 'camps'],
+				log_transaction_text: `IP ${request.mw_userid} change pcr camps type pcr to  ${camp_type}.`,
+				tempArray: ['camp_id', 'camps'],
 				action: 'update',
 				sortedData: true,
 			};
 			await this.userService.addAuditLogAction(auditData);
 
-			if (camp && campDayActivity) {
+			if (camp) {
 				return response.status(200).json({
 					success: true,
 					message: 'PCR camp updated successfully!',
 					data: {
 						camp,
-						campDayActivity,
 					},
 				});
 			}
