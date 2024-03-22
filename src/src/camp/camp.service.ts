@@ -4580,6 +4580,15 @@ export class CampService {
 
 	public async pcrCampEnd(body: any, request: any, response: any) {
 		const camp_id = body?.camp_id;
+		const user = await this.userService.ipUserInfo(request);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return request.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
 		//validation check is camp type and camp-day-activity is PCR type
 		let data = {
 			query: `query MyQuery {
@@ -4632,6 +4641,31 @@ export class CampService {
 				['id', 'type'],
 			);
 			let camp = camp_day_response?.camps;
+
+			// activity logs old camp to new camp
+			const auditData = {
+				userId: request?.mw_userid,
+				mw_userid: request?.mw_userid,
+				user_type: 'IP',
+				context: 'pcr_camp.update.camp_type',
+				context_id: camp_id,
+				oldData: {
+					camp_type: camp_day,
+					type: camps,
+				},
+				newData: {
+					camp_type: 'main',
+					type: 'main',
+				},
+				subject: 'pcr_camp',
+				subject_id: camp_id,
+				log_transaction_text: `IP ${request.mw_userid} change pcr camp_day_activity_tracker camp_type pcr to ${camp_type}  and camps type pcr to  ${camp_type}.`,
+				tempArray: ['camp_type', 'camps'],
+				action: 'update',
+				sortedData: true,
+			};
+			await this.userService.addAuditLogAction(auditData);
+
 			if (camp && campDayActivity) {
 				return response.status(200).json({
 					success: true,
