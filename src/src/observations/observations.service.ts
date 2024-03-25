@@ -1840,6 +1840,7 @@ export class ObservationsService {
 				result = response?.data?.data?.insert_field_responses_one;
 			}
 
+			console.log('result-->>', result);
 			if (!result) {
 				return resp.status(500).json({
 					success: false,
