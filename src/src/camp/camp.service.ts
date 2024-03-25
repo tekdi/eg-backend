@@ -2355,6 +2355,7 @@ export class CampService {
 					kit_was_sufficient
 					kit_ratings
 					kit_feedback
+					type
 				  group {
 						name
 						status
@@ -4617,6 +4618,88 @@ export class CampService {
 			return response.json({
 				status: 400,
 				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
+	public async pcrCampEnd(body: any, request: any, response: any) {
+		const camp_id = body?.camp_id;
+		const user = await this.userService.ipUserInfo(request);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return request.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		//validation check is camp type and camp-day-activity is PCR type
+		let data = {
+			query: `query MyQuery {
+		camps:camps(where: {id: {_eq: ${camp_id}}}){
+			id
+			type
+		}
+	}`,
+		};
+
+		const pcr_response = await this.hasuraServiceFromServices.getData(data);
+		//check camps type is  PCR or not!
+		const camps = pcr_response?.data?.camps[0]?.type;
+		const type = 'main';
+		if (camps === 'pcr') {
+			let update_body = ['type'];
+			let camp_day_response = await this.hasuraService.q(
+				'camps',
+				{
+					...body,
+					id: camp_id,
+					type: 'main',
+				},
+				update_body,
+				true,
+				['id', 'type'],
+			);
+			let camp = camp_day_response?.camps;
+
+			// activity logs old camp to new camp
+			const auditData = {
+				userId: request?.mw_userid,
+				mw_userid: request?.mw_userid,
+				user_type: 'IP',
+				context: 'pcr_camp.update.camp_type',
+				context_id: camp_id,
+				oldData: {
+					camp_id: camp_id,
+					type: camps,
+				},
+				newData: {
+					camp_id: camp_id,
+					type: 'main',
+				},
+				subject: 'pcr_camp',
+				subject_id: camp_id,
+				log_transaction_text: `IP ${request.mw_userid} change pcr camps type pcr to  ${type}.`,
+				tempArray: ['camp_id', 'camps'],
+				action: 'update',
+				sortedData: true,
+			};
+			await this.userService.addAuditLogAction(auditData);
+
+			if (camp) {
+				return response.status(200).json({
+					success: true,
+					message: 'PCR camp updated successfully!',
+					data: {
+						camp,
+					},
+				});
+			}
+		} else {
+			return response.status(422).json({
+				success: false,
+				message: 'PCR Camp is Already close',
 				data: {},
 			});
 		}
