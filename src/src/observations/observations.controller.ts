@@ -426,17 +426,4 @@ export class ObservationsController {
 			request,
 		);
 	}
-
-	@Post('/camp-learner-list')
-	@UsePipes(ValidationPipe)
-	@UseGuards(new AuthGuard())
-	public async getCampLearnersListForEPCP(
-		@Res() response: Response,
-		@Req() request: Request,
-	) {
-		return this.observationsService.getCampLearnersListForEPCP(
-			response,
-			request,
-		);
-	}
 }

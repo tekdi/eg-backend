@@ -384,4 +384,14 @@ export class CampController {
 	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campDetails(body, request, response);
 	}
+
+	@Post('camp-info/learners')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getCampLearnersListForEPCP(
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.campService.getCampLearnersListForEPCP(response, request);
+	}
 }
