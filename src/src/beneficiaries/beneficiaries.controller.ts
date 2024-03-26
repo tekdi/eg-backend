@@ -512,4 +512,20 @@ export class BeneficiariesController {
 			response,
 		);
 	}
+
+	@Post('/update-scholarship/:id')
+	@UseGuards(new AuthGuard())
+	public async updateScholarshipId(
+		@Param('id') id: string,
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.updateScholarshipId(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }
