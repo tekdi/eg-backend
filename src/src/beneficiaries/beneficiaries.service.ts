@@ -1418,6 +1418,7 @@ export class BeneficiariesService {
 				parent_support
 				education_10th_date
 				education_10th_exam_year
+				scholarship_order_id
 			  }
 			  program_users {
 				organisation_id
@@ -3761,5 +3762,57 @@ export class BeneficiariesService {
 		}
 
 		return updateResult;
+	}
+
+	//Update scolarship_order_id
+	public async updateScholarshipId(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		const learner_id = id;
+		const scholarship_order_id = body?.scholarship_order_id;
+
+		let check_id = {
+			query: `query MyQuery {
+				core_beneficiaries(where: {user_id: {_eq: ${learner_id}}}){
+					id
+					user_id
+				}
+			}`,
+		};
+		const response_data = await this.hasuraServiceFromServices.getData(
+			check_id,
+		);
+		if (!response_data || !response_data.data?.core_beneficiaries[0]) {
+			return response.status(422).json({
+				success: false,
+				message: 'Beneficiaries ID is not exists!',
+				data: {},
+			});
+		}
+
+		let data = {
+			query: `mutation MyMutation {
+			update_core_beneficiaries(where: {user_id: {_eq: ${learner_id}}}, _set: {scholarship_order_id: ${scholarship_order_id}}) {
+				affected_rows
+				returning {
+					scholarship_order_id
+					id
+					user_id
+				}
+			}
+		}`,
+		};
+		const newResult = await this.hasuraServiceFromServices.getData(data);
+		const updateResult =
+			newResult?.data?.update_core_beneficiaries?.returning[0];
+
+		return response.status(200).json({
+			success: true,
+			message: 'Beneficiaries Scholarship Updated',
+			data: updateResult || {},
+		});
 	}
 }
