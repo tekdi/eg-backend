@@ -373,7 +373,7 @@ export class CampService {
 		let status = 'active';
 
 		let qury = `query MyQuery {
-			main_camp:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"main"}},order_by: {id: asc}) {
+			camps:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"main"}},order_by: {id: asc}) {
 			  id
 			  kit_ratings
 			  kit_feedback
@@ -422,14 +422,14 @@ export class CampService {
 
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const main_camp = response?.data?.main_camp || [];
+		const camps = response?.data?.camps || [];
 		const pcr_camp = response?.data?.pcr_camp || [];
 
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
 			data: {
-				main_camp,
+				camps,
 				pcr_camp,
 			},
 		});
