@@ -3526,7 +3526,7 @@ export class CampService {
 		let camp_day_happening = body?.camp_day_happening;
 		let camp_day_not_happening_reason = body?.camp_day_not_happening_reason;
 		let mood = body?.mood;
-		const camp_type = 'pcr';
+		const camp_type = body?.camp_type;
 		let object;
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
