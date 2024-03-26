@@ -1770,22 +1770,20 @@ export class ObservationsService {
 
 			const existingData =
 				await this.hasuraServiceFromServices.queryWithVariable(data);
-
 			const action =
 				existingData?.data?.data?.field_responses?.length > 0
 					? 'update'
 					: 'insert';
-
 			let query = '';
 			Object.keys(body).forEach((e) => {
-				if (body[e] && body[e] !== '') {
-					if (e === 'render') {
-						query += `${e}: ${body[e]}, `;
-					} else if (Array.isArray(body[e])) {
+				if (body[e]) {
+					if (Array.isArray(body[e])) {
 						query += `${e}: "${JSON.stringify(body[e])}", `;
 					} else {
 						query += `${e}: "${body[e]}", `;
 					}
+				} else {
+					query += `${e}: "", `;
 				}
 			});
 
@@ -1979,9 +1977,40 @@ export class ObservationsService {
 				fieldResponsesResult,
 				observationFieldsResultCount?.[0]?.count,
 			);
-		}
+			return resp.status(200).json({
+				message: 'Data retrieved',
+				data: dataWithStatus,
+			});
+		} else {
+			//no data fouud
+			let fieldResponsesData = [
+				['count', 'observation_id', 'context', 'context_id'],
+			];
+			field_responses_context_id.forEach((item) => {
+				fieldResponsesData.push([
+					'0',
+					`${observation_id}`,
+					`${fields_response_context}`,
+					`${item}`,
+				]);
+			});
 
-		if (fieldResponsesResult?.length > 0) {
+			let fieldResponsesResult =
+				this.hasuraServiceFromServices.getFormattedData(
+					fieldResponsesData,
+				);
+
+			if (fieldResponsesResult.length > 0) {
+				dataWithStatus = this.addStatus(
+					fieldResponsesResult,
+					observationFieldsResultCount?.[0]?.count,
+				);
+				return resp.status(200).json({
+					message: 'Data retrieved',
+					data: dataWithStatus,
+				});
+			}
+
 			return resp.status(200).json({
 				message: 'Data retrieved',
 				data: dataWithStatus,
