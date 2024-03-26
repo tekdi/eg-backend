@@ -7,6 +7,8 @@ import { KeycloakModule } from 'src/services/keycloak/keycloak.module';
 import { UserModule } from 'src/user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { Method } from 'src/common/method/method';
+import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 
 @Module({
 	imports: [
@@ -17,11 +19,14 @@ import { AuthService } from './auth.service';
 		UserModule,
 	],
 	controllers: [AuthController],
-	providers: [AuthService],
+	providers: [AuthService, Method],
 	exports: [AuthService],
 })
 export class AuthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
+		consumer
+			.apply(CohortMiddleware)
+			.forRoutes('/auth/reset-password-admin');
 	}
 }
