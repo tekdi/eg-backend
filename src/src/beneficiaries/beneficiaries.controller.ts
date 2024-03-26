@@ -493,7 +493,7 @@ export class BeneficiariesController {
 		);
 	}
 
-	@Post(':id')
+	@Post('/update-scholarship/:id')
 	@UseGuards(new AuthGuard())
 	public async updateScholarshipId(
 		@Param('id') id: string,
