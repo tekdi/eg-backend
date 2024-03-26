@@ -3773,6 +3773,13 @@ export class BeneficiariesService {
 	) {
 		const learner_id = id;
 		const scholarship_order_id = body?.scholarship_order_id;
+		if (!scholarship_order_id || scholarship_order_id === '') {
+			return response.status(422).json({
+				success: false,
+				message: 'required scholarship Id!',
+				data: {},
+			});
+		}
 
 		let check_id = {
 			query: `query MyQuery {
