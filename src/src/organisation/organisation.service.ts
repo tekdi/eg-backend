@@ -33,27 +33,6 @@ export class OrganisationService {
 				data: {},
 			});
 		}
-		const organisationData = {
-			name: body?.name,
-			mobile: body?.mobile,
-			contact_person: body?.contact_person,
-			address: body?.address || null,
-			email_id: body?.email_id,
-		};
-
-		const tableName = 'organisations';
-		const newOrganisation = await this.hasuraService.q(
-			tableName,
-			organisationData,
-			['name', 'mobile', 'contact_person', 'address', 'email_id'],
-		);
-
-		if (!newOrganisation || !newOrganisation?.organisations.id) {
-			throw new Error('Failed to create organisation.');
-		}
-		const organisation = newOrganisation?.organisations;
-
-		const organisation_id = organisation?.id;
 		const {
 			learner_target,
 			doc_per_cohort_id,
@@ -81,6 +60,27 @@ export class OrganisationService {
 				data: {},
 			});
 		}
+		const organisationData = {
+			name: body?.name,
+			mobile: body?.mobile,
+			contact_person: body?.contact_person,
+			address: body?.address || null,
+			email_id: body?.email_id,
+		};
+
+		const tableName = 'organisations';
+		const newOrganisation = await this.hasuraService.q(
+			tableName,
+			organisationData,
+			['name', 'mobile', 'contact_person', 'address', 'email_id'],
+		);
+
+		if (!newOrganisation || !newOrganisation?.organisations.id) {
+			throw new Error('Failed to create organisation.');
+		}
+		const organisation = newOrganisation?.organisations;
+
+		const organisation_id = organisation?.id;
 
 		// Calculate learner_target per camp and round up to nearest whole number
 		if (Math.ceil(learner_target / learner_per_camp) !== camp_target) {
