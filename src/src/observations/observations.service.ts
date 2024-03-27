@@ -863,18 +863,24 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
-			const traverseFilters = (filters) => {
-				Object.keys(filters).forEach((key) => {
-					if (typeof filters[key] === 'object') {
-						traverseFilters(filters[key]);
-					} else {
-						if (!key.startsWith('_')) {
-							filters[`_${key}`] = filters[key];
-							delete filters[key];
+			function traverseFilters(filters) {
+				if (typeof filters === 'object') {
+					Object.keys(filters).forEach((key) => {
+						if (Array.isArray(filters[key])) {
+							filters[key].forEach((item) =>
+								traverseFilters(item),
+							);
+						} else if (typeof filters[key] === 'object') {
+							traverseFilters(filters[key]);
+						} else {
+							if (!key.startsWith('_')) {
+								filters[`_${key}`] = filters[key];
+								delete filters[key];
+							}
 						}
-					}
-				});
-			};
+					});
+				}
+			}
 
 			traverseFilters(body?.filters);
 
@@ -952,8 +958,6 @@ export class ObservationsService {
 					},
 				};
 			}
-
-			console.log('query-->>', JSON.stringify(data));
 		}
 
 		response = await this.hasuraServiceFromServices.queryWithVariable(data);
