@@ -42,6 +42,7 @@ export class EventsService {
 		'reminders',
 		'academic_year_id',
 		'program_id',
+		'params',
 	];
 
 	public attendanceReturnFields = [
@@ -71,7 +72,6 @@ export class EventsService {
 		let user_id_arr = req.attendees;
 		let program_id = header?.mw_program_id;
 		let academic_year_id = header?.mw_academic_year_id;
-
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
 		let obj = {
@@ -92,12 +92,15 @@ export class EventsService {
 			reminders: JSON.stringify(req.reminders).replace(/"/g, '\\"'),
 			program_id: program_id,
 			academic_year_id: academic_year_id,
+			params: req.params,
 		};
 
-		const eventResult = await this.hasuraService.create(
+		const eventResult = await this.hasuraService.createWithVariable(
 			this.table,
 			obj,
 			this.returnFields,
+			[],
+			[{ key: 'params', type: 'json' }],
 		);
 
 		if (eventResult) {

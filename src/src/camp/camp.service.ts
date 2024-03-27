@@ -4375,44 +4375,112 @@ export class CampService {
 		let context_id = body?.context_id;
 		const dateString = moment().startOf('day').format();
 		const endDate = moment().endOf('day').format();
+		let errorMessage;
+
+		if (body?.fields && !Array.isArray(body?.fields)) {
+			errorMessage = 'Fields Must Be Array';
+		}
+
 		// Validate the request parameters
 		if (!camp_id || !context_id) {
+			errorMessage = 'Required Camp-id and camp-day-activity-id';
+		}
+		if (errorMessage) {
 			return resp.status(422).json({
-				message: 'Required Camp-id and camp-day-activity-id',
+				message: errorMessage,
 				data: {},
 			});
 		}
 
+		let queryFields = [];
+
+		// Determine which fields to include in the query
+		const fields = body?.fields;
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('beneficairesCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`beneficairesCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}}) {
+          aggregate {
+            count
+            }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('beneficairesAttendaceCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`beneficairesAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+          aggregate {
+          	count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('beneficairesPresentAttendaceCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`beneficairesPresentAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"member"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"},status:{_eq:"present"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+          aggregate {
+            count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('prerakPresentAttendaceCount')
+		) {
+			queryFields = [
+				...queryFields,
+				`prerakPresentAttendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"},member_type:{_eq:"owner"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"},status:{_eq:"present"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
+          aggregate {
+            count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('today_session_count')
+		) {
+			queryFields = [
+				...queryFields,
+				`today_session_count:learning_sessions_tracker_aggregate(where: {camp_id: {_eq: ${camp_id}}, _or: [{created_at: {_gte: "${dateString}", _lte: "${endDate}"}}, {updated_at:{_gte: "${dateString}", _lte: "${endDate}"}}]}) {
+          aggregate{
+            count
+          }
+        }`,
+			];
+		}
+		if (
+			!fields ||
+			fields?.length === 0 ||
+			fields.includes('misc_activities')
+		) {
+			queryFields = [
+				...queryFields,
+				`misc_activities:camp_days_activities_tracker_by_pk(id: ${context_id}){
+					misc_activities
+				}`,
+			];
+		}
+
 		let data = {
-			query: `query MyQuery {
-								leanerCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"}}) {
-									aggregate {
-										count
-									}
-								}
-								attendaceCount: group_users_aggregate(where: {camps: {id: {_eq: ${camp_id}}}, status: {_eq: "active"}, attendance: {context_id: {_eq: ${context_id}}, context: {_eq: "camp_days_activities_tracker"}, date_time: {_gte: "${dateString}", _lte: "${endDate}"}}}) {
-									aggregate {
-										count
-									}
-								}
-								learning_sessions_tracker_aggregate(where: {camp_id: {_eq: ${camp_id}},
-									_or: [{
-										created_at: {_gte: "${dateString}", _lte: "${endDate}"}
-										
-									},{
-										updated_at:{_gte: "${dateString}", _lte: "${endDate}"}
-									}
-									]
-								}) {
-									aggregate{
-										count
-									}
-								}
-								camp_days_activities_tracker(where:{id:{_eq:${context_id}}}){
-									misc_activities
-								}
-							}
-			  `,
+			query: `query MyQuery { ${queryFields.join(' ')} }`,
 		};
 
 		const hasura_response = await this.hasuraServiceFromServices.getData(
