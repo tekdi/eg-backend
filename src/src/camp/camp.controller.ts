@@ -400,4 +400,14 @@ export class CampController {
 	pcrCampEnd(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.pcrCampEnd(body, request, response);
 	}
+
+	@Post('admin/multiple_end_pcr')
+	@UseGuards(new AuthGuard())
+	multiplePcrCampEnd(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.multiplePcrCampEnd(body, request, response);
+	}
 }

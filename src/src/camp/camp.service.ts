@@ -4704,4 +4704,98 @@ export class CampService {
 			});
 		}
 	}
+
+	//multiple PCR camp END
+	public async multiplePcrCampEnd(body: any, request: any, response: any) {
+		const camp_id = body?.camp_id;
+		const user = await this.userService.ipUserInfo(request);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return request.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		//validation check is camp type is PCR only
+		let data = {
+			query: `query MyQuery {
+	camps:camps(where: {id: {_in: [${camp_id}]}}){
+		id
+		type
+	}
+}`,
+		};
+		const pcr_response = await this.hasuraServiceFromServices.getData(data);
+		//check camps type is  PCR or not!
+		const camps = pcr_response?.data?.camps ?? [];
+
+		// Check if all camps are of type PCR
+		const campIds = camps
+			.filter((camp: any) => camp.type != 'pcr')
+			.map((e) => e.id);
+
+		if (campIds.length > 0) {
+			return response.status(422).json({
+				success: false,
+				message: `${campIds} This ID are Not PCR Camp Ids`,
+				data: {},
+			});
+		}
+		const type = 'main';
+
+		let updatecamp = {
+			query: `mutation MyMutation {
+			update_camps_many(updates: {where: {id: {_in: [${camp_id}]}}, _set: {type: "main"}}) {
+				affected_rows
+				returning {
+					id
+					type
+				}
+			}
+		}`,
+		};
+		const updateResponse = await this.hasuraServiceFromServices.getData(
+			updatecamp,
+		);
+		const updatedCamps =
+			updateResponse?.data?.update_camps_many?.[0].returning ?? [];
+
+		// activity logs old camp to new camp
+		const userData = await Promise.all(
+			updatedCamps?.map(async (item) => {
+				const auditData = {
+					userId: request?.mw_userid,
+					mw_userid: request?.mw_userid,
+					user_type: 'IP',
+					context: 'camps.update.camp_type',
+					context_id: item.id,
+					oldData: {
+						camp_id: item.id,
+						type: 'pcr',
+					},
+					newData: {
+						camp_id: item.id,
+						type: item.type,
+					},
+					subject: 'camps',
+					subject_id: item.id,
+					log_transaction_text: `IP ${request.mw_userid} change pcr camps type pcr to  ${type}.`,
+					tempArray: ['camp_id', 'camps'],
+					action: 'update',
+					sortedData: true,
+				};
+				await this.userService.addAuditLogAction(auditData);
+			}),
+		);
+		if (updatedCamps) {
+			return response.status(200).json({
+				success: true,
+				message: 'PCR camp updated successfully!',
+				data: {
+					updatedCamps,
+				},
+			});
+		}
+	}
 }
