@@ -419,8 +419,6 @@ export class CampService {
 			  }
 			}
 		  }`;
-		console.log('eee', qury);
-
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const camps = response?.data?.camps || [];
@@ -4056,8 +4054,6 @@ export class CampService {
 				offset: offset,
 			},
 		};
-		console.log('sss', query_data.query);
-
 		const response = await this.hasuraServiceFromServices.getData(
 			query_data,
 		);
