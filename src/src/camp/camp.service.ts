@@ -162,8 +162,8 @@ export class CampService {
 				name: campName,
 				type: 'camp',
 				status: 'camp_initiated',
-				program_id: body?.program_id || 1,
-				academic_year_id: body?.academic_year_id || 1,
+				program_id: request.mw_program_id,
+				academic_year_id: request.mw_academic_year_id,
 				created_by: facilitator_id,
 				updated_by: facilitator_id,
 			};
@@ -419,6 +419,7 @@ export class CampService {
 			  }
 			}
 		  }`;
+		console.log('eee', qury);
 
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
@@ -3953,8 +3954,8 @@ export class CampService {
 	public async campLearnersById(id: any, body: any, req: any, resp) {
 		const camp_id = id;
 		const facilitator_id = req.mw_userid;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		let program_id = req.mw_program_id;
+		let academic_year_id = req.mw_academic_year_id;
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 5 : parseInt(body.limit);
@@ -4055,6 +4056,7 @@ export class CampService {
 				offset: offset,
 			},
 		};
+		console.log('sss', query_data.query);
 
 		const response = await this.hasuraServiceFromServices.getData(
 			query_data,

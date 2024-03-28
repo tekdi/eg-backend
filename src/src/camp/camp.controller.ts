@@ -11,6 +11,7 @@ import {
 	UseGuards,
 	UsePipes,
 	ValidationPipe,
+	Request,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { CampService } from './camp.service';
