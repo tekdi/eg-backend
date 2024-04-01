@@ -596,10 +596,13 @@ export class EventsService {
 			const format = 'YYYY-MM-DD';
 			const dateString = moment().startOf('day').format(format);
 			const currentTime = moment().format('HH:mm');
-
+			const currentTimeWithOffset = moment()
+				.subtract(5, 'hours')
+				.subtract(30, 'minutes')
+				.format('HH:mm');
 			let data = {
 				query: `query MyQuery1 {
-					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTime}"}, end_time: {_gte: "${currentTime}"}}) {
+					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTimeWithOffset}"}, end_time: {_gte: "${currentTimeWithOffset}"}}) {
 						aggregate {
 							count
 						}
