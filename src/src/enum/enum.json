@@ -429,10 +429,6 @@
 			"value": "pragati_orientation"
 		},
 		{
-			"title": "FACILITATOR_EVENT_TYPE_GKP_TRAINING",
-			"value": "gkp_training"
-		},
-		{
 			"title": "FACILITATOR_EVENT_TYPE_PCR_TRAINING",
 			"value": "pcr_training"
 		},
