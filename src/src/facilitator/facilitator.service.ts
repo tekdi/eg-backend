@@ -93,10 +93,6 @@ export class FacilitatorService {
 				status = `status: { _in: ["applied" ]}`;
 				break;
 			}
-			case 'gkp_training': {
-				status = `status: { _in: ["pragati_mobilizer" ]}`;
-				break;
-			}
 			case 'pcr_training': {
 				status = `status: { _in: ["pragati_mobilizer","selected_for_onboarding" ]}`;
 				break;
