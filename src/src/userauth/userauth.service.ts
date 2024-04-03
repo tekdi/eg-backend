@@ -9,6 +9,8 @@ import { Method } from '../common/method/method';
 import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
 import { UserService } from 'src/user/user.service';
 import { S3Service } from 'src/services/s3/s3.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
+const { Blob } = require('buffer');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -34,6 +36,7 @@ export class UserauthService {
 		private userService: UserService,
 		private readonly s3Service: S3Service,
 		private method: Method,
+		private uploadFileService: UploadFileService,
 	) {}
 
 	public async userAuthRegister(body, response, role) {
@@ -856,6 +859,7 @@ export class UserauthService {
 			user_id,
 			program_id,
 			academic_year_id,
+			response,
 		);
 
 		console.log('result-->>', result);
@@ -870,6 +874,7 @@ export class UserauthService {
 		user_id: any,
 		program_id: any,
 		academic_year_id: any,
+		resp?: any,
 	) {
 		let tableFields;
 		let tableName;
@@ -891,7 +896,7 @@ export class UserauthService {
 		let qualification_document_data;
 		let resultArray = [];
 		let upsert_records_result;
-
+		let base64result;
 		for (const key in json) {
 			const value = json[key];
 
@@ -902,60 +907,28 @@ export class UserauthService {
 					const subValue = value[subKey];
 
 					if (typeof subValue === 'object') {
-						// Separate the subobjects of profile_photo_1 and documents
-						if (subKey === 'profile_photo_1') {
-							profile_photo_1_value = Object.values(subValue);
-
-							documents_values_1 = Object.values(
+						if (subKey.startsWith('profile_photo_')) {
+							const profilePhotoValue = Object.values(subValue);
+							const documentsValues = Object.values(
 								subValue.documents,
 							);
+							const base64 = documentsValues?.[0];
+							const documentDetails = {
+								document_type: 'profile_photo',
+								document_sub_type: subKey,
+							};
 
-							profile_documents_array.push({
-								document_id: documents_values_1?.[1],
-								name: documents_values_1?.[2],
-								doument_type: documents_values_1?.[3],
-								document_sub_type: documents_values_1?.[4],
-							});
+							if (base64) {
+								await this.base64ToBlob(
+									base64,
+									user_id,
+									resp,
+									documentDetails,
+								);
+							}
 
-							// Add profile_photo_1 with its name value for inserting in users table
-							value['profile_photo_1'] =
-								profile_photo_1_value?.[0];
-						}
-						if (subKey === 'profile_photo_2') {
-							profile_photo_2_value = Object.values(subValue);
-
-							documents_values_2 = Object.values(
-								subValue.documents,
-							);
-
-							profile_documents_array.push({
-								document_id: documents_values_2?.[1],
-								name: documents_values_2?.[2],
-								doument_type: documents_values_2?.[3],
-								document_sub_type: documents_values_2?.[4],
-							});
-
-							// Add profile_photo_2 with its name value for inserting in users table
-							value['profile_photo_2'] =
-								profile_photo_2_value?.[0];
-						}
-						if (subKey === 'profile_photo_3') {
-							profile_photo_3_value = Object.values(subValue);
-
-							documents_values_3 = Object.values(
-								subValue.documents,
-							);
-
-							profile_documents_array.push({
-								document_id: documents_values_3?.[1],
-								name: documents_values_3?.[2],
-								doument_type: documents_values_3?.[3],
-								document_sub_type: documents_values_3?.[4],
-							});
-
-							// Add profile_photo_3 with its name value for inserting in users table
-							value['profile_photo_3'] =
-								profile_photo_3_value?.[0];
+							// Add profile photo with its name value for inserting in users table
+							value[subKey] = profilePhotoValue?.[0];
 						}
 					}
 				}
@@ -970,6 +943,7 @@ export class UserauthService {
 					tableName,
 					user_id,
 					resultArray,
+					resp,
 				);
 			}
 
@@ -993,14 +967,29 @@ export class UserauthService {
 			if (tableName == 'qualifications') {
 				console.log('qualvalue-->', value);
 				if (value?.documents) {
-					qualification_document_data = {
-						document_id: value?.documents?.document_id,
-						name: value?.documents?.name,
+					let base64 = value?.documents?.base64;
+
+					console.log('base64-->>', base64);
+					let document_details = {
+						document_type: 'qualifications',
 						document_sub_type: 'qualifications',
-						doument_type: 'qualifications',
 						context: 'qualifications',
 					};
+
+					if (base64) {
+						base64result = await this.base64ToBlob(
+							base64,
+							user_id,
+							resp,
+							document_details,
+						);
+					}
 				}
+
+				console.log('base64result-->.', base64result);
+
+				value['qualification_reference_document_id'] =
+					base64result?.document_id;
 				tableFields = tableFields?.filter(
 					(field) => field !== 'documents',
 				);
@@ -1046,36 +1035,18 @@ export class UserauthService {
 			}
 
 			console.log('upsert_records_result-->>', upsert_records_result);
-
-			if (tableName == 'users' && profile_documents_array?.length > 0) {
-				await this.upsertProfileDocuments(profile_documents_array);
-			}
-
-			if (tableName == 'qualifications' && qualification_document_data) {
-				let result = await this.upsertRecords(
-					1,
-					'documents',
-					[
-						'name',
-						'document_sub_type',
-						'doument_type',
-						'context',
-						'context_id',
-						'user_id',
-					],
-					qualification_document_data,
-					user_id,
-					qualification_document_data?.document_id,
-				);
-
-				console.log('result doc-->>.', result);
-			}
 		}
 
 		return resultArray;
 	}
 
-	public async processJsonArray(values, tableName, user_id, resultArray?) {
+	public async processJsonArray(
+		values,
+		tableName,
+		user_id,
+		resultArray?,
+		resp?,
+	) {
 		let set_update;
 		let update_id;
 		let referenceFields;
@@ -1083,6 +1054,7 @@ export class UserauthService {
 		let documentFields;
 		let documentData;
 		let result;
+		let base64result;
 
 		for (const obj of values) {
 			let tableFields = Object.keys(obj);
@@ -1104,35 +1076,47 @@ export class UserauthService {
 						'name',
 						'contact_number',
 						'type_of_document',
+						'context',
+						'context_id',
 					];
 					referenceData = {
 						name: obj?.references.name,
 						contact_number: obj?.references.contact_number,
 						type_of_document: obj?.references.type_of_document,
-						id: obj?.references?.id,
 						context: 'experience',
+						context_id: obj?.id,
 					};
 
 					if (set_update == 1) {
 						referenceData.context_id = obj?.id;
+						referenceData['id'] = obj?.references?.id;
 					}
 				}
 
 				if ('documents' in obj.references) {
-					documentFields = [
-						'name',
-						'document_sub_type',
-						'doument_type',
-						'context',
-					];
-					documentData = {
-						name: obj?.references?.documents?.name,
-						document_sub_type:
-							obj?.references?.documents?.document_sub_type,
-						doument_type: obj?.references?.documents?.document_type,
-						id: obj?.references?.documents?.document_id,
-						context: 'reference',
+					let base64 = obj.references?.documents?.base64;
+
+					console.log('base64-->>', base64);
+					let document_details = {
+						document_type: 'reference',
+						document_sub_type: 'reference',
+						context: 'experience',
 					};
+
+					if (base64) {
+						base64result = await this.base64ToBlob(
+							base64,
+							user_id,
+							resp,
+							document_details,
+						);
+					}
+
+					referenceData['document_id'] = base64result?.document_id;
+
+					tableFields = tableFields?.filter(
+						(field) => field !== 'documents',
+					);
 				}
 
 				// remove references object from the main object to process the experience object
@@ -1141,6 +1125,8 @@ export class UserauthService {
 				);
 				delete obj?.references;
 			}
+
+			console.log('referenceData-->>', referenceData);
 
 			result = await this.upsertRecords(
 				set_update,
@@ -1166,17 +1152,7 @@ export class UserauthService {
 					update_id,
 				);
 
-				if (documentData) {
-					let update_id = documentData?.id;
-					let result2 = await this.upsertRecords(
-						1,
-						'documents',
-						documentFields,
-						documentData,
-						user_id,
-						update_id,
-					);
-				}
+				console.log('references result--->>', result1);
 			}
 
 			if (result?.[tableName]?.extensions) {
@@ -1308,7 +1284,7 @@ export class UserauthService {
 			}
 			case 'experience': {
 				query = `query MyQuery {
-					experience(where: {id: {_eq:${value?.id}}}){
+					experience(where: {user_id: {_eq:${user_id}},type:{_eq:${value?.type}}}){
 					  id
 					}
 				  }
@@ -1678,5 +1654,59 @@ export class UserauthService {
 				data: formattedData,
 			});
 		}
+	}
+
+	public async base64ToBlob(base64, userId, res, documentDetails) {
+		console.log('here-->>');
+		let fileObject;
+		const arr = base64.split(',');
+		const mime = arr[0].match(/:(.*?);/)[1];
+		const buffer = Buffer.from(arr[1], 'base64');
+		let { document_type, document_sub_type } = documentDetails;
+
+		// Generate a unique filename with timestamp and userId
+		const now = new Date();
+		const formattedDateTime = now
+			.toISOString()
+			.slice(0, 19)
+			.replace('T', '-'); // YYYY-MM-DD-HH-MM-SS format
+		const filename = `${userId}-${formattedDateTime}.${mime.split('/')[1]}`; // Extract file extension
+
+		fileObject = {
+			fieldname: 'file',
+			mimetype: mime,
+			encoding: '7bit',
+			originalname: filename,
+			buffer: buffer,
+		};
+		let uploadresponse = await this.uploadFileService.addFile(
+			fileObject,
+			userId,
+			document_type,
+			document_sub_type,
+			res,
+			true,
+		);
+
+		console.log(
+			'response of file upload-->>',
+			JSON.stringify(uploadresponse),
+		);
+		let document_id: any; // Adjust the type as per your requirement
+
+		if ('data' in uploadresponse && uploadresponse.data) {
+			document_id =
+				uploadresponse.data.data?.insert_documents?.returning[0]?.id;
+		} else {
+			// Handle the case where 'data' property is not present
+			// or uploadresponse.data is null/undefined
+			document_id = null; // Or any other fallback value
+		}
+		return {
+			data: buffer,
+			filename,
+			mimeType: mime,
+			document_id: document_id,
+		};
 	}
 }
