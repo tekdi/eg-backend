@@ -77,7 +77,8 @@ export class UserauthService {
 			if (
 				!body.role_fields.facilitator_id ||
 				!body.role_fields.program_id ||
-				!body.role_fields.academic_year_id
+				!body.role_fields.academic_year_id ||
+				!body.role_fields.org_id
 			) {
 				misssingFieldsFlag = true;
 			}
@@ -184,6 +185,9 @@ export class UserauthService {
 				}
 				if (body.role_fields.facilitator_id) {
 					body.facilitator_id = body.role_fields.facilitator_id;
+				}
+				if (body.role_fields.org_id) {
+					body.org_id = body.role_fields.org_id;
 				}
 				if (role === 'facilitator' && body.hasOwnProperty('dob')) {
 					delete body.dob;

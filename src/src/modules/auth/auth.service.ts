@@ -780,6 +780,7 @@ export class AuthService {
 
 	async newCreate(req: any) {
 		const tableName = 'users';
+		let other = [];
 		const newR = await this.hasuraService.q(
 			tableName,
 			{ ...req, aadhar_verified: 'pending' },
@@ -808,6 +809,8 @@ export class AuthService {
 			req.program_id = req.role_fields.program_id;
 			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'identified';
+			req.org_id = req?.role_fields?.org_id;
+			other = [...other, 'org_id'];
 		}
 
 		if (req.role === 'facilitator' || req.role === 'facilitators') {
@@ -836,6 +839,7 @@ export class AuthService {
 					'program_id',
 					'academic_year_id',
 					'status',
+					...(other || []),
 				],
 			);
 		}
