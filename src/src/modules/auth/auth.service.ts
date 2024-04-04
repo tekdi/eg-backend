@@ -815,6 +815,14 @@ export class AuthService {
 				'keycloak_id',
 				'username',
 				'aadhar_verified',
+				'village',
+				'state',
+				'block',
+				'district',
+				'grampanchayat',
+				'pincode',
+				'lat',
+				'long',
 			],
 		);
 
