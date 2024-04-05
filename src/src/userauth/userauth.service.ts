@@ -462,6 +462,8 @@ export class UserauthService {
 				diploma_details
 				pan_no
 				sourcing_channel
+				has_job_exp
+				has_volunteer_exp
 			  }
 			  extended_users {
 				marital_status
