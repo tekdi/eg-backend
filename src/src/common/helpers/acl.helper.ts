@@ -506,6 +506,38 @@ export class AclHelper {
 			return false;
 		}
 	}
+	async doIHaveEventAccess(req: any, entity_id: any) {
+		const user_roles = req.mw_roles;
+		let gqlQuery;
+		if (user_roles.includes('program_owners')) {
+			return true;
+		}
+
+		// Validate for IP role
+		if (user_roles.includes('staff')) {
+			// 2.1 Validate if this event is added by staff
+			gqlQuery = {
+				query: `query MyQuery {
+					events_aggregate(where: {id: {_eq: ${entity_id}}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}, created_by: {_eq: ${req.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }`,
+			};
+		}
+		console.log(gqlQuery.query);
+
+		// Fetch data
+		const result = await this.hasuraServiceFromService.getData(gqlQuery);
+		if (result?.data && result.data.events_aggregate.aggregate.count > 0) {
+			console.log('I have access: true');
+			return true;
+		} else {
+			console.log('I have access: false');
+			return false;
+		}
+	}
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
@@ -547,6 +579,9 @@ export class AclHelper {
 			}
 			case 'edit-request': {
 				return await this.doIHaveEditRequestAccess(request, entity_id);
+			}
+			case 'event': {
+				return await this.doIHaveEventAccess(request, entity_id);
 			}
 			default:
 				return false;
