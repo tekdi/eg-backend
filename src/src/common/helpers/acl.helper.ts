@@ -494,7 +494,7 @@ export class AclHelper {
 				  `,
 			};
 		}
-		console.log(gqlquery.query);
+		console.log('query ->', gqlquery.query);
 
 		const result = await this.hasuraServiceFromService.getData(gqlquery);
 		if (
