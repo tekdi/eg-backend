@@ -538,6 +538,113 @@ export class AclHelper {
 			return false;
 		}
 	}
+	async doIHaveUserAccess(request, entity_id) {
+		const user_roles = request.mw_roles;
+		//finding out the entity name
+		let roles_query = {
+			query: `query MyQuery {
+				prerak: program_faciltators_aggregate(where: {user_id: {_eq: ${entity_id}}}) {
+				  aggregate {
+					count
+				  }
+				}
+				learner: program_beneficiaries_aggregate(where: {user_id: {_eq: ${entity_id}}}) {
+				  aggregate {
+					count
+				  }
+				}
+				staff: program_users(where: {user_id: {_eq: ${entity_id}}}) {
+				  organisation_id
+				}
+			  }
+			  `,
+		};
+		console.log('roles_query', roles_query.query);
+
+		const roles_result = await this.hasuraServiceFromService.getData(
+			roles_query,
+		);
+		let entityBeingAccessed;
+		if (roles_result?.data) {
+			if (roles_result.data.prerak.aggregate.count > 0) {
+				entityBeingAccessed = 'program_faciltators';
+			} else if (roles_result.data.learner.aggregate.count > 0) {
+				entityBeingAccessed = 'program_beneficiaries';
+			} else if (roles_result.data.staff.aggregate.count > 0) {
+				entityBeingAccessed = 'program_users';
+			}
+		}
+		console.log('entityBeingAccessed ', entityBeingAccessed);
+
+		let gqlquery;
+		if (user_roles.includes('pogram_owner')) {
+			return true;
+		}
+		if (user_roles.includes('staff')) {
+			//finding out organisation_id
+			const parent_ip_query = {
+				query: `query MyQuery {
+				program_users(where: {user_id: {_eq: ${request.mw_userid}}}) {
+				  organisation_id
+				}
+			  }
+			  `,
+			};
+			const parent_ip_result =
+				await this.hasuraServiceFromService.getData(parent_ip_query);
+			let parent_ip;
+			if (parent_ip_result?.data) {
+				parent_ip =
+					parent_ip_result.data.program_users[0].organisation_id;
+			}
+
+			if (entityBeingAccessed == 'program_faciltators') {
+				gqlquery = {
+					query: `query MyQuery {
+						program_faciltators_aggregate(where: {user_id: {_eq: ${entity_id}}, parent_ip: {_eq: "${parent_ip}"}}) {
+						  aggregate {
+							count
+						  }
+						}
+					  }`,
+				};
+			} else if (entityBeingAccessed == 'program_beneficiaries') {
+				gqlquery = {
+					query: `query MyQuery {
+						program_beneficiaries_aggregate(where: {user_id: {_eq: ${entity_id}}, facilitator_user: {program_faciltators: {parent_ip: {_eq: "${parent_ip}"}}}}) {
+						  aggregate {
+							count
+						  }
+						}
+					  }
+					  `,
+				};
+			}
+		}
+		if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate(where: {user_id: {_eq: ${entity_id}}, facilitator_id: {_eq: ${request.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		console.log(gqlquery.query);
+
+		const result = await this.hasuraServiceFromService.getData(gqlquery);
+
+		const tableName = entityBeingAccessed + '_aggregate';
+
+		if (result?.data && result.data[tableName].aggregate.count > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
@@ -582,6 +689,9 @@ export class AclHelper {
 			}
 			case 'event': {
 				return await this.doIHaveEventAccess(request, entity_id);
+			}
+			case 'user': {
+				return await this.doIHaveUserAccess(request, entity_id);
 			}
 			default:
 				return false;
