@@ -314,19 +314,15 @@ export class AclHelper {
 				  `,
 			};
 			console.log(gqlQuery.query);
-
-			const result = await this.hasuraServiceFromService.getData(
-				gqlQuery,
-			);
-			if (
-				result?.data &&
-				result.data.kit_materials_checklist_aggregate.aggregate.count >
-					0
-			) {
-				return true;
-			} else {
-				return false;
-			}
+		}
+		const result = await this.hasuraServiceFromService.getData(gqlQuery);
+		if (
+			result?.data &&
+			result.data.kit_materials_checklist_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 	private async doIHaveReferenceAccess(req: any, entity_id: any) {
@@ -350,18 +346,15 @@ export class AclHelper {
 				  `,
 			};
 			console.log(gqlquery.query);
-
-			const result = await this.hasuraServiceFromService.getData(
-				gqlquery,
-			);
-			if (
-				result?.data &&
-				result.data.references_aggregate.aggregate.count > 0
-			) {
-				return true;
-			} else {
-				return false;
-			}
+		}
+		const result = await this.hasuraServiceFromService.getData(gqlquery);
+		if (
+			result?.data &&
+			result.data.references_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 
@@ -392,19 +385,15 @@ export class AclHelper {
 				  `,
 			};
 			console.log(gqlQuery.query);
-
-			const result = await this.hasuraServiceFromService.getData(
-				gqlQuery,
-			);
-			if (
-				result?.data &&
-				result.data.kit_materials_checklist_aggregate.aggregate.count >
-					0
-			) {
-				return true;
-			} else {
-				return false;
-			}
+		}
+		const result = await this.hasuraServiceFromService.getData(gqlQuery);
+		if (
+			result?.data &&
+			result.data.kit_materials_checklist_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 
