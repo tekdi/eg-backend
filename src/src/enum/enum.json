@@ -733,12 +733,12 @@
 			"value": "marksheet"
 		},
 		{
-			"title": "TRANSFER_CERTIFICATE_WITH_CBO_SIGN",
-			"value": "transfer_certificate_with_cbo_sign"
+			"title": "TRANSFER_CERTIFICATE_WITH_CBEO_SIGN",
+			"value": "transfer_certificate_with_cbeo_sign"
 		},
 		{
-			"title": "MARKSHEET_WITH_CBO_SIGN",
-			"value": "marksheet_with_cbo_sign"
+			"title": "MARKSHEET_WITH_CBEO_SIGN",
+			"value": "marksheet_with_cbeo_sign"
 		},
 		{
 			"title": "AFFIDAVIT_FOR_NON_SCHOOLING_CERTIFICATION_NOTARY",
