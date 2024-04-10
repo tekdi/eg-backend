@@ -2287,6 +2287,7 @@ export class CampService {
 			);
 
 			return resp.status(200).json({
+				status: 200,
 				message: 'Successfully updated camp details',
 				data: camp_id,
 			});
@@ -4729,6 +4730,15 @@ export class CampService {
 			});
 		}
 		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		// Check if camp_id is provided and is an array
+		if (!camp_id || !Array.isArray(camp_id) || camp_id.length === 0) {
+			return response.status(422).json({
+				success: false,
+				message:
+					'camp_id is required and must be an array and should not be empty',
+				data: {},
+			});
+		}
 		//validation check is camp type is PCR only
 		let data = {
 			query: `query MyQuery {
