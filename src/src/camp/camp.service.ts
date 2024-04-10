@@ -48,7 +48,7 @@ export class CampService {
 
 	public returnFieldsProperties = ['id'];
 
-	public returnFieldsGroups = ['status', 'id'];
+	public returnFieldsGroups = ['status', 'id', 'org_id'];
 
 	async create(body: any, request: any, response: any) {
 		try {
@@ -57,8 +57,18 @@ export class CampService {
 			const program_id = request.mw_program_id;
 			const academic_year_id = request.mw_academic_year_id;
 			let beneficiary_status = 'enrolled_ip_verified';
+			const org_id = body?.org_id;
 			let createcampResponse: any;
 			let creategroupwoner: any;
+
+			if (!org_id || org_id == '') {
+				return response.status(422).json({
+					success: false,
+					key: 'org_id',
+					data: {},
+					message: 'Required Org_id',
+				});
+			}
 
 			let facilitator_status = await this.checkFaciltatorStatus(
 				facilitator_id,
@@ -158,11 +168,12 @@ export class CampService {
 			const campName = `camp${formattedCount}`;
 
 			let create_group_object = {
+				org_id,
 				name: campName,
 				type: 'camp',
 				status: 'camp_initiated',
-				program_id: body?.program_id || 1,
-				academic_year_id: body?.academic_year_id || 1,
+				program_id: request.mw_program_id,
+				academic_year_id: request.mw_academic_year_id,
 				created_by: facilitator_id,
 				updated_by: facilitator_id,
 			};
@@ -3878,8 +3889,8 @@ export class CampService {
 	public async campLearnersById(id: any, body: any, req: any, resp) {
 		const camp_id = id;
 		const facilitator_id = req.mw_userid;
-		let program_id = body?.program_id || 1;
-		let academic_year_id = body?.academic_year_id || 1;
+		let program_id = req.mw_program_id;
+		let academic_year_id = req.mw_academic_year_id;
 
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 5 : parseInt(body.limit);
