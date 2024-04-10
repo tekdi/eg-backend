@@ -2276,6 +2276,7 @@ export class CampService {
 			);
 
 			return resp.status(200).json({
+				status: 200,
 				message: 'Successfully updated camp details',
 				data: camp_id,
 			});
