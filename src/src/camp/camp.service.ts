@@ -2253,6 +2253,7 @@ export class CampService {
 		}
 		if (!group_id) {
 			return resp.status(400).json({
+				status: 400,
 				message: 'CAMP_INVALID_ERROR',
 				data: [],
 			});
@@ -2275,6 +2276,7 @@ export class CampService {
 			);
 
 			return resp.status(200).json({
+				status: 200,
 				message: 'Successfully updated camp details',
 				data: camp_id,
 			});
