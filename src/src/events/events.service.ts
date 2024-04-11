@@ -1066,7 +1066,7 @@ export class EventsService {
 						user_id
 						certificate_status
 					}
-					attendances{
+					attendances(where: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}){
 						id
 						user_id
 						status
