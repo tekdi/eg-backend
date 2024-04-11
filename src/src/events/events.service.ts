@@ -204,12 +204,6 @@ export class EventsService {
 		const count = geteventData?.data?.events_aggregate?.aggregate?.count;
 		//if event created show this message
 
-		return response.status(200).send({
-			success: false,
-			message: 'Event Already created!',
-			key: 'batch_name',
-			data: obj,
-		});
 		if (count > 0) {
 			return response.status(422).send({
 				success: false,
