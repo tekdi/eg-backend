@@ -75,6 +75,24 @@ export class EventsService {
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
 		//get do_id for event exam master data
+		// Convert start_date and end_date to UTC
+		const startDateTimeUTC = moment
+			.tz(
+				req.start_date + ' ' + req.start_time,
+				'YYYY-MM-DD HH:mm',
+				'Asia/Kolkata',
+			)
+			.utc()
+			.add(5.5, 'hours');
+		const endDateTimeUTC = moment
+			.tz(
+				req.end_date + ' ' + req.end_time,
+				'YYYY-MM-DD HH:mm',
+				'Asia/Kolkata',
+			)
+			.utc()
+			.add(5.5, 'hours');
+
 		let eventExamData = {
 			query: `query MyQuery {
 				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"}}){
@@ -118,9 +136,11 @@ export class EventsService {
 			master_trainer: req.master_trainer,
 			created_by: user_id,
 			end_date: req.end_date,
-			end_time: req.end_time,
+			//end_time: req.end_time,
+			end_time: endDateTimeUTC.format('HH:mm'),
+			start_time: startDateTimeUTC.format('HH:mm'),
 			start_date: req.start_date,
-			start_time: req.start_time,
+			//start_time: req.start_time,
 			updated_by: user_id,
 			type: req.type,
 			program_id: program_id,
@@ -596,13 +616,10 @@ export class EventsService {
 			const format = 'YYYY-MM-DD';
 			const dateString = moment().startOf('day').format(format);
 			const currentTime = moment().format('HH:mm');
-			const currentTimeWithOffset = moment()
-				.subtract(5, 'hours')
-				.subtract(30, 'minutes')
-				.format('HH:mm');
+
 			let data = {
 				query: `query MyQuery1 {
-					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTimeWithOffset}"}, end_time: {_gte: "${currentTimeWithOffset}"}}) {
+					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTime}"}, end_time: {_gte: "${currentTime}"}}) {
 						aggregate {
 							count
 						}
