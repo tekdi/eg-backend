@@ -454,16 +454,16 @@ export class EventsService {
 			const userDetail = await this.userService.ipUserInfo(header);
 			const user_id = userDetail.data.id;
 			// Validate start date
-			const daysDiff = moment(req.end_date).diff(
-				moment(req.start_date),
-				'days',
-			);
-			const currentDateTime = moment();
+			const daysDiff = moment
+				.utc(req.end_date)
+				.diff(moment.utc(req.start_date), 'days');
+			const currentDateTime = moment.utc();
+
 			const startDateTime = moment(
 				req.start_date + ' ' + req.start_time,
 				'YYYY-MM-DD HH:mm',
 				true, // Parse in strict mode
-			);
+			).utc();
 
 			let errorMessage = {};
 			if (startDateTime.isBefore(currentDateTime, 'day')) {
