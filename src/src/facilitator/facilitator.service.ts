@@ -2536,6 +2536,7 @@ export class FacilitatorService {
 			academic_year_id: academic_year_id,
 			parent_ip: parent_ip,
 			program_id: program_id,
+			status: 'applied',
 			qualification_ids: JSON.stringify(
 				JSON.parse(otherData.qualification_ids),
 			).replace(/"/g, '\\"'),
