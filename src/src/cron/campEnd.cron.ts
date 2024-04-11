@@ -25,15 +25,13 @@ export class CampEndCron {
 			.format('YYYY-MM-DDTHH:mm:ss');
 
 		let updateQuery = `mutation MyMutation {
-				quit: update_camp_days_activities_tracker(where: {start_date: {_gte: "${yesterdayStartTime}", _lte: "${yesterdayEndTime}"}, end_date: {_is_null: true}, attendances: {status: {_neq: "present"},context:{_eq:"camp_days_activities_tracker"}}}, _set: {end_camp_marked_by: "quit", end_date: "${today}"}) {
-					affected_rows
-					
-				}
-				system: update_camp_days_activities_tracker(where: {start_date: {_gte: "${yesterdayStartTime}", _lte: "${yesterdayEndTime}"}, end_date: {_is_null: true}}, _set: {end_camp_marked_by: "system", end_date: "${today}"}) {
-					affected_rows
-					
-				}
+			quit: update_camp_days_activities_tracker(where: {start_date: {_gte: "${yesterdayStartTime}", _lte: "${yesterdayEndTime}"}, end_date: {_is_null: true}, attendances: {status: {_neq: "present"},context:{_eq:"camp_days_activities_tracker"}}}, _set: {end_camp_marked_by: "quit", end_date: "${today}"}) {
+				affected_rows
 			}
+			system: update_camp_days_activities_tracker(where: {start_date: {_gte: "${yesterdayStartTime}", _lte: "${yesterdayEndTime}"}, end_date: {_is_null: true}}, _set: {end_camp_marked_by: "system", end_date: "${today}"}) {
+				affected_rows
+			}
+		}
 		  `;
 
 		let result = await this.hasuraService.getData({ query: updateQuery });

@@ -2941,15 +2941,34 @@ export class BeneficiariesService {
 						request,
 					);
 				}
-				await this.hasuraService.q(
-					tableName,
-					{
-						...myRequest,
-						id: programDetails?.id ? programDetails.id : null,
-					},
-					userArr,
-					update,
-				);
+				const res =
+					await this.hasuraServiceFromServices.updateWithVariable(
+						programDetails?.id,
+						'program_beneficiaries',
+						{
+							...myRequest,
+						},
+						userArr,
+						update,
+						{
+							variable: [
+								{
+									key: 'payment_receipt_document_id',
+									type: 'jsonb',
+								},
+							],
+						},
+					);
+
+				// await this.hasuraService.q(
+				// 	tableName,
+				// 	{
+				// 		...myRequest,
+				// 		id: programDetails?.id ? programDetails.id : null,
+				// 	},
+				// 	userArr,
+				// 	update,
+				// );
 				break;
 			}
 

@@ -49,7 +49,7 @@ export class CampService {
 
 	public returnFieldsProperties = ['id'];
 
-	public returnFieldsGroups = ['status', 'id'];
+	public returnFieldsGroups = ['status', 'id', 'org_id'];
 
 	async create(body: any, request: any, response: any) {
 		try {
@@ -58,8 +58,18 @@ export class CampService {
 			const program_id = request.mw_program_id;
 			const academic_year_id = request.mw_academic_year_id;
 			let beneficiary_status = 'enrolled_ip_verified';
+			const org_id = body?.org_id;
 			let createcampResponse: any;
 			let creategroupwoner: any;
+
+			if (!org_id || org_id == '') {
+				return response.status(422).json({
+					success: false,
+					key: 'org_id',
+					data: {},
+					message: 'Required Org_id',
+				});
+			}
 
 			let facilitator_status = await this.checkFaciltatorStatus(
 				facilitator_id,
@@ -159,6 +169,7 @@ export class CampService {
 			const campName = `camp${formattedCount}`;
 
 			let create_group_object = {
+				org_id,
 				name: campName,
 				type: 'camp',
 				status: 'camp_initiated',
@@ -2276,6 +2287,7 @@ export class CampService {
 			);
 
 			return resp.status(200).json({
+				status: 200,
 				message: 'Successfully updated camp details',
 				data: camp_id,
 			});
@@ -4718,6 +4730,15 @@ export class CampService {
 			});
 		}
 		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		// Check if camp_id is provided and is an array
+		if (!camp_id || !Array.isArray(camp_id) || camp_id.length === 0) {
+			return response.status(422).json({
+				success: false,
+				message:
+					'camp_id is required and must be an array and should not be empty',
+				data: {},
+			});
+		}
 		//validation check is camp type is PCR only
 		let data = {
 			query: `query MyQuery {
