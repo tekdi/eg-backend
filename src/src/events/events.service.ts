@@ -1050,33 +1050,27 @@ export class EventsService {
 				events(where: {end_date:{_gte:"${todayDate}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					id
 					user_id
-					context
-					context_id
-					created_by
-					updated_by
-					created_at
-					updated_at
 					start_date
 					start_time
 					end_date
 					end_time
 					name
-					location
-					location_type
 					type
 					params
 					master_trainer
 					lms_test_tracking(where: {user_id: {_eq: ${id}},context:{_eq:${context}}}) {
-						context
-						context_id
 						status
-						created_at
-						updated_at
 						id
 						test_id
 						score
 						user_id
 						certificate_status
+					}
+					attendances{
+						id
+						user_id
+						status
+						date_time
 					}
 				}
 
