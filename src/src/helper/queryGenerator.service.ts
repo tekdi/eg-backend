@@ -179,6 +179,102 @@ export class QueryGeneratorService {
 		}`;
 	}
 
+	updateWithVariable(
+		id: number,
+		tName: String,
+		item: any,
+		onlyFields: any = [],
+		fields: any = [],
+		props: any = {},
+	) {
+		let tableName = `update_${tName}`;
+		const keys = Object.keys(item);
+		let resultObject = {};
+		let params = '';
+		const { variable } = props;
+
+		if (Array.isArray(variable) && variable?.length > 0) {
+			params = `(${variable
+				.filter((key) => item[key.key])
+				.map((newD) => `$${newD.key}: ${newD?.type}`)
+				.join(', ')})`;
+
+			let vData = {};
+			variable.forEach((e) => {
+				if (item?.[e.key]) {
+					vData = { ...vData, [e.key]: item?.[e.key] };
+				}
+			});
+			resultObject = { ...resultObject, variables: vData };
+		}
+		const getObjStr = (item: any, type: String = '') => {
+			let str = `where: ${
+				props?.where ? props?.where : `{id: {_eq: ${id}}}`
+			}, _set: {`;
+			let strArr = [];
+			keys.forEach((e, index) => {
+				if (
+					e !== 'id' &&
+					(onlyFields.length < 1 || onlyFields.includes(e))
+				) {
+					const data = variable.map((e) => e.key).filter((e) => e);
+					if (data.includes(e)) {
+						strArr = [...strArr, `${e}:$${e}`];
+					} else {
+						strArr = [...strArr, `${e}:"${item[e]}"`];
+					}
+				}
+			});
+			str += strArr.join();
+			str += `}`;
+			return str;
+		};
+
+		resultObject = {
+			query: `mutation MyQuery${params} {
+	  ${tableName}(${getObjStr(item)}) {
+		affected_rows
+			returning {
+		${this.getParam(
+			fields && fields.length > 0
+				? fields
+				: onlyFields
+				? onlyFields
+				: keys,
+		)}
+		}
+	  }
+	}
+	`,
+			...resultObject,
+		};
+
+		let coreQuery = `${tableName}(${getObjStr(item)}) {
+			affected_rows
+			returning {
+				${this.getParam(
+					fields && fields.length > 0
+						? fields
+						: onlyFields
+						? onlyFields
+						: keys,
+				)}
+			}
+		  }`;
+		if (props?.isCore === true) {
+			return coreQuery;
+		}
+
+		resultObject = {
+			query: `mutation MyQuery {
+				${coreQuery}
+		  }`,
+			...resultObject,
+		};
+
+		return resultObject;
+	}
+
 	//mutation
 	mutation(
 		tName: String,
