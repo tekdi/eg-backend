@@ -274,6 +274,8 @@ export class AclHelper {
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
 
+		const list_query = camp_id ? `id: {_eq: ${camp_id}},` : ``;
+
 		if (user_roles?.includes('program_owner')) {
 			rolesQuery = ``;
 		} else if (user_roles?.includes('staff')) {
@@ -293,7 +295,7 @@ export class AclHelper {
 
 		let query = `query MyQuery {
 				camps_aggregate(where: {
-					id: {_eq: ${camp_id}},
+					${list_query}
 					group: {
 						${academic_year_id ? `academic_year_id: {_eq: ${academic_year_id}}` : ``},
 						${program_id ? `program_id: {_eq: ${program_id}}` : ``}
@@ -662,41 +664,7 @@ export class AclHelper {
 		}
 	}
 
-	async doIHaveConsentAccess(request, entity_id) {
-		/*
-		const user_roles = request.mw_roles;
-		let gqlquery;
-		if (user_roles.include('program_owner')) {
-			return true;
-		} else if (
-			user_roles.includes('staff' || user_roles.includes('facilitator'))
-		) {
-			gqlquery = {
-				query: `query MyQuery {
-					consents_aggregate(where: {facilitator_id: {_eq: ${request.mw_userid}}, camp_id: {_eq: ${request?.body?.camp_id}}, status: {_eq: "active"}, academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}}) {
-					  aggregate {
-						count
-					  }
-					}
-				  }
-				  `,
-			};
-		}
-		console.log(gqlquery.query);
-		
-		const result = await this.hasuraServiceFromService.getData(gqlquery);
-		if (
-			result?.data &&
-			result.data.consents_aggregate.aggregate.count > 0
-		) {
-			return true;
-		} else {
-			return false;
-		}
-		*/
-		return true;
-	}
-	private async doIHaveAttendanceAccess(request, entity_id) {
+	async doIHaveConsentAccess(request, camp_id) {
 		const user_roles = request.mw_roles;
 		let gqlquery;
 		if (user_roles.includes('program_owner')) {
@@ -707,7 +675,42 @@ export class AclHelper {
 		) {
 			gqlquery = {
 				query: `query MyQuery {
-					attendance_aggregate(where: {id: {_eq: ${entity_id}}, created_by: {_eq: ${request.mw_userid}}}) {
+					consents_aggregate(where: {facilitator_id: {_eq: ${request.mw_userid}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"}, academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		console.log(gqlquery.query);
+
+		const result = await this.hasuraServiceFromService.getData(gqlquery);
+		if (
+			result?.data &&
+			result.data.consents_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
+		}
+
+		return true;
+	}
+	private async doIHaveAttendanceAccess(request, entity_id) {
+		const user_roles = request.mw_roles;
+		const list_query = entity_id ? `id: {_eq: ${entity_id}},` : ``;
+		let gqlquery;
+		if (user_roles.includes('program_owner')) {
+			return true;
+		} else if (
+			user_roles.includes('staff') ||
+			user_roles.includes('facilitator')
+		) {
+			gqlquery = {
+				query: `query MyQuery {
+					attendance_aggregate(where: {${list_query} created_by: {_eq: ${request.mw_userid}}}) {
 					  aggregate {
 						count
 					  }
@@ -777,7 +780,10 @@ export class AclHelper {
 				return await this.doIHaveUserAccess(request, entity_id);
 			}
 			case 'consent': {
-				return await this.doIHaveConsentAccess(request, entity_id);
+				return await this.doIHaveConsentAccess(
+					request,
+					request?.body?.camp_id,
+				);
 			}
 			case 'attendance': {
 				return await this.doIHaveAttendanceAccess(request, entity_id);

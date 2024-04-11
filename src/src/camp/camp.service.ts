@@ -2031,7 +2031,8 @@ export class CampService {
 			  }
 			}
 		  }`;
-
+		  console.log(query);
+		  
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
