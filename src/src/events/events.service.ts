@@ -453,6 +453,55 @@ export class EventsService {
 		try {
 			const userDetail = await this.userService.ipUserInfo(header);
 			const user_id = userDetail.data.id;
+			// Validate start date
+			const daysDiff = moment(req.end_date).diff(
+				moment(req.start_date),
+				'days',
+			);
+			const currentDateTime = moment();
+			const startDateTime = moment(
+				req.start_date + ' ' + req.start_time,
+				'YYYY-MM-DD HH:mm',
+				true, // Parse in strict mode
+			);
+
+			let errorMessage = {};
+			if (startDateTime.isBefore(currentDateTime, 'day')) {
+				errorMessage = {
+					key: 'start_date',
+					message: 'Start date cannot be a back date.',
+				};
+			} else if (daysDiff < 0 || daysDiff > 5) {
+				errorMessage = {
+					key: 'event_days',
+					message: 'Event duration must be between 1 and 5 days.',
+				};
+			}
+			if (Object.keys(errorMessage).length) {
+				return resp.status(422).send({
+					success: false,
+					...errorMessage,
+					data: {},
+				});
+			}
+
+			// Convert start_date and end_date to UTC
+			const startDateTimeUTC = moment
+				.tz(
+					req.start_date + ' ' + req.start_time,
+					'YYYY-MM-DD HH:mm',
+					'Asia/Kolkata',
+				)
+				.utc();
+
+			const endDateTimeUTC = moment
+				.tz(
+					req.end_date + ' ' + req.end_time,
+					'YYYY-MM-DD HH:mm',
+					'Asia/Kolkata',
+				)
+				.utc();
+
 			const attendees = req.attendees;
 			if (attendees) {
 				const data = {
@@ -527,8 +576,13 @@ export class EventsService {
 				}
 			}
 			//update events fields
+
 			const newRequest = {
-				...req,
+				...req, // Spread req object first
+				end_date: endDateTimeUTC.format('YYYY-MM-DD'),
+				end_time: endDateTimeUTC.format('HH:mm'),
+				start_time: startDateTimeUTC.format('HH:mm'),
+				start_date: startDateTimeUTC.format('YYYY-MM-DD'),
 				...(req.reminders && {
 					reminders: JSON.stringify(req.reminders).replace(
 						/"/g,
