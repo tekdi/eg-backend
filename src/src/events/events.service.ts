@@ -82,16 +82,15 @@ export class EventsService {
 				'YYYY-MM-DD HH:mm',
 				'Asia/Kolkata',
 			)
-			.utc()
-			.add(5.5, 'hours');
+			.utc();
+
 		const endDateTimeUTC = moment
 			.tz(
 				req.end_date + ' ' + req.end_time,
 				'YYYY-MM-DD HH:mm',
 				'Asia/Kolkata',
 			)
-			.utc()
-			.add(5.5, 'hours');
+			.utc();
 
 		let eventExamData = {
 			query: `query MyQuery {
@@ -204,6 +203,13 @@ export class EventsService {
 
 		const count = geteventData?.data?.events_aggregate?.aggregate?.count;
 		//if event created show this message
+
+		return response.status(200).send({
+			success: false,
+			message: 'Event Already created!',
+			key: 'batch_name',
+			data: obj,
+		});
 		if (count > 0) {
 			return response.status(422).send({
 				success: false,
@@ -615,7 +621,7 @@ export class EventsService {
 		try {
 			const format = 'YYYY-MM-DD';
 			const dateString = moment().startOf('day').format(format);
-			const currentTime = moment().format('HH:mm');
+			const currentTime = moment.utc().format('HH:mm');
 
 			let data = {
 				query: `query MyQuery1 {
