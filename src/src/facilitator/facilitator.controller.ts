@@ -63,7 +63,7 @@ export class FacilitatorController {
 	@Post('/forOrientation')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['edit.own'])
+	@AclGuardData('facilitator', ['read.own'])
 	async getFacilitatorsForOrientation(
 		@Req() request: any,
 		@Body() body: any,

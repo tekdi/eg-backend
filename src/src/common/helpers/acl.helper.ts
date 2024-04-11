@@ -120,6 +120,7 @@ export class AclHelper {
 		beneficiary_id: number,
 	): Promise<boolean> {
 		let gqlQuery;
+
 		const user_roles = request.mw_roles;
 		console.log('### Use roles: ' + user_roles);
 
@@ -190,7 +191,7 @@ export class AclHelper {
 		}
 
 		// Fetch data
-		console.log(gqlQuery);
+		console.log(gqlQuery.query);
 		const result = await this.hasuraServiceFromService.getData(gqlQuery);
 
 		if (result?.data && result.data['program_beneficiaries'].length > 0) {
@@ -253,27 +254,29 @@ export class AclHelper {
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
 
-		if (req?.roles?.includes('program_owner')) {
+		if (user_roles?.includes('program_owner')) {
 			rolesQuery = ``;
-		} else if (req?.roles?.includes('staff')) {
+		} else if (user_roles?.includes('staff')) {
 			const redultIP = await this.userService.getIpRoleUserById(user_id, {
 				program_id,
 				academic_year_id,
 			});
 
 			const parent_ip = redultIP?.program_users?.[0]?.organisation_id;
+
 			rolesQuery = `user:{program_faciltators:{
 					academic_year_id: {_eq: ${academic_year_id}},
 					program_id: {_eq: ${program_id}},
 					parent_ip:{_eq:"${parent_ip}"}
 				}}`;
 		}
+
 		let query = `query MyQuery {
 				camps_aggregate(where: {
 					id: {_eq: ${camp_id}},
 					group: {
-						academic_year_id: {_eq: ${academic_year_id}},
-						program_id: {_eq: ${program_id}}
+						${academic_year_id ? `academic_year_id: {_eq: ${academic_year_id}}` : ``},
+						${program_id ? `program_id: {_eq: ${program_id}}` : ``}
 					},
 					group_users: {
 						member_type: {_eq: ${member_type}},
@@ -286,10 +289,14 @@ export class AclHelper {
 				  }
 				}
 			}`;
+		console.log(query);
 		const response = await this.hasuraServiceFromService.getData({
 			query,
 		});
-		if (response?.data && response.data['camps_aggregate'].length > 0) {
+		if (
+			response?.data &&
+			response.data['camps_aggregate'].aggregate.count > 0
+		) {
 			console.log(response.data['camps_aggregate']);
 			return true;
 		} else {
@@ -634,6 +641,72 @@ export class AclHelper {
 			return false;
 		}
 	}
+
+	async doIHaveConsentAccess(request, entity_id) {
+		/*
+		const user_roles = request.mw_roles;
+		let gqlquery;
+		if (user_roles.include('program_owner')) {
+			return true;
+		} else if (
+			user_roles.includes('staff' || user_roles.includes('facilitator'))
+		) {
+			gqlquery = {
+				query: `query MyQuery {
+					consents_aggregate(where: {facilitator_id: {_eq: ${request.mw_userid}}, camp_id: {_eq: ${request?.body?.camp_id}}, status: {_eq: "active"}, academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		console.log(gqlquery.query);
+		
+		const result = await this.hasuraServiceFromService.getData(gqlquery);
+		if (
+			result?.data &&
+			result.data.consents_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
+		}
+		*/
+		return true;
+	}
+	private async doIHaveAttendanceAccess(request, entity_id) {
+		const user_roles = request.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('program_owner')) {
+			return true;
+		} else if (
+			user_roles.includes('staff') ||
+			user_roles.includes('facilitator')
+		) {
+			gqlquery = {
+				query: `query MyQuery {
+					attendance_aggregate(where: {id: {_eq: ${entity_id}}, created_by: {_eq: ${request.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		console.log(gqlquery.query);
+		const result = await this.hasuraServiceFromService.getData(gqlquery);
+		if (
+			result?.data &&
+			result.data.attendance_aggregate.aggregate.count > 0
+		) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
@@ -681,6 +754,12 @@ export class AclHelper {
 			}
 			case 'user': {
 				return await this.doIHaveUserAccess(request, entity_id);
+			}
+			case 'consent': {
+				return await this.doIHaveConsentAccess(request, entity_id);
+			}
+			case 'attendance': {
+				return await this.doIHaveAttendanceAccess(request, entity_id);
 			}
 			default:
 				return false;

@@ -418,7 +418,7 @@ export class BeneficiariesController {
 	@Post('admin/reassign')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['reassign', 'reassign.own'])
+	@AclGuardData('beneficiary', ['reassign.facilitator.own'])
 	async reassignBeneficiary(
 		@Req() request: any,
 		@Body() body: any,
