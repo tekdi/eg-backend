@@ -690,55 +690,68 @@
 	"DOCUMENT_LIST": [
 		{
 			"title": "JAN_AADHAAR_CARD",
-			"value": "jan_aadhaar_card"
+			"value": "jan_aadhaar_card",
+			"type": "optional"
 		},
 		{
 			"title": "AADHAAR_CARD",
-			"value": "aadhaar_card"
+			"value": "aadhaar_card",
+			"type": "optional"
 		},
 		{
 			"title": "BANK_PASSBOOK",
-			"value": "bank_passbook"
+			"value": "bank_passbook",
+			"type": "required"
 		},
 		{
 			"title": "PHOTO",
-			"value": "photo"
+			"value": "photo",
+			"type": "required"
 		},
 		{
 			"title": "CAST_CERTIFICATE",
-			"value": "cast_certificate"
+			"value": "cast_certificate",
+			"type": "optional"
 		},
 		{
 			"title": "MOBILE_NUMBER",
-			"value": "mobile_number"
+			"value": "mobile_number",
+			"type": "required"
 		},
 		{
 			"title": "EMAIL_ID",
-			"value": "email_id"
+			"value": "email_id",
+			"type": "optional"
 		},
 		{
 			"title": "TRANSFER_CERTIFICATE",
-			"value": "transfer_certificate"
+			"value": "transfer_certificate",
+			"type": "optional"
 		},
 		{
 			"title": "MARKSHEET",
-			"value": "marksheet"
+			"value": "marksheet",
+			"type": "required"
 		},
 		{
 			"title": "TRANSFER_CERTIFICATE_WITH_CBEO_SIGN",
-			"value": "transfer_certificate_with_cbeo_sign"
+			"value": "transfer_certificate_with_cbeo_sign",
+			"type": "optional"
 		},
 		{
 			"title": "MARKSHEET_WITH_CBEO_SIGN",
-			"value": "marksheet_with_cbeo_sign"
+			"value": "marksheet_with_cbeo_sign",
+			"type": "optional"
 		},
 		{
 			"title": "AFFIDAVIT_FOR_NON_SCHOOLING_CERTIFICATION_NOTARY",
-			"value": "affidavit_for_non_schooling_certification_notary"
+			"value": "affidavit_for_non_schooling_certification_notary",
+			"type": "optional"
 		},
 		{
 			"title": "BIRTH_CERTIFICATE",
-			"value": "birth_certificate"
+			"value": "birth_certificate",
+			"type": "required"
 		}
 	],
 	"LEARNING_MOTIVATION": [
