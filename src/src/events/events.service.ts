@@ -612,7 +612,7 @@ export class EventsService {
 		}
 		try {
 			const format = 'YYYY-MM-DD';
-			const dateString = moment().startOf('day').format(format);
+			const dateString = moment.utc().startOf('day').format(format);
 			const currentTime = moment.utc().format('HH:mm');
 
 			let data = {
