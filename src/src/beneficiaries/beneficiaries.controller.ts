@@ -62,6 +62,8 @@ export class BeneficiariesController {
 
 	@Post('/admin/list/duplicates-by-aadhaar')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read', 'read.own'])
 	async getBeneficiariesDuplicatesByAadhaar(
 		@Body() body: Record<string, any>,
 		@Query() query: any,

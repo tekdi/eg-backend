@@ -122,8 +122,20 @@ export class AclHelper {
 		let gqlQuery;
 
 		const user_roles = request.mw_roles;
+		const academic_year_id = request.mw_academic_year_id;
+		const program_id = request.mw_program_id;
+		let filter;
+		if (academic_year_id && program_id) {
+			filter = {
+				program_id: program_id,
+				academic_year_id: academic_year_id,
+			};
+		}
 		console.log('### Use roles: ' + user_roles);
 
+		let list_query = `${
+			beneficiary_id ? `user_id: {_eq: ${beneficiary_id}},` : ``
+		}`;
 		// Validate for PO role
 		if (user_roles.includes('program_owners')) {
 			return true;
@@ -134,29 +146,33 @@ export class AclHelper {
 			// 2.1 Validate if this learner is added by Prerak from my IP
 			const parent_ip_data = await this.userService.getIpRoleUserById(
 				request.mw_userid,
-				{
-					program_id: request.mw_program_id,
-					academic_year_id: request.mw_academic_year_id,
-				},
+				filter,
 			);
 
 			const parent_ip_id =
 				parent_ip_data?.program_users?.[0]?.organisation_id;
-
 			gqlQuery = {
 				query: `query MyQuery {
 					program_beneficiaries (
 						where: {
-							user_id: {_eq: ${beneficiary_id}},
+							${list_query}
 							facilitator_user: {
 								program_faciltators: {
-									academic_year_id: {_eq: ${request.mw_academic_year_id}},
-									program_id: {_eq: ${request.mw_program_id}},
+									${
+										request.academic_year_id
+											? `academic_year_id: {_eq: ${request.mw_academic_year_id}}`
+											: ``
+									},
+									${request.program_id ? `program_id: {_eq: ${request.mw_program_id}}` : ``},
 									parent_ip: {_eq: "${parent_ip_id}"}
 								}
 							},
-							academic_year_id: {_eq: ${request.mw_academic_year_id}},
-							program_id: {_eq: ${request.mw_program_id}}
+							${
+								request.academic_year_id
+									? `academic_year_id: {_eq: ${request.mw_academic_year_id}}`
+									: ``
+							},
+									${request.program_id ? `program_id: {_eq: ${request.mw_program_id}}` : ``}
 						}
 					) {
 						id
@@ -174,10 +190,14 @@ export class AclHelper {
 				query: `query MyQuery {
 					program_beneficiaries (
 						where: {
-							user_id: {_eq: ${beneficiary_id}},
+							${list_query}
 							facilitator_id: {_eq: ${request.mw_userid}},
-							program_id: {_eq: ${request.mw_program_id}},
-							academic_year_id: {_eq: ${request.mw_academic_year_id}}
+							${request.mw_program_id ? `program_id: {_eq: ${request.mw_program_id}}` : ``},
+							${
+								request.academic_year_id
+									? `academic_year_id: {_eq: ${request.mw_academic_year_id}}`
+									: ``
+							}
 						}
 					){
 						id
@@ -707,6 +727,7 @@ export class AclHelper {
 			return false;
 		}
 	}
+
 	public async doIHaveAccess(
 		request: any,
 		entity: string,
@@ -811,20 +832,19 @@ export class AclHelper {
 		if (!ownershipCheckRequired) {
 			return true;
 		}
-		if (entity_id) {
-			// 4 - Validate ownership
 
-			const iHaveAccess = await this.doIHaveAccess(
-				request,
-				entity,
-				entity_id,
-			);
-			console.log('### iHaveAccess: ', iHaveAccess);
+		// 4 - Validate ownership
 
-			// 4.1 - If I do have ownership access return false
-			if (!iHaveAccess) {
-				return false;
-			}
+		const iHaveAccess = await this.doIHaveAccess(
+			request,
+			entity,
+			entity_id,
+		);
+		console.log('### iHaveAccess: ', iHaveAccess);
+
+		// 4.1 - If I do have ownership access return false
+		if (!iHaveAccess) {
+			return false;
 		}
 
 		return true;
