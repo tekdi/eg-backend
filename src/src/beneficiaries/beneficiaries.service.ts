@@ -1909,32 +1909,30 @@ export class BeneficiariesService {
 
 		if (body.enrollment_verification_status == 'pending') {
 			const data = {
-				query: `query searchById {
-					users_by_pk(id: ${updatedUser?.program_beneficiaries?.user_id}) {
-						id
-						program_beneficiaries{
-							payment_receipt_document_id
-							document {
-								id
-								name
-						  }
-					  }
+				query: `query MyQuery {
+					documents(where: {doument_type: {_eq: "enrollment_receipt"},user_id:{_eq:${updatedUser?.program_beneficiaries?.user_id}}}){
+					  id
+					  name
 					}
-			}`,
+				  }
+				  `,
 			};
 
 			const response = await this.hasuraServiceFromServices.getData(data);
-			const documentDetails =
-				response?.data?.users_by_pk?.program_beneficiaries[0]?.document;
-			if (documentDetails?.id) {
+			const documentDetails = response?.data?.documents;
+			if (documentDetails?.length > 0) {
 				//delete document from documnet table
-				await this.hasuraService.delete('documents', {
-					id: documentDetails?.id,
-				});
-			}
-			if (documentDetails?.name) {
-				//delete document from s3 bucket
-				await this.s3Service.deletePhoto(documentDetails?.name);
+				// await this.hasuraService.delete('documents', {
+				// 	id: documentDetails?.id,
+				// });
+				// if (documentDetails?.name) {
+				// 	//delete document from s3 bucket
+				// 	await this.s3Service.deletePhoto(documentDetails?.name);
+				// }
+
+				for (const documentDetail of documentDetails) {
+					await this.uploadFileService.DeleteFile(documentDetail);
+				}
 			}
 		}
 
@@ -2889,33 +2887,33 @@ export class BeneficiariesService {
 					myRequest['enrollment_aadhaar_no'] = null;
 					myRequest['is_eligible'] = null;
 					const data = {
-						query: `query searchById {
-							users_by_pk(id: ${req.id}) {
-								id
-								program_beneficiaries{
-									payment_receipt_document_id
-									document {
-										id
-										name
-								  }
-							  }
-							}
-					}`,
+						query: `query MyQuery {
+					documents(where: {doument_type: {_eq: "enrollment_receipt"},user_id:{_eq:${req?.id}}}){
+					  id
+					  name
+					}
+				  }
+				  `,
 					};
+
 					const response =
 						await this.hasuraServiceFromServices.getData(data);
-					const documentDetails =
-						response?.data?.users_by_pk?.program_beneficiaries[0]
-							?.document;
-					if (documentDetails?.id) {
+					const documentDetails = response?.data?.documents;
+					if (documentDetails?.length > 0) {
 						//delete document from documnet table
-						await this.hasuraService.delete('documents', {
-							id: documentDetails?.id,
-						});
-					}
-					if (documentDetails?.name) {
-						//delete document from s3 bucket
-						await this.s3Service.deletePhoto(documentDetails?.name);
+						// await this.hasuraService.delete('documents', {
+						// 	id: documentDetails?.id,
+						// });
+						// if (documentDetails?.name) {
+						// 	//delete document from s3 bucket
+						// 	await this.s3Service.deletePhoto(documentDetails?.name);
+						// }
+
+						for (const documentDetail of documentDetails) {
+							await this.uploadFileService.DeleteFile(
+								documentDetail,
+							);
+						}
 					}
 					const status = await this.statusUpdate(
 						{

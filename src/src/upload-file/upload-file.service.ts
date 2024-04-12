@@ -263,4 +263,14 @@ export class UploadFileService {
 			}
 		}
 	}
+
+	async DeleteFile(documentDetails: any) {
+		await this.hasuraService.delete('documents', {
+			id: documentDetails?.id,
+		});
+		if (documentDetails?.name) {
+			//delete document from s3 bucket
+			await this.s3Service.deletePhoto(documentDetails?.name);
+		}
+	}
 }
