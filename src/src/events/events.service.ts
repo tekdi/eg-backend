@@ -396,37 +396,6 @@ export class EventsService {
 		type
 		updated_by
 		user_id
-		attendances(order_by: {
-		  created_at: asc
-		  }) {
-		  created_by
-		  created_at
-		  context
-		  context_id
-		  date_time
-		  id
-		  lat
-		  user_id
-		  updated_by
-		  status
-		  long
-		  rsvp
-		  fa_is_processed
-		  fa_similarity_percentage
-		  user{
-			first_name
-			id
-			last_name
-			middle_name
-			profile_url
-			aadhar_verified
-			aadhaar_verification_mode
-			program_faciltators{
-			documents_status
-			  }
-		  }
-		}
-
 	  }
 	}
 	`,
