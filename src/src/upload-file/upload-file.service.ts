@@ -18,7 +18,9 @@ export class UploadFileService {
 		document_type: string,
 		document_sub_type: string,
 		response: Response,
+		isCommonFunction?,
 	) {
+		console.log('file-->>', file);
 		if (!file?.originalname) {
 			return response.status(400).send({
 				success: false,
@@ -116,7 +118,10 @@ export class UploadFileService {
 			};
 			const res = await this.hasuraService.postData(query);
 
-			if (res) {
+			if (res && isCommonFunction) {
+				return { data: { key: key, fileUrl: fileUrl, data: res.data } };
+			} else if (res) {
+				console.log('response file upload-->>', JSON.stringify(res));
 				return response.status(200).send({
 					success: true,
 					status: 'Success',

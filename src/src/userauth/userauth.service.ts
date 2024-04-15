@@ -9,6 +9,8 @@ import { Method } from '../common/method/method';
 import { AcknowledgementService } from 'src/modules/acknowledgement/acknowledgement.service';
 import { UserService } from 'src/user/user.service';
 import { S3Service } from 'src/services/s3/s3.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
+const { Blob } = require('buffer');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -34,6 +36,7 @@ export class UserauthService {
 		private userService: UserService,
 		private readonly s3Service: S3Service,
 		private method: Method,
+		private uploadFileService: UploadFileService,
 	) {}
 
 	public async userAuthRegister(body, response, role) {
@@ -147,9 +150,9 @@ export class UserauthService {
 			if (findUsername.length > 0 && group === 'beneficiaries') {
 				let lastUsername =
 					findUsername[findUsername.length - 1].username;
-				console.log('lastUsername', lastUsername);
+				//	//console.log('lastUsername', lastUsername);
 				let count = findUsername.length;
-				console.log('count', count);
+				//console.log('count', count);
 				data_to_create_user.username =
 					data_to_create_user.username + '_' + count;
 			}
@@ -391,7 +394,7 @@ export class UserauthService {
 		let academic_year_id = request?.mw_academic_year_id; // get academic_year_id from token
 
 		//query to get user details information
-		//console.log('user_id', user_id);
+		////console.log('user_id', user_id);
 
 		let query = `query MyQuery {
 			users_by_pk(id:${user_id}) {
@@ -463,6 +466,8 @@ export class UserauthService {
 				diploma_details
 				pan_no
 				sourcing_channel
+				has_job_exp
+				has_volunteer_exp
 			  }
 			  extended_users {
 				marital_status
@@ -550,7 +555,7 @@ export class UserauthService {
 
 		let user_data = hasura_response?.data;
 
-		//console.log('user_data', JSON.stringify(user_data));
+		////console.log('user_data', JSON.stringify(user_data));
 
 		// get profile photo document details
 		let profilePhoto1Documents =
@@ -831,7 +836,7 @@ export class UserauthService {
 				aadhaar_verification_mode,
 				id,
 			},
-			core_faciltator: user_data?.users_by_pk?.core_faciltator || {},
+			core_faciltators: user_data?.users_by_pk?.core_faciltator || {},
 			extended_users: user_data?.users_by_pk?.extended_users || {},
 			references: user_data?.users_by_pk?.references,
 			program_faciltators: user_data?.users_by_pk?.program_faciltators,
@@ -850,30 +855,46 @@ export class UserauthService {
 
 	public async userOnboarding(body: any, response: any, request: any) {
 		//first check validations for all inputs
+		let jsonContent;
+		//console.log('body-->', body);
+
+		try {
+			// Convert buffer to JSON object
+			jsonContent = JSON.parse(body.buffer.toString('utf8'));
+
+			// Process JSON content
+
+			// Return success message
+		} catch (error) {
+			console.error('Error parsing JSON:', error);
+		}
 
 		let user_id = request?.mw_userid;
 		let program_id = request?.mw_program_id;
-		let academic_year_id = request?.academic_year_id;
+		let academic_year_id = request?.mw_academic_year_id;
 
 		let result = await this.processTable(
-			body,
+			jsonContent,
 			user_id,
 			program_id,
 			academic_year_id,
+			response,
 		);
 
-		console.log('result-->>', result);
+		//console.log('result-->>', result);
 		if (result) {
 			return response.status(200).json({
 				result: result,
 			});
 		}
 	}
+
 	private async processTable(
 		json: any,
 		user_id: any,
 		program_id: any,
 		academic_year_id: any,
+		resp?: any,
 	) {
 		let tableFields;
 		let tableName;
@@ -895,191 +916,176 @@ export class UserauthService {
 		let qualification_document_data;
 		let resultArray = [];
 		let upsert_records_result;
-
+		let base64result;
 		for (const key in json) {
 			const value = json[key];
+			if (!(Object.keys(value).length === 0)) {
+				//console.log('value-->>', value);
+				if (typeof value === 'object') {
+					tableName = key;
+					tableFields = Object.keys(value);
+					for (const subKey in value) {
+						const subValue = value[subKey];
 
-			if (typeof value === 'object') {
-				tableName = key;
-				tableFields = Object.keys(value);
-				for (const subKey in value) {
-					const subValue = value[subKey];
+						if (typeof subValue === 'object') {
+							if (subKey.startsWith('profile_photo_')) {
+								const profilePhotoValue =
+									Object.values(subValue);
+								const documentsValues = Object.values(
+									subValue.documents,
+								);
+								const base64 = documentsValues?.[0];
+								const documentDetails = {
+									document_type: 'profile_photo',
+									document_sub_type: subKey,
+								};
 
-					if (typeof subValue === 'object') {
-						// Separate the subobjects of profile_photo_1 and documents
-						if (subKey === 'profile_photo_1') {
-							profile_photo_1_value = Object.values(subValue);
+								if (base64) {
+									await this.base64ToBlob(
+										base64,
+										user_id,
+										resp,
+										documentDetails,
+									);
+								}
 
-							documents_values_1 = Object.values(
-								subValue.documents,
-							);
-
-							profile_documents_array.push({
-								document_id: documents_values_1?.[1],
-								name: documents_values_1?.[2],
-								doument_type: documents_values_1?.[3],
-								document_sub_type: documents_values_1?.[4],
-							});
-
-							// Add profile_photo_1 with its name value for inserting in users table
-							value['profile_photo_1'] =
-								profile_photo_1_value?.[0];
-						}
-						if (subKey === 'profile_photo_2') {
-							profile_photo_2_value = Object.values(subValue);
-
-							documents_values_2 = Object.values(
-								subValue.documents,
-							);
-
-							profile_documents_array.push({
-								document_id: documents_values_2?.[1],
-								name: documents_values_2?.[2],
-								doument_type: documents_values_2?.[3],
-								document_sub_type: documents_values_2?.[4],
-							});
-
-							// Add profile_photo_2 with its name value for inserting in users table
-							value['profile_photo_2'] =
-								profile_photo_2_value?.[0];
-						}
-						if (subKey === 'profile_photo_3') {
-							profile_photo_3_value = Object.values(subValue);
-
-							documents_values_3 = Object.values(
-								subValue.documents,
-							);
-
-							profile_documents_array.push({
-								document_id: documents_values_3?.[1],
-								name: documents_values_3?.[2],
-								doument_type: documents_values_3?.[3],
-								document_sub_type: documents_values_3?.[4],
-							});
-
-							// Add profile_photo_3 with its name value for inserting in users table
-							value['profile_photo_3'] =
-								profile_photo_3_value?.[0];
+								// Add profile photo with its name value for inserting in users table
+								value[subKey] = profilePhotoValue?.[0];
+							}
 						}
 					}
 				}
-			}
 
-			if (Array.isArray(value)) {
-				// Handle array
-				tableName = key;
+				if (Array.isArray(value)) {
+					// Handle array
+					tableName = key;
+					let tempvalue = [];
 
-				await this.processJsonArray(
-					value,
-					tableName,
-					user_id,
-					resultArray,
-				);
-			}
-
-			if (tableName != 'users' && tableName != 'references') {
-				value.user_id = user_id;
-				tableFields.push('user_id');
-			}
-
-			if (tableName == 'program_faciltators') {
-				value.program_id = program_id;
-				value.academic_year_id = academic_year_id;
-				tableFields.push('program_id');
-				tableFields.push('academic_year_id');
-			}
-
-			if (tableName == 'references') {
-				value.context_id = user_id;
-				tableFields.push('context_id');
-			}
-
-			if (tableName == 'qualifications') {
-				console.log('qualvalue-->', value);
-				if (value?.documents) {
-					qualification_document_data = {
-						document_id: value?.documents?.document_id,
-						name: value?.documents?.name,
-						document_sub_type: 'qualifications',
-						doument_type: 'qualifications',
-						context: 'qualifications',
-					};
+					for (let i = 0; i < value.length; i++) {
+						let tempobj = value[i];
+						delete tempobj.status;
+						delete tempobj.unique_key;
+						tempvalue.push(tempobj);
+					}
+					await this.processJsonArray(
+						tempvalue,
+						tableName,
+						user_id,
+						resultArray,
+						resp,
+					);
 				}
-				tableFields = tableFields?.filter(
-					(field) => field !== 'documents',
-				);
-				delete value?.documents;
-				console.log('qualvalue123-->', value);
-			}
 
-			let response = await this.findExisitingReccord(
-				tableName,
-				value,
-				user_id,
-			);
+				if (tableName != 'users' && tableName != 'references') {
+					value.user_id = user_id;
+					tableFields.push('user_id');
+				}
 
-			set_update = response?.set_update;
-			update_id = response?.id;
+				if (tableName == 'program_faciltators') {
+					//console.log('vlaues-->>', value);
 
-			if (tableName != 'experience') {
-				upsert_records_result = await this.upsertRecords(
-					set_update,
+					value.program_id = program_id;
+					value.academic_year_id = academic_year_id;
+					try {
+						value.qualification_ids = JSON.stringify(
+							JSON.parse(value?.qualification_ids),
+						).replace(/"/g, '\\"');
+					} catch (e) {}
+
+					tableFields.push('program_id');
+					tableFields.push('academic_year_id');
+					//console.log('vlaues123-->>', value);
+				}
+
+				if (tableName == 'references') {
+					value.context_id = user_id;
+					tableFields.push('context_id');
+				}
+
+				if (tableName == 'qualifications') {
+					//console.log('qualvalue-->', value);
+					if (value?.documents) {
+						let base64 = value?.documents?.base64;
+
+						//console.log('base64-->>', base64);
+						let document_details = {
+							document_type: 'qualifications',
+							document_sub_type: 'qualifications',
+							context: 'qualifications',
+						};
+
+						if (base64) {
+							base64result = await this.base64ToBlob(
+								base64,
+								user_id,
+								resp,
+								document_details,
+							);
+						}
+					}
+
+					//console.log('base64result-->.', base64result);
+
+					value['qualification_reference_document_id'] =
+						base64result?.document_id;
+					tableFields = tableFields?.filter(
+						(field) => field !== 'documents',
+					);
+					delete value?.documents;
+					//console.log('qualvalue123-->', value);
+				}
+
+				let response = await this.findExisitingReccord(
 					tableName,
-					tableFields,
 					value,
 					user_id,
-					update_id,
 				);
 
-				if (upsert_records_result?.[tableName]?.extensions) {
-					resultArray.push({
-						[tableName]: {
-							status: false,
-							message:
-								upsert_records_result?.[tableName]?.message,
-						},
-					});
-				} else {
-					resultArray.push({
-						[tableName]: {
-							status: true,
-							message: 'successfully updated the value',
-						},
-					});
+				set_update = response?.set_update;
+				update_id = response?.id;
+
+				if (tableName != 'experience') {
+					upsert_records_result = await this.upsertRecords(
+						set_update,
+						tableName,
+						tableFields,
+						value,
+						user_id,
+						update_id,
+					);
+
+					if (upsert_records_result?.[tableName]?.extensions) {
+						resultArray.push({
+							[tableName]: {
+								status: false,
+								message:
+									upsert_records_result?.[tableName]?.message,
+							},
+						});
+					} else {
+						resultArray.push({
+							[tableName]: {
+								status: true,
+								message: 'successfully updated the value',
+							},
+						});
+					}
 				}
-			}
 
-			console.log('upsert_records_result-->>', upsert_records_result);
-
-			if (tableName == 'users' && profile_documents_array?.length > 0) {
-				await this.upsertProfileDocuments(profile_documents_array);
-			}
-
-			if (tableName == 'qualifications' && qualification_document_data) {
-				let result = await this.upsertRecords(
-					1,
-					'documents',
-					[
-						'name',
-						'document_sub_type',
-						'doument_type',
-						'context',
-						'context_id',
-						'user_id',
-					],
-					qualification_document_data,
-					user_id,
-					qualification_document_data?.document_id,
-				);
-
-				console.log('result doc-->>.', result);
+				//console.log('upsert_records_result-->>', upsert_records_result);
 			}
 		}
 
 		return resultArray;
 	}
 
-	public async processJsonArray(values, tableName, user_id, resultArray?) {
+	public async processJsonArray(
+		values,
+		tableName,
+		user_id,
+		resultArray?,
+		resp?,
+	) {
 		let set_update;
 		let update_id;
 		let referenceFields;
@@ -1087,6 +1093,7 @@ export class UserauthService {
 		let documentFields;
 		let documentData;
 		let result;
+		let base64result;
 
 		for (const obj of values) {
 			let tableFields = Object.keys(obj);
@@ -1096,7 +1103,7 @@ export class UserauthService {
 			set_update = obj?.id ? 1 : 0;
 			update_id = obj?.id;
 
-			console.log('set->.', set_update);
+			//console.log('set->.', set_update);
 			if (set_update == 1) {
 				tableFields.push('id');
 			}
@@ -1108,35 +1115,47 @@ export class UserauthService {
 						'name',
 						'contact_number',
 						'type_of_document',
+						'context',
+						'context_id',
 					];
 					referenceData = {
 						name: obj?.references.name,
 						contact_number: obj?.references.contact_number,
 						type_of_document: obj?.references.type_of_document,
-						id: obj?.references?.id,
 						context: 'experience',
+						context_id: obj?.id,
 					};
 
 					if (set_update == 1) {
 						referenceData.context_id = obj?.id;
+						referenceData['id'] = obj?.references?.id;
 					}
 				}
 
 				if ('documents' in obj.references) {
-					documentFields = [
-						'name',
-						'document_sub_type',
-						'doument_type',
-						'context',
-					];
-					documentData = {
-						name: obj?.references?.documents?.name,
-						document_sub_type:
-							obj?.references?.documents?.document_sub_type,
-						doument_type: obj?.references?.documents?.document_type,
-						id: obj?.references?.documents?.document_id,
-						context: 'reference',
+					let base64 = obj.references?.documents?.base64;
+
+					//console.log('base64-->>', base64);
+					let document_details = {
+						document_type: 'reference',
+						document_sub_type: 'reference',
+						context: 'experience',
 					};
+
+					if (base64) {
+						base64result = await this.base64ToBlob(
+							base64,
+							user_id,
+							resp,
+							document_details,
+						);
+					}
+
+					referenceData['document_id'] = base64result?.document_id;
+
+					tableFields = tableFields?.filter(
+						(field) => field !== 'documents',
+					);
 				}
 
 				// remove references object from the main object to process the experience object
@@ -1145,6 +1164,8 @@ export class UserauthService {
 				);
 				delete obj?.references;
 			}
+
+			//console.log('referenceData-->>', referenceData);
 
 			result = await this.upsertRecords(
 				set_update,
@@ -1170,17 +1191,7 @@ export class UserauthService {
 					update_id,
 				);
 
-				if (documentData) {
-					let update_id = documentData?.id;
-					let result2 = await this.upsertRecords(
-						1,
-						'documents',
-						documentFields,
-						documentData,
-						user_id,
-						update_id,
-					);
-				}
+				//console.log('references result--->>', result1);
 			}
 
 			if (result?.[tableName]?.extensions) {
@@ -1312,7 +1323,7 @@ export class UserauthService {
 			}
 			case 'experience': {
 				query = `query MyQuery {
-					experience(where: {id: {_eq:${value?.id}}}){
+					experience(where: {user_id: {_eq:${user_id}},type:{_eq:${value?.type}}}){
 					  id
 					}
 				  }
@@ -1341,6 +1352,7 @@ export class UserauthService {
 		id?,
 	) {
 		let result;
+		//console.log('value-->>', value);
 		if (set_update == 1 && id) {
 			result = await this.hasuraService.q(
 				tableName,
@@ -1380,7 +1392,7 @@ export class UserauthService {
 				['name', 'document_sub_type', 'doument_type', 'id'],
 			);
 
-			console.log('resuklt-->>', result);
+			//console.log('resuklt-->>', result);
 		}
 	}
 
@@ -1682,5 +1694,59 @@ export class UserauthService {
 				data: formattedData,
 			});
 		}
+	}
+
+	public async base64ToBlob(base64, userId, res, documentDetails) {
+		//console.log('here-->>');
+		let fileObject;
+		const arr = base64.split(',');
+		const mime = arr[0].match(/:(.*?);/)[1];
+		const buffer = Buffer.from(arr[1], 'base64');
+		let { document_type, document_sub_type } = documentDetails;
+
+		// Generate a unique filename with timestamp and userId
+		const now = new Date();
+		const formattedDateTime = now
+			.toISOString()
+			.slice(0, 19)
+			.replace('T', '-'); // YYYY-MM-DD-HH-MM-SS format
+		const filename = `${userId}-${formattedDateTime}.${mime.split('/')[1]}`; // Extract file extension
+
+		fileObject = {
+			fieldname: 'file',
+			mimetype: mime,
+			encoding: '7bit',
+			originalname: filename,
+			buffer: buffer,
+		};
+		let uploadresponse = await this.uploadFileService.addFile(
+			fileObject,
+			userId,
+			document_type,
+			document_sub_type,
+			res,
+			true,
+		);
+
+		//console.log(
+		//	'response of file upload-->>',
+		//	JSON.stringify(uploadresponse),
+		//	);
+		let document_id: any; // Adjust the type as per your requirement
+
+		if ('data' in uploadresponse && uploadresponse.data) {
+			document_id =
+				uploadresponse.data.data?.insert_documents?.returning[0]?.id;
+		} else {
+			// Handle the case where 'data' property is not present
+			// or uploadresponse.data is null/undefined
+			document_id = null; // Or any other fallback value
+		}
+		return {
+			data: buffer,
+			filename,
+			mimeType: mime,
+			document_id: document_id,
+		};
 	}
 }
