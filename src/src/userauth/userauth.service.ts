@@ -149,9 +149,9 @@ export class UserauthService {
 			if (findUsername.length > 0 && group === 'beneficiaries') {
 				let lastUsername =
 					findUsername[findUsername.length - 1].username;
-				console.log('lastUsername', lastUsername);
+				//	//console.log('lastUsername', lastUsername);
 				let count = findUsername.length;
-				console.log('count', count);
+				//console.log('count', count);
 				data_to_create_user.username =
 					data_to_create_user.username + '_' + count;
 			}
@@ -390,7 +390,7 @@ export class UserauthService {
 		let academic_year_id = request?.mw_academic_year_id; // get academic_year_id from token
 
 		//query to get user details information
-		//console.log('user_id', user_id);
+		////console.log('user_id', user_id);
 
 		let query = `query MyQuery {
 			users_by_pk(id:${user_id}) {
@@ -551,7 +551,7 @@ export class UserauthService {
 
 		let user_data = hasura_response?.data;
 
-		//console.log('user_data', JSON.stringify(user_data));
+		////console.log('user_data', JSON.stringify(user_data));
 
 		// get profile photo document details
 		let profilePhoto1Documents =
@@ -832,7 +832,7 @@ export class UserauthService {
 				aadhaar_verification_mode,
 				id,
 			},
-			core_faciltator: user_data?.users_by_pk?.core_faciltator || {},
+			core_faciltators: user_data?.users_by_pk?.core_faciltator || {},
 			extended_users: user_data?.users_by_pk?.extended_users || {},
 			references: user_data?.users_by_pk?.references,
 			program_faciltators: user_data?.users_by_pk?.program_faciltators,
@@ -851,26 +851,40 @@ export class UserauthService {
 
 	public async userOnboarding(body: any, response: any, request: any) {
 		//first check validations for all inputs
+		let jsonContent;
+		//console.log('body-->', body);
+
+		try {
+			// Convert buffer to JSON object
+			jsonContent = JSON.parse(body.buffer.toString('utf8'));
+
+			// Process JSON content
+
+			// Return success message
+		} catch (error) {
+			console.error('Error parsing JSON:', error);
+		}
 
 		let user_id = request?.mw_userid;
 		let program_id = request?.mw_program_id;
-		let academic_year_id = request?.academic_year_id;
+		let academic_year_id = request?.mw_academic_year_id;
 
 		let result = await this.processTable(
-			body,
+			jsonContent,
 			user_id,
 			program_id,
 			academic_year_id,
 			response,
 		);
 
-		console.log('result-->>', result);
+		//console.log('result-->>', result);
 		if (result) {
 			return response.status(200).json({
 				result: result,
 			});
 		}
 	}
+
 	private async processTable(
 		json: any,
 		user_id: any,
@@ -901,142 +915,161 @@ export class UserauthService {
 		let base64result;
 		for (const key in json) {
 			const value = json[key];
+			if (!(Object.keys(value).length === 0)) {
+				//console.log('value-->>', value);
+				if (typeof value === 'object') {
+					tableName = key;
+					tableFields = Object.keys(value);
+					for (const subKey in value) {
+						const subValue = value[subKey];
 
-			if (typeof value === 'object') {
-				tableName = key;
-				tableFields = Object.keys(value);
-				for (const subKey in value) {
-					const subValue = value[subKey];
-
-					if (typeof subValue === 'object') {
-						if (subKey.startsWith('profile_photo_')) {
-							const profilePhotoValue = Object.values(subValue);
-							const documentsValues = Object.values(
-								subValue.documents,
-							);
-							const base64 = documentsValues?.[0];
-							const documentDetails = {
-								document_type: 'profile_photo',
-								document_sub_type: subKey,
-							};
-
-							if (base64) {
-								await this.base64ToBlob(
-									base64,
-									user_id,
-									resp,
-									documentDetails,
+						if (typeof subValue === 'object') {
+							if (subKey.startsWith('profile_photo_')) {
+								const profilePhotoValue =
+									Object.values(subValue);
+								const documentsValues = Object.values(
+									subValue.documents,
 								);
-							}
+								const base64 = documentsValues?.[0];
+								const documentDetails = {
+									document_type: 'profile_photo',
+									document_sub_type: subKey,
+								};
 
-							// Add profile photo with its name value for inserting in users table
-							value[subKey] = profilePhotoValue?.[0];
+								if (base64) {
+									await this.base64ToBlob(
+										base64,
+										user_id,
+										resp,
+										documentDetails,
+									);
+								}
+
+								// Add profile photo with its name value for inserting in users table
+								value[subKey] = profilePhotoValue?.[0];
+							}
 						}
 					}
 				}
-			}
 
-			if (Array.isArray(value)) {
-				// Handle array
-				tableName = key;
+				if (Array.isArray(value)) {
+					// Handle array
+					tableName = key;
+					let tempvalue = [];
 
-				await this.processJsonArray(
-					value,
+					for (let i = 0; i < value.length; i++) {
+						let tempobj = value[i];
+						delete tempobj.status;
+						delete tempobj.unique_key;
+						tempvalue.push(tempobj);
+					}
+					await this.processJsonArray(
+						tempvalue,
+						tableName,
+						user_id,
+						resultArray,
+						resp,
+					);
+				}
+
+				if (tableName != 'users' && tableName != 'references') {
+					value.user_id = user_id;
+					tableFields.push('user_id');
+				}
+
+				if (tableName == 'program_faciltators') {
+					//console.log('vlaues-->>', value);
+
+					value.program_id = program_id;
+					value.academic_year_id = academic_year_id;
+					try {
+						value.qualification_ids = JSON.stringify(
+							JSON.parse(value?.qualification_ids),
+						).replace(/"/g, '\\"');
+					} catch (e) {}
+
+					tableFields.push('program_id');
+					tableFields.push('academic_year_id');
+					//console.log('vlaues123-->>', value);
+				}
+
+				if (tableName == 'references') {
+					value.context_id = user_id;
+					tableFields.push('context_id');
+				}
+
+				if (tableName == 'qualifications') {
+					//console.log('qualvalue-->', value);
+					if (value?.documents) {
+						let base64 = value?.documents?.base64;
+
+						//console.log('base64-->>', base64);
+						let document_details = {
+							document_type: 'qualifications',
+							document_sub_type: 'qualifications',
+							context: 'qualifications',
+						};
+
+						if (base64) {
+							base64result = await this.base64ToBlob(
+								base64,
+								user_id,
+								resp,
+								document_details,
+							);
+						}
+					}
+
+					//console.log('base64result-->.', base64result);
+
+					value['qualification_reference_document_id'] =
+						base64result?.document_id;
+					tableFields = tableFields?.filter(
+						(field) => field !== 'documents',
+					);
+					delete value?.documents;
+					//console.log('qualvalue123-->', value);
+				}
+
+				let response = await this.findExisitingReccord(
 					tableName,
+					value,
 					user_id,
-					resultArray,
-					resp,
 				);
-			}
 
-			if (tableName != 'users' && tableName != 'references') {
-				value.user_id = user_id;
-				tableFields.push('user_id');
-			}
+				set_update = response?.set_update;
+				update_id = response?.id;
 
-			if (tableName == 'program_faciltators') {
-				value.program_id = program_id;
-				value.academic_year_id = academic_year_id;
-				tableFields.push('program_id');
-				tableFields.push('academic_year_id');
-			}
+				if (tableName != 'experience') {
+					upsert_records_result = await this.upsertRecords(
+						set_update,
+						tableName,
+						tableFields,
+						value,
+						user_id,
+						update_id,
+					);
 
-			if (tableName == 'references') {
-				value.context_id = user_id;
-				tableFields.push('context_id');
-			}
-
-			if (tableName == 'qualifications') {
-				console.log('qualvalue-->', value);
-				if (value?.documents) {
-					let base64 = value?.documents?.base64;
-
-					console.log('base64-->>', base64);
-					let document_details = {
-						document_type: 'qualifications',
-						document_sub_type: 'qualifications',
-						context: 'qualifications',
-					};
-
-					if (base64) {
-						base64result = await this.base64ToBlob(
-							base64,
-							user_id,
-							resp,
-							document_details,
-						);
+					if (upsert_records_result?.[tableName]?.extensions) {
+						resultArray.push({
+							[tableName]: {
+								status: false,
+								message:
+									upsert_records_result?.[tableName]?.message,
+							},
+						});
+					} else {
+						resultArray.push({
+							[tableName]: {
+								status: true,
+								message: 'successfully updated the value',
+							},
+						});
 					}
 				}
 
-				console.log('base64result-->.', base64result);
-
-				value['qualification_reference_document_id'] =
-					base64result?.document_id;
-				tableFields = tableFields?.filter(
-					(field) => field !== 'documents',
-				);
-				delete value?.documents;
-				console.log('qualvalue123-->', value);
+				//console.log('upsert_records_result-->>', upsert_records_result);
 			}
-
-			let response = await this.findExisitingReccord(
-				tableName,
-				value,
-				user_id,
-			);
-
-			set_update = response?.set_update;
-			update_id = response?.id;
-
-			if (tableName != 'experience') {
-				upsert_records_result = await this.upsertRecords(
-					set_update,
-					tableName,
-					tableFields,
-					value,
-					user_id,
-					update_id,
-				);
-
-				if (upsert_records_result?.[tableName]?.extensions) {
-					resultArray.push({
-						[tableName]: {
-							status: false,
-							message:
-								upsert_records_result?.[tableName]?.message,
-						},
-					});
-				} else {
-					resultArray.push({
-						[tableName]: {
-							status: true,
-							message: 'successfully updated the value',
-						},
-					});
-				}
-			}
-
-			console.log('upsert_records_result-->>', upsert_records_result);
 		}
 
 		return resultArray;
@@ -1066,7 +1099,7 @@ export class UserauthService {
 			set_update = obj?.id ? 1 : 0;
 			update_id = obj?.id;
 
-			console.log('set->.', set_update);
+			//console.log('set->.', set_update);
 			if (set_update == 1) {
 				tableFields.push('id');
 			}
@@ -1098,7 +1131,7 @@ export class UserauthService {
 				if ('documents' in obj.references) {
 					let base64 = obj.references?.documents?.base64;
 
-					console.log('base64-->>', base64);
+					//console.log('base64-->>', base64);
 					let document_details = {
 						document_type: 'reference',
 						document_sub_type: 'reference',
@@ -1128,7 +1161,7 @@ export class UserauthService {
 				delete obj?.references;
 			}
 
-			console.log('referenceData-->>', referenceData);
+			//console.log('referenceData-->>', referenceData);
 
 			result = await this.upsertRecords(
 				set_update,
@@ -1154,7 +1187,7 @@ export class UserauthService {
 					update_id,
 				);
 
-				console.log('references result--->>', result1);
+				//console.log('references result--->>', result1);
 			}
 
 			if (result?.[tableName]?.extensions) {
@@ -1315,6 +1348,7 @@ export class UserauthService {
 		id?,
 	) {
 		let result;
+		//console.log('value-->>', value);
 		if (set_update == 1 && id) {
 			result = await this.hasuraService.q(
 				tableName,
@@ -1354,7 +1388,7 @@ export class UserauthService {
 				['name', 'document_sub_type', 'doument_type', 'id'],
 			);
 
-			console.log('resuklt-->>', result);
+			//console.log('resuklt-->>', result);
 		}
 	}
 
@@ -1659,7 +1693,7 @@ export class UserauthService {
 	}
 
 	public async base64ToBlob(base64, userId, res, documentDetails) {
-		console.log('here-->>');
+		//console.log('here-->>');
 		let fileObject;
 		const arr = base64.split(',');
 		const mime = arr[0].match(/:(.*?);/)[1];
@@ -1690,10 +1724,10 @@ export class UserauthService {
 			true,
 		);
 
-		console.log(
-			'response of file upload-->>',
-			JSON.stringify(uploadresponse),
-		);
+		//console.log(
+		//	'response of file upload-->>',
+		//	JSON.stringify(uploadresponse),
+		//	);
 		let document_id: any; // Adjust the type as per your requirement
 
 		if ('data' in uploadresponse && uploadresponse.data) {
