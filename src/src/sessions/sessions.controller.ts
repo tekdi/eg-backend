@@ -90,4 +90,21 @@ export class SessionsController {
 			response,
 		);
 	}
+
+	@Post('/session-wegithage/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	getSessionWegithage(
+		@Req() request: any,
+		@Res() response: Response,
+		@Param('id') id: number,
+		@Body() body: any,
+	) {
+		return this.sessionService.getSessionWegithage(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }
