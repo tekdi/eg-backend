@@ -1160,6 +1160,7 @@ export class UserauthService {
 					}
 
 					referenceData['document_id'] = base64result?.document_id;
+					referenceFields.push('document_id');
 
 					tableFields = tableFields?.filter(
 						(field) => field !== 'documents',
@@ -1199,7 +1200,7 @@ export class UserauthService {
 					update_id,
 				);
 
-				//console.log('references result--->>', result1);
+				console.log('references result--->>', result1);
 			}
 
 			if (result?.[tableName]?.extensions) {
