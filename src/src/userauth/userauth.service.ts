@@ -379,7 +379,7 @@ export class UserauthService {
 			const base64String = `data:${fileType};base64,${base64Data}`; // Include the content type in the Base64 string
 			return base64String;
 		} catch (error) {
-			console.error('Error converting image to Base64:', error);
+			//console.error('Error converting image to Base64:', error);
 			return null;
 		}
 	}
@@ -1200,7 +1200,7 @@ export class UserauthService {
 					update_id,
 				);
 
-				console.log('references result--->>', result1);
+				//console.log('references result--->>', result1);
 			}
 
 			if (result?.[tableName]?.extensions) {
