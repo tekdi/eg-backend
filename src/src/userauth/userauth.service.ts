@@ -977,6 +977,12 @@ export class UserauthService {
 					tableFields.push('user_id');
 				}
 
+				if (tableName === 'users') {
+					if (typeof value?.alternative_mobile_number === 'string') {
+						value.alternative_mobile_number = null;
+					}
+				}
+
 				if (tableName == 'program_faciltators') {
 					//console.log('vlaues-->>', value);
 
@@ -996,6 +1002,12 @@ export class UserauthService {
 				if (tableName == 'references') {
 					value.context_id = user_id;
 					tableFields.push('context_id');
+					value.context = 'users';
+					tableFields.push('context');
+					value.program_id = program_id;
+					value.academic_year_id = academic_year_id;
+					tableFields.push('program_id');
+					tableFields.push('academic_year_id');
 				}
 
 				if (tableName == 'qualifications') {
