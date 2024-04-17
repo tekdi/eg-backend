@@ -267,7 +267,8 @@ export class EventsService {
 		}
 	}
 
-	public async getEventsList(header, response) {
+	public async getEventsList(body, header, response) {
+		let filter = [];
 		let program_id = header?.mw_program_id;
 		let academic_year_id = header?.mw_academic_year_id;
 		const userDetail: any = await this.userService.ipUserInfo(header);
@@ -295,6 +296,18 @@ export class EventsService {
 			});
 		}
 
+		filter.push(
+			`{academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}`,
+		);
+
+		if (body?.start_date) {
+			filter.push(`start_date: {_eq:"${body?.start_date}"}`);
+		}
+
+		if (body?.end_date) {
+			filter.push(`end_date: {_eq:"${body?.end_date}"}`);
+		}
+
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
@@ -311,7 +324,7 @@ export class EventsService {
 							}
 						}
 					],
-					_and: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}
+					_and: ${filter}
 				}}) {
 					id
 					location

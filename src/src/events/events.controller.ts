@@ -35,10 +35,14 @@ export class EventsController {
 		return this.eventsService.create(createEventDto, header, response);
 	}
 
-	@Get('/list')
+	@Post('/list')
 	@UseGuards(new AuthGuard())
-	getEventsList(@Req() header: Request, @Res() response: Response) {
-		return this.eventsService.getEventsList(header, response);
+	getEventsList(
+		@Body() body: Body,
+		@Req() header: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.getEventsList(body, header, response);
 	}
 
 	@Post()
