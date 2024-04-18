@@ -27,4 +27,16 @@ export class ExamController {
 	) {
 		return this.examService.getExamSchedule(id, response, request);
 	}
+
+	@Post('schedule/subject/list/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async createObservation(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.examService.getExamSchedule(id, response, request);
+	}
+
 }
