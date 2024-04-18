@@ -26,6 +26,7 @@ export class PrepareCertificateHtmlCron {
 	@Cron(CronExpression.EVERY_5_MINUTES)
 	async prepareCertificateHtml() {
 		console.log('cron job: issueCertificate started at time ' + new Date());
+
 		//fetch all test tracking data which has certificate_status null
 		const userForIssueCertificate = await this.fetchTestTrackingData(
 			parseInt(
@@ -48,25 +49,26 @@ export class PrepareCertificateHtmlCron {
 				let test_id = userTestData?.test_id;
 				let context = userTestData?.context;
 				let context_id = userTestData?.context_id;
-				let getUserList = await this.userService.getUserName(user_id);
-				let user_name = '';
-				if (getUserList.length > 0) {
-					user_name += getUserList[0]?.first_name
-						? (await this.method.CapitalizeEachWord(
-								getUserList[0].first_name,
-						  )) + ' '
-						: '';
-					user_name += getUserList[0]?.middle_name
-						? (await this.method.CapitalizeEachWord(
-								getUserList[0].middle_name,
-						  )) + ' '
-						: '';
-					user_name += getUserList[0]?.last_name
-						? (await this.method.CapitalizeEachWord(
-								getUserList[0].last_name,
-						  )) + ' '
-						: '';
-				}
+
+				const user_name = await this.method.CapitalizeEachWord(
+					[
+						userTestData?.user?.first_name,
+						userTestData?.user?.middle_name,
+						userTestData?.user?.last_name,
+					]
+						.filter((e) => e)
+						.join(' '),
+				);
+
+				const event_start_date = moment(
+					userTestData?.events?.[0]?.start_date,
+				).format('DD MMM YYYY');
+				const event_end_date = moment(
+					userTestData?.events?.[0]?.end_date,
+				).format('DD MMM YYYY');
+				const academic_year =
+					userTestData?.events?.[0]?.academic_year?.name;
+
 				//get attendance status
 				let attendance_valid = false;
 				let usrAttendanceList =
@@ -112,6 +114,18 @@ export class PrepareCertificateHtmlCron {
 						let certificate_id = certificate_data?.id;
 						let uid = 'P-' + certificate_id + '-' + user_id;
 						//update html code
+						certificateTemplate = certificateTemplate.replace(
+							'{{academic_year}}',
+							academic_year,
+						);
+						certificateTemplate = certificateTemplate.replace(
+							'{{event_start_date}}',
+							event_start_date,
+						);
+						certificateTemplate = certificateTemplate.replace(
+							'{{event_end_date}}',
+							event_end_date,
+						);
 						certificateTemplate = certificateTemplate.replace(
 							'{{name}}',
 							user_name,
@@ -247,6 +261,20 @@ export class PrepareCertificateHtmlCron {
 					score
 					context
 					context_id
+					user{
+						first_name
+						middle_name
+						last_name
+					}
+					events(where:{context:{_eq:"events"}}){
+						id
+						start_date
+						end_date
+						academic_year{
+							name
+						}
+
+					}
 				}
 			}
 			`;
