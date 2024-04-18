@@ -383,7 +383,7 @@ export class UserauthService {
 			const base64String = `data:${fileType};base64,${base64Data}`; // Include the content type in the Base64 string
 			return base64String;
 		} catch (error) {
-			console.error('Error converting image to Base64:', error);
+			//console.error('Error converting image to Base64:', error);
 			return null;
 		}
 	}
@@ -1164,6 +1164,7 @@ export class UserauthService {
 					}
 
 					referenceData['document_id'] = base64result?.document_id;
+					referenceFields.push('document_id');
 
 					tableFields = tableFields?.filter(
 						(field) => field !== 'documents',
