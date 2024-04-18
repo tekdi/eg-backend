@@ -40,4 +40,15 @@ export class ExamController {
 	) {
 		return this.examService.createExamSchedule(body, response, request);
 	}
+
+	@Post('schedule/edit')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async editExamSchedule(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.editExamSchedule(body, response, request);
+	}
 }

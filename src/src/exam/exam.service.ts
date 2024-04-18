@@ -166,4 +166,77 @@ export class ExamService {
 			});
 		}
 	}
+
+	async editExamSchedule(body, response, request) {
+		let result = [];
+		let user_id = request?.mw_userid;
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+		let validation_query;
+		let event_validation_data;
+		let event_validation_response;
+		let event_id;
+
+		let attendance_validation_data;
+		let attendance_validation_response;
+		let attendance_id;
+
+		event_validation_data = {
+			query: `
+				query MyQuery {
+					events(where: {context: {_eq: "subjects"}, academic_year_id: {_eq:${academic_year_id}}, context_id: {_eq:${body?.subject_id}}, program_id: {_eq:${program_id}}, type: {_eq:"${body?.type}"}}) {
+						id
+					}
+				}
+			`,
+		};
+
+		event_validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(
+				event_validation_data,
+			);
+
+		event_id = event_validation_response?.data?.data?.events?.[0]?.id;
+
+		if (!event_id) {
+			return response.status(422).json({
+				status: false,
+				is_editable: false,
+				message: 'Event does not exists',
+			});
+		}
+
+		attendance_validation_data = {
+			query: `
+			query MyQuery2 {
+				attendance(where: {context_id: {_eq:${event_id}}}){
+				  id
+				}
+			  }
+			  
+			`,
+		};
+
+		attendance_validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(
+				attendance_validation_data,
+			);
+
+		attendance_id =
+			attendance_validation_response?.data?.data?.attendance?.[0]?.id;
+
+		if (attendance_id) {
+			return response.status(422).json({
+				status: false,
+				is_editable: false,
+				message: 'Event having attendance cannot be updated',
+			});
+		} else {
+			return response.status(200).json({
+				status: true,
+				is_editable: true,
+				message: 'Event can be updated',
+			});
+		}
+	}
 }
