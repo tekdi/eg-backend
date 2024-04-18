@@ -301,11 +301,15 @@ export class EventsService {
 		);
 
 		if (body?.start_date) {
-			filter.push(`start_date: {_eq:"${body?.start_date}"}`);
+			filter.push(
+				`start_date: {_gte:"${body?.start_date}",_lte:"${body?.start_date}"}`,
+			);
 		}
 
 		if (body?.end_date) {
-			filter.push(`end_date: {_eq:"${body?.end_date}"}`);
+			filter.push(
+				`end_date: {_gte:"${body?.end_date}",_lte:"${body?.end_date}"}`,
+			);
 		}
 
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
