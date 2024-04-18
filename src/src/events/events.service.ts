@@ -301,15 +301,13 @@ export class EventsService {
 		);
 
 		if (body?.start_date) {
-			filter.push(
-				`start_date: {_gte:"${body?.start_date}",_lte:"${body?.start_date}"}`,
-			);
+			filter.push(`start_date: {_gte:"${body?.start_date}"}`);
 		}
 
 		if (body?.end_date) {
-			filter.push(
-				`end_date: {_gte:"${body?.end_date}",_lte:"${body?.end_date}"}`,
-			);
+			filter.push(`end_date: {_lte:"${body?.end_date}"}`);
+		} else if (body?.start_date) {
+			filter.push(`end_date: {_lte:"${body?.start_date}"}`);
 		}
 
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
@@ -346,28 +344,6 @@ export class EventsService {
 					created_by
 					updated_by
 					user_id
-					attendances {
-						context
-						context_id
-						created_by
-						date_time
-						id
-						lat
-						long
-						rsvp
-						status
-						updated_by
-						user_id
-						user {
-							first_name
-							id
-							last_name
-							middle_name
-							profile_url
-							aadhar_verified
-							aadhaar_verification_mode
-						}
-					}
 				}
 			}`,
 		};

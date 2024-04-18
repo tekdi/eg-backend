@@ -7,6 +7,7 @@ import { html_code } from 'src/lms/certificate_html';
 import { LMSCertificateDto } from 'src/lms/dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { json } from 'stream/consumers';
 
 const moment = require('moment');
 const qr = require('qrcode');
@@ -71,21 +72,35 @@ export class PrepareCertificateHtmlCron {
 
 				//get attendance status
 				let attendance_valid = false;
+				const startMoment = moment(
+					userTestData?.events?.[0]?.start_date,
+				);
+				const endMoment = moment(userTestData?.events?.[0]?.end_date);
+				let datesD = [];
+				while (startMoment.isSameOrBefore(endMoment)) {
+					datesD.push(startMoment.format('YYYY-MM-DD'));
+					startMoment.add(1, 'day');
+				}
+
 				let usrAttendanceList =
 					await this.attendanceCoreService.getUserAttendancePresentList(
-						user_id,
-						context,
-						context_id,
+						{
+							user_id,
+							context,
+							context_id,
+							event_start_date: `${userTestData?.events?.[0]?.start_date}T00:00:00`,
+							event_end_date: `${userTestData?.events?.[0]?.end_date}T23:59:59`,
+						},
 					);
+
 				console.log('usrAttendanceList list', usrAttendanceList);
-				let minAttendance = parseInt(
-					this.configService.get<string>(
-						'LMS_CERTIFICATE_ISSUE_MIN_ATTENDANCE',
-					),
-				);
+				console.log('events-dates', JSON.stringify(datesD));
+				let minAttendance = datesD.length;
+
 				if (usrAttendanceList.length >= minAttendance) {
 					attendance_valid = true;
 				}
+
 				//check certificate criteria
 				if (userTestData?.score >= minPercentage && attendance_valid) {
 					issue_status = 'true';
@@ -217,10 +232,19 @@ export class PrepareCertificateHtmlCron {
 				if (issue_status == 'true') {
 					testTrackingUpdateData['certificate_status'] = issue_status;
 				}
-				await this.updateTestTrackingData(
+				const result = await this.updateTestTrackingData(
 					userTestData?.id,
 					testTrackingUpdateData,
 				);
+				if (issue_status === 'false') {
+					console.log(
+						`user_id ${user_id} name ${user_name} testID ${test_id} Not Genrated event date count ${minAttendance} attendance count ${usrAttendanceList.length}`,
+					);
+				} else if (result) {
+					console.log(
+						`user_id ${user_id} name ${user_name} testID ${test_id} Certificate Genrated Sucssefully`,
+					);
+				}
 			}
 		}
 	}
@@ -278,10 +302,9 @@ export class PrepareCertificateHtmlCron {
 				}
 			}
 			`;
-		console.log('fetchTestTrackingData query', query);
+
 		try {
 			const result_query = await this.hasuraService.getData({ query });
-			console.log('result_query', result_query);
 			const data_list = result_query?.data?.lms_test_tracking;
 			if (data_list) {
 				return data_list;
@@ -382,8 +405,6 @@ export class PrepareCertificateHtmlCron {
 		}
 	}
 	async updateTestTrackingData(id, testTrackingUpdateData) {
-		console.log('id', id);
-		console.log('testTrackingUpdateData', testTrackingUpdateData);
 		let setQuery = ``;
 		if (testTrackingUpdateData?.certificate_status) {
 			setQuery += `certificate_status: ${testTrackingUpdateData.certificate_status}`;
