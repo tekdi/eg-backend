@@ -20,6 +20,17 @@ export class QueryGeneratorService {
 		return str;
 	};
 
+	filterObjectByKeyArray = (obj: any, desiredKeys: []) => {
+		const filteredObject = desiredKeys.reduce((acc: any, key) => {
+			if (key in obj) {
+				acc[key] = obj[key];
+			}
+			return acc;
+		}, {});
+
+		return filteredObject;
+	};
+
 	// create
 	create(tName: String, item: any, onlyFields: any = [], fields: any = []) {
 		let tableName = `insert_${tName}_one`;
@@ -337,8 +348,13 @@ export class QueryGeneratorService {
 		onlyFields: any = [],
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
-		const getObjStr = (request: any) => {
-			const { filters, page, limit, order_by } = request;
+		const getObjStr = (request: any, is_aggregate = false) => {
+			const { filter, page, limit, order_by, onlyfilter } = request;
+			const filters = this.filterObjectByKeyArray(
+				filter || {},
+				onlyfilter || [],
+			);
+
 			let str = '';
 			if (
 				(limit && limit != '0') ||
@@ -347,26 +363,31 @@ export class QueryGeneratorService {
 			) {
 				str += '(';
 				let paramArr = [];
+
 				if (filters && Object.keys(filters).length > 0) {
 					let filterStr = `where: {`;
 					let strArr = Object.keys(filters).map((e) => {
-						if (this.isEmptyObject(filters[e])) {
+						let qData = '';
+						if (e === 'core') {
+							qData = filters[e];
+						} else if (this.isEmptyObject(filters[e])) {
 							let data = this.objectConvert(
 								filters[e],
 								([key, val]) => {
 									return `${key}: "${val}"`;
 								},
 							);
-							return `${e}:{${data.join(',')}}`;
+							qData = `${e}:{${data.join(',')}}`;
 						} else if (filters && filters[e] != '') {
-							return `${e}:{_eq:"${filters[e]}"}`;
+							qData = `${e}:{_eq:"${filters[e]}"}`;
 						}
+						return qData;
 					});
 					filterStr += strArr.join();
 					filterStr += `}`;
 					paramArr = [...paramArr, filterStr];
 				}
-				if (limit) {
+				if (limit && !is_aggregate) {
 					let offset = 0;
 					if (page > 1 && limit) {
 						offset = parseInt(limit) * (page - 1);
@@ -387,9 +408,8 @@ export class QueryGeneratorService {
 			}
 			return str;
 		};
-
-		return `query MyQuery {
-	  ${tableName}_aggregate${getObjStr(request)} {
+		const query = `query MyQuery {
+	  ${tableName}_aggregate${getObjStr(request, true)} {
 		aggregate {
 		  count
 		}
@@ -399,6 +419,8 @@ export class QueryGeneratorService {
 	  }
 	}
 	`;
+
+		return query;
 	}
 
 	findOne(id: number, tName: String, onlyFields: any = []) {

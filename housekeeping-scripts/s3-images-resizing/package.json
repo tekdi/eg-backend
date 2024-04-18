@@ -1,0 +1,18 @@
+{
+  "name": "eg-scripting",
+  "version": "1.0.0",
+  "description": "Nodejs based scripts for EG",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Manoj L",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.496.0",
+    "csv": "^6.3.6",
+    "dotenv": "^16.4.1",
+    "sharp": "^0.33.2"
+  }
+}

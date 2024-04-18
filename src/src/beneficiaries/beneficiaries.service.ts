@@ -681,10 +681,20 @@ export class BeneficiariesService {
 	}
 
 	public async getList(body: any, req: any, resp: any) {
-		const user = await this.userService.ipUserInfo(req);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
+		if (req.mw_roles?.includes('program_owner')) {
+			req.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			if (req.mw_roles?.includes('staff')) {
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			} else if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			}
+		}
+		if (!req.parent_ip_id) {
 			return resp.status(404).send({
 				success: false,
 				message: 'Invalid Ip',
@@ -693,18 +703,18 @@ export class BeneficiariesService {
 		}
 		const sortType = body?.sortType ? body?.sortType : 'desc';
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let status = body?.status;
 		let filterQueryArray = [];
 
 		if (body?.reassign) {
 			filterQueryArray.push(
-				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } ,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} } } }`,
+				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${req.parent_ip_id}" } ,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} } } }`,
 			);
 		} else {
 			filterQueryArray.push(
-				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} }},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}  } }`,
+				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${req.parent_ip_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} }},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}  } }`,
 			);
 		}
 

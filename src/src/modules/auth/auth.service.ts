@@ -256,11 +256,11 @@ export class AuthService {
 	}
 
 	public async resetPasswordUsingId(req, header, response) {
-		console.log('req', req);
+		const { mw_roles } = header;
 		const authToken = header.header('authorization');
 		const decoded: any = jwt_decode(authToken);
 		let keycloak_id = decoded.sub;
-		console.log('keycloak_id', keycloak_id);
+
 		let query2 = {
 			query: `query MyQuery {
 				users(where: {keycloak_id: {_eq: "${keycloak_id}" }}) {
@@ -276,12 +276,9 @@ export class AuthService {
 				}
 			  }`,
 		};
+
 		const userRole = await this.hasuraService.postData(query2);
-		console.log(
-			'userRole',
-			userRole.data.users[0].program_users[0].roles.role_type,
-		);
-		if (userRole.data.users[0].program_users[0].roles.role_type === 'IP') {
+		if (mw_roles.includes('staff')) {
 			let query = {
 				query: `query MyQuery {
 					users_by_pk(id: ${req.id}) {
@@ -294,7 +291,6 @@ export class AuthService {
 			};
 
 			const userRes = await this.hasuraService.postData(query);
-			console.log('userRes', userRes);
 
 			if (userRes) {
 				const token =
@@ -500,6 +496,15 @@ export class AuthService {
 			) {
 				misssingFieldsFlag = true;
 			}
+		} else if (body.role === 'staff') {
+			if (
+				!body.role_fields.organisation_id ||
+				!body.role_fields.program_id ||
+				!body.role_fields.academic_year_id ||
+				!body.role_fields.role_slug
+			) {
+				misssingFieldsFlag = true;
+			}
 		} else {
 			misssingFieldsFlag = true;
 		}
@@ -532,6 +537,10 @@ export class AuthService {
 
 			case 'beneficiary': {
 				group = `beneficiaries`;
+				break;
+			}
+			case 'staff': {
+				group = `staff`;
 				break;
 			}
 		}
@@ -613,6 +622,12 @@ export class AuthService {
 				if (body.role_fields.facilitator_id) {
 					body.facilitator_id = body.role_fields.facilitator_id;
 				}
+				if (body.role_fields.organisation_id) {
+					body.organisation_id = body.role_fields.organisation_id;
+				}
+				if (body.role_fields.role_slug) {
+					body.role_slug = body.role_fields.role_slug;
+				}
 				if (body.role === 'facilitator' && body.hasOwnProperty('dob')) {
 					delete body.dob;
 				}
@@ -639,6 +654,8 @@ export class AuthService {
 						},
 						['status', 'reason_for_status_update'],
 					);
+				}
+				if (body.role === 'staff' && result.data.program_users) {
 				}
 				// Send login details SMS
 				// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
@@ -794,6 +811,14 @@ export class AuthService {
 				'keycloak_id',
 				'username',
 				'aadhar_verified',
+				'village',
+				'state',
+				'block',
+				'district',
+				'grampanchayat',
+				'pincode',
+				'lat',
+				'long',
 			],
 		);
 
@@ -820,6 +845,15 @@ export class AuthService {
 			req.program_id = req.role_fields.program_id;
 			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'applied';
+		}
+		if (req.role === 'staff') {
+			programRoleTableName = 'program_users';
+			groupId = 'organisation_id';
+			req.organisation_id = `${req.role_fields.organisation_id}`;
+			req.program_id = req.role_fields.program_id;
+			req.academic_year_id = req.role_fields.academic_year_id;
+			req.role_slug = req.role_fields.role_slug;
+			other = [...other, 'role_slug'];
 		}
 		console.log('tableName', programRoleTableName);
 		console.log('groupId', groupId);

@@ -36,6 +36,7 @@ export class CampService {
 		'kit_ratings',
 		'kit_feedback',
 		'group_id',
+		'type',
 	];
 
 	public returnFieldsconsents = [
@@ -193,6 +194,7 @@ export class CampService {
 					group_id: createresponse?.groups?.id,
 					created_by: facilitator_id,
 					updated_by: facilitator_id,
+					type: 'pcr',
 				};
 
 				createcampResponse = await this.hasuraService.q(
@@ -382,7 +384,7 @@ export class CampService {
 		let status = 'active';
 
 		let qury = `query MyQuery {
-			camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}},order_by: {id: asc}) {
+			camps:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"main"}},order_by: {id: asc}) {
 			  id
 			  kit_ratings
 			  kit_feedback
@@ -391,6 +393,7 @@ export class CampService {
 				preferred_start_time
 				preferred_end_time
 				week_off
+				type
 			  group{
 				name
 				description
@@ -404,16 +407,42 @@ export class CampService {
 
 			  }
 			}
+			pcr_camp:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"pcr"}},order_by: {id: asc}) {
+			  id
+			  kit_ratings
+			  kit_feedback
+			  kit_received
+			  kit_was_sufficient
+				preferred_start_time
+				preferred_end_time
+				week_off
+				type
+			  group{
+				name
+				description
+				status
+			  }
+			  group_users(where: {member_type: {_neq: "owner"}}) {
+				user_id
+				status
+				member_type
+
+			  }
+			}
 		  }`;
 
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
-		const newQdata = response?.data;
+		const camps = response?.data?.camps || [];
+		const pcr_camp = response?.data?.pcr_camp || [];
 
 		return resp.status(200).json({
 			success: true,
 			message: 'Data found successfully!',
-			data: newQdata || { camps: [] },
+			data: {
+				camps,
+				pcr_camp,
+			},
 		});
 	}
 
@@ -435,6 +464,7 @@ export class CampService {
 			  preferred_start_time
 			  preferred_end_time
 			  week_off
+				type
 			  group{
 				name
 				description
@@ -787,6 +817,7 @@ export class CampService {
 			  preferred_start_time
 			  preferred_end_time
 			  week_off
+				type
 			  properties {
 				lat
 				long
@@ -2030,9 +2061,19 @@ export class CampService {
 		let facilitator_id = body?.facilitator_id;
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 50 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 
-		let query = `query MyQuery {
-			consents(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
+		let data = {
+			query: `query MyQuery($limit:Int, $offset:Int) {
+			consents_aggregate(where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}})  {
+					aggregate {
+						count
+					  }
+				}
+			consents(limit: $limit,
+				offset: $offset,where: {facilitator_id: {_eq:${facilitator_id}},camp_id: {_eq:${camp_id}}, status: {_eq: "active"},academic_year_id: {_eq:${academic_year_id}},program_id: {_eq:${program_id}}}) {
 			  id
 			  document_id
 			  user_id
@@ -2041,12 +2082,23 @@ export class CampService {
 				name
 			  }
 			}
-		  }`;
+		  }`,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
+		};
 
-		const hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
 		const consent_response = hasura_response?.data;
+
+		const count =
+			hasura_response?.data?.consents_aggregate?.aggregate?.count;
+
+		const totalPages = Math.ceil(count / limit);
+
 		if (!consent_response?.consents?.length) {
 			return resp.status(200).json({
 				success: true,
@@ -2068,13 +2120,16 @@ export class CampService {
 				status: 200,
 				message: 'Successfully updated consents details',
 				data: resultData,
+				totalCount: count,
+				limit: limit,
+				currentPage: page,
+				totalPages: totalPages,
 			});
 		}
 	}
 
 	async getAdminConsentBenficiaries(body: any, request: any, resp: any) {
 		let camp_id = body?.camp_id;
-
 		const user = await this.userService.ipUserInfo(request);
 
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
@@ -2091,15 +2146,13 @@ export class CampService {
 
 		// get facilitator for the provided camp id
 
-		let query = `query MyQuery {
+		let query = `query MyQuery{
 			camps(where: {id: {_eq:${camp_id}}, group_users: {user: {program_faciltators: {parent_ip: {_eq: "${parent_ip_id}"}}}}}) {
 			  group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
 				user_id
 			  }
 			}
-		  }
-
-		  `;
+		  }`;
 
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -2211,6 +2264,7 @@ export class CampService {
 		}
 		if (!group_id) {
 			return resp.status(400).json({
+				status: 400,
 				message: 'CAMP_INVALID_ERROR',
 				data: [],
 			});
@@ -2233,6 +2287,7 @@ export class CampService {
 			);
 
 			return resp.status(200).json({
+				status: 200,
 				message: 'Successfully updated camp details',
 				data: camp_id,
 			});
@@ -2240,15 +2295,25 @@ export class CampService {
 	}
 
 	async getCampList(body: any, req: any, resp: any) {
-		const user = await this.userService.ipUserInfo(req);
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
+		if (req.mw_roles?.includes('program_owner')) {
+			req.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			if (req.mw_roles?.includes('staff')) {
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			} else if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			}
+		}
+		if (!req.parent_ip_id) {
 			return resp.status(404).send({
 				success: false,
 				message: 'Invalid Ip',
 				data: {},
 			});
 		}
-		body.parent_ip_id = user?.data?.program_users?.[0]?.organisation_id;
+
 		const data = await this.campcoreservice.list(body, req);
 
 		if (data) {
@@ -2276,9 +2341,19 @@ export class CampService {
 					data: [],
 				});
 			}
-			const user = await this.userService.ipUserInfo(req);
-
-			if (!user?.data?.program_users?.[0]?.organisation_id) {
+			if (req.mw_roles?.includes('program_owner')) {
+				req.parent_ip_id = req.mw_ip_user_id;
+			} else {
+				const user = await this.userService.ipUserInfo(req);
+				if (req.mw_roles?.includes('staff')) {
+					req.parent_ip_id =
+						user?.data?.program_users?.[0]?.organisation_id;
+				} else if (req.mw_roles?.includes('facilitator')) {
+					req.parent_ip_id =
+						user?.data?.program_faciltators?.parent_ip;
+				}
+			}
+			if (!req.parent_ip_id) {
 				return resp.status(404).send({
 					success: false,
 					message: 'Invalid Ip',
@@ -2293,6 +2368,7 @@ export class CampService {
 					kit_was_sufficient
 					kit_ratings
 					kit_feedback
+					type
 				  group {
 						name
 						status
@@ -3463,6 +3539,7 @@ export class CampService {
 		let camp_day_happening = body?.camp_day_happening;
 		let camp_day_not_happening_reason = body?.camp_day_not_happening_reason;
 		let mood = body?.mood;
+		const camp_type = body?.camp_type;
 		let object;
 		const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
 
@@ -3503,9 +3580,9 @@ export class CampService {
 		}
 
 		if (camp_day_happening === 'no') {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}",camp_type:"${camp_type}", camp_day_not_happening_reason: "${camp_day_not_happening_reason}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}",end_date:"${currentDate}"}`;
 		} else {
-			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
+			object = `{camp_id: ${camp_id}, camp_day_happening: "${camp_day_happening}",camp_type:"${camp_type}", created_by: ${created_by}, updated_by: ${updated_by}, start_date: "${currentDate}", mood: "${mood}"}`;
 		}
 
 		const data = {
@@ -3521,7 +3598,7 @@ export class CampService {
 				mood
 				start_date
 				end_date
-
+				camp_type
 			}
 		}`,
 		};
@@ -4510,6 +4587,236 @@ export class CampService {
 				status: 500,
 				message: 'IP_CAMP_LIST_ERROR',
 				data: {},
+			});
+		}
+	}
+
+	async getCampLearnersListForEPCP(response: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		let user_id = request?.mw_userid;
+		let query = `query MyQuery {
+			camps(where: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},status: {_in: ["registered","camp_ip_verified","change_required"]}, group_users: {user_id: {_eq:${user_id}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}}}) {
+			  camp_id: id
+			  group {
+				group_id: id
+				group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}, user: {program_beneficiaries: {status: {_eq: "registered_in_camp"}}}}) {
+				  user {
+					user_id: id
+					first_name
+					middle_name
+					last_name
+				  }
+				}
+			  }
+			}
+		  }
+		  
+          
+          `;
+
+		const result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const newQdata = result?.data?.camps;
+
+		if (newQdata) {
+			return response.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return response.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+
+	public async pcrCampEnd(body: any, request: any, response: any) {
+		const camp_id = body?.camp_id;
+		const user = await this.userService.ipUserInfo(request);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return request.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		//validation check is camp type and camp-day-activity is PCR type
+		let data = {
+			query: `query MyQuery {
+		camps:camps(where: {id: {_eq: ${camp_id}}}){
+			id
+			type
+		}
+	}`,
+		};
+
+		const pcr_response = await this.hasuraServiceFromServices.getData(data);
+		//check camps type is  PCR or not!
+		const camps = pcr_response?.data?.camps[0]?.type;
+		const type = 'main';
+		if (camps === 'pcr') {
+			let update_body = ['type'];
+			let camp_day_response = await this.hasuraService.q(
+				'camps',
+				{
+					...body,
+					id: camp_id,
+					type: 'main',
+				},
+				update_body,
+				true,
+				['id', 'type'],
+			);
+			let camp = camp_day_response?.camps;
+
+			// activity logs old camp to new camp
+			const auditData = {
+				userId: request?.mw_userid,
+				mw_userid: request?.mw_userid,
+				user_type: 'IP',
+				context: 'pcr_camp.update.camp_type',
+				context_id: camp_id,
+				oldData: {
+					camp_id: camp_id,
+					type: camps,
+				},
+				newData: {
+					camp_id: camp_id,
+					type: 'main',
+				},
+				subject: 'pcr_camp',
+				subject_id: camp_id,
+				log_transaction_text: `IP ${request.mw_userid} change pcr camps type pcr to  ${type}.`,
+				tempArray: ['camp_id', 'camps'],
+				action: 'update',
+				sortedData: true,
+			};
+			await this.userService.addAuditLogAction(auditData);
+
+			if (camp) {
+				return response.status(200).json({
+					success: true,
+					message: 'PCR camp updated successfully!',
+					data: {
+						camp,
+					},
+				});
+			}
+		} else {
+			return response.status(422).json({
+				success: false,
+				message: 'PCR Camp is Already close',
+				data: {},
+			});
+		}
+	}
+
+	//multiple PCR camp END
+	public async multiplePcrCampEnd(body: any, request: any, response: any) {
+		const camp_id = body?.camp_id;
+		const user = await this.userService.ipUserInfo(request);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
+			return request.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		// Check if camp_id is provided and is an array
+		if (!camp_id || !Array.isArray(camp_id) || camp_id.length === 0) {
+			return response.status(422).json({
+				success: false,
+				message:
+					'camp_id is required and must be an array and should not be empty',
+				data: {},
+			});
+		}
+		//validation check is camp type is PCR only
+		let data = {
+			query: `query MyQuery {
+	camps:camps(where: {id: {_in: [${camp_id}]}}){
+		id
+		type
+	}
+}`,
+		};
+		const pcr_response = await this.hasuraServiceFromServices.getData(data);
+		//check camps type is  PCR or not!
+		const camps = pcr_response?.data?.camps ?? [];
+
+		// Check if all camps are of type PCR
+		const campIds = camps
+			.filter((camp: any) => camp.type != 'pcr')
+			.map((e) => e.id);
+
+		if (campIds.length > 0) {
+			return response.status(422).json({
+				success: false,
+				message: `${campIds} This ID are Not PCR Camp Ids`,
+				data: {},
+			});
+		}
+		const type = 'main';
+
+		let updatecamp = {
+			query: `mutation MyMutation {
+			update_camps_many(updates: {where: {id: {_in: [${camp_id}]}}, _set: {type: "main"}}) {
+				affected_rows
+				returning {
+					id
+					type
+				}
+			}
+		}`,
+		};
+		const updateResponse = await this.hasuraServiceFromServices.getData(
+			updatecamp,
+		);
+		const updatedCamps =
+			updateResponse?.data?.update_camps_many?.[0].returning ?? [];
+
+		// activity logs old camp to new camp
+		const userData = await Promise.all(
+			updatedCamps?.map(async (item) => {
+				const auditData = {
+					userId: request?.mw_userid,
+					mw_userid: request?.mw_userid,
+					user_type: 'IP',
+					context: 'camps.update.camp_type',
+					context_id: item.id,
+					oldData: {
+						camp_id: item.id,
+						type: 'pcr',
+					},
+					newData: {
+						camp_id: item.id,
+						type: item.type,
+					},
+					subject: 'camps',
+					subject_id: item.id,
+					log_transaction_text: `IP ${request.mw_userid} change pcr camps type pcr to  ${type}.`,
+					tempArray: ['camp_id', 'camps'],
+					action: 'update',
+					sortedData: true,
+				};
+				await this.userService.addAuditLogAction(auditData);
+			}),
+		);
+		if (updatedCamps) {
+			return response.status(200).json({
+				success: true,
+				message: 'PCR camp updated successfully!',
+				data: {
+					updatedCamps,
+				},
 			});
 		}
 	}

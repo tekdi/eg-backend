@@ -155,20 +155,8 @@
 			"value": "applied"
 		},
 		{
-			"title": "FACILITATOR_STATUS_APPLICATION_SCREENED",
-			"value": "application_screened"
-		},
-		{
-			"title": "FACILITATOR_STATUS_SHORTLISTED_FOR_ORIENTATION",
-			"value": "shortlisted_for_orientation"
-		},
-		{
 			"title": "FACILITATOR_STATUS_PRAGATI_MOBILIZER",
 			"value": "pragati_mobilizer"
-		},
-		{
-			"title": "FACILITATOR_STATUS_SELECTED_FOR_TRAINING",
-			"value": "selected_for_training"
 		},
 		{
 			"title": "FACILITATOR_STATUS_SELECTED_FOR_ONBOARDING",
@@ -421,16 +409,20 @@
 	],
 	"FACILITATOR_EVENT_TYPE": [
 		{
-			"title": "FACILITATOR_EVENT_TYPE_PRERAK_ORIENTATION",
-			"value": "prerak_orientation"
+			"title": "FACILITATOR_EVENT_TYPE_PRAGATI_ORIENTATION",
+			"value": "pragati_orientation"
 		},
 		{
-			"title": "FACILITATOR_EVENT_TYPE_PRERAK_FLN_TRAINING",
-			"value": "prerak_fln_training"
+			"title": "FACILITATOR_EVENT_TYPE_PCR_TRAINING",
+			"value": "pcr_training"
 		},
 		{
-			"title": "FACILITATOR_EVENT_TYPE_PRERAK_CAMP_EXECUTION_TRAINING",
-			"value": "prerak_camp_execution_training"
+			"title": "FACILITATOR_EVENT_TYPE_MAIN_CAMP_EXECUTION_TRAINING",
+			"value": "main_camp_execution_training"
+		},
+		{
+			"title": "FACILITATOR_EVENT_TYPE_DRIP_TRAINING",
+			"value": "drip_training"
 		}
 	],
 	"BENEFICIARY_REASONS_FOR_REJECTING_LEARNER": [
@@ -1410,6 +1402,10 @@
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
 			"value": "miscellaneous_activities_school_teacher_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
+			"value": "miscellaneous_activities_e_pcp_activities"
 		}
 	],
 	"KIT_MATERIALS_CHECKLISTS": [
@@ -1508,6 +1504,138 @@
 		{
 			"title": "PARENT_SUPPORT_MAY_BE",
 			"value": "may_be"
+		}
+	],
+	"EVENT_BATCH_NAME": [
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_1",
+			"value": "batch_1"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_2",
+			"value": "batch_2"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_3",
+			"value": "batch_3"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_4",
+			"value": "batch_4"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_5",
+			"value": "batch_5"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_6",
+			"value": "batch_6"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_7",
+			"value": "batch_7"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_8",
+			"value": "batch_8"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_9",
+			"value": "batch_9"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_10",
+			"value": "batch_10"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_11",
+			"value": "batch_11"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_12",
+			"value": "batch_12"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_13",
+			"value": "batch_13"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_14",
+			"value": "batch_14"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_15",
+			"value": "batch_15"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_16",
+			"value": "batch_16"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_17",
+			"value": "batch_17"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_18",
+			"value": "batch_18"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_19",
+			"value": "batch_19"
+		},
+		{
+			"title": "EVENT_BATCH_NAME_BATCH_20",
+			"value": "batch_20"
+		}
+	],
+	"PCR_MISCELLANEOUS_ACTIVITIES": [
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
+			"value": "miscellaneous_activities_communication_skills"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
+			"value": "miscellaneous_activities_role_model_intervention"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
+			"value": "miscellaneous_activities_aspiration_mapping"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
+			"value": "miscellaneous_activities_digital_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
+			"value": "miscellaneous_activities_financial_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
+			"value": "miscellaneous_activities_linkages"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
+			"value": "miscellaneous_activities_family_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
+			"value": "miscellaneous_activities_role_model_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
+			"value": "miscellaneous_activities_school_teacher_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
+			"value": "miscellaneous_activities_e_pcp_activities"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_PCR",
+			"value": "miscellaneous_activities_pcr"
 		}
 	]
 }

@@ -74,6 +74,59 @@ export class EventsService {
 		let academic_year_id = header?.mw_academic_year_id;
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
+		//get do_id for event exam master data
+		// Convert start_date and end_date to UTC
+		const startDateTimeUTC = moment
+			.tz(
+				req.start_date + ' ' + req.start_time,
+				'YYYY-MM-DD HH:mm',
+				'Asia/Kolkata',
+			)
+			.utc();
+
+		const endDateTimeUTC = moment
+			.tz(
+				req.end_date + ' ' + req.end_time,
+				'YYYY-MM-DD HH:mm',
+				'Asia/Kolkata',
+			)
+			.utc();
+
+		let eventExamData = {
+			query: `query MyQuery {
+				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"}}){
+					id
+					do_id
+					event_type
+				}
+			}`,
+		};
+
+		const getExamId = await this.hasuraServiceFromServices.getData(
+			eventExamData,
+		);
+
+		let doIds = getExamId?.data?.event_exams_master?.map(
+			(exam) => exam.do_id,
+		);
+		let paramId = null;
+
+		if (doIds && doIds.length > 0) {
+			paramId = {
+				attendance_type: 'day',
+				do_id: doIds,
+			};
+		}
+		let optional = {};
+		if (req?.location && req?.location_type && req?.reminders) {
+			optional['location'] = req.location;
+			optional['reminders'] = JSON.stringify(req.reminders).replace(
+				/"/g,
+				'\\"',
+			);
+			optional['location_type'] = req.location_type;
+		}
+
 		let obj = {
 			...(req?.context_id && { context_id: req?.context_id }),
 			...(req?.context && { context: req?.context }),
@@ -81,61 +134,129 @@ export class EventsService {
 			name: req.name,
 			master_trainer: req.master_trainer,
 			created_by: user_id,
-			end_date: req.end_date,
-			end_time: req.end_time,
-			location: req.location,
-			location_type: req.location_type,
-			start_date: req.start_date,
-			start_time: req.start_time,
+			end_date: endDateTimeUTC.format('YYYY-MM-DD'),
+			end_time: endDateTimeUTC.format('HH:mm'),
+			start_time: startDateTimeUTC.format('HH:mm'),
+			start_date: startDateTimeUTC.format('YYYY-MM-DD'),
 			updated_by: user_id,
 			type: req.type,
-			reminders: JSON.stringify(req.reminders).replace(/"/g, '\\"'),
 			program_id: program_id,
 			academic_year_id: academic_year_id,
-			params: req.params,
+			params: paramId, //set  params to null if no param id found in the database
+			...optional, //set optional for remainders,location,location_type
 		};
-
-		const eventResult = await this.hasuraService.createWithVariable(
-			this.table,
-			obj,
-			this.returnFields,
-			[],
-			[{ key: 'params', type: 'json' }],
+		// Check duration
+		const daysDiff = moment(req.end_date).diff(
+			moment(req.start_date),
+			'days',
 		);
 
-		if (eventResult) {
-			const promises = [];
-			const query = [];
-			for (const iterator of user_id_arr) {
-				let obj = {
-					user_id: iterator,
-					created_by: user_id,
-					context_id: eventResult.events.id,
-					context: 'events',
-					updated_by: user_id,
-				};
-				query.push(obj);
+		const currentDate = moment(); // Current date
+
+		// Check if the number of attendees falls within the configured limits
+		let errorMessage = {};
+
+		const numAttendees = req.attendees.length;
+		const minParticipants = 0; // Example: Minimum number of participants allowed
+		const maxParticipants = 50; // Example: Maximum number of participants allowed
+
+		if (numAttendees < minParticipants || numAttendees > maxParticipants) {
+			errorMessage = {
+				key: 'participants_limit',
+				massage: `Number of attendees must be between ${minParticipants} and ${maxParticipants}`,
+			};
+		} else if (moment(req.start_date)?.isBefore(currentDate, 'day')) {
+			errorMessage = {
+				key: 'back_date',
+				message: 'start date is before the current date',
+			};
+		} else if (daysDiff < 0 || daysDiff > 5) {
+			errorMessage = {
+				key: 'event_days',
+				message: 'Event duration must be between 1 and 5 days.',
+			};
+		}
+
+		if (Object.keys(errorMessage).length) {
+			return response.status(422).send({
+				success: false,
+				...errorMessage,
+				data: {},
+			});
+		}
+
+		//checking the event already created
+		let data = {
+			query: `query MyQuery {
+			events_aggregate(where: {start_date: {_gte: "${req.start_date}", _lte: "${req.start_date}"}, end_date: {_gte: "${req.end_date}", _lte: "${req.end_date}"}, program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, master_trainer: {_eq: "${req.master_trainer}"}, start_time: {_eq: "${req.start_time}"}, type: {_eq: "${req.type}"}, user_id: {_eq: ${user_id}}, name: {_eq: "${req.name}"}}) {
+				aggregate {
+					count
+				}
 			}
-			for (const iterator of query) {
-				promises.push(
-					this.hasuraService.create(
-						'attendance',
-						iterator,
-						this.attendanceReturnFields,
-					),
-				);
-			}
-			const createAttendees = await Promise.all(promises);
-			let mappedData = createAttendees.map((data) => data.attendance);
-			if (createAttendees) {
-				return response.status(200).send({
-					success: true,
-					message: 'Event created successfully!',
-					data: {
-						events: eventResult.events,
-						attendance: mappedData,
-					},
-				});
+		}
+		`,
+		};
+
+		const geteventData = await this.hasuraServiceFromServices.getData(data);
+
+		const count = geteventData?.data?.events_aggregate?.aggregate?.count;
+		//if event created show this message
+
+		if (count > 0) {
+			return response.status(422).send({
+				success: false,
+				message: 'Event Already created!',
+				key: 'batch_name',
+				data: {},
+			});
+		} else {
+			const eventResult = await this.hasuraService.createWithVariable(
+				this.table,
+				obj,
+				this.returnFields,
+				[],
+				[{ key: 'params', type: 'json' }],
+			);
+			if (eventResult) {
+				const promises = [];
+				const query = [];
+				for (const iterator of user_id_arr) {
+					let obj = {
+						user_id: iterator,
+						created_by: user_id,
+						context_id: eventResult.events.id,
+						context: 'events',
+						updated_by: user_id,
+					};
+					query.push(obj);
+				}
+				for (const iterator of query) {
+					promises.push(
+						this.hasuraService.create(
+							'attendance',
+							iterator,
+							this.attendanceReturnFields,
+						),
+					);
+				}
+				const createAttendees = await Promise.all(promises);
+				let mappedData = createAttendees.map((data) => data.attendance);
+				if (createAttendees) {
+					return response.status(200).send({
+						success: true,
+						message: 'Event created successfully!',
+						data: {
+							events: eventResult.events,
+							attendance: mappedData,
+						},
+					});
+				} else {
+					return response.status(500).send({
+						success: false,
+						message: 'Unable to create Event!',
+						data: {},
+					});
+				}
 			} else {
 				return response.status(500).send({
 					success: false,
@@ -143,16 +264,11 @@ export class EventsService {
 					data: {},
 				});
 			}
-		} else {
-			return response.status(500).send({
-				success: false,
-				message: 'Unable to create Event!',
-				data: {},
-			});
 		}
 	}
 
-	public async getEventsList(header, response) {
+	public async getEventsList(body, header, response) {
+		let filter = [];
 		let program_id = header?.mw_program_id;
 		let academic_year_id = header?.mw_academic_year_id;
 		const userDetail: any = await this.userService.ipUserInfo(header);
@@ -180,6 +296,20 @@ export class EventsService {
 			});
 		}
 
+		filter.push(
+			`{academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}`,
+		);
+
+		if (body?.start_date) {
+			filter.push(`start_date: {_gte:"${body?.start_date}"}`);
+		}
+
+		if (body?.end_date) {
+			filter.push(`end_date: {_lte:"${body?.end_date}"}`);
+		} else if (body?.start_date) {
+			filter.push(`end_date: {_lte:"${body?.start_date}"}`);
+		}
+
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
@@ -196,7 +326,7 @@ export class EventsService {
 							}
 						}
 					],
-					_and: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}
+					_and: ${filter}
 				}}) {
 					id
 					location
@@ -214,28 +344,6 @@ export class EventsService {
 					created_by
 					updated_by
 					user_id
-					attendances {
-						context
-						context_id
-						created_by
-						date_time
-						id
-						lat
-						long
-						rsvp
-						status
-						updated_by
-						user_id
-						user {
-							first_name
-							id
-							last_name
-							middle_name
-							profile_url
-							aadhar_verified
-							aadhaar_verification_mode
-						}
-					}
 				}
 			}`,
 		};
@@ -281,37 +389,6 @@ export class EventsService {
 		type
 		updated_by
 		user_id
-		attendances(order_by: {
-		  created_at: asc
-		  }) {
-		  created_by
-		  created_at
-		  context
-		  context_id
-		  date_time
-		  id
-		  lat
-		  user_id
-		  updated_by
-		  status
-		  long
-		  rsvp
-		  fa_is_processed
-		  fa_similarity_percentage
-		  user{
-			first_name
-			id
-			last_name
-			middle_name
-			profile_url
-			aadhar_verified
-			aadhaar_verification_mode
-			program_faciltators{
-			documents_status
-			  }
-		  }
-		}
-
 	  }
 	}
 	`,
@@ -337,9 +414,58 @@ export class EventsService {
 	public async update(id: number, header: any, req: any, resp: any) {
 		try {
 			const userDetail = await this.userService.ipUserInfo(header);
-			let user_id = userDetail.data.id;
-			let attendees = req.attendees;
-			if (attendees && attendees.length > 0) {
+			const user_id = userDetail.data.id;
+			// Validate start date
+			const daysDiff = moment
+				.utc(req.end_date)
+				.diff(moment.utc(req.start_date), 'days');
+			const currentDateTime = moment.utc();
+
+			const startDateTime = moment(
+				req.start_date + ' ' + req.start_time,
+				'YYYY-MM-DD HH:mm',
+				true, // Parse in strict mode
+			).utc();
+
+			let errorMessage = {};
+			if (startDateTime.isBefore(currentDateTime, 'day')) {
+				errorMessage = {
+					key: 'start_date',
+					message: 'Start date cannot be a back date.',
+				};
+			} else if (daysDiff < 0 || daysDiff > 5) {
+				errorMessage = {
+					key: 'event_days',
+					message: 'Event duration must be between 1 and 5 days.',
+				};
+			}
+			if (Object.keys(errorMessage).length) {
+				return resp.status(422).send({
+					success: false,
+					...errorMessage,
+					data: {},
+				});
+			}
+
+			// Convert start_date and end_date to UTC
+			const startDateTimeUTC = moment
+				.tz(
+					req.start_date + ' ' + req.start_time,
+					'YYYY-MM-DD HH:mm',
+					'Asia/Kolkata',
+				)
+				.utc();
+
+			const endDateTimeUTC = moment
+				.tz(
+					req.end_date + ' ' + req.end_time,
+					'YYYY-MM-DD HH:mm',
+					'Asia/Kolkata',
+				)
+				.utc();
+
+			const attendees = req.attendees;
+			if (attendees) {
 				const data = {
 					query: `query MyQuery {
 		  events(where: {id: {_eq: ${id}}}){
@@ -359,16 +485,15 @@ export class EventsService {
 					data,
 				);
 				let eventDetails = response?.data.events[0];
-				let mappedData = response?.data.events.map(
-					(data) => data.attendances,
-				);
-				if (response) {
+				if (eventDetails?.id) {
+					let mappedData = eventDetails?.attendances;
 					//remove attendees in current event
 					const deletePromise = [];
-					const deleteAttendees = mappedData[0].filter(
-						(data) => !req.attendees.includes(data.user_id),
+					const deleteAttendees = mappedData.filter(
+						(data) => !attendees.includes(data.user_id),
 					);
 					if (deleteAttendees && deleteAttendees.length > 0) {
+						//remove for and add delete multiple query
 						for (const iterator of deleteAttendees) {
 							deletePromise.push(
 								this.hasuraService.delete('attendance', {
@@ -382,8 +507,8 @@ export class EventsService {
 					}
 
 					//add new attendees in current event
-					const tempArray = mappedData[0].map((data) => data.user_id);
-					const addAttendees = req.attendees.filter(
+					const tempArray = mappedData.map((data) => data.user_id);
+					const addAttendees = attendees.filter(
 						(data) => !tempArray.includes(data),
 					);
 					if (addAttendees && addAttendees.length > 0) {
@@ -413,8 +538,13 @@ export class EventsService {
 				}
 			}
 			//update events fields
+
 			const newRequest = {
-				...req,
+				...req, // Spread req object first
+				end_date: endDateTimeUTC.format('YYYY-MM-DD'),
+				end_time: endDateTimeUTC.format('HH:mm'),
+				start_time: startDateTimeUTC.format('HH:mm'),
+				start_date: startDateTimeUTC.format('YYYY-MM-DD'),
 				...(req.reminders && {
 					reminders: JSON.stringify(req.reminders).replace(
 						/"/g,
@@ -483,6 +613,7 @@ export class EventsService {
 	}
 
 	public async updateAttendanceDetail(id: number, req: any, response: any) {
+		let attendance_id = id;
 		const tableName = 'attendance';
 		if (req?.status == 'present') {
 			let checkStringResult = this.checkStrings({});
@@ -496,6 +627,35 @@ export class EventsService {
 			}
 		}
 		try {
+			const format = 'YYYY-MM-DD';
+			const dateString = moment.utc().startOf('day').format(format);
+			const currentTime = moment.utc().format('HH:mm');
+
+			let data = {
+				query: `query MyQuery1 {
+					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTime}"}, end_time: {_gte: "${currentTime}"}}) {
+						aggregate {
+							count
+						}
+					}
+				}
+				`,
+			};
+
+			const getAttendanceData =
+				await this.hasuraServiceFromServices.getData(data);
+			const count =
+				getAttendanceData?.data?.events_aggregate?.aggregate?.count;
+
+			if (count === 0) {
+				return response.status(422).send({
+					success: false,
+					message:
+						'Attendance cannot be marked as today is not within the event date range.',
+					data: {},
+				});
+			}
+
 			let result = await this.hasuraService.update(
 				+id,
 				tableName,
@@ -598,6 +758,7 @@ export class EventsService {
 			});
 		}
 	}
+
 	async getParticipants(req, id, body, res) {
 		const auth_users = await this.userService.ipUserInfo(req, 'staff');
 
@@ -707,9 +868,93 @@ export class EventsService {
 
 	public async createEventAttendance(body: any, req: any, res: any) {
 		(body.status = body?.status || null),
-			(body.context = body?.context || 'events'),
+			(body.context = 'events'),
 			(body.created_by = req?.mw_userid),
 			(body.updated_by = req?.mw_userid);
+		const presentDate = body?.date_time;
+		//Taking event date and attendances count
+		let data = {
+			query: `query MyQuery {
+			events(where: {id: {_eq: ${body.context_id}}}){
+				start_date
+				start_time
+				end_date
+				end_time
+				id
+			}
+			attendance_aggregate(where:{
+				context_id:{_eq:${body?.context_id}},
+				context:{_eq:${body.context}},
+				date_time:{_gte:"${body?.date_time}",_lte:"${body?.date_time}"},
+				user_id:{_eq:${body?.user_id}}
+			}){
+				aggregate{
+					count
+				}
+			}
+		}
+		`,
+		};
+
+		const getAttendanceData = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		let event = getAttendanceData?.data?.events?.[0];
+		let count =
+			getAttendanceData?.data?.attendance_aggregate?.aggregate?.count;
+		//if attendances is present for that date
+		if (count > 0) {
+			return res.status(422).json({
+				success: false,
+				message: 'Attendance allready marked for this date',
+			});
+		}
+
+		const format = 'YYYY-MM-DD HH:mm';
+		const currentDate = moment();
+		let errorMessage = {};
+		const startDate = moment(
+			`${event?.start_date} ${event?.start_time}`,
+			format,
+		);
+
+		const endDate = moment(`${event?.end_date} ${event?.end_time}`, format);
+
+		const newPresentDate = moment(
+			`${presentDate} ${moment().format('HH:mm')}`,
+			format,
+		);
+		//current date is after start date of event and presnt date is after event start date
+		if (
+			startDate.isSameOrAfter(currentDate) ||
+			startDate.isSameOrAfter(newPresentDate)
+		) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_FUTURE_DATE_ERROR_MESSAGE',
+			};
+		} else if (
+			endDate.isSameOrBefore(currentDate) ||
+			endDate.isSameOrBefore(newPresentDate)
+		) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_PAST_DATE_ERROR_MESSAGE',
+			};
+		} else if (!newPresentDate.isSameOrBefore(currentDate)) {
+			errorMessage = {
+				key: 'date_time',
+				message: 'ATTENDANCE_FUTURE_DATE_ERROR_MESSAGE',
+			};
+		}
+
+		if (Object.keys(errorMessage).length > 0) {
+			return res.status(422).json({
+				success: false,
+				...errorMessage,
+			});
+		}
 
 		let response = await this.hasuraService.q(
 			'attendance',
@@ -767,33 +1012,27 @@ export class EventsService {
 				events(where: {end_date:{_gte:"${todayDate}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					id
 					user_id
-					context
-					context_id
-					created_by
-					updated_by
-					created_at
-					updated_at
 					start_date
 					start_time
 					end_date
 					end_time
 					name
-					location
-					location_type
 					type
 					params
 					master_trainer
 					lms_test_tracking(where: {user_id: {_eq: ${id}},context:{_eq:${context}}}) {
-						context
-						context_id
 						status
-						created_at
-						updated_at
 						id
 						test_id
 						score
 						user_id
 						certificate_status
+					}
+					attendances(where: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}){
+						id
+						user_id
+						status
+						date_time
 					}
 				}
 

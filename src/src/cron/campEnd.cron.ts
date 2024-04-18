@@ -31,7 +31,7 @@ export class CampEndCron {
 			system: update_camp_days_activities_tracker(where: {start_date: {_gte: "${yesterdayStartTime}", _lte: "${yesterdayEndTime}"}, end_date: {_is_null: true}}, _set: {end_camp_marked_by: "system", end_date: "${today}"}) {
 				affected_rows
 			}
-		  }
+		}
 		  `;
 
 		let result = await this.hasuraService.getData({ query: updateQuery });

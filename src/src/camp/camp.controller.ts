@@ -384,4 +384,30 @@ export class CampController {
 	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campDetails(body, request, response);
 	}
+
+	@Post('camp-info/learners')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getCampLearnersListForEPCP(
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.campService.getCampLearnersListForEPCP(response, request);
+	}
+
+	@Post('admin/end_pcr')
+	@UseGuards(new AuthGuard())
+	pcrCampEnd(@Req() request: any, @Body() body: any, @Res() response: any) {
+		return this.campService.pcrCampEnd(body, request, response);
+	}
+
+	@Post('admin/multiple_end_pcr')
+	@UseGuards(new AuthGuard())
+	multiplePcrCampEnd(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.campService.multiplePcrCampEnd(body, request, response);
+	}
 }
