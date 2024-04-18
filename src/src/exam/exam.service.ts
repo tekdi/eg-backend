@@ -52,4 +52,118 @@ export class ExamService {
 			});
 		}
 	}
+
+	async createExamSchedule(body, response, request) {
+		let result = [];
+		let user_id = request?.mw_userid;
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+		let validation_query;
+		let validation_data;
+		let validation_response;
+		let event_id;
+
+		for (const schedule of body) {
+			validation_data = {
+				query: `
+					query MyQuery {
+						events(where: {context: {_eq: "subjects"}, academic_year_id: {_eq:${academic_year_id}}, context_id: {_eq:${schedule?.subject_id}}, program_id: {_eq:${program_id}}, type: {_eq:"${schedule?.type}"}}) {
+							id
+						}
+					}
+				`,
+			};
+
+			validation_response =
+				await this.hasuraServiceFromServices.queryWithVariable(
+					validation_data,
+				);
+
+			event_id = validation_response?.data?.data?.events?.[0]?.id;
+
+			let query;
+
+			if (event_id) {
+				query = `
+					mutation UpdateEvent {
+						update_events_by_pk(pk_columns: {id: ${event_id}}, _set: {
+				`;
+			} else {
+				query = `
+					mutation CreateEvent {
+						insert_events_one(object: {
+							context: "subjects",
+							program_id: ${program_id},
+							academic_year_id: ${academic_year_id},
+							created_by:${user_id},
+							updated_by:${user_id},
+				`;
+			}
+
+			Object.keys(schedule).forEach((key) => {
+				if (schedule[key] !== null && schedule[key] !== '') {
+					if (key === 'subject_id') {
+						query += `context_id: ${schedule[key]}, `;
+					} else if (key === 'exam_date') {
+						// Assuming exam_date is in the format 'YYYY-MM-DD'
+						query += `start_date: "${schedule[key]}", `;
+						query += `end_date: "${schedule[key]}", `;
+					} else if (Array.isArray(schedule[key])) {
+						query += `${key}: "${JSON.stringify(schedule[key])}", `;
+					} else {
+						query += `${key}: "${schedule[key]}", `;
+					}
+				}
+			});
+
+			query = query.slice(0, -2); // Remove trailing comma and space
+
+			query += `
+						}) {
+							id
+							context_id
+							context
+							start_date
+							end_date
+							program_id
+							academic_year_id
+							type
+							status
+							created_by
+							updated_by
+						}
+					}
+				`;
+
+			let data = {
+				query: `${query}`,
+				variables: {},
+			};
+
+			const query_response =
+				await this.hasuraServiceFromServices.queryWithVariable(data);
+			const updatedOrCreatedEvent =
+				query_response?.data?.data?.[
+					event_id ? 'update_events_by_pk' : 'insert_events_one'
+				];
+
+			if (updatedOrCreatedEvent) {
+				result.push(updatedOrCreatedEvent);
+			}
+		}
+
+		if (result.length > 0) {
+			return response.status(200).json({
+				success: true,
+				message: 'Exam schedule created or updated successfully!',
+				data: result,
+			});
+		} else {
+			return response.status(500).json({
+				success: false,
+				message: 'Unable to create or update exam schedule!',
+				data: {},
+			});
+		}
+	}
 }
