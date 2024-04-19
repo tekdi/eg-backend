@@ -415,6 +415,27 @@ export class EventsService {
 		try {
 			const userDetail = await this.userService.ipUserInfo(header);
 			const user_id = userDetail.data.id;
+			let data = {
+				query: `query MyQuery {
+					events_by_pk(id: ${id}) {
+								id
+								params
+							}
+					}`,
+			};
+
+			const result = await this.hasuraServiceFromServices.getData(data);
+			const event_res = result?.data?.events_by_pk;
+			const check_params = event_res?.params;
+			if (check_params?.start_exam === 'yes') {
+				return resp.status(422).send({
+					success: false,
+					message:
+						'Event Can Not Edited As Event Exam has already started!',
+					data: {},
+				});
+			}
+
 			// Validate start date
 			const daysDiff = moment
 				.utc(req.end_date)
