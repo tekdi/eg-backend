@@ -19,7 +19,7 @@ export class FaUserIndexingCron {
 	}
 
 	//first cron runs for each hour's 5th minute eg: 10:05am, 11::05am
-	@Cron('05 * * * *')
+	// @Cron('05 * * * *')
 	async createCollectionUsers() {
 		try {
 			/*----------------------- Create users in collection -----------------------*/
