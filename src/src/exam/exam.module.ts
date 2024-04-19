@@ -13,9 +13,6 @@ import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 })
 export class ExamModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
-		consumer
-			.apply(CohortMiddleware)
-			.exclude('/exam/schedule/subject/list/:id')
-			.forRoutes(ExamController);
+		consumer.apply(CohortMiddleware).exclude().forRoutes(ExamController);
 	}
 }

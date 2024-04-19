@@ -6,6 +6,8 @@ export class ExamService {
 	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
 
 	async getExamSchedule(id: any, resp: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
 		let data;
 		data = {
 			query: `query MyQuery {
@@ -16,7 +18,7 @@ export class ExamService {
                   board_id
                   is_theory
                   is_practical
-                  events(where:{context:{_eq:"subjects"}}) {
+				  events(where: {context: {_eq: "subjects"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}){
                     context
                     context_id
                     program_id
@@ -45,8 +47,8 @@ export class ExamService {
 				data: newQdata,
 			});
 		} else {
-			return resp.json({
-				status: 400,
+			return resp.status(422).json({
+				success: true,
 				message: 'Data Not Found',
 				data: {},
 			});
@@ -236,6 +238,80 @@ export class ExamService {
 				status: true,
 				is_editable: true,
 				message: 'Event can be updated',
+			});
+		}
+	}
+
+	async getExamScheduleByBoardIdAndDate(
+		id: any,
+		date: string,
+		resp: any,
+		request: any,
+	) {
+		let board_id = id;
+
+		let data;
+		let subject_id_data;
+
+		subject_id_data = {
+			query: `query MyQuery2 {
+					subjects(where: {board_id: {_eq:${board_id}}}){
+					  id
+					}
+				  }`,
+		};
+
+		let subject_id_response =
+			await this.hasuraServiceFromServices.queryWithVariable(
+				subject_id_data,
+			);
+
+		let subject_id_result = subject_id_response?.data?.data?.subjects;
+
+		const ids = subject_id_result?.map((subject) => subject.id);
+
+		data = {
+			query: `query MyQuery {
+				subjects(where: {board_id: {_eq:${board_id}}, events: {context_id: {_in:[${ids}]}, context: {_eq: "subjects"}, start_date: {_eq: "${date}"}}}) {
+				  name
+				  id
+				  board
+				  board_id
+				  is_theory
+				  is_practical
+				  events(where: {start_date: {_eq: "${date}"}}) {
+					context
+					context_id
+					program_id
+					academic_year_id
+					id
+					start_date
+					end_date
+					type
+					status
+				  }
+				}
+			  }
+			  `,
+		};
+
+		let response = await this.hasuraServiceFromServices.queryWithVariable(
+			data,
+		);
+
+		let newQdata = response?.data?.data?.subjects;
+
+		if (newQdata?.length > 0) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.status(422).json({
+				success: true,
+				message: 'Data Not Found',
+				data: {},
 			});
 		}
 	}
