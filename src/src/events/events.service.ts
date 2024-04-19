@@ -1118,4 +1118,90 @@ export class EventsService {
 			return response.status(400).json({ message: e.message });
 		}
 	}
+
+	public async eventStartExam(id: number, header: any, req: any, resp: any) {
+		const user_id = header?.mw_userid;
+		const role = header?.mw_roles;
+		const academic_year_id = header?.mw_academic_year_id;
+		const program_id = header?.mw_program_id;
+
+		let data = {
+			query: `query MyQuery {
+						events(where: {id: {_eq: ${id}},academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
+							id
+							params
+							created_by
+						}
+				}`,
+		};
+		const result = await this.hasuraServiceFromServices.getData(data);
+		const event_res = result?.data?.events?.[0];
+		const check_params = event_res?.params;
+		const created_by = event_res?.created_by;
+
+		//if params already have exam started
+		if (check_params && check_params?.start_exam === 'yes') {
+			return resp.status(422).send({
+				success: false,
+				message: 'Event exam has already started!',
+				data: {},
+			});
+		}
+		if (!event_res || event_res === '') {
+			return resp.status(422).send({
+				success: false,
+				message: 'Event Does Not Exist!',
+				data: {},
+			});
+		} else if (!check_params || check_params === '') {
+			return resp.status(422).send({
+				success: false,
+				message: 'Does Not Have Exam IDS',
+				data: {},
+			});
+		}
+
+		//if role is not equal to PO admin
+		if (!role.includes('program_owner')) {
+			//IS created by IP user check with created by id
+			if (created_by != user_id) {
+				return resp.status(422).send({
+					success: false,
+					message:
+						'Admin Dont have access to Start Exam of this Event!',
+					data: {},
+				});
+			}
+		}
+
+		if (event_res) {
+			//check whether current event have param and in that  params is start or not
+			const checkParam = event_res?.params;
+
+			// Update the params object with start_exam: "yes"
+			const updatedParams = { ...checkParam, start_exam: 'yes' };
+			const eventResult = await this.hasuraService.updateWithVariable(
+				id,
+				'events',
+				{ params: updatedParams },
+				[],
+				['id', 'params'],
+				{
+					variable: [
+						{
+							key: 'params',
+							type: 'json',
+						},
+					],
+				},
+			);
+
+			const main_result = eventResult?.events;
+			return resp.status(200).send({
+				success: true,
+				message: 'Exam Started!',
+				data: { main_result },
+			});
+		}
+	}
 }

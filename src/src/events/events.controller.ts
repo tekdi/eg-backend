@@ -161,4 +161,15 @@ export class EventsController {
 	) {
 		return this.eventsService.campParamsCross(id, body, request, response);
 	}
+
+	@Patch('/admin/:id/start-exam')
+	@UseGuards(new AuthGuard())
+	eventStartExam(
+		@Param('id') id: any,
+		@Req() header: any,
+		@Body() request: any,
+		@Res() response: any,
+	) {
+		return this.eventsService.eventStartExam(id, header, request, response);
+	}
 }
