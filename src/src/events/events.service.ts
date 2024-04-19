@@ -1195,7 +1195,7 @@ export class EventsService {
 		return resp.status(200).send({
 			success: true,
 			message: 'Exam Started!',
-			data: { eventResult },
+			data: eventResult,
 		});
 	}
 }
