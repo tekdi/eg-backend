@@ -1119,7 +1119,7 @@ export class EventsService {
 		}
 	}
 
-	public async eventStartExam(id: number, header: any, req: any, resp: any) {
+	public async eventStartExam(id: number, header: any, resp: any) {
 		const user_id = header?.mw_userid;
 		const role = header?.mw_roles;
 		const academic_year_id = header?.mw_academic_year_id;

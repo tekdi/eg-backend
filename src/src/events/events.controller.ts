@@ -167,9 +167,8 @@ export class EventsController {
 	eventStartExam(
 		@Param('id') id: any,
 		@Req() header: any,
-		@Body() request: any,
 		@Res() response: any,
 	) {
-		return this.eventsService.eventStartExam(id, header, request, response);
+		return this.eventsService.eventStartExam(id, header, response);
 	}
 }
