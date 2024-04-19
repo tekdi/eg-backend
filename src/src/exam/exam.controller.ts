@@ -51,4 +51,21 @@ export class ExamController {
 	) {
 		return this.examService.editExamSchedule(body, response, request);
 	}
+
+	@Get('schedule/:id/:date')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getExamScheduleByBoardIdAndDate(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+		@Param('date') date: string, // Add date parameter here
+	) {
+		return this.examService.getExamScheduleByBoardIdAndDate(
+			id,
+			date,
+			response,
+			request,
+		); // Call the modified service function
+	}
 }
