@@ -249,16 +249,35 @@ export class ExamService {
 		let board_id = id;
 
 		let data;
+		let subject_id_data;
+
+		subject_id_data = {
+			query: `query MyQuery2 {
+					subjects(where: {board_id: {_eq:${board_id}}}){
+					  id
+					}
+				  }`,
+		};
+
+		let subject_id_response =
+			await this.hasuraServiceFromServices.queryWithVariable(
+				subject_id_data,
+			);
+
+		let subject_id_result = subject_id_response?.data?.data?.subjects;
+
+		const ids = subject_id_result?.map((subject) => subject.id);
+
 		data = {
 			query: `query MyQuery {
-				subjects(where: {board_id: {_eq: ${board_id}}}) {
+				subjects(where: {board_id: {_eq:${board_id}}, events: {context_id: {_in:[${ids}]}, context: {_eq: "subjects"}, start_date: {_eq: "${date}"}}}) {
 				  name
 				  id
 				  board
 				  board_id
 				  is_theory
 				  is_practical
-				  events(where: {context: {_eq: "subjects"}, start_date: {_eq: "${date}"}}) {
+				  events(where: {start_date: {_eq: "${date}"}}) {
 					context
 					context_id
 					program_id
@@ -270,8 +289,10 @@ export class ExamService {
 					status
 				  }
 				}
-			  }`,
+			  }
+			  `,
 		};
+
 		let response = await this.hasuraServiceFromServices.queryWithVariable(
 			data,
 		);
@@ -285,8 +306,8 @@ export class ExamService {
 				data: newQdata,
 			});
 		} else {
-			return resp.json({
-				status: 400,
+			return resp.status(422).json({
+				success: true,
 				message: 'Data Not Found',
 				data: {},
 			});
