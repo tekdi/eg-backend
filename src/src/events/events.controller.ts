@@ -166,9 +166,9 @@ export class EventsController {
 	@UseGuards(new AuthGuard())
 	eventStartExam(
 		@Param('id') id: any,
-		@Req() header: any,
+		@Req() request: any,
 		@Res() response: any,
 	) {
-		return this.eventsService.eventStartExam(id, header, response);
+		return this.eventsService.eventStartExam(id, request, response);
 	}
 }

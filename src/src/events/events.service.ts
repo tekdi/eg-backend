@@ -1119,11 +1119,11 @@ export class EventsService {
 		}
 	}
 
-	public async eventStartExam(id: number, header: any, resp: any) {
-		const user_id = header?.mw_userid;
-		const role = header?.mw_roles;
-		const academic_year_id = header?.mw_academic_year_id;
-		const program_id = header?.mw_program_id;
+	public async eventStartExam(id: number, req: any, resp: any) {
+		const user_id = req?.mw_userid;
+		const role = req?.mw_roles;
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
 
 		let data = {
 			query: `query MyQuery {
