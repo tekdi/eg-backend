@@ -1140,7 +1140,11 @@ export class EventsService {
 		const created_by = event_res?.created_by;
 
 		//if params already have exam started
-		if (check_params && check_params?.start_exam === 'yes') {
+		if (
+			check_params?.do_id &&
+			check_params.do_id.length > 0 &&
+			check_params?.start_exam === 'yes'
+		) {
 			return resp.status(422).send({
 				success: false,
 				message: 'Event exam has already started!',
@@ -1162,46 +1166,36 @@ export class EventsService {
 		}
 
 		//if role is not equal to PO admin
-		if (!role.includes('program_owner')) {
+		if (!role.includes('program_owner') && created_by != user_id) {
 			//IS created by IP user check with created by id
-			if (created_by != user_id) {
-				return resp.status(422).send({
-					success: false,
-					message:
-						'Admin Dont have access to Start Exam of this Event!',
-					data: {},
-				});
-			}
-		}
-
-		if (event_res) {
-			//check whether current event have param and in that  params is start or not
-			const checkParam = event_res?.params;
-
-			// Update the params object with start_exam: "yes"
-			const updatedParams = { ...checkParam, start_exam: 'yes' };
-			const eventResult = await this.hasuraService.updateWithVariable(
-				id,
-				'events',
-				{ params: updatedParams },
-				[],
-				['id', 'params'],
-				{
-					variable: [
-						{
-							key: 'params',
-							type: 'json',
-						},
-					],
-				},
-			);
-
-			const main_result = eventResult?.events;
-			return resp.status(200).send({
-				success: true,
-				message: 'Exam Started!',
-				data: { main_result },
+			return resp.status(422).send({
+				success: false,
+				message: 'Admin Dont have access to Start Exam of this Event!',
+				data: {},
 			});
 		}
+
+		// Update the params object with start_exam: "yes"
+		const eventResult = await this.hasuraService.updateWithVariable(
+			id,
+			'events',
+			{ params: { ...check_params, start_exam: 'yes' } },
+			[],
+			['id', 'params'],
+			{
+				variable: [
+					{
+						key: 'params',
+						type: 'json',
+					},
+				],
+			},
+		);
+
+		return resp.status(200).send({
+			success: true,
+			message: 'Exam Started!',
+			data: { eventResult },
+		});
 	}
 }
