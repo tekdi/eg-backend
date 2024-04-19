@@ -6,6 +6,8 @@ export class ExamService {
 	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
 
 	async getExamSchedule(id: any, resp: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
 		let data;
 		data = {
 			query: `query MyQuery {
@@ -16,7 +18,7 @@ export class ExamService {
                   board_id
                   is_theory
                   is_practical
-                  events(where:{context:{_eq:"subjects"}}) {
+				  events(where: {context: {_eq: "subjects"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}){
                     context
                     context_id
                     program_id
@@ -45,8 +47,8 @@ export class ExamService {
 				data: newQdata,
 			});
 		} else {
-			return resp.json({
-				status: 400,
+			return resp.status(422).json({
+				success: true,
 				message: 'Data Not Found',
 				data: {},
 			});
