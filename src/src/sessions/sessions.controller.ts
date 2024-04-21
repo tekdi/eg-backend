@@ -51,8 +51,8 @@ export class SessionsController {
 	@Get('/list/:id')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('session',['read.own'])
+	@UseGuards(AclGuard)
+	@AclGuardData('session', ['read.own'])
 	getSessionsListByCampId(
 		@Req() request: any,
 		@Res() response: Response,

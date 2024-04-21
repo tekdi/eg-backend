@@ -22,8 +22,6 @@ export class EditRequestController {
 	@Post('/edit-requests')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('edit-request',['read.own'])
 	getEditRequestsList(
 		@Req() request: any,
 		@Body() body: any,
@@ -72,8 +70,6 @@ export class EditRequestController {
 
 	@Post('/admin/edit-requests')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('edit-request', ['read.own'])
 	getAdminEditRequests(
 		@Req() request: any,
 		@Body() body: any,

@@ -31,8 +31,8 @@ export class ReferencesController {
 
 	@Post('/list')
 	@UseGuards(AuthGuard)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('reference',['read.own'])
+	@UseGuards(AclGuard)
+	@AclGuardData('reference', ['read.own'])
 	communityList(
 		@Req() request: any,
 		@Body() body: any,

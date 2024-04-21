@@ -45,8 +45,8 @@ export class KitMaterialsController {
 
 	@Get('/list/:camp_id')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('kit-material', ['read.own'])
+	// @UseGuards(AclGuard)
+	// @AclGuardData('kit-material', ['read.own'])
 	async list(
 		@Req() request: any,
 		@Body() body: any,

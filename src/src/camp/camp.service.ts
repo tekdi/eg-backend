@@ -13,6 +13,7 @@ import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
 import * as moment from 'moment';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 @Injectable()
 export class CampService {
 	constructor(
@@ -26,6 +27,7 @@ export class CampService {
 		private campcoreservice: CampCoreService,
 		private beneficiariesService: BeneficiariesService,
 		private beneficiariesCoreService: BeneficiariesCoreService,
+		private aclHelper: AclHelper,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -364,11 +366,72 @@ export class CampService {
 	}
 
 	public async campList(body: any, req: any, resp) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		const member_type = 'owner';
+		const status = 'active';
+		if (user_roles.includes('program_owner')) {
+			return true;
+		} else if (user_roles.includes('staff')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (user_roles.includes('facilitator')) {
+			const parent_ip_query = {
+				query: `query MyQuery {
+				program_faciltators(where: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}, user_id: {_eq: ${req.mw_userid}}}) {
+				  parent_ip
+				}
+			  }
+			  `,
+			};
+			const parent_ip_data = await this.hasuraServiceFromServices.getData(
+				parent_ip_query,
+			);
+			const parent_ip =
+				parent_ip_data.data.program_faciltators[0].parent_ip;
+
+			gqlquery = {
+				query: `query MyQuery {
+					camps_aggregate(where: {
+						group: {
+							academic_year_id: {_eq: ${req.mw_academic_year_id}},
+							program_id: {_eq: ${req.mw_program_id}}
+						},
+						group_users: {
+							member_type: {_eq: "${member_type}"},
+							status: {_eq: "${status}"},
+							user_id : {_eq: ${req.mw_userid}},
+							user: {program_faciltators: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, parent_ip: {_eq: "${parent_ip}"}}}
+						}
+					}) {
+					  aggregate {
+						count
+					  }
+					}
+				}`,
+			};
+		}
+		console.log(gqlquery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlquery);
+		if (
+			!(
+				result?.data &&
+				result.data['camps_aggregate'].aggregate.count > 0
+			)
+		) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
 		const facilitator_id = req.mw_userid;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
-		let member_type = 'owner';
-		let status = 'active';
 
 		let qury = `query MyQuery {
 			camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}},order_by: {id: asc}) {
@@ -2031,8 +2094,8 @@ export class CampService {
 			  }
 			}
 		  }`;
-		  console.log(query);
-		  
+		console.log(query);
+
 		const hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
@@ -2230,6 +2293,56 @@ export class CampService {
 	}
 
 	async getCampList(body: any, req: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			let filter;
+
+			filter = {
+				program_id: req.mw_program_id,
+				academic_year_id: req.mw_academic_year_id,
+			};
+
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				filter,
+			);
+			const parent_ip =
+				parent_ip_data?.program_users?.[0]?.organisation_id;
+
+			gqlquery = {
+				query: `query MyQuery {
+					camps_aggregate(where: {group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}}, user: {program_faciltators: {parent_ip: {_eq: "${parent_ip}"}}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		} else if (user_roles.includes('facilitator')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+		console.log(gqlquery.query);
+
+		const response = await this.hasuraServiceFromServices.getData(gqlquery);
+
+		if (
+			!(
+				response?.data &&
+				response.data.camps_aggregate.aggregate.count > 0
+			)
+		) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -2563,6 +2676,39 @@ export class CampService {
 	}
 
 	async getCampAttendanceById(id, body, req, res) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					attendance_aggregate(where: {context_id:{_eq:${id}}, created_by: {_eq:${req.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }`,
+			};
+		}
+		const result = await this.hasuraServiceFromServices.getData(gqlquery);
+		if (
+			!(
+				result?.data &&
+				result.data.attendance_aggregate.aggregate.count > 0
+			)
+		) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
 		let camp_attendance_body = { ...body };
 
 		const setStartAndEndDate = () => {
@@ -2638,6 +2784,39 @@ export class CampService {
 	}
 
 	async getAttendanceList(body, req, res) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					attendance_aggregate(where: {updated_by: {_eq: ${req.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		const result = await this.hasuraServiceFromServices.getData(gqlquery);
+		if (
+			!(
+				result?.data &&
+				result.data.attendance_aggregate.aggregate.count > 0
+			)
+		) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		let attendance_body = { ...body };
 
 		if (attendance_body?.start_date && attendance_body?.end_date) {
@@ -2650,6 +2829,7 @@ export class CampService {
 			req,
 			res,
 		);
+		//console.log(JSON.stringify(response));
 
 		let attendance_data = response;
 
@@ -2669,6 +2849,84 @@ export class CampService {
 	}
 
 	public async getStatuswiseCount(req: any, body: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('facilitator')) {
+			let filter;
+			if (req.mw_program_id && req.mw_academic_year_id) {
+				filter = `{groups: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}},`;
+			} else {
+				filter = ``;
+			}
+			const parent_ip_query = {
+				query: `query MyQuery {
+				program_faciltators(where: {${filter} user_id: {_eq: ${req.mw_userid}}}) {
+				  parent_ip
+				}
+			  }
+			  `,
+			};
+			const parent_ip_data = await this.hasuraServiceFromServices.getData(
+				parent_ip_query,
+			);
+			const parent_ip =
+				parent_ip_data.data.program_faciltators[0].parent_ip;
+			gqlquery = {
+				query: `query MyQuery {
+					camps_aggregate(where: {group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}}, user: {${filter} group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}, user_id: {_eq: ${req.mw_userid}}}, program_faciltators: {parent_ip: {_eq: "${parent_ip}"}}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  
+				  `,
+			};
+		} else if (user_roles.includes('staff')) {
+			let filter;
+			if (req.mw_program_id && req.mw_academic_year_id) {
+				filter = `{groups: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}},`;
+			} else {
+				filter = ``;
+			}
+			const parent_ip_query = {
+				query: `query MyQuery {
+					program_faciltators(where: {${filter} user_id: {_eq: ${req.mw_userid}}}) {
+					  parent_ip
+					}
+				  }
+				  `,
+			};
+			const parent_ip_data = await this.hasuraServiceFromServices.getData(
+				parent_ip_query,
+			);
+			const parent_ip =
+				parent_ip_data.data.program_faciltators[0].parent_ip;
+			gqlquery = {
+				query: `query MyQuery {
+						camps_aggregate(where: {group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}}, user: {${filter} group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}}, program_faciltators: {parent_ip: {_eq: "${parent_ip}"}}}}) {
+						  aggregate {
+							count
+						  }
+						}
+					  }
+					  
+					  `,
+			};
+		}
+		console.log(gqlquery.query);
+
+		const result = await this.hasuraServiceFromServices.getData(gqlquery);
+
+		if (
+			!(result?.data && result.data.camps_aggregate.aggregate.count > 0)
+		) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const status = this.enumService
 			.getEnumValue('GROUPS_STATUS')
 			.data.map((item) => item.value);
@@ -2731,6 +2989,56 @@ export class CampService {
 	}
 
 	async getFilter_By_Camps(body: any, req: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			let filter;
+
+			filter = {
+				program_id: req.mw_program_id,
+				academic_year_id: req.mw_academic_year_id,
+			};
+
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				filter,
+			);
+			const parent_ip =
+				parent_ip_data?.program_users?.[0]?.organisation_id;
+
+			gqlquery = {
+				query: `query MyQuery {
+					camps_aggregate(where: {group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}}, user: {program_faciltators: {parent_ip: {_eq: "${parent_ip}"}}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		} else if (user_roles.includes('facilitator')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+		console.log(gqlquery.query);
+
+		const response = await this.hasuraServiceFromServices.getData(gqlquery);
+
+		if (
+			!(
+				response?.data &&
+				response.data.camps_aggregate.aggregate.count > 0
+			)
+		) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -3374,6 +3682,53 @@ export class CampService {
 	}
 
 	async getAvailableFacilitatorList(body: any, req: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			let filter;
+
+			filter = {
+				program_id: req.mw_program_id,
+				academic_year_id: req.mw_academic_year_id,
+			};
+
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				filter,
+			);
+			const parent_ip =
+				parent_ip_data?.program_users?.[0]?.organisation_id;
+
+			gqlquery = {
+				query: `query MyQuery {
+					camps_aggregate(where: {group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}}, user: {program_faciltators: {parent_ip: {_eq: "${parent_ip}"}}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		} else if (user_roles.includes('facilitator')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+		console.log(gqlquery.query);
+
+		const result = await this.hasuraServiceFromServices.getData(gqlquery);
+
+		if (
+			!(result?.data && result.data.camps_aggregate.aggregate.count > 0)
+		) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
@@ -3567,6 +3922,42 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
+		const user_roles = req.mw_roles;
+
+		if (
+			user_roles.includes('program_owner') ||
+			user_roles.includes('staff')
+		) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+		const camp_id_query = {
+			query: `query MyQuery {
+				camp_days_activities_tracker(where: {id: {_eq: ${id}}}) {
+				  camp_id
+				}
+			  }
+			  `,
+		};
+
+		const camp_id_result = await this.hasuraServiceFromServices.getData(
+			camp_id_query,
+		);
+
+		const camp_id =
+			camp_id_result?.data.camp_days_activities_tracker[0].camp_id;
+		const result = await this.aclHelper.doIHaveAccess(req, 'camp', camp_id);
+
+		if (!result) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		let misc_activities = body.misc_activities;
 		switch (body?.edit_page_type) {
 			case 'edit_mood': {

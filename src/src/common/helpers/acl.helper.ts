@@ -133,9 +133,6 @@ export class AclHelper {
 		}
 		console.log('### Use roles: ' + user_roles);
 
-		let list_query = `${
-			beneficiary_id ? `user_id: {_eq: ${beneficiary_id}},` : ``
-		}`;
 		// Validate for PO role
 		if (user_roles.includes('program_owners')) {
 			return true;
@@ -155,7 +152,7 @@ export class AclHelper {
 				query: `query MyQuery {
 					program_beneficiaries (
 						where: {
-							${list_query}
+							user_id: {_eq: ${beneficiary_id}},
 							facilitator_user: {
 								program_faciltators: {
 									${
@@ -190,7 +187,7 @@ export class AclHelper {
 				query: `query MyQuery {
 					program_beneficiaries (
 						where: {
-							${list_query}
+							user_id: {_eq: ${beneficiary_id}},
 							facilitator_id: {_eq: ${request.mw_userid}},
 							${request.mw_program_id ? `program_id: {_eq: ${request.mw_program_id}}` : ``},
 							${
@@ -227,38 +224,43 @@ export class AclHelper {
 		req: any,
 		facilitatorId: number,
 	): Promise<boolean> {
-		/*let gqlQuery = {
+		let filter;
+		if(req.mw_academic_year_id && req.mw_program_id){
+			filter = {
+                program_id: req.mw_program_id,
+                academic_year_id: req.mw_academic_year_id,
+            };
+		}
+		const parent_ip = await this.userService.getIpRoleUserById(req.mw_userid,filter);
+		const parent_ip_id = parent_ip.program_users[0].organisation_id;
+		let gqlQuery = {
 			query: `query MyQuery {
-				program_facilitators (
+				program_faciltators_aggregate (
 					where: {
 						user_id: {_eq: ${facilitatorId}},
-						facilitator_id: {_eq: ${req.mw_userid}},
 						program_id: {_eq: ${req.mw_program_id}},
-						academic_year_id: {_eq: ${req.mw_academic_year_id}}
+						academic_year_id: {_eq: ${req.mw_academic_year_id}},
+						parent_ip: {_eq: "${parent_ip_id}"}
 					}
 				){
-					id
-					user_id
-					facilitator_id
-					program_id
-					academic_year_id
+					aggregate{
+						count
+					}
 				}
 			}`,
 		};
 
 		// Fetch data
 		const result = await this.hasuraServiceFromService.getData(gqlQuery);
-		// console.log(gqlQuery); console.log(result);
+		 console.log(gqlQuery.query); 
+		 console.log(result);
 
-		if (result?.data && result.data['program_beneficiaries'].length > 0) {
-			console.log(result.data['program_beneficiaries']);
+		if (result?.data && result.data.program_faciltators_aggregate.aggregate.count > 0) {
 			return true;
 		} else {
 			return false;
-		}*/
+		}
 
-		// @TODO - update code above
-		return true;
 	}
 	private async doIHaveCampAccess(req: any, camp_id: number) {
 		const user_roles = req.mw_roles;
@@ -273,44 +275,46 @@ export class AclHelper {
 		let rolesQuery = `user_id: {_eq: ${user_id}}`;
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
+		let filter;
+		if (academic_year_id && program_id) {
+			filter = {
+				program_id: program_id,
+				academic_year_id: academic_year_id,
+			};
+		}
+		const redultIP = await this.userService.getIpRoleUserById(
+			user_id,
+			filter,
+		);
 
-		const list_query = camp_id ? `id: {_eq: ${camp_id}},` : ``;
+		const parent_ip = redultIP?.program_users?.[0]?.organisation_id;
 
 		if (user_roles?.includes('program_owner')) {
-			rolesQuery = ``;
+			return true;
 		} else if (user_roles?.includes('staff')) {
-			const redultIP = await this.userService.getIpRoleUserById(user_id, {
-				program_id,
-				academic_year_id,
-			});
-
-			const parent_ip = redultIP?.program_users?.[0]?.organisation_id;
-
 			rolesQuery = `user:{program_faciltators:{
-					academic_year_id: {_eq: ${academic_year_id}},
-					program_id: {_eq: ${program_id}},
+				${academic_year_id ? `academic_year_id: {_eq: ${academic_year_id}}` : ``},
+				${program_id ? `program_id: {_eq: ${program_id}}` : ``},
 					parent_ip:{_eq:"${parent_ip}"}
 				}}`;
+		} else if (user_roles.includes('facilitator')) {
+			rolesQuery = `user: {groups: {${
+				academic_year_id
+					? `academic_year_id: {_eq: ${academic_year_id}}`
+					: ``
+			},
+			${
+				program_id ? `program_id: {_eq: ${program_id}}` : ``
+			}}, group_users: {member_type: {_eq: "${member_type}"}, status: {_eq: "${status}"}, user_id: {_eq: ${user_id}}}}`;
 		}
 
 		let query = `query MyQuery {
-				camps_aggregate(where: {
-					${list_query}
-					group: {
-						${academic_year_id ? `academic_year_id: {_eq: ${academic_year_id}}` : ``},
-						${program_id ? `program_id: {_eq: ${program_id}}` : ``}
-					},
-					group_users: {
-						member_type: {_eq: ${member_type}},
-						status: {_eq: ${status}},
-						${rolesQuery}
-					}
-				}) {
-				  aggregate {
-					count
-				  }
-				}
-			}`;
+			camps_aggregate(where: {id: {_eq: ${camp_id}}, group_users: {member_type: {_eq: "${member_type}"}, status: {_eq: "${status}"}}, ${rolesQuery}}) {
+			  aggregate{
+				count
+			  }
+			}
+		  }`;
 		console.log(query);
 		const response = await this.hasuraServiceFromService.getData({
 			query,
@@ -366,7 +370,7 @@ export class AclHelper {
 		) {
 			gqlquery = {
 				query: `query MyQuery {
-					references_aggregate(where: {context_id: {_eq: ${req.mw_userid}}, id: {_eq: ${entity_id}}}) {
+					references_aggregate(where: {context_id: {_eq: ${req.mw_userid}}}) {
 					  aggregate {
 						count
 					  }
@@ -390,6 +394,7 @@ export class AclHelper {
 	private async doIHavePcrScoreAccess(request, entity, entity_id) {
 		const user_roles = request.mw_roles;
 		let gqlQuery;
+
 		if (user_roles.includes('program_owner')) {
 			return true;
 		}
@@ -418,7 +423,7 @@ export class AclHelper {
 		const result = await this.hasuraServiceFromService.getData(gqlQuery);
 		if (
 			result?.data &&
-			result.data.kit_materials_checklist_aggregate.aggregate.count > 0
+			result.data.pcr_scores_aggregate.aggregate.count > 0
 		) {
 			return true;
 		} else {
@@ -429,6 +434,16 @@ export class AclHelper {
 	private async doIHaveSessionAccess(request, entity_id) {
 		const user_roles = request.mw_roles;
 		let gqlquery;
+
+		let filter_query = ``;
+		if (request.url.includes('/sessions/list/')) {
+			filter_query = `, camp_id : {_eq : ${entity_id}}`;
+		} else if (request.url.includes('/sessions/details/')) {
+			filter_query = `, learning_lesson_plan_id: {_eq: ${entity_id}} `;
+		} else {
+			filter_query = `, id : {_eq:${entity_id}}`;
+		}
+
 		if (user_roles.includes('program_owner')) {
 			return true;
 		}
@@ -437,12 +452,13 @@ export class AclHelper {
 		if (user_roles.includes('facilitator')) {
 			gqlquery = {
 				query: `query MyQuery {
-					learning_sessions_tracker_aggregate(where: {updated_by: {_eq: ${request.mw_userid}}, id: {_eq: ${entity_id}}}) {
+					learning_sessions_tracker_aggregate(where: {created_by:{_eq : ${request.mw_userid}} ${filter_query}}) {
 					  aggregate {
 						count
 					  }
 					}
 				  }
+				  
 				  `,
 			};
 		}
@@ -497,6 +513,7 @@ export class AclHelper {
 	private async doIHaveEditRequestAccess(request, entity_id) {
 		const user_roles = request.mw_roles;
 		let gqlquery;
+
 		if (user_roles.includes('program_owner')) {
 			return true;
 		}
@@ -511,7 +528,19 @@ export class AclHelper {
 				  }
 				  `,
 			};
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					edit_requests_aggregate(where: {id: {_eq: ${entity_id}}, edit_req_by: {_eq: ${request.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
 		}
+
 		console.log('query ->', gqlquery.query);
 
 		const result = await this.hasuraServiceFromService.getData(gqlquery);
@@ -527,16 +556,25 @@ export class AclHelper {
 	async doIHaveEventAccess(req: any, entity_id: any) {
 		const user_roles = req.mw_roles;
 		let gqlQuery;
+		const academic_year_id = req.academic_year_id;
+		const program_id = req.mw_program_id;
 		if (user_roles.includes('program_owners')) {
 			return true;
 		}
-
+		let filter_query;
+		if (academic_year_id && program_id) {
+			filter_query = `academic_year_id: {_eq: ${
+				academic_year_id ? academic_year_id : ``
+			}}}, program_id: {_eq: ${program_id ? program_id : ``}},`;
+		} else {
+			filter_query = ``;
+		}
 		// Validate for IP role
 		if (user_roles.includes('staff')) {
 			// 2.1 Validate if this event is added by staff
 			gqlQuery = {
 				query: `query MyQuery {
-					events_aggregate(where: {id: {_eq: ${entity_id}}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}, created_by: {_eq: ${req.mw_userid}}}) {
+					events_aggregate(where: {id:{_eq:${entity_id}} ${filter_query} user_id: {_eq: ${req.mw_userid}}}) {
 					  aggregate {
 						count
 					  }
@@ -558,6 +596,7 @@ export class AclHelper {
 	}
 	async doIHaveUserAccess(request, entity_id) {
 		const user_roles = request.mw_roles;
+
 		//finding out the entity name
 		let roles_query = {
 			query: `query MyQuery {
@@ -595,7 +634,7 @@ export class AclHelper {
 		console.log('entityBeingAccessed ', entityBeingAccessed);
 
 		let gqlquery;
-		if (user_roles.includes('pogram_owner')) {
+		if (user_roles.includes('program_owner')) {
 			return true;
 		}
 		if (user_roles.includes('staff')) {
@@ -695,12 +734,9 @@ export class AclHelper {
 		} else {
 			return false;
 		}
-
-		return true;
 	}
 	private async doIHaveAttendanceAccess(request, entity_id) {
 		const user_roles = request.mw_roles;
-		const list_query = entity_id ? `id: {_eq: ${entity_id}},` : ``;
 		let gqlquery;
 		if (user_roles.includes('program_owner')) {
 			return true;
@@ -710,7 +746,7 @@ export class AclHelper {
 		) {
 			gqlquery = {
 				query: `query MyQuery {
-					attendance_aggregate(where: {${list_query} created_by: {_eq: ${request.mw_userid}}}) {
+					attendance_aggregate(where: {id: {_eq: ${entity_id}}, created_by: {_eq: ${request.mw_userid}}}) {
 					  aggregate {
 						count
 					  }
@@ -752,8 +788,6 @@ export class AclHelper {
 				return await this.doIHaveKitMaterialAccess(request, entity_id);
 			}
 			case 'pcrscore': {
-				console.log(request.params);
-
 				return await this.doIHavePcrScoreAccess(
 					request,
 					request?.params,

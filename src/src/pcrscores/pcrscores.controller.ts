@@ -36,8 +36,8 @@ export class PcrscoresController {
 
 	@Post('/list')
 	@UseGuards(AuthGuard)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('pcrscore',['read.own'])
+	@UseGuards(AclGuard)
+	@AclGuardData('pcrscore', ['read.own'])
 	pcrscoreList(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.pcrscoresService.pcrscoreList(body, request, response);
 	}
@@ -57,8 +57,6 @@ export class PcrscoresController {
 
 	@Get('/:user_id')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('pcrscore', ['read.own'])
 	async pcrscoreByUser_id(
 		@Req() request: any,
 		@Body() body: any,

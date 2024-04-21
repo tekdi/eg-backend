@@ -101,8 +101,8 @@ export class UserController {
 	// users/list API filter pagination
 	@Post('/list')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('user', ['read.own'])
+	// @UseGuards(AclGuard)
+	// @AclGuardData('user', ['read.own'])
 	public async searchAttendance(
 		@Body() request: Record<string, any>,
 		@Req() req: any,

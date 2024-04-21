@@ -36,8 +36,6 @@ export class CampController {
 
 	@Post('/list')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('camp', ['read', 'read.own'])
 	campList(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campList(body, request, response);
 	}
@@ -170,8 +168,6 @@ export class CampController {
 
 	@Post('admin/camp-list')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('camp', ['read', 'read.own'])
 	getCampList(@Req() req: any, @Res() response: any, @Body() body: any) {
 		return this.campService.getCampList(body, req, response);
 	}
@@ -213,10 +209,9 @@ export class CampController {
 		return this.campService.updateCampAttendance(id, body, req, response);
 	}
 
+	//cannot apply aclguard as we are not passing anything that could be used as for validating access, it is only using timing
 	@Post('/attendances/list')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('attendance', ['read.own'])
 	getAttendanceList(
 		@Req() req: any,
 		@Res() response: any,
@@ -240,8 +235,6 @@ export class CampController {
 
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('camp', ['read.own'])
 	getStatuswiseCount(
 		@Body() body: any,
 		@Req() request: any,
@@ -253,8 +246,6 @@ export class CampController {
 	@Post('/admin/filter-by-camps')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
-	@UseGuards(AclGuard)
-	@AclGuardData('camp', ['read', 'read.own'])
 	async getFilter_By_Camps(
 		@Req() req: any,
 		@Res() response: any,
@@ -283,8 +274,6 @@ export class CampController {
 
 	@Post('/admin/facilitators')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('camp', ['read', 'read.own'])
 	getAvailableFacilitatorList(
 		@Body() body: any,
 		@Req() request: any,
@@ -329,8 +318,6 @@ export class CampController {
 
 	@Patch('/camp-day-activity/:id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('camp-day-activity', ['edit.own'])
 	update_camp_day_activity(
 		@Req() request: any,
 		@Body() body: any,
@@ -420,7 +407,6 @@ export class CampController {
 		return this.campService.campLearnersById(id, body, request, response);
 	}
 
-	//multiple reassigne learner from One camp to other
 	@Patch('/admin/multiplereassign/:id')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)

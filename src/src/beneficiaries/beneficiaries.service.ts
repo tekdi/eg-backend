@@ -228,6 +228,76 @@ export class BeneficiariesService {
 	}
 
 	async exportCsv(req: any, body: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('facilitator')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (
+			user_roles.includes('staff') ||
+			user_roles.includes('program_owner')
+		) {
+			const parent_ip = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				{
+					program_id: req.mw_program_id,
+					academic_year_id: req.mw_academic_year_id,
+				},
+			);
+			console.log(JSON.stringify(parent_ip));
+
+			const parent_id = parent_ip.program_users[0].organisation_id;
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate (
+						where: {
+							facilitator_user: {
+								program_faciltators: {
+									${
+										req.academic_year_id
+											? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+											: ``
+									},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``},
+									parent_ip: {_eq: "${parent_id}"}
+								}
+							},
+							${
+								req.academic_year_id
+									? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+									: ``
+							},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``}
+						}
+					) {
+						aggregate{
+							count
+						}
+					}
+				}`,
+			};
+			console.log(gqlquery.query);
+			const result = await this.hasuraServiceFromServices.getData(
+				gqlquery,
+			);
+			if (
+				!(
+					result?.data &&
+					result.data.program_beneficiaries_aggregate.aggregate
+						.count > 0
+				)
+			) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
+
 		try {
 			const user = await this.userService.ipUserInfo(req);
 			const academic_year_id = req.mw_academic_year_id;
@@ -424,6 +494,75 @@ export class BeneficiariesService {
 	}
 
 	async exportSubjectCsv(req: any, body: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('facilitator')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (
+			user_roles.includes('staff') ||
+			user_roles.includes('program_owner')
+		) {
+			const parent_ip = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				{
+					program_id: req.mw_program_id,
+					academic_year_id: req.mw_academic_year_id,
+				},
+			);
+			console.log(JSON.stringify(parent_ip));
+
+			const parent_id = parent_ip.program_users[0].organisation_id;
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate (
+						where: {
+							facilitator_user: {
+								program_faciltators: {
+									${
+										req.academic_year_id
+											? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+											: ``
+									},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``},
+									parent_ip: {_eq: "${parent_id}"}
+								}
+							},
+							${
+								req.academic_year_id
+									? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+									: ``
+							},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``}
+						}
+					) {
+						aggregate{
+							count
+						}
+					}
+				}`,
+			};
+			console.log(gqlquery.query);
+			const result = await this.hasuraServiceFromServices.getData(
+				gqlquery,
+			);
+			if (
+				!(
+					result?.data &&
+					result.data.program_beneficiaries_aggregate.aggregate
+						.count > 0
+				)
+			) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
 		try {
 			const user = await this.userService.ipUserInfo(req);
 			const academic_year_id = req.mw_academic_year_id;
@@ -619,8 +758,104 @@ export class BeneficiariesService {
 		}
 	}
 
-	//status count
 	public async getStatuswiseCount(body: any, req: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				{
+					program_id: req.mw_program_id,
+					academic_year_id: req.mw_academic_year_id,
+				},
+			);
+			const parent_ip_id =
+				parent_ip_data.program_users[0].organisation_id;
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate (
+						where: {
+							facilitator_user: {
+								program_faciltators: {
+									${
+										req.academic_year_id
+											? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+											: ``
+									},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``},
+									parent_ip: {_eq: "${parent_ip_id}"}
+								}
+							},
+							${
+								req.academic_year_id
+									? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+									: ``
+							},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``}
+						}
+					) {
+						aggregate{
+							count
+						}
+					}
+				}`,
+			};
+			console.log(gqlquery.query);
+			const result = await this.hasuraServiceFromServices.getData(
+				gqlquery,
+			);
+			if (
+				!(
+					result?.data &&
+					result.data.program_beneficiaries_aggregate.aggregate
+						.count > 0
+				)
+			) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate (
+						where: {
+							facilitator_id: {_eq: ${req.mw_userid}},
+							${req.mw_program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``},
+							${
+								req.academic_year_id
+									? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+									: ``
+							}
+						}
+					){
+						aggregate{
+							count
+						}
+					}
+				}`,
+			};
+			console.log(gqlquery.query);
+			const result = await this.hasuraServiceFromServices.getData(
+				gqlquery,
+			);
+			if (
+				!(
+					result?.data &&
+					result.data.program_beneficiaries_aggregate.aggregate
+						.count > 0
+				)
+			) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
+
 		const user = await this.userService.ipUserInfo(req);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
@@ -681,6 +916,47 @@ export class BeneficiariesService {
 	}
 
 	public async getList(body: any, req: any, resp: any) {
+		const user_roles = req.mw_roles;
+		if (user_roles.includes('facilitator')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+		let ownership_check;
+		let gqlquery;
+		// roles verification
+		if (user_roles.includes('staff')) {
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate(where: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }`,
+			};
+			const ownership_result =
+				await this.hasuraServiceFromServices.getData(gqlquery);
+			if (
+				ownership_result?.data &&
+				ownership_result.data.program_beneficiaries_aggregate.aggregate
+					.count > 0
+			) {
+				ownership_check = true;
+			} else {
+				ownership_check = false;
+			}
+			if (!ownership_check) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
+
 		const user = await this.userService.ipUserInfo(req);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
@@ -691,6 +967,7 @@ export class BeneficiariesService {
 				data: {},
 			});
 		}
+
 		const sortType = body?.sortType ? body?.sortType : 'desc';
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
@@ -911,6 +1188,59 @@ export class BeneficiariesService {
 	}
 
 	public async findAll(body: any, req: any, resp: any) {
+		let ownership_check;
+		let gqlquery;
+		// roles verification
+		const user_roles = req.mw_roles;
+		if (user_roles.includes('staff')) {
+			/*
+			//since this list is for facilitator then shall we return false here for staff and then we can also do the same in admin/list for facilitator
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate(where: {facilitator_user: {program_faciltators: {parent_ip: {_eq: "1"}}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }`,
+			};
+			*/
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate(where: {facilitator_id: {_eq: ${req.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }`,
+			};
+
+			const ownership_result =
+				await this.hasuraServiceFromServices.getData(gqlquery);
+			if (
+				ownership_result?.data &&
+				ownership_result.data.program_beneficiaries_aggregate.aggregate
+					.count > 0
+			) {
+				ownership_check = true;
+			} else {
+				ownership_check = false;
+			}
+			if (!ownership_check) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
+
 		const user = await this.userService.ipUserInfo(req);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
@@ -1684,10 +2014,7 @@ export class BeneficiariesService {
 
 	public async statusUpdate(body: any, request: any) {
 		const status_response =
-			await this.beneficiariesCoreService.statusUpdate(
-				body,
-				request,
-			);
+			await this.beneficiariesCoreService.statusUpdate(body, request);
 
 		if (body?.status == 'dropout' || body?.status == 'rejected') {
 			//check if the learner is active in any camp and update the status to inactive
@@ -3132,8 +3459,8 @@ export class BeneficiariesService {
 		res?: any,
 	) {
 		const user = (await this.findOne(id)).data;
-		const academic_year_id = req.mw_academic_year_id;
-		const program_id = req.mw_program_id;
+		//const academic_year_id = req.mw_academic_year_id;
+		//const program_id = req.mw_program_id;
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3628,6 +3955,104 @@ export class BeneficiariesService {
 	}
 
 	public async notRegisteredBeneficiaries(body: any, req: any, resp: any) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				{
+					program_id: req.mw_program_id,
+					academic_year_id: req.mw_academic_year_id,
+				},
+			);
+			console.log(JSON.stringify(parent_ip_data));
+
+			const parent_ip_id =
+				parent_ip_data.program_users[0].organisation_id;
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate (
+						where: {
+							facilitator_user: {
+								program_faciltators: {
+									${
+										req.academic_year_id
+											? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+											: ``
+									},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``},
+									parent_ip: {_eq: "${parent_ip_id}"}
+								}
+							},
+							${
+								req.academic_year_id
+									? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+									: ``
+							},
+									${req.program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``}
+						}
+					) {
+						aggregate{
+							count
+						}
+					}
+				}`,
+			};
+			console.log(gqlquery.query);
+			const result = await this.hasuraServiceFromServices.getData(
+				gqlquery,
+			);
+			if (
+				!(
+					result?.data &&
+					result.data.program_beneficiaries_aggregate.aggregate
+						.count > 0
+				)
+			) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					program_beneficiaries_aggregate (
+						where: {
+							facilitator_id: {_eq: ${req.mw_userid}},
+							${req.mw_program_id ? `program_id: {_eq: ${req.mw_program_id}}` : ``},
+							${
+								req.academic_year_id
+									? `academic_year_id: {_eq: ${req.mw_academic_year_id}}`
+									: ``
+							}
+						}
+					){
+						aggregate{
+							count
+						}
+					}
+				}`,
+			};
+			console.log(gqlquery.query);
+			const result = await this.hasuraServiceFromServices.getData(
+				gqlquery,
+			);
+			if (
+				!(
+					result?.data &&
+					result.data.program_beneficiaries_aggregate.aggregate
+						.count > 0
+				)
+			) {
+				return resp.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
 		const facilitator_id = req.mw_userid;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;

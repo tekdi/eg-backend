@@ -22,6 +22,8 @@ import { FacilitatorService } from './facilitator.service';
 import { AclGuard } from 'src/common/guards/acl.guard';
 import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 import { AclHelper } from 'src/common/helpers/acl.helper';
+import { UserService } from 'src/user/user.service';
+import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/facilitators')
@@ -30,6 +32,8 @@ export class FacilitatorController {
 	constructor(
 		public facilitatorService: FacilitatorService,
 		public aclHelper: AclHelper,
+		public userService: UserService,
+		private hasuraServiceFromService: HasuraServiceFromServices,
 	) {}
 
 	// @Post('/create')
@@ -54,16 +58,14 @@ export class FacilitatorController {
 
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['read', 'read.own'])
-	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
+	// @UseGuards(AclGuard)
+	// @AclGuardData('facilitator', ['read', 'read.own'])
+	async getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.facilitatorService.getStatuswiseCount(request, response);
 	}
 
 	@Post('/forOrientation')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['read.own'])
 	async getFacilitatorsForOrientation(
 		@Req() request: any,
 		@Body() body: any,
@@ -103,17 +105,27 @@ export class FacilitatorController {
 
 	@Patch('admin/okyc_details_override')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
 	@AclGuardData('facilitator', ['edit.own'])
-	okyc_update(@Req() req: any, @Body() body: any, @Res() response: any) {
+	async okyc_update(
+		@Req() req: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		if (
+			!(await this.aclHelper.doIHaveAccess(req, 'facilitator', body?.id))
+		) {
+			return response.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		return this.facilitatorService.okyc_update(body, req, response);
 	}
 
 	@Post('/')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['read', 'read.own'])
 	async getFacilitators(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -128,19 +140,30 @@ export class FacilitatorController {
 	@AclGuardData('facilitator', ['read', 'read.own'])
 	@UsePipes(ValidationPipe)
 	async getFacilitatorsFromIds(@Body() body: any, @Res() res: any) {
-		// if (
-		// 	!(await this.aclHelper.doIHaveAccess(
-		// 		null,
-		// 		'facilitator',
-		// 		parseInt(body?.user_id, 10),
-		// 	))
-		// ) {
-		// 	return res.status(403).json({
-		// 		success: false,
-		// 		message: 'FORBIDDEN',
-		// 		data: {},
-		// 	});
-		//}
+		const ids = body.Ids;
+
+		if (!Array.isArray(ids)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid request. The IDs array is invalid.',
+				data: {},
+			});
+		}
+		for (const id of ids) {
+			if (
+				!(await this.aclHelper.doIHaveAccess(
+					null,
+					'facilitator',
+					parseInt(id, 10),
+				))
+			) {
+				return res.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
 		const result = await this.facilitatorService.getFacilitatorsFromIds(
 			body.Ids,
 			body.search,
@@ -155,8 +178,6 @@ export class FacilitatorController {
 	@Post('/admin/filter-by-beneficiaries')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
-	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['read', 'read.own'])
 	async getFilter_By_Beneficiaries(
 		@Body() body: any,
 		@Res() res: any,
@@ -172,8 +193,6 @@ export class FacilitatorController {
 	@Post('/exportCsv')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
-	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['read.own', 'read'])
 	async exportFileToCsv(
 		@Req() request: any,
 		@Body() body: FilterFacilitatorDto,
@@ -203,8 +222,6 @@ export class FacilitatorController {
 	@Post('/admin/learner-status-distribution')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
-	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['read', 'read.own'])
 	async getLearnerStatusDistribution(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -238,9 +255,24 @@ export class FacilitatorController {
 
 	@Post('/update-okyc-response')
 	@UseGuards(AuthGuard)
-	@UseGuards(AclGuard)
-	@AclGuardData('facilitator', ['edit.own'])
-	updateOkycResponse(@Req() req: any, @Body() body: any, @Res() res: any) {
+	async updateOkycResponse(
+		@Req() req: any,
+		@Body() body: any,
+		@Res() res: any,
+	) {
+		if (
+			!(await this.aclHelper.doIHaveAccess(
+				req,
+				'facilitator',
+				req.mw_userid,
+			))
+		) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		return this.facilitatorService.updateOkycResponse(req, body, res);
 	}
 
