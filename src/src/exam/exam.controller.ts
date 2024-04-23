@@ -68,4 +68,19 @@ export class ExamController {
 			request,
 		); // Call the modified service function
 	}
+
+	@Post('schedule/learner/attendance/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getLearnerAttendanceBySubjectId(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Body() body: Body,
+	) {
+		return this.examService.getLearnerAttendanceBySubjectId(
+			body,
+			request,
+			response,
+		); // Call the modified service function
+	}
 }
