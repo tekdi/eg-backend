@@ -327,6 +327,79 @@ export class ExamService {
 		}
 	}
 
+	async getLearnerAttendanceBySubjectId(bodyArray, request, response) {
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+		let user_id = request?.mw_userid;
+		let resultArray = [];
+
+		for (let input of bodyArray) {
+			let subject_data;
+			let result;
+			let learner_ids = [];
+			let program_beneficiaries = [];
+			let attendance_data;
+			let attendance_result;
+			let users_data;
+
+			subject_data = {
+				query: `query MyQuery2 {
+					program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, academic_year_id:{_eq:${academic_year_id}}, program_id:{_eq:${program_id}}, subjects: {_ilike: "%${input?.subject_id}%"}}) {
+						user_id
+					}
+				  }
+			  `,
+			};
+
+			result = await this.hasuraServiceFromServices.queryWithVariable(
+				subject_data,
+			);
+
+			program_beneficiaries = result?.data?.data?.program_beneficiaries;
+
+			learner_ids = program_beneficiaries.map(
+				(beneficiary) => beneficiary.user_id,
+			);
+
+			attendance_data = {
+				query: `query MyQuery {
+					users(where: {id: {_in: [${learner_ids}]}}) {
+						user_id: id
+						first_name
+						middle_name
+						last_name
+						attendances(where: {context: {_eq: "events"}, context_id: {_eq:${input?.event_id}}}) {
+							id
+							context
+							context_id
+							status
+						}
+					}
+				  }`,
+			};
+
+			attendance_result =
+				await this.hasuraServiceFromServices.queryWithVariable(
+					attendance_data,
+				);
+
+			users_data = attendance_result?.data?.data?.users;
+
+			resultArray.push({
+				subject_id: input?.subject_id,
+				event_id: input?.event_id,
+				type: input?.type,
+				data: users_data,
+			});
+		}
+
+		return response.status(200).json({
+			success: true,
+			message: 'Retrieved data successfully!',
+			data: resultArray,
+		});
+	}
+
 	async addExamScheduleAttendance(body, response, request) {
 		let result = [];
 		let user_id = request?.mw_userid;
