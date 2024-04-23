@@ -399,4 +399,113 @@ export class ExamService {
 			data: resultArray,
 		});
 	}
+
+	async addExamScheduleAttendance(body, response, request) {
+		let result = [];
+		let user_id = request?.mw_userid;
+		let validation_data;
+		let validation_response;
+		let attendance_id;
+
+		for (const schedule of body) {
+			validation_data = {
+				query: `
+				query MyQuery {
+					attendance(where: {context: {_eq: "events"}, context_id: {_eq:${schedule?.event_id}}, user_id: {_eq:${schedule?.user_id}}}){
+					  id
+					}
+				  }
+				  `,
+			};
+
+			validation_response =
+				await this.hasuraServiceFromServices.queryWithVariable(
+					validation_data,
+				);
+
+			attendance_id =
+				validation_response?.data?.data?.attendance?.[0]?.id;
+
+			let query;
+
+			if (attendance_id) {
+				query = `
+					mutation UpdateAttendance {
+						update_attendance_by_pk(pk_columns: {id: ${attendance_id}}, _set: {
+				`;
+			} else {
+				query = `
+					mutation CreateAttendance {
+						insert_attendance_one(object: {
+							context: "events",
+							created_by:${user_id},
+							updated_by:${user_id},
+				`;
+			}
+
+			Object.keys(schedule).forEach((key) => {
+				if (schedule[key] !== null && schedule[key] !== '') {
+					if (key === 'event_id') {
+						query += `context_id: ${schedule[key]}, `;
+					} else if (key === 'attendance_date') {
+						// Assuming date_time is in the format 'YYYY-MM-DD:HH-MM-SS'
+						query += `date_time: "${schedule[key]}", `;
+					} else if (Array.isArray(schedule[key])) {
+						query += `${key}: "${JSON.stringify(schedule[key])}", `;
+					} else {
+						query += `${key}: "${schedule[key]}", `;
+					}
+				}
+			});
+
+			query = query.slice(0, -2); // Remove trailing comma and space
+
+			query += `
+						}) {
+							id
+							context_id
+							context
+							status
+							date_time
+							user_id
+							created_by
+							updated_by
+							
+						}
+					}
+				`;
+
+			let data = {
+				query: `${query}`,
+				variables: {},
+			};
+
+			const query_response =
+				await this.hasuraServiceFromServices.queryWithVariable(data);
+			const updatedOrCreatedEvent =
+				query_response?.data?.data?.[
+					attendance_id
+						? 'update_attendance_by_pk'
+						: 'insert_attendance_one'
+				];
+
+			if (updatedOrCreatedEvent) {
+				result.push(updatedOrCreatedEvent);
+			}
+		}
+
+		if (result.length > 0) {
+			return response.status(200).json({
+				success: true,
+				message: 'Attendance created or updated successfully!',
+				data: result,
+			});
+		} else {
+			return response.status(500).json({
+				success: false,
+				message: 'Unable to create or update attendance!',
+				data: {},
+			});
+		}
+	}
 }

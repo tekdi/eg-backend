@@ -81,6 +81,21 @@ export class ExamController {
 			body,
 			request,
 			response,
-		); // Call the modified service function
+		);
+	} // Call the modified service function
+
+	@Post('schedule/attendance')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async addExamScheduleAttendance(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.addExamScheduleAttendance(
+			body,
+			response,
+			request,
+		);
 	}
 }
