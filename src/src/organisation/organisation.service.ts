@@ -448,10 +448,15 @@ export class OrganisationService {
 
 	async update(id: any, body: any, request: any, resp: any) {
 		try {
-			const program_id = request.mw_program_id;
-			const academic_year_id = request.mw_academic_year_id;
-			const edit_page_type = body.edit_page_type; // Assuming edit_page_type is present in the request body
-			const update_body = body.update_body; // Assuming update_body contains the fields to be updated based on edit page type
+			// Check if id:organisation is a valid ID
+			if (!id || isNaN(id) || id === 'string' || id <= 0) {
+				return resp.status(422).send({
+					success: false,
+					message:
+						'Invalid organisation ID. Please provide a valid ID.',
+					data: {},
+				});
+			}
 
 			const orgUpdateFields = [
 				'name',
@@ -459,7 +464,6 @@ export class OrganisationService {
 				'mobile',
 				'address',
 			];
-
 			const programOrgUpdateFields = [
 				'id',
 				'learner_target',
@@ -469,48 +473,71 @@ export class OrganisationService {
 			let orgResponse = {};
 			let programOrgResponse = {};
 
-			if (
-				body?.program_organisation?.learner_target &&
-				body?.program_organisation?.learner_per_camp
-			) {
-				const learner_target =
-					body?.program_organisation?.learner_target;
-				const learner_per_camp =
-					body?.program_organisation?.learner_per_camp;
-				const camp_target = Math.ceil(
-					learner_target / learner_per_camp,
-				);
+			if (body?.program_organisation) {
+				const { learner_target, learner_per_camp, camp_target } =
+					body.program_organisation;
 
-				// Update the program_organisation object in the request body with the calculated camp_target
-				body.program_organisation = {
-					...body.program_organisation,
-					camp_target: camp_target,
-				};
+				// Check if all fields are present
+				if (!learner_target || !learner_per_camp || !camp_target) {
+					return resp.status(422).send({
+						success: false,
+						message:
+							'All fields (learner_target, learner_per_camp, camp_target) are required.',
+						data: {},
+					});
+				}
+
+				// Check if learner_target and learner_per_camp are valid numbers
+				if (isNaN(learner_target) || isNaN(learner_per_camp)) {
+					return resp.status(422).send({
+						success: false,
+						message:
+							'Invalid input. Learner target and learner per camp must be numbers.',
+						data: {},
+					});
+				}
+
+				// Validate camp_target calculation
+				if (
+					Math.ceil(learner_target / learner_per_camp) !== camp_target
+				) {
+					return resp.status(422).send({
+						success: false,
+						message: 'Camp target is wrong',
+						data: {},
+					});
+				}
+
+				// Update camp_target in the program_organisation object
+				body.program_organisation.camp_target = camp_target;
+
+				// Update program_organisations table
+				const programOrganisationId = body.program_organisation.id;
+				if (!programOrganisationId) {
+					return resp.status(422).json({
+						success: false,
+						message:
+							'Please provide the ID for program_organisation.',
+						data: {},
+					});
+				}
+				programOrgResponse = await this.hasuraService.q(
+					'program_organisation',
+					{ ...body.program_organisation, id: programOrganisationId },
+					programOrgUpdateFields,
+					true,
+					['id', 'learner_target', 'learner_per_camp', 'camp_target'],
+				);
 			}
+
 			// Update organisations table
 			if (body?.organisation) {
 				orgResponse = await this.hasuraService.q(
-					'organisations', // Table name
-					{
-						...body.organisation,
-						id: id,
-					},
+					'organisations',
+					{ ...body.organisation, id },
 					orgUpdateFields,
 					true,
-					['id', 'name', 'contact_person', 'mobile', 'address'], // Return fields
-				);
-			}
-			if (body?.program_organisation) {
-				// Update program_organisations table
-				programOrgResponse = await this.hasuraService.q(
-					'program_organisation',
-					{
-						...body.program_organisation,
-						id: body?.program_organisation?.id,
-					},
-					programOrgUpdateFields,
-					true,
-					['id', 'learner_target', 'learner_per_camp', 'camp_target'], // Return fields
+					['id', 'name', 'contact_person', 'mobile', 'address'],
 				);
 			}
 
