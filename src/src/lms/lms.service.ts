@@ -574,15 +574,8 @@ export class LMSService {
 		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let skip = page > 1 ? limit * (page - 1) : 0;
-		const context = req?.query?.context;
-		const filterQueryArray = [];
-		if (body.context && body.context.length > 0) {
-			filterQueryArray.push(`context: {_eq: ${context}}`);
-		} else {
-			filterQueryArray.push('context: {_eq: "events"}');
-		}
-
-		let filterQuery = filterQueryArray;
+		const context = req?.query?.context || 'events';
+		let filterQuery = [`context: {_eq: ${context}}`];
 
 		const data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
