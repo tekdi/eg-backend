@@ -273,6 +273,8 @@ export class UserauthService {
 						career_aspiration_details:
 							body?.career_aspiration_details,
 						user_id: user_id,
+						device_type: body?.device_type,
+						device_ownership: body?.device_ownership,
 					};
 					await this.hasuraService.q(
 						'core_beneficiaries',
