@@ -569,13 +569,17 @@ export class LMSService {
 			});
 		}
 	}
-	public async getList(req, body, user_id, res) {
+	public async getList(req, user_id, res) {
+		const body = req?.query;
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let skip = page > 1 ? limit * (page - 1) : 0;
-		const context = req?.query?.context || 'events';
+		const context = body.context || 'events';
 		let filterQuery = [`context: {_eq: ${context}}`];
+		if (body.context_id) {
+			filterQuery.push(`context_id: {_eq: ${body?.context_id}}`);
+		}
 
 		const data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
