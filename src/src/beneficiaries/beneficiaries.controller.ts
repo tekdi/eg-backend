@@ -50,6 +50,8 @@ export class BeneficiariesController {
 
 	@Post()
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read', 'read.own'])
 	findAll(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -68,14 +70,6 @@ export class BeneficiariesController {
 		@Query() query: any,
 		@Res() response: Record<string, any>,
 	) {
-		const roles = request.mw_roles;
-		if (roles.includes('facilitator')) {
-			return response.status(403).json({
-				success: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		}
 		const aadhaarNo = body.aadhar_no;
 		const limit = !isNaN(parseInt(query.limit)) ? parseInt(query.limit) : 0;
 		const page =
@@ -109,19 +103,14 @@ export class BeneficiariesController {
 
 	@Post('admin/list/deactivate-duplicates')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async deactivateDuplicateBeneficiaries(
 		@Body() body: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Record<string, any>,
 	) {
 		const roles = req.mw_roles;
-		if (roles.includes('facilitator')) {
-			return response.status(403).json({
-				success: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		}
 		let duplicateArr;
 		// Fetch aadhar number of user to set as active
 		const aadhar_no = (
@@ -169,6 +158,8 @@ export class BeneficiariesController {
 
 	@Post('/admin/list')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own', 'read'])
 	findAllBeneficiariesForIp(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -195,6 +186,8 @@ export class BeneficiariesController {
 
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own', 'read'])
 	async getStatuswiseCount(
 		@Body() body: any,
 		@Req() request: any,
@@ -209,6 +202,8 @@ export class BeneficiariesController {
 
 	@Get('admin/list/duplicates-count-by-aadhaar')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async getAllDuplicateCountsByAadhaar(
 		@Req() request: any,
 		@Query() query: any,
@@ -298,23 +293,14 @@ export class BeneficiariesController {
 	@Put('statusUpdate')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit.status.own'])
 	async statusUpdate(
 		@Body() body: StatusUpdateDTO,
 		@Res() response: any,
 		@Req() request: any,
 	) {
 		// Bcoz record ID is getting passed in req body, we need to add extra ownership check
-		const user_roles = request.mw_roles;
-		if (
-			user_roles.includes('staff') ||
-			user_roles.includes('program_owner')
-		) {
-			return response.status(403).json({
-				success: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		}
 		if (
 			!(await this.aclHelper.doIHaveAccess(
 				request,
@@ -343,22 +329,13 @@ export class BeneficiariesController {
 	@Put('admin/statusUpdate')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit.status.own'])
 	async statusUpdateByIp(
 		@Body() body: StatusUpdateDTO,
 		@Res() response: any,
 		@Req() request: any,
 	) {
-		const user_roles = request.mw_roles;
-		if (
-			user_roles.includes('facilitator') ||
-			user_roles.includes('program_owner')
-		) {
-			return response.status(403).json({
-				success: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		}
 		if (
 			!(await this.aclHelper.doIHaveAccess(
 				request,
@@ -385,6 +362,8 @@ export class BeneficiariesController {
 
 	@Post('/admin/export-csv')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async exportCsv(
 		@Req() request: any,
 		@Body() body: any,
@@ -395,6 +374,8 @@ export class BeneficiariesController {
 
 	@Post('/admin/export-subjects-csv')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async exportSubjectsCsv(
 		@Req() request: any,
 		@Body() body: any,
@@ -409,23 +390,14 @@ export class BeneficiariesController {
 
 	@Post('admin/verify-enrollment')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['edit.enrollement.own'])
 	async verifyEnrollment(
 		@Body() body: any,
 		@Res() response: any,
 		@Req() request: any,
 	) {
 		// Bcoz record ID is getting passed in req body, we need to add extra ownership check
-		const user_roles = request.mw_roles;
-		if (
-			user_roles.includes('facilitator') ||
-			user_roles.includes('program_owner')
-		) {
-			return response.status(403).json({
-				success: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		}
 		if (
 			!(await this.aclHelper.doIHaveAccess(
 				request,
@@ -467,39 +439,30 @@ export class BeneficiariesController {
 
 	@Post('admin/reassign')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['reassign.facilitator.own'])
 	async reassignBeneficiary(
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
 	) {
-		const user_roles = request.mw_roles;
-		if (
-			user_roles.includes('facilitator') ||
-			user_roles.includes('program_owner')
-		) {
-			return response.status(403).json({
-				success: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		} else if (user_roles.includes('staff')) {
-			const benId = body?.beneficiaryIds;
-			for (let id of benId) {
-				if (
-					!(await this.aclHelper.doIHaveAccess(
-						request,
-						'beneficiary',
-						parseInt(id, 10),
-					))
-				) {
-					return response.status(403).json({
-						success: false,
-						message: 'FORBIDDEN',
-						data: {},
-					});
-				}
+		const benId = body?.beneficiaryIds;
+		for (let id of benId) {
+			if (
+				!(await this.aclHelper.doIHaveAccess(
+					request,
+					'beneficiary',
+					parseInt(id, 10),
+				))
+			) {
+				return response.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
 			}
 		}
+
 		// @TODO - validate access for all beneficiaryIds (if not checked below)
 
 		const result = {
@@ -620,6 +583,8 @@ export class BeneficiariesController {
 
 	@Post('/beneficiaries-for-camp')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	notRegisteredBeneficiaries(
 		@Req() request: any,
 		@Body() body: any,

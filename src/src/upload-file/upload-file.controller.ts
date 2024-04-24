@@ -58,8 +58,8 @@ export class UploadFileController {
 
 	@Get('/:id/get-file')
 	@UseInterceptors(FileInterceptor('file'))
-	// @UseGuards(AclGuard)
-	// @AclGuardData('upload-file',['read.own'])
+	@UseGuards(AclGuard)
+	@AclGuardData('upload-file', ['read.own'])
 	async getFileUrl(
 		@Param('id') id: string,
 		@Res() request: Request,

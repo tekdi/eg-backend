@@ -153,8 +153,8 @@ export class EventsController {
 	//the user_id being passed here will be of staff and event's access is given to staff so it cannot access its own value and resulting in false
 	@Get('/:id/get-events-by-user_id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('event', ['read.own'])
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read.own'])
 	getEventsListByUserId(
 		@Req() req: any,
 		@Param('id') id: any,
@@ -166,8 +166,8 @@ export class EventsController {
 
 	@Post('/camp-question-list')
 	@UseGuards(AuthGuard)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('event', ['read.own'])
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read.own'])
 	campQuestionList(
 		@Body() body: string,
 		@Req() request: Request,

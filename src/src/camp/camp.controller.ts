@@ -36,6 +36,8 @@ export class CampController {
 
 	@Post('/list')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp',['read.own','read'])
 	campList(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campList(body, request, response);
 	}
@@ -168,6 +170,8 @@ export class CampController {
 
 	@Post('admin/camp-list')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp',['read.own','read'])
 	getCampList(@Req() req: any, @Res() response: any, @Body() body: any) {
 		return this.campService.getCampList(body, req, response);
 	}
@@ -211,6 +215,8 @@ export class CampController {
 
 	//cannot apply aclguard as we are not passing anything that could be used as for validating access, it is only using timing
 	@Post('/attendances/list')
+	@UseGuards(AclGuard)
+	@AclGuardData('attendance', ['read.own'])
 	@UseGuards(AuthGuard)
 	getAttendanceList(
 		@Req() req: any,
@@ -235,6 +241,8 @@ export class CampController {
 
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp',['read.own'])
 	getStatuswiseCount(
 		@Body() body: any,
 		@Req() request: any,
@@ -246,6 +254,8 @@ export class CampController {
 	@Post('/admin/filter-by-camps')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read.own'])
 	async getFilter_By_Camps(
 		@Req() req: any,
 		@Res() response: any,
@@ -274,6 +284,8 @@ export class CampController {
 
 	@Post('/admin/facilitators')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp',['read.own'])
 	getAvailableFacilitatorList(
 		@Body() body: any,
 		@Req() request: any,
@@ -318,6 +330,8 @@ export class CampController {
 
 	@Patch('/camp-day-activity/:id')
 	@UseGuards(AuthGuard)
+	// @UseGuards(AclGuard)
+	// @AclGuardData('camp',['edit.own'])
 	update_camp_day_activity(
 		@Req() request: any,
 		@Body() body: any,

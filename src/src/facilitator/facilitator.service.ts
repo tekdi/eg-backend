@@ -13,6 +13,7 @@ import {
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { Method } from '../common/method/method';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -26,6 +27,7 @@ export class FacilitatorService {
 		private uploadFileService: UploadFileService,
 		private facilitatorCoreService: FacilitatorCoreService,
 		private method: Method,
+		private aclHelper: AclHelper,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
@@ -1801,60 +1803,15 @@ export class FacilitatorService {
 	}
 
 	async getFacilitators(req: any, body: any, resp: any) {
-		const user_roles = req.mw_roles;
-		if (user_roles.includes('facilitator')) {
+		const ownershipCheck = await this.ownerShipCheckForFacilitator(req);
+		if (!ownershipCheck) {
 			return resp.status(403).json({
-				status: false,
+				success: false,
 				message: 'FORBIDDEN',
 				data: {},
 			});
-		} else if (user_roles.includes('staff')) {
-			let filter;
-			if (req.mw_academic_year_id && req.mw_program_id) {
-				filter = {
-					program_id: req.mw_program_id,
-					academic_year_id: req.mw_academic_year_id,
-				};
-			}
-			const parent_ip = await this.userService.getIpRoleUserById(
-				req.mw_userid,
-				filter,
-			);
-			const parent_ip_id = parent_ip.program_users[0].organisation_id;
-			let gqlQuery = {
-				query: `query MyQuery {
-				program_faciltators_aggregate (
-					where: {
-						program_id: {_eq: ${req.mw_program_id}},
-						academic_year_id: {_eq: ${req.mw_academic_year_id}},
-						parent_ip: {_eq: "${parent_ip_id}"}
-					}
-				){
-					aggregate{
-						count
-					}
-				}
-			}`,
-			};
-
-			// Fetch data
-			const result = await this.hasuraServiceFromServices.getData(
-				gqlQuery,
-			);
-			console.log(gqlQuery.query);
-			console.log(result);
-
-			if (
-				!result?.data &&
-				result.data.program_faciltators_aggregate.aggregate.count > 0
-			) {
-				return resp.status(403).json({
-					status: false,
-					message: 'FORBIDDEN',
-					data: {},
-				});
-			}
 		}
+
 		const user: any = await this.userService.ipUserInfo(req);
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
@@ -2893,6 +2850,38 @@ export class FacilitatorService {
 				success: true,
 				data: {},
 			});
+		}
+	}
+	private async ownerShipCheckForFacilitator(req) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForFacilitator(req);
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_faciltators')) {
+			relationQuery = `${ownershipWhereConditions['program_faciltators']}`;
+			//ownershipWhereConditions = 'program_faciltators'] = `{user_id:{_eq: ${req.mw_userid}}}
+		} else if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`;
+			//ownershipWhereConditions = 'program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
+		} else {
+			return true;
+		}
+
+		const gqlQuery = {
+			query: `query MyQuery {
+				ownership: program_faciltators_aggregate(where: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}, ${relationQuery}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return false;
+		} else {
+			return true;
 		}
 	}
 }

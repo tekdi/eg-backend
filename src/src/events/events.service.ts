@@ -336,6 +336,7 @@ export class EventsService {
 				}
 			}`,
 		};
+		console.log(getQuery.query);
 
 		const eventsList = await this.hasuraService.postData(getQuery);
 		if (eventsList?.data?.events?.length > 0) {

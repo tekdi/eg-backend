@@ -57,6 +57,8 @@ export class PcrscoresController {
 
 	@Get('/:user_id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('pcrscore', ['read.own'])
 	async pcrscoreByUser_id(
 		@Req() request: any,
 		@Body() body: any,

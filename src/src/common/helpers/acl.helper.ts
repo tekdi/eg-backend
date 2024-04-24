@@ -225,13 +225,16 @@ export class AclHelper {
 		facilitatorId: number,
 	): Promise<boolean> {
 		let filter;
-		if(req.mw_academic_year_id && req.mw_program_id){
+		if (req.mw_academic_year_id && req.mw_program_id) {
 			filter = {
-                program_id: req.mw_program_id,
-                academic_year_id: req.mw_academic_year_id,
-            };
+				program_id: req.mw_program_id,
+				academic_year_id: req.mw_academic_year_id,
+			};
 		}
-		const parent_ip = await this.userService.getIpRoleUserById(req.mw_userid,filter);
+		const parent_ip = await this.userService.getIpRoleUserById(
+			req.mw_userid,
+			filter,
+		);
 		const parent_ip_id = parent_ip.program_users[0].organisation_id;
 		let gqlQuery = {
 			query: `query MyQuery {
@@ -252,15 +255,16 @@ export class AclHelper {
 
 		// Fetch data
 		const result = await this.hasuraServiceFromService.getData(gqlQuery);
-		 console.log(gqlQuery.query); 
-		 console.log(result);
+		console.log(gqlQuery.query);
 
-		if (result?.data && result.data.program_faciltators_aggregate.aggregate.count > 0) {
+		if (
+			result?.data &&
+			result.data.program_faciltators_aggregate.aggregate.count > 0
+		) {
 			return true;
 		} else {
 			return false;
 		}
-
 	}
 	private async doIHaveCampAccess(req: any, camp_id: number) {
 		const user_roles = req.mw_roles;
@@ -873,18 +877,19 @@ export class AclHelper {
 			return true;
 		}
 
-		// 4 - Validate ownership
+		if (entity_id) {
+			// 4 - Validate ownership
+			const iHaveAccess = await this.doIHaveAccess(
+				request,
+				entity,
+				entity_id,
+			);
+			console.log('### iHaveAccess: ', iHaveAccess);
 
-		const iHaveAccess = await this.doIHaveAccess(
-			request,
-			entity,
-			entity_id,
-		);
-		console.log('### iHaveAccess: ', iHaveAccess);
-
-		// 4.1 - If I do have ownership access return false
-		if (!iHaveAccess) {
-			return false;
+			// 4.1 - If I do have ownership access return false
+			if (!iHaveAccess) {
+				return false;
+			}
 		}
 
 		return true;
@@ -904,4 +909,104 @@ export class AclHelper {
 			});
 		}
 	}*/
+
+	async getOwnershipQueryConditionsForBeneficiaries(req) {
+		let queryWhereConditions = {};
+		let user_roles = req.mw_roles;
+		if (user_roles.includes('facilitator')) {
+			queryWhereConditions[
+				'program_faciltators'
+			] = `user_id:{_eq: ${req.mw_userid}}`;
+		} else if (user_roles.includes('staff')) {
+			let filter;
+
+			// Get parent ip
+			if (req.mw_academic_year_id && req.mw_program_id) {
+				filter = {
+					academic_year_id: req.mw_academic_year_id,
+					program_id: req.mw_program_id,
+				};
+			} else {
+				filter = {};
+			}
+
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				filter,
+			);
+			const parent_ip = parent_ip_data.program_users[0].organisation_id;
+
+			queryWhereConditions[
+				'program_users'
+			] = `parent_ip:{_eq: "${parent_ip}"}`;
+		}
+
+		return queryWhereConditions;
+	}
+	async getOwnershipQueryConditionsForFacilitator(req) {
+		let queryWhereConditions = {};
+		const user_roles = req.mw_roles;
+		if (user_roles.includes('facilitator')) {
+			queryWhereConditions[
+				'program_faciltators'
+			] = `user_id:{_eq: ${req.mw_userid}}`;
+		} else if (user_roles.includes('staff')) {
+			let filter;
+
+			// Get parent ip
+			if (req.mw_academic_year_id && req.mw_program_id) {
+				filter = {
+					academic_year_id: req.mw_academic_year_id,
+					program_id: req.mw_program_id,
+				};
+			} else {
+				filter = {};
+			}
+
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				filter,
+			);
+			const parent_ip = parent_ip_data.program_users[0].organisation_id;
+
+			queryWhereConditions[
+				'program_users'
+			] = `parent_ip:{_eq: "${parent_ip}"}`;
+		}
+
+		return queryWhereConditions;
+	}
+	async getOwnershipQueryConditionsForCamp(req) {
+		let queryWhereConditions = {};
+		const user_roles = req.mw_roles;
+		if (user_roles.includes('facilitator')) {
+			queryWhereConditions[
+				'program_faciltators'
+			] = `, user_id: {_eq:${req.mw_userid}}`;
+		} else if (user_roles.includes('staff')) {
+			let filter;
+
+			// Get parent ip
+			if (req.mw_academic_year_id && req.mw_program_id) {
+				filter = {
+					academic_year_id: req.mw_academic_year_id,
+					program_id: req.mw_program_id,
+				};
+			} else {
+				filter = {};
+			}
+
+			const parent_ip_data = await this.userService.getIpRoleUserById(
+				req.mw_userid,
+				filter,
+			);
+			const parent_ip = parent_ip_data.program_users[0].organisation_id;
+
+			queryWhereConditions[
+				'program_users'
+			] = `user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"}}}`;
+		}
+
+		return queryWhereConditions;
+	}
 }
