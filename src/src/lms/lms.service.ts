@@ -577,6 +577,7 @@ export class LMSService {
 		let skip = page > 1 ? limit * (page - 1) : 0;
 		const context = body.context || 'events';
 		let filterQuery = [`context: {_eq: ${context}}`];
+		//add filter if context_id present
 		if (body.context_id) {
 			filterQuery.push(`context_id: {_eq: ${body?.context_id}}`);
 		}
