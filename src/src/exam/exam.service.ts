@@ -387,6 +387,7 @@ export class ExamService {
 
 			resultArray.push({
 				subject_id: input?.subject_id,
+				subject_name: input?.subject_name,
 				event_id: input?.event_id,
 				type: input?.type,
 				data: users_data,
