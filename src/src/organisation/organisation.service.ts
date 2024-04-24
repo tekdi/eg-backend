@@ -445,4 +445,86 @@ export class OrganisationService {
 			});
 		}
 	}
+
+	async update(id: any, body: any, request: any, resp: any) {
+		try {
+			const program_id = request.mw_program_id;
+			const academic_year_id = request.mw_academic_year_id;
+			const edit_page_type = body.edit_page_type; // Assuming edit_page_type is present in the request body
+			const update_body = body.update_body; // Assuming update_body contains the fields to be updated based on edit page type
+
+			const orgUpdateFields = [
+				'name',
+				'contact_person',
+				'mobile',
+				'address',
+			];
+
+			const programOrgUpdateFields = [
+				'id',
+				'learner_target',
+				'learner_per_camp',
+				'camp_target',
+			];
+			let orgResponse = {};
+			let programOrgResponse = {};
+
+			if (
+				body?.program_organisation?.learner_target &&
+				body?.program_organisation?.learner_per_camp
+			) {
+				const learner_target =
+					body?.program_organisation?.learner_target;
+				const learner_per_camp =
+					body?.program_organisation?.learner_per_camp;
+				const camp_target = Math.ceil(
+					learner_target / learner_per_camp,
+				);
+
+				// Update the program_organisation object in the request body with the calculated camp_target
+				body.program_organisation = {
+					...body.program_organisation,
+					camp_target: camp_target,
+				};
+			}
+			// Update organisations table
+			if (body?.organisation) {
+				orgResponse = await this.hasuraService.q(
+					'organisations', // Table name
+					{
+						...body.organisation,
+						id: id,
+					},
+					orgUpdateFields,
+					true,
+					['id', 'name', 'contact_person', 'mobile', 'address'], // Return fields
+				);
+			}
+			if (body?.program_organisation) {
+				// Update program_organisations table
+				programOrgResponse = await this.hasuraService.q(
+					'program_organisation',
+					{
+						...body.program_organisation,
+						id: body?.program_organisation?.id,
+					},
+					programOrgUpdateFields,
+					true,
+					['id', 'learner_target', 'learner_per_camp', 'camp_target'], // Return fields
+				);
+			}
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Updated successfully!',
+				data: { orgResponse, programOrgResponse },
+			});
+		} catch (error) {
+			return resp.status(422).json({
+				success: false,
+				message: "Couldn't update the organisation.",
+				data: {},
+			});
+		}
+	}
 }
