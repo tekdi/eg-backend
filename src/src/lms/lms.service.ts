@@ -574,6 +574,15 @@ export class LMSService {
 		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let skip = page > 1 ? limit * (page - 1) : 0;
+		const context = req?.query?.context;
+		const filterQueryArray = [];
+		if (body.context && body.context.length > 0) {
+			filterQueryArray.push(`context: {_eq: ${context}}`);
+		} else {
+			filterQueryArray.push('context: {_eq: "events"}');
+		}
+
+		let filterQuery = filterQueryArray;
 
 		const data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
@@ -582,7 +591,7 @@ export class LMSService {
 					  count
 					}
 				}
-				lms_test_tracking(where: {user_id: {_eq: ${user_id}}}, limit: $limit,
+				lms_test_tracking(where: {user_id: {_eq: ${user_id}},${filterQuery}}, limit: $limit,
 					offset: $offset,) {
 					id
 					user_id
@@ -602,9 +611,10 @@ export class LMSService {
 					score
 					cron_last_processed_at
 					attendance_count
-					events(where: {context: {_eq: "events"}}) {
+					events{
 						name
 						id
+						type
 					}
 				}
 			  }
