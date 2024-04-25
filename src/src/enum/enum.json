@@ -1396,8 +1396,8 @@
 			"value": "miscellaneous_activities_role_model_visit"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_AND_TEACHER_VISIT",
-			"value": "miscellaneous_activities_stakeholder_and_teacher_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_OR_TEACHER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_or_teacher_visit"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_REVISION",
@@ -1622,8 +1622,8 @@
 			"value": "miscellaneous_activities_role_model_visit"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_AND_TEACHER_VISIT",
-			"value": "miscellaneous_activities_stakeholder_and_teacher_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_OR_TEACHER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_or_teacher_visit"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_REVISION",
