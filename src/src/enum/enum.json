@@ -1396,12 +1396,12 @@
 			"value": "miscellaneous_activities_role_model_visit"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
-			"value": "miscellaneous_activities_stakeholder_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_AND_TEACHER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_and_teacher_visit"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
-			"value": "miscellaneous_activities_school_teacher_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_REVISION",
+			"value": "miscellaneous_activities_revision"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
@@ -1622,12 +1622,12 @@
 			"value": "miscellaneous_activities_role_model_visit"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
-			"value": "miscellaneous_activities_stakeholder_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_AND_TEACHER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_and_teacher_visit"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
-			"value": "miscellaneous_activities_school_teacher_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_REVISION",
+			"value": "miscellaneous_activities_revision"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
