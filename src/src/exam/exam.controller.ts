@@ -98,4 +98,15 @@ export class ExamController {
 			request,
 		);
 	}
+
+	@Get('attendance/report')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getAttendanceReport(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.getAttendanceReport(body, request, response);
+	}
 }
