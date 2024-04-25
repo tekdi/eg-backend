@@ -109,4 +109,19 @@ export class ExamController {
 	) {
 		return this.examService.getAttendanceReport(body, request, response);
 	}
+
+	@Get('learner/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getCampRegisteredLearners(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.getCampRegisteredLearners(
+			body,
+			request,
+			response,
+		);
+	}
 }

@@ -603,4 +603,47 @@ export class ExamService {
 			data: attendance_report_result,
 		});
 	}
+
+	async getCampRegisteredLearners(body, request, response) {
+		let user_id = request?.mw_userid;
+		let data;
+		let validation_response;
+		let result;
+
+		data = {
+			query: `query MyQuery {
+				program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, status: {_eq: "registered_in_camp"}}) {
+				  user {
+					id
+					first_name
+					middle_name
+					last_name
+				  }
+				}
+			  }
+			  `,
+		};
+
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		result = validation_response?.data?.data?.program_beneficiaries;
+
+		if (result?.length > 0) {
+			return response.status(200).json({
+				message: 'Data Retrieved Successfully',
+				data: result,
+			});
+		} else if (result?.length == 0) {
+			return response.status(404).json({
+				message: 'Data Not found',
+				data: [],
+			});
+		} else {
+			return response.status(500).json({
+				message: 'Error getting data',
+				data: [],
+			});
+		}
+	}
 }
