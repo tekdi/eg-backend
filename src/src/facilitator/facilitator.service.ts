@@ -76,64 +76,8 @@ export class FacilitatorService {
 		body: any,
 		response: any,
 	) {
-		const user_roles = request.mw_roles;
-		let gqlquery;
-		if (user_roles.includes('facilitator')) {
-			return response.status(403).json({
-				success: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		} else if (user_roles.includes('staff')) {
-			const parent_ip_data = await this.userService.getIpRoleUserById(
-				request.mw_userid,
-				{
-					program_id: request.mw_program_id,
-					academic_year_id: request.mw_academic_year,
-				},
-			);
-
-			const parent_ip_id =
-				parent_ip_data?.program_users?.[0]?.organisation_id;
-			gqlquery = {
-				query: `query MyQuery {
-					program_faciltators_aggregate(where: {program_id: {_eq: ${request.mw_program_id}}, academic_year_id: {_eq: ${request.mw_academic_year_id}}, parent_ip: {_eq: "${parent_ip_id}"}}) {
-					  aggregate {
-						count
-					  }
-					}
-				  }`,
-			};
-			console.log(gqlquery.query);
-
-			const result = await this.hasuraServiceFromServices.getData(
-				gqlquery,
-			);
-			if (
-				!result?.data &&
-				result.data.program_faciltators_aggregate.aggregate.count > 0
-			) {
-				return response.status(403).json({
-					success: false,
-					message: 'FORBIDDEN',
-					data: {},
-				});
-			}
-		}
-
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
-		const user = await this.userService.getIpRoleUserById(
-			request.mw_userid,
-			{ program_id, academic_year_id },
-		);
-
-		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
-
-		let skip = page > 1 ? limit * (page - 1) : 0;
-		let filterQueryArray = [];
-
 		let status;
 		switch (body?.type) {
 			case 'pragati_orientation': {
@@ -157,6 +101,52 @@ export class FacilitatorService {
 				break;
 			}
 		}
+
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForFacilitator(
+				request,
+			);
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; //ownershipWhereConditions = 'program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
+		} else {
+			return response.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
+		const gqlQuery = {
+			query: `query MyQuery {
+				ownership : users_aggregate(where: {_and: [{program_faciltators: {${relationQuery}, academic_year_id: {_eq: ${request.mw_academic_year_id}}, program_id: {_eq: ${request.mw_program_id}}, ${status}}}]}) {
+				  aggregate {
+					count
+				  }
+				}
+			}
+			  
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return response.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+		const user = await this.userService.getIpRoleUserById(
+			request.mw_userid,
+			{ program_id, academic_year_id },
+		);
+
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+
+		let skip = page > 1 ? limit * (page - 1) : 0;
+		let filterQueryArray = [];
 
 		filterQueryArray.push(
 			`	program_faciltators: {
@@ -413,87 +403,39 @@ export class FacilitatorService {
 
 	//status count
 	public async getStatuswiseCount(req: any, resp: any) {
-		const user_roles = req.mw_roles;
-		let gqlquery;
-		if (user_roles.includes('facilitator')) {
-			const parent_ip_query = {
-				query: `query MyQuery {
-					program_faciltators(where: {user_id: {_eq: ${req.mw_userid}}, program_id: {_eq: ${req.mw_program_id}}, academic_year_id: {_eq: ${req.mw_academic_year_id}}}) {
-					  parent_ip
-					}
-				  }
-				  `,
-			};
-			console.log(parent_ip_query.query);
-
-			const parent_ip_data = await this.hasuraServiceFromServices.getData(
-				parent_ip_query,
-			);
-			const parent_ip_id =
-				parent_ip_data.data.program_faciltators[0].parent_ip;
-
-			gqlquery = {
-				query: `query MyQuery {
-					program_faciltators_aggregate(where: {program_id: {_eq: ${req.mw_program_id}}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, parent_ip: {_eq: "${parent_ip_id}"}}) {
-					  aggregate {
-						count
-					  }
-					}
-				  }
-				  `,
-			};
-			console.log(gqlquery.query);
-
-			const result = await this.hasuraServiceFromServices.getData(
-				gqlquery,
-			);
-			if (
-				!result?.data &&
-				result.data.program_faciltators_aggregate.aggregate.count > 0
-			) {
-				return resp.status(403).json({
-					success: false,
-					message: 'FORBIDDEN',
-					data: {},
-				});
-			}
-		} else if (user_roles.includes('staff')) {
-			const parent_ip_data = await this.userService.getIpRoleUserById(
-				req.mw_userid,
-				{
-					program_id: req.mw_program_id,
-					academic_year_id: req.mw_academic_year,
-				},
-			);
-
-			const parent_ip_id =
-				parent_ip_data?.program_users?.[0]?.organisation_id;
-			gqlquery = {
-				query: `query MyQuery {
-					program_faciltators_aggregate(where: {program_id: {_eq: ${req.mw_program_id}}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, parent_ip: {_eq: "${parent_ip_id}"}}) {
-					  aggregate {
-						count
-					  }
-					}
-				  }`,
-			};
-			console.log(gqlquery.query);
-
-			const result = await this.hasuraServiceFromServices.getData(
-				gqlquery,
-			);
-			if (
-				!result?.data &&
-				result.data.program_faciltators_aggregate.aggregate.count > 0
-			) {
-				return resp.status(403).json({
-					success: false,
-					message: 'FORBIDDEN',
-					data: {},
-				});
-			}
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForFacilitator(req);
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; //ownershipWhereConditions = 'program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
+		} else {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
 		}
 
+		const gqlQuery = {
+			query: `query MyQuery {
+				ownership: program_faciltators_aggregate(where: {${relationQuery}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}, status: {_in: ["quit", "rejected", "on_hold", "pragati_mobilizer", "selected_for_onboarding", "selected_prerak", "rusticate","applied"]}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }
+			  
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const user = await this.userService.ipUserInfo(req);
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
@@ -541,6 +483,7 @@ export class FacilitatorService {
 						}}`,
 				)}
 		}`;
+
 		const response = await this.hasuraServiceFromServices.getData({
 			query,
 		});
@@ -1252,59 +1195,38 @@ export class FacilitatorService {
 		});
 	}
 	async exportFileToCsv(req: any, body: any, resp: any) {
-		const user_roles = req.mw_roles;
-		if (user_roles.includes('facilitator')) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForFacilitator(req);
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; //ownershipWhereConditions = 'program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
+		} else {
 			return resp.status(403).json({
-				status: false,
+				success: false,
 				message: 'FORBIDDEN',
 				data: {},
 			});
-		} else if (user_roles.includes('staff')) {
-			let filter;
-			if (req.mw_academic_year_id && req.mw_program_id) {
-				filter = {
-					program_id: req.mw_program_id,
-					academic_year_id: req.mw_academic_year_id,
-				};
-			}
-			const parent_ip = await this.userService.getIpRoleUserById(
-				req.mw_userid,
-				filter,
-			);
-			const parent_ip_id = parent_ip.program_users[0].organisation_id;
-			let gqlQuery = {
-				query: `query MyQuery {
-					program_faciltators_aggregate (
-						where: {
-							program_id: {_eq: ${req.mw_program_id}},
-							academic_year_id: {_eq: ${req.mw_academic_year_id}},
-							parent_ip: {_eq: "${parent_ip_id}"}
-						}
-					){
-						aggregate{
-							count
-						}
-					}
-				}`,
-			};
+		}
 
-			// Fetch data
-			const result = await this.hasuraServiceFromServices.getData(
-				gqlQuery,
-			);
-			console.log(gqlQuery.query);
-			console.log(result);
-
-			if (
-				!result?.data &&
-				result.data.program_faciltators_aggregate.aggregate.count > 0
-			) {
-				return resp.status(403).json({
-					status: false,
-					message: 'FORBIDDEN',
-					data: {},
-				});
-			}
+		const gqlQuery = {
+			query: `query MyQuery {
+				ownership : users_aggregate(where: {_and: [{program_faciltators: { ${relationQuery}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}}}]}) {
+				aggregate{
+				  count
+				  }
+				}
+			  }
+			  
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
 		}
 		try {
 			const user = await this.userService.ipUserInfo(req);
@@ -1559,60 +1481,6 @@ export class FacilitatorService {
 	}
 
 	async getFilter_By_Beneficiaries(body: any, resp: any, req: any) {
-		const user_roles = req.mw_roles;
-		if (user_roles.includes('facilitator')) {
-			return resp.status(403).json({
-				status: false,
-				message: 'FORBIDDEN',
-				data: {},
-			});
-		} else if (user_roles.includes('staff')) {
-			let filter;
-			if (req.mw_academic_year_id && req.mw_program_id) {
-				filter = {
-					program_id: req.mw_program_id,
-					academic_year_id: req.mw_academic_year_id,
-				};
-			}
-			const parent_ip = await this.userService.getIpRoleUserById(
-				req.mw_userid,
-				filter,
-			);
-			const parent_ip_id = parent_ip.program_users[0].organisation_id;
-			let gqlQuery = {
-				query: `query MyQuery {
-					program_faciltators_aggregate (
-						where: {
-							program_id: {_eq: ${req.mw_program_id}},
-							academic_year_id: {_eq: ${req.mw_academic_year_id}},
-							parent_ip: {_eq: "${parent_ip_id}"}
-						}
-					){
-						aggregate{
-							count
-						}
-					}
-				}`,
-			};
-
-			// Fetch data
-			const result = await this.hasuraServiceFromServices.getData(
-				gqlQuery,
-			);
-			console.log(gqlQuery.query);
-			console.log(result);
-
-			if (
-				!result?.data &&
-				result.data.program_faciltators_aggregate.aggregate.count > 0
-			) {
-				return resp.status(403).json({
-					status: false,
-					message: 'FORBIDDEN',
-					data: {},
-				});
-			}
-		}
 		try {
 			const page = isNaN(body.page) ? 1 : parseInt(body.page);
 			const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
@@ -1772,6 +1640,7 @@ export class FacilitatorService {
 					offset: offset,
 				},
 			};
+
 			const result = await this.hasuraService.getData(data);
 			const extractedData = result?.data?.users;
 			const count = result?.data?.users_aggregate?.aggregate?.count;
@@ -1803,8 +1672,33 @@ export class FacilitatorService {
 	}
 
 	async getFacilitators(req: any, body: any, resp: any) {
-		const ownershipCheck = await this.ownerShipCheckForFacilitator(req);
-		if (!ownershipCheck) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForFacilitator(req);
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; //ownershipWhereConditions = 'program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
+		} else {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
+		const gqlQuery = {
+			query: `query MyQuery {
+				ownership : users_aggregate(where: {_and: [{program_faciltators:{ ${relationQuery}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}}}]}) {
+				  aggregate {
+					count
+				  }
+				}
+			}
+			  
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
 			return resp.status(403).json({
 				success: false,
 				message: 'FORBIDDEN',
@@ -2178,62 +2072,42 @@ export class FacilitatorService {
 	}
 
 	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
-		const user_roles = req.mw_roles;
-		if (user_roles.includes('facilitator')) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForFacilitator(req);
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; //ownershipWhereConditions = ['program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
+		} else {
 			return resp.status(403).json({
-				status: false,
+				success: false,
 				message: 'FORBIDDEN',
 				data: {},
 			});
-		} else if (user_roles.includes('staff')) {
-			let filter;
-			if (req.mw_academic_year_id && req.mw_program_id) {
-				filter = {
-					program_id: req.mw_program_id,
-					academic_year_id: req.mw_academic_year_id,
-				};
-			}
-			const parent_ip = await this.userService.getIpRoleUserById(
-				req.mw_userid,
-				filter,
-			);
-			const parent_ip_id = parent_ip.program_users[0].organisation_id;
-			let gqlQuery = {
-				query: `query MyQuery {
-					program_faciltators_aggregate (
-						where: {
-							program_id: {_eq: ${req.mw_program_id}},
-							academic_year_id: {_eq: ${req.mw_academic_year_id}},
-							parent_ip: {_eq: "${parent_ip_id}"}
-						}
-					){
-						aggregate{
-							count
-						}
-					}
-				}`,
-			};
+		}
 
-			// Fetch data
-			const result = await this.hasuraServiceFromServices.getData(
-				gqlQuery,
-			);
-			console.log(gqlQuery.query);
-			console.log(result);
-
-			if (
-				!result?.data &&
-				result.data.program_faciltators_aggregate.aggregate.count > 0
-			) {
-				return resp.status(403).json({
-					status: false,
-					message: 'FORBIDDEN',
-					data: {},
-				});
-			}
+		const gqlQuery = {
+			query: `query MyQuery($limit: Int, $offset: Int) {
+				ownership : users_aggregate(where: {_and: [{program_faciltators: {${relationQuery}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}}}], _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }
+			  
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
 		}
 		let program_id = req?.mw_program_id;
 		let academic_year_id = req?.mw_academic_year_id;
+
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.id) {
 			return resp.status(401).json({
@@ -2857,11 +2731,9 @@ export class FacilitatorService {
 			await this.aclHelper.getOwnershipQueryConditionsForFacilitator(req);
 		let relationQuery;
 		if (ownershipWhereConditions.hasOwnProperty('program_faciltators')) {
-			relationQuery = `${ownershipWhereConditions['program_faciltators']}`;
-			//ownershipWhereConditions = 'program_faciltators'] = `{user_id:{_eq: ${req.mw_userid}}}
+			relationQuery = `${ownershipWhereConditions['program_faciltators']}`; //ownershipWhereConditions = 'program_faciltators'] = `{user_id:{_eq: ${req.mw_userid}}}
 		} else if (ownershipWhereConditions.hasOwnProperty('program_users')) {
-			relationQuery = `${ownershipWhereConditions['program_users']}`;
-			//ownershipWhereConditions = 'program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
+			relationQuery = `${ownershipWhereConditions['program_users']}`; //ownershipWhereConditions = 'program_users'] = `{parent_ip:{_eq: "${parent_ip}"}}`
 		} else {
 			return true;
 		}

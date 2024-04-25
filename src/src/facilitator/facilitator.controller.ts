@@ -58,14 +58,16 @@ export class FacilitatorController {
 
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
-	// @UseGuards(AclGuard)
-	// @AclGuardData('facilitator', ['read', 'read.own'])
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['read', 'read.own'])
 	async getStatuswiseCount(@Req() request: any, @Res() response: Response) {
 		return this.facilitatorService.getStatuswiseCount(request, response);
 	}
 
 	@Post('/forOrientation')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['read.own'])
 	async getFacilitatorsForOrientation(
 		@Req() request: any,
 		@Body() body: any,
@@ -126,6 +128,8 @@ export class FacilitatorController {
 	@Post('/')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['read.own'])
 	async getFacilitators(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -178,6 +182,8 @@ export class FacilitatorController {
 	@Post('/admin/filter-by-beneficiaries')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['read.own'])
 	async getFilter_By_Beneficiaries(
 		@Body() body: any,
 		@Res() res: any,
@@ -193,6 +199,8 @@ export class FacilitatorController {
 	@Post('/exportCsv')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['read.own'])
 	async exportFileToCsv(
 		@Req() request: any,
 		@Body() body: FilterFacilitatorDto,
@@ -222,6 +230,8 @@ export class FacilitatorController {
 	@Post('/admin/learner-status-distribution')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['read.own'])
 	async getLearnerStatusDistribution(
 		@Req() req: any,
 		@Body() body: FilterFacilitatorDto,
@@ -255,6 +265,8 @@ export class FacilitatorController {
 
 	@Post('/update-okyc-response')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['edit.own'])
 	async updateOkycResponse(
 		@Req() req: any,
 		@Body() body: any,
