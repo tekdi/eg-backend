@@ -609,15 +609,69 @@ export class ExamService {
 		let data;
 		let validation_response;
 		let result;
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+		let role = request?.mw_roles;
+		let filter;
+
+		if (role?.includes('facilitator')) {
+			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"}}`;
+		} else if (role?.includes('staff')) {
+			//get organisation_id of the IP
+			let query = {
+				query: `query MyQuery {
+					program_users(where: {academic_year_id: {_eq: 1}, program_id: {_eq: 1}, user_id: {_eq:${user_id}}}) {
+					  organisation_id
+					}
+				  }
+				  `,
+			};
+
+			validation_response =
+				await this.hasuraServiceFromServices.queryWithVariable(query);
+
+			let parent_ip =
+				validation_response?.data?.data?.program_users?.[0]
+					?.organisation_id;
+
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}}
+				`;
+		}
 
 		data = {
 			query: `query MyQuery {
-				program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, status: {_eq: "registered_in_camp"}}) {
-				  user {
+				program_beneficiaries(where: ${filter}) {
+				  facilitator_id
+				  facilitator_user{
 					id
+					first_name
+					last_name
+					middle_name
+				   
+				  }
+				  enrollment_number
+				  beneficiary_user:user {
+				   beneficiary_id: id
 					first_name
 					middle_name
 					last_name
+					exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1}}) {
+					  id
+					  board_id
+					  program_id
+					  academic_year_id
+					  board_id
+					  enrollment
+					  candidate
+					  father
+					  mother
+					  dob
+					  course_class
+					  exam_year
+					  total_marks
+					  final_result
+					  document_id
+					}
 				  }
 				}
 			  }
