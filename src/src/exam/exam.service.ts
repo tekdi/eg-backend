@@ -509,4 +509,98 @@ export class ExamService {
 			});
 		}
 	}
+
+	async getAttendanceReport(body: any, request: any, response: any) {
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+		let user_id = request?.mw_userid;
+		let data;
+		let result;
+		let validation_response;
+		let sql;
+
+		data = {
+			query: `query MyQuery {
+				program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, status:{_eq:"registered_in_camp"},program_id: {_eq:${program_id}}, facilitator_id: {_eq:${user_id}}}){
+				  id
+				  subjects
+				}
+			  }
+			  `,
+		};
+
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		result = validation_response?.data?.data?.program_beneficiaries;
+
+		const subjects = new Set();
+		result.forEach((beneficiary) => {
+			if (beneficiary?.subjects !== null) {
+				JSON.parse(beneficiary?.subjects).forEach((subject) => {
+					// Parse subject as integer before adding to the set
+					subjects.add(parseInt(subject));
+				});
+			}
+		});
+
+		// Convert set to array for easier manipulation
+		const uniqueSubjects = Array.from(subjects);
+		// Map each element in uniqueSubjects array to a string with parentheses
+
+		const formattedSubjects = `(${uniqueSubjects.join(',')})`;
+		console.log(formattedSubjects); // Output: (10,19)
+
+		sql = ` SELECT 
+		events.id AS eventid,
+		context_id,
+		context,
+		start_date,
+		su.id,
+		su.name,
+		bo.id AS boardid,
+		bo.name AS boardname,
+		(SELECT COUNT(id) FROM program_beneficiaries WHERE EXISTS (SELECT 1 FROM json_array_elements_text(subjects::json) AS item WHERE item::text = CAST(su.id AS TEXT))) AS total_students,
+		(SELECT COUNT(id) FROM attendance att WHERE att.context_id = events.id AND att.context = 'events' AND att.status = 'present') AS present,
+		(SELECT COUNT(id) FROM attendance att WHERE att.context_id = events.id AND att.context = 'events' AND att.status = 'absent') AS absent
+	FROM 
+		events
+	LEFT JOIN  
+		subjects su ON events.context_id = su.id
+	LEFT JOIN  
+		boards bo ON su.board_id = bo.id
+	WHERE 
+		context = 'subjects' AND context_id IN ${formattedSubjects} AND academic_year_id = ${academic_year_id} AND events.program_id = ${program_id};`;
+
+		const attendance_report_data = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
+
+		if (attendance_report_data == undefined) {
+			return response.status(404).json({
+				status: false,
+				message: 'Data not found',
+				data: [],
+			});
+		}
+
+		let attendance_report_result =
+			this.hasuraServiceFromServices.getFormattedData(
+				attendance_report_data,
+			);
+
+		// Calculate not_marked for each instance
+		attendance_report_result.forEach((report) => {
+			report.not_marked = (
+				report.total_students -
+				(report.present + report.absent)
+			)?.toString();
+		});
+
+		return response.status(200).json({
+			status: true,
+			message: 'Data retrieved successfully',
+			data: attendance_report_result,
+		});
+	}
 }
