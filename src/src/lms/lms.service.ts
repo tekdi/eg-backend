@@ -569,11 +569,18 @@ export class LMSService {
 			});
 		}
 	}
-	public async getList(req, body, user_id, res) {
+	public async getList(req, user_id, res) {
+		const body = req?.query;
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let skip = page > 1 ? limit * (page - 1) : 0;
+		const context = body.context || 'events';
+		let filterQuery = [`context: {_eq: ${context}}`];
+		//add filter if context_id present
+		if (body.context_id) {
+			filterQuery.push(`context_id: {_eq: ${body?.context_id}}`);
+		}
 
 		const data = {
 			query: `query MyQuery($limit:Int, $offset:Int) {
@@ -582,7 +589,7 @@ export class LMSService {
 					  count
 					}
 				}
-				lms_test_tracking(where: {user_id: {_eq: ${user_id}}}, limit: $limit,
+				lms_test_tracking(where: {user_id: {_eq: ${user_id}},${filterQuery}}, limit: $limit,
 					offset: $offset,) {
 					id
 					user_id
@@ -602,9 +609,10 @@ export class LMSService {
 					score
 					cron_last_processed_at
 					attendance_count
-					events(where: {context: {_eq: "events"}}) {
+					events{
 						name
 						id
+						type
 					}
 				}
 			  }

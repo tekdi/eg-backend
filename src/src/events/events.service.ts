@@ -415,6 +415,27 @@ export class EventsService {
 		try {
 			const userDetail = await this.userService.ipUserInfo(header);
 			const user_id = userDetail.data.id;
+			let data = {
+				query: `query MyQuery {
+					events_by_pk(id: ${id}) {
+								id
+								params
+							}
+					}`,
+			};
+
+			const result = await this.hasuraServiceFromServices.getData(data);
+			const event_res = result?.data?.events_by_pk;
+			const check_params = event_res?.params;
+			if (check_params?.start_exam === 'yes') {
+				return resp.status(422).send({
+					success: false,
+					message:
+						'Event Can Not Edited As Event Exam has already started!',
+					data: {},
+				});
+			}
+
 			// Validate start date
 			const daysDiff = moment
 				.utc(req.end_date)
@@ -1117,5 +1138,85 @@ export class EventsService {
 			console.log(e);
 			return response.status(400).json({ message: e.message });
 		}
+	}
+
+	public async eventStartExam(id: number, req: any, resp: any) {
+		const user_id = req?.mw_userid;
+		const role = req?.mw_roles;
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
+
+		let data = {
+			query: `query MyQuery {
+						events(where: {id: {_eq: ${id}},academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
+							id
+							params
+							created_by
+						}
+				}`,
+		};
+		const result = await this.hasuraServiceFromServices.getData(data);
+		const event_res = result?.data?.events?.[0];
+		const check_params = event_res?.params;
+		const created_by = event_res?.created_by;
+
+		//if params already have exam started
+		if (
+			check_params?.do_id &&
+			check_params.do_id.length > 0 &&
+			check_params?.start_exam === 'yes'
+		) {
+			return resp.status(422).send({
+				success: false,
+				message: 'Event exam has already started!',
+				data: {},
+			});
+		}
+		if (!event_res || event_res === '') {
+			return resp.status(422).send({
+				success: false,
+				message: 'Event Does Not Exist!',
+				data: {},
+			});
+		} else if (!check_params || check_params === '') {
+			return resp.status(422).send({
+				success: false,
+				message: 'Does Not Have Exam IDS',
+				data: {},
+			});
+		}
+
+		//if role is not equal to PO admin
+		if (!role.includes('program_owner') && created_by != user_id) {
+			//IS created by IP user check with created by id
+			return resp.status(422).send({
+				success: false,
+				message: 'Admin Dont have access to Start Exam of this Event!',
+				data: {},
+			});
+		}
+
+		// Update the params object with start_exam: "yes"
+		const eventResult = await this.hasuraService.updateWithVariable(
+			id,
+			'events',
+			{ params: { ...check_params, start_exam: 'yes' } },
+			[],
+			['id', 'params'],
+			{
+				variable: [
+					{
+						key: 'params',
+						type: 'json',
+					},
+				],
+			},
+		);
+
+		return resp.status(200).send({
+			success: true,
+			message: 'Exam Started!',
+			data: eventResult,
+		});
 	}
 }
