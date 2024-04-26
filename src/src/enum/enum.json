@@ -413,10 +413,6 @@
 			"value": "pragati_orientation"
 		},
 		{
-			"title": "FACILITATOR_EVENT_TYPE_GKP_TRAINING",
-			"value": "gkp_training"
-		},
-		{
 			"title": "FACILITATOR_EVENT_TYPE_PCR_TRAINING",
 			"value": "pcr_training"
 		},
@@ -694,55 +690,68 @@
 	"DOCUMENT_LIST": [
 		{
 			"title": "JAN_AADHAAR_CARD",
-			"value": "jan_aadhaar_card"
+			"value": "jan_aadhaar_card",
+			"type": "optional"
 		},
 		{
 			"title": "AADHAAR_CARD",
-			"value": "aadhaar_card"
+			"value": "aadhaar_card",
+			"type": "optional"
 		},
 		{
 			"title": "BANK_PASSBOOK",
-			"value": "bank_passbook"
+			"value": "bank_passbook",
+			"type": "required"
 		},
 		{
 			"title": "PHOTO",
-			"value": "photo"
+			"value": "photo",
+			"type": "required"
 		},
 		{
 			"title": "CAST_CERTIFICATE",
-			"value": "cast_certificate"
+			"value": "cast_certificate",
+			"type": "optional"
 		},
 		{
 			"title": "MOBILE_NUMBER",
-			"value": "mobile_number"
+			"value": "mobile_number",
+			"type": "required"
 		},
 		{
 			"title": "EMAIL_ID",
-			"value": "email_id"
+			"value": "email_id",
+			"type": "optional"
 		},
 		{
 			"title": "TRANSFER_CERTIFICATE",
-			"value": "transfer_certificate"
+			"value": "transfer_certificate",
+			"type": "optional"
 		},
 		{
 			"title": "MARKSHEET",
-			"value": "marksheet"
+			"value": "marksheet",
+			"type": "required"
 		},
 		{
-			"title": "TRANSFER_CERTIFICATE_WITH_CBO_SIGN",
-			"value": "transfer_certificate_with_cbo_sign"
+			"title": "TRANSFER_CERTIFICATE_WITH_CBEO_SIGN",
+			"value": "transfer_certificate_with_cbeo_sign",
+			"type": "optional"
 		},
 		{
-			"title": "MARKSHEET_WITH_CBO_SIGN",
-			"value": "marksheet_with_cbo_sign"
+			"title": "MARKSHEET_WITH_CBEO_SIGN",
+			"value": "marksheet_with_cbeo_sign",
+			"type": "optional"
 		},
 		{
 			"title": "AFFIDAVIT_FOR_NON_SCHOOLING_CERTIFICATION_NOTARY",
-			"value": "affidavit_for_non_schooling_certification_notary"
+			"value": "affidavit_for_non_schooling_certification_notary",
+			"type": "optional"
 		},
 		{
 			"title": "BIRTH_CERTIFICATE",
-			"value": "birth_certificate"
+			"value": "birth_certificate",
+			"type": "required"
 		}
 	],
 	"LEARNING_MOTIVATION": [
@@ -1375,8 +1384,8 @@
 			"value": "miscellaneous_activities_financial_literacy"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
-			"value": "miscellaneous_activities_linkages"
+			"title": "MISCELLANEOUS_ACTIVITIES_FORMATIVE_ASSESSMENT",
+			"value": "miscellaneous_activities_formative_assessment"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
@@ -1577,6 +1586,56 @@
 		{
 			"title": "EVENT_BATCH_NAME_BATCH_20",
 			"value": "batch_20"
+		}
+	],
+	"PCR_MISCELLANEOUS_ACTIVITIES": [
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
+			"value": "miscellaneous_activities_communication_skills"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
+			"value": "miscellaneous_activities_role_model_intervention"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
+			"value": "miscellaneous_activities_aspiration_mapping"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
+			"value": "miscellaneous_activities_digital_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
+			"value": "miscellaneous_activities_financial_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
+			"value": "miscellaneous_activities_linkages"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
+			"value": "miscellaneous_activities_family_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
+			"value": "miscellaneous_activities_role_model_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SCHOOL_TEACHER_VISIT",
+			"value": "miscellaneous_activities_school_teacher_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
+			"value": "miscellaneous_activities_e_pcp_activities"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_PCR",
+			"value": "miscellaneous_activities_pcr"
 		}
 	]
 }

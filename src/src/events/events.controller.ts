@@ -35,10 +35,14 @@ export class EventsController {
 		return this.eventsService.create(createEventDto, header, response);
 	}
 
-	@Get('/list')
-	@UseGuards(AuthGuard)
-	getEventsList(@Req() header: Request, @Res() response: Response) {
-		return this.eventsService.getEventsList(header, response);
+	@Post('/list')
+	@UseGuards(new AuthGuard())
+	getEventsList(
+		@Body() body: Body,
+		@Req() header: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.getEventsList(body, header, response);
 	}
 
 	@Post()
@@ -156,5 +160,15 @@ export class EventsController {
 		@Res() response: Response,
 	) {
 		return this.eventsService.campParamsCross(id, body, request, response);
+	}
+
+	@Patch('/admin/:id/start-exam')
+	@UseGuards(new AuthGuard())
+	eventStartExam(
+		@Param('id') id: any,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.eventsService.eventStartExam(id, request, response);
 	}
 }

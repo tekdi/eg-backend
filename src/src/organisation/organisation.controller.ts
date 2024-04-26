@@ -10,6 +10,7 @@ import {
 	Response,
 	UsePipes,
 	ValidationPipe,
+	Param,
 } from '@nestjs/common';
 import { OrganisationService } from './organisation.service';
 import { AuthGuard } from '../modules/auth/auth.guard';
@@ -19,40 +20,57 @@ export class OrganisationController {
 
 	@Post('/create')
 	@UsePipes(ValidationPipe)
-	@UseGuards(AuthGuard)
-	registerCamp(
-		@Body() body: any,
-		@Req() request: any,
-		@Res() response: Response,
-	) {
+	@UseGuards(new AuthGuard())
+	create(@Body() body: any, @Req() request: any, @Res() response: Response) {
 		return this.organisationService.create(body, request, response);
 	}
 
 	@Post('/list')
 	@UseGuards(AuthGuard)
 	getOrganisation(
-		@Body() request: Record<string, any>,
+		@Body() body: Record<string, any>,
 		@Req() req: any,
 		@Res() response: Response,
 	) {
-		return this.organisationService.getOrganisation(request, req, response);
+		return this.organisationService.getOrganisation(body, req, response);
 	}
 
-	// @Get(':id')
-	// findOne(@Param('id') id: string) {
-	// 	return this.organisationService.findOne(+id);
-	// }
+	@Post('/:id')
+	@UseGuards(new AuthGuard())
+	getOrganisationDetails(
+		@Req() req: any,
+		@Res() response: Response,
+		@Param('id') id: number,
+	) {
+		return this.organisationService.getOrganisationDetails(
+			req,
+			response,
+			id,
+		);
+	}
 
-	// @Patch(':id')
-	// update(
-	// 	@Param('id') id: string,
-	// 	@Body() updateOrganisationDto: UpdateOrganisationDto,
-	// ) {
-	// 	return this.organisationService.update(+id, updateOrganisationDto);
-	// }
+	@Get('/exist_list')
+	@UseGuards(new AuthGuard())
+	getOrganisationExists(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.organisationService.getOrganisationExists(
+			body,
+			req,
+			response,
+		);
+	}
 
-	// @Delete(':id')
-	// remove(@Param('id') id: string) {
-	// 	return this.organisationService.remove(+id);
-	// }
+	@Post('/add/existing')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	addExisting(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.organisationService.addExisting(body, request, response);
+	}
 }

@@ -21,7 +21,7 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import { BeneficiariesService } from './beneficiaries.service';
-
+import { IpMiddleware } from 'src/common/middlewares/ip.middleware';
 @Module({
 	imports: [
 		UserModule,
@@ -81,13 +81,16 @@ export class BeneficiariesModule implements NestModule {
 
 			);
 		*/
-
+		consumer
+			.apply(IpMiddleware)
+			.forRoutes('/beneficiaries/admin/list', '/beneficiaries/:id');
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/:id/is_enrollment_exists',
 				//{ path: '/beneficiaries/:id', method: RequestMethod.GET },
+
 				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
 				'/beneficiaries/register',
 				//'/beneficiaries/statusUpdate',
