@@ -604,6 +604,221 @@ export class ExamService {
 		});
 	}
 
+	async createExamResult(body: any, request: any, response: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		let examResultBody = body;
+
+		let examResult = await this.ExamResultUpsert(
+			examResultBody,
+			academic_year_id,
+			program_id,
+		);
+
+		if (examResult) {
+			return response.status(200).json({
+				data: examResult,
+			});
+		} else {
+			return response.status(500).json({
+				data: [],
+			});
+		}
+	}
+
+	async ExamResultUpsert(examResultBody, academic_year_id, program_id) {
+		let data;
+		let vquery;
+		let vresponse;
+		let result: { subject?: any[] } = {}; // Define the type of result
+		let subjects_response = [];
+
+		let mutation_query;
+		let set_update;
+		let exam_result_subjects_id;
+		let exam_result_response;
+
+		const { subject, ...exam_result } = examResultBody;
+
+		// Check for existing exam result data
+
+		vquery = `
+			query MyQuery {
+				exam_results(where: {user_id: {_eq: ${exam_result?.user_id}}, academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, board_id: {_eq:${exam_result?.board_id}}}){
+					id
+				}
+			}
+		`;
+
+		vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+
+		let exam_result_id = vresponse?.data?.exam_results?.[0]?.id;
+
+		set_update = exam_result_id ? 1 : 0; // Set the update flag
+
+		if (set_update == 1) {
+			mutation_query = `
+				mutation UpdateExamResults {
+					update_exam_results_by_pk(pk_columns: {id: ${exam_result_id}}, _set: {
+			`;
+		} else {
+			mutation_query = `
+				mutation CreateExamResults {
+					insert_exam_results_one(object: {
+						program_id: ${program_id},
+						academic_year_id: ${academic_year_id},
+			`;
+		}
+
+		Object.keys(exam_result).forEach((key) => {
+			if (exam_result[key] !== null && exam_result[key] !== '') {
+				if (
+					key == 'user_id' ||
+					key == 'board_id' ||
+					key == 'total_marks'
+				) {
+					mutation_query += `${key}: ${exam_result[key]}, `;
+				} else {
+					mutation_query += `${key}: "${exam_result[key]}", `;
+				}
+			}
+		});
+
+		mutation_query = mutation_query.slice(0, -2); // Remove trailing comma and space
+
+		mutation_query += `
+					}) {
+						id
+						user_id
+						board_id
+						enrollment
+						candidate
+						father
+						mother
+						dob
+						course_class
+						exam_year
+						total_marks
+						final_result
+					}
+				}
+			`;
+
+		data = {
+			query: `${mutation_query}`,
+			variables: {},
+		};
+
+		const query_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		exam_result_id =
+			set_update == 1
+				? query_response?.data?.data?.update_exam_results_by_pk?.id
+				: query_response?.data?.data?.insert_exam_results_one?.id;
+
+		exam_result_response =
+			set_update == 1
+				? query_response?.data?.data?.update_exam_results_by_pk
+				: query_response?.data?.data?.insert_exam_results_one;
+
+		result = { ...exam_result_response }; // Set exam result data directly
+
+		// Process subjects array
+
+		if (subject?.length > 0) {
+			result.subject = []; // Initialize subject array
+
+			for (const schedule of subject) {
+				data = {
+					query: `
+						query MyQuery {
+							exam_subject_results(where: {exam_results_id: {_eq:${exam_result_id}}, subject_code: {_eq:"${schedule?.subject_code}"}}) {
+								id
+							}
+						}
+					`,
+				};
+
+				vresponse =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						data,
+					);
+
+				exam_result_subjects_id =
+					vresponse?.data?.data?.exam_subject_results?.[0]?.id;
+
+				let query;
+
+				if (exam_result_subjects_id) {
+					query = `
+						mutation UpdateExamResultSubjects {
+							update_exam_subject_results_by_pk(pk_columns: {id: ${exam_result_subjects_id}}, _set: {
+					`;
+				} else {
+					query = `
+						mutation CreateExamResultSubjects {
+							insert_exam_subject_results_one(object: {
+								exam_results_id:${exam_result_id},
+					`;
+				}
+
+				Object.keys(schedule).forEach((key) => {
+					if (schedule[key] !== null && schedule[key] !== '') {
+						if (key == 'max_marks') {
+							query += `${key}: ${schedule[key]}, `;
+						} else {
+							query += `${key}: "${schedule[key]}", `;
+						}
+					}
+				});
+
+				query = query.slice(0, -2); // Remove trailing comma and space
+
+				query += `
+							}) {
+								id
+								exam_results_id
+								subject_name
+								subject_code
+								max_marks
+								theory
+								practical
+								tma_internal_sessional
+								total
+								result
+							}
+						}
+					`;
+
+				data = {
+					query: `${query}`,
+					variables: {},
+				};
+
+				const query_response =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						data,
+					);
+
+				const updatedOrCreatedEvent =
+					query_response?.data?.data?.[
+						exam_result_subjects_id
+							? 'update_exam_subject_results_by_pk'
+							: 'insert_exam_subject_results_one'
+					];
+
+				if (updatedOrCreatedEvent) {
+					result.subject.push(updatedOrCreatedEvent); // Push subject data directly to result
+				}
+			}
+		}
+
+		return result; // Return the modified result object
+	}
+
 	async getCampRegisteredLearners(body, request, response) {
 		let user_id = request?.mw_userid;
 		let data;
