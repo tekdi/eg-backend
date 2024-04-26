@@ -560,7 +560,7 @@ export class ExamService {
 		su.name,
 		bo.id AS boardid,
 		bo.name AS boardname,
-		(SELECT COUNT(id) FROM program_beneficiaries WHERE EXISTS (SELECT 1 FROM json_array_elements_text(subjects::json) AS item WHERE item::text = CAST(su.id AS TEXT))) AS total_students,
+		(SELECT COUNT(id) FROM program_beneficiaries WHERE facilitator_id = ${user_id} AND EXISTS (SELECT 1 FROM json_array_elements_text(subjects::json) AS item WHERE item::text = CAST(su.id AS TEXT))) AS total_students,
 		(SELECT COUNT(id) FROM attendance att WHERE att.context_id = events.id AND att.context = 'events' AND att.status = 'present') AS present,
 		(SELECT COUNT(id) FROM attendance att WHERE att.context_id = events.id AND att.context = 'events' AND att.status = 'absent') AS absent
 	FROM 
@@ -592,8 +592,8 @@ export class ExamService {
 		// Calculate not_marked for each instance
 		attendance_report_result.forEach((report) => {
 			report.not_marked = (
-				report.total_students -
-				(report.present + report.absent)
+				parseInt(report.total_students) -
+				(parseInt(report.present) + parseInt(report.absent))
 			)?.toString();
 		});
 
