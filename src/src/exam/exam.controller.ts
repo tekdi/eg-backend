@@ -109,4 +109,15 @@ export class ExamController {
 	) {
 		return this.examService.getAttendanceReport(body, request, response);
 	}
+
+	@Post('result/search')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getExamResult(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.getExamResult(body, request, response);
+	}
 }

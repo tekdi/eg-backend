@@ -603,4 +603,71 @@ export class ExamService {
 			data: attendance_report_result,
 		});
 	}
+
+	async getExamResult(body: any, request: any, response: any) {
+		let data;
+		let validation_response;
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+
+		data = {
+			query: `query MyQuery {
+				exam_results(where: {user_id: {_eq:${body?.user_id}}, program_id: {_eq:${program_id}}, board_id:{_eq:${body?.board_id}},academic_year_id: {_eq:${academic_year_id}}, enrollment: {_eq: "${body?.enrollment}"}}) {
+				  id
+				  program_id
+				  academic_year_id
+				  board_id
+				  enrollment
+				  candidate
+				  father
+				  mother
+				  dob
+				  course_class
+				  exam_year
+				  total_marks
+				  final_result
+				  exam_subject_results {
+					id
+					exam_results_id
+					subject_name
+					subject_code
+					max_marks
+					theory
+					practical
+					tma_internal_sessional
+					total
+					result
+				  }
+				  document_id
+				  document {
+					id
+					context
+					context_id
+					path
+				  }
+				}
+			  }
+			  
+			  `,
+		};
+
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		let newQdata = validation_response?.data?.data?.exam_results;
+
+		if (newQdata?.length > 0) {
+			return response.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata,
+			});
+		} else {
+			return response.status(404).json({
+				success: true,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
 }
