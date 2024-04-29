@@ -982,4 +982,88 @@ export class ExamService {
 			});
 		}
 	}
+
+	async getExamResultReport(body: any, request: any, response: any) {
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+		let user_id = request?.mw_userid;
+		let data;
+		let result;
+		let validation_response;
+		let sql;
+
+		data = {
+			query: `query MyQuery {
+				program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, status: {_eq: "registered_in_camp"}}){
+				  id
+				  user_id
+				}
+			  }
+			  		  
+			  
+			  `,
+		};
+
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		result = validation_response?.data?.data?.program_beneficiaries;
+
+		let total_learners = result?.length;
+
+		const ids = result.map((beneficiary) => beneficiary?.user_id);
+
+		// Map each element in ids array to a string with parentheses
+
+		const formattedIds = `(${ids.join(',')})`;
+		console.log(formattedIds); // Output: (10,19)
+
+		sql = ` SELECT 
+    
+		SUM(CASE WHEN er.final_result = '10th_passed' THEN 1 ELSE 0 END) AS "tenth_passed",
+		SUM(CASE WHEN er.final_result = 'pragati_syc' THEN 1 ELSE 0 END) AS pragati_syc
+		
+	FROM 
+		program_beneficiaries pb
+	LEFT JOIN 
+		exam_results er ON pb.user_id = er.user_id 
+	WHERE 
+		pb.facilitator_id = ${user_id} 
+		AND pb.academic_year_id = ${academic_year_id}
+		AND pb.program_id = ${program_id}
+		AND er.user_id IN ${formattedIds}
+	
+		
+	`;
+
+		const result_report_data = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
+
+		if (result_report_data == undefined) {
+			return response.status(404).json({
+				status: false,
+				message: 'Data not found',
+				data: [],
+			});
+		}
+
+		let result_report_result =
+			this.hasuraServiceFromServices.getFormattedData(result_report_data);
+
+		// Calculate not_marked for each instance
+		result_report_result.forEach((report) => {
+			report.total_learners = total_learners?.toString();
+			report.not_uploaded = (
+				parseInt(total_learners) -
+				(parseInt(report.tenth_passed) + parseInt(report.pragati_syc))
+			)?.toString();
+		});
+
+		return response.status(200).json({
+			status: true,
+			message: 'Data retrieved successfully',
+			data: result_report_result,
+		});
+	}
 }
