@@ -365,6 +365,43 @@ export class HasuraService {
 		);
 	}
 
+	public async updateWithVariable(
+		id: number,
+		tableName: String,
+		item: Object,
+		onlyFields: any = [],
+		fields: any = [],
+		props: any = {},
+	) {
+		return this.getResponce(
+			await lastValueFrom(
+				this.httpService
+					.post(
+						this.url,
+
+						this.qgService.updateWithVariable(
+							id,
+							tableName,
+							item,
+							onlyFields,
+							fields,
+							props,
+						),
+
+						{
+							headers: {
+								'x-hasura-admin-secret':
+									process.env.HASURA_ADMIN_SECRET,
+								'Content-Type': 'application/json',
+							},
+						},
+					)
+					.pipe(map((res) => res.data)),
+			),
+			tableName,
+		);
+	}
+
 	public async delete(
 		tableName: string,
 		item: Object,
