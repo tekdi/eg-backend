@@ -238,26 +238,6 @@ export class BeneficiariesController {
 		@Req() req: any,
 		@Res() response: Response,
 	) {
-		if (req.mw_roles?.includes('program_owner')) {
-			req.parent_ip_id = req.mw_ip_user_id;
-		} else {
-			const user = await this.userService.ipUserInfo(req);
-			if (req.mw_roles?.includes('staff')) {
-				req.parent_ip_id =
-					user?.data?.program_users?.[0]?.organisation_id;
-			} else if (req.mw_roles?.includes('facilitator')) {
-				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
-			}
-		}
-
-		if (!req.parent_ip_id) {
-			return response.status(404).send({
-				success: false,
-				message: 'Invalid Ip',
-				data: {},
-			});
-		}
-
 		return this.beneficiariesService.findOne(+id, response);
 	}
 
