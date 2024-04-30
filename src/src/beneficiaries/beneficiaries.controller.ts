@@ -242,11 +242,31 @@ export class BeneficiariesController {
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read', 'read.own'])
-	async findOne(
+	public async findOne(
 		@Param('id') id: string,
-		@Req() request: any,
+		@Req() req: any,
 		@Res() response: Response,
 	) {
+		if (req.mw_roles?.includes('program_owner')) {
+			req.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			if (req.mw_roles?.includes('staff')) {
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			} else if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			}
+		}
+
+		if (!req.parent_ip_id) {
+			return response.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
+
 		return this.beneficiariesService.findOne(+id, response);
 	}
 
@@ -591,6 +611,22 @@ export class BeneficiariesController {
 		@Res() response: any,
 	) {
 		return this.beneficiariesService.notRegisteredBeneficiaries(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/update-scholarship/:id')
+	@UseGuards(new AuthGuard())
+	public async updateScholarshipId(
+		@Param('id') id: string,
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.updateScholarshipId(
+			id,
 			body,
 			request,
 			response,

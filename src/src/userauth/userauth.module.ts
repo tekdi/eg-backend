@@ -16,6 +16,8 @@ import { Method } from '../common/method/method';
 import { AcknowledgementModule } from '../modules/acknowledgement/acknowledgement.module';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
+import { S3Module } from 'src/services/s3/s3.module';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 
 @Module({
 	imports: [
@@ -25,9 +27,10 @@ import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 		HelperModule,
 		UserModule,
 		AcknowledgementModule,
+		S3Module,
 	],
 	controllers: [UserauthController],
-	providers: [UserauthService, AuthService, Method],
+	providers: [UserauthService, UploadFileService, AuthService, Method],
 	exports: [UserauthService],
 })
 export class UserauthModule implements NestModule {

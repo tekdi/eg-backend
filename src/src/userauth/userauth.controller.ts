@@ -3,19 +3,21 @@ import {
 	Controller,
 	Get,
 	Param,
-	Patch,
 	Post,
 	Req,
 	Res,
 	UseGuards,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
 	Response,
+	Request,
+	UploadedFile,
+	UseInterceptors,
 } from '@nestjs/common';
 
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { UserauthService } from './userauth.service';
+import { FileInterceptor } from '@nestjs/platform-express/multer';
 
 @Controller('userauth')
 export class UserauthController {
@@ -46,14 +48,40 @@ export class UserauthController {
 		return this.userauthService.getUserInfoDetails(request, response);
 	}
 
+	// @Post('/onboarding')
+	// @UsePipes(ValidationPipe)
+	// @UseGuards(new AuthGuard())
+	// public async userOnboarding(
+	// 	@Body() body: Body,
+	// 	@Res() response: Response,
+	// 	@Req() request: Request,
+	// ) {
+	// 	return this.userauthService.userOnboarding(body, response, request);
+	// }
+
 	@Post('/onboarding')
+	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
-	@UseGuards(AuthGuard)
+	@UseInterceptors(FileInterceptor('jsonpayload')) //  'jsonpayload' is the name of the field for the uploaded file
 	public async userOnboarding(
-		@Body() body: Body,
+		@UploadedFile() file: Express.Multer.File,
 		@Res() response: Response,
 		@Req() request: Request,
 	) {
-		return this.userauthService.userOnboarding(body, response, request);
+		return this.userauthService.userOnboarding(file, response, request);
+	}
+
+	@Get('/beneficiary/user-info/:id')
+	@UsePipes(ValidationPipe)
+	public async getUserInfoDetailsForBeneficiary(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.userauthService.getUserInfoDetailsForBeneficiary(
+			request,
+			response,
+			id,
+		);
 	}
 }

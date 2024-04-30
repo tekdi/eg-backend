@@ -828,7 +828,18 @@ export class BeneficiariesService {
 		const user = await this.userService.ipUserInfo(req);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
+		if (req.mw_roles?.includes('program_owner')) {
+			req.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			if (req.mw_roles?.includes('staff')) {
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			} else if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			}
+		}
+		if (!req.parent_ip_id) {
 			return resp.status(404).send({
 				success: false,
 				message: 'Invalid Ip',
@@ -838,18 +849,18 @@ export class BeneficiariesService {
 
 		const sortType = body?.sortType ? body?.sortType : 'desc';
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 		let status = body?.status;
 		let filterQueryArray = [];
 
 		if (body?.reassign) {
 			filterQueryArray.push(
-				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" } ,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} } } }`,
+				`{_not: {group_users: {status: {_eq: "active"}, group: {status: {_in: ["registered", "camp_ip_verified", "change_required"]}}}}},{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${req.parent_ip_id}" } ,program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} } } }`,
 			);
 		} else {
 			filterQueryArray.push(
-				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} }},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}  } }`,
+				`{ program_beneficiaries: {facilitator_user: { program_faciltators: { parent_ip: { _eq: "${req.parent_ip_id}" },program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}} }},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}  } }`,
 			);
 		}
 
@@ -1607,6 +1618,7 @@ export class BeneficiariesService {
 				parent_support
 				education_10th_date
 				education_10th_exam_year
+				scholarship_order_id
 			  }
 			  program_users {
 				organisation_id
@@ -2083,32 +2095,30 @@ export class BeneficiariesService {
 
 		if (body.enrollment_verification_status == 'pending') {
 			const data = {
-				query: `query searchById {
-					users_by_pk(id: ${updatedUser?.program_beneficiaries?.user_id}) {
-						id
-						program_beneficiaries{
-							payment_receipt_document_id
-							document {
-								id
-								name
-						  }
-					  }
+				query: `query MyQuery {
+					documents(where: {doument_type: {_eq: "enrollment_receipt"},user_id:{_eq:${updatedUser?.program_beneficiaries?.user_id}}}){
+					  id
+					  name
 					}
-			}`,
+				  }
+				  `,
 			};
 
 			const response = await this.hasuraServiceFromServices.getData(data);
-			const documentDetails =
-				response?.data?.users_by_pk?.program_beneficiaries[0]?.document;
-			if (documentDetails?.id) {
+			const documentDetails = response?.data?.documents;
+			if (documentDetails?.length > 0) {
 				//delete document from documnet table
-				await this.hasuraService.delete('documents', {
-					id: documentDetails?.id,
-				});
-			}
-			if (documentDetails?.name) {
-				//delete document from s3 bucket
-				await this.s3Service.deletePhoto(documentDetails?.name);
+				// await this.hasuraService.delete('documents', {
+				// 	id: documentDetails?.id,
+				// });
+				// if (documentDetails?.name) {
+				// 	//delete document from s3 bucket
+				// 	await this.s3Service.deletePhoto(documentDetails?.name);
+				// }
+
+				for (const documentDetail of documentDetails) {
+					await this.uploadFileService.DeleteFile(documentDetail);
+				}
 			}
 		}
 
@@ -3063,33 +3073,33 @@ export class BeneficiariesService {
 					myRequest['enrollment_aadhaar_no'] = null;
 					myRequest['is_eligible'] = null;
 					const data = {
-						query: `query searchById {
-							users_by_pk(id: ${req.id}) {
-								id
-								program_beneficiaries{
-									payment_receipt_document_id
-									document {
-										id
-										name
-								  }
-							  }
-							}
-					}`,
+						query: `query MyQuery {
+					documents(where: {doument_type: {_eq: "enrollment_receipt"},user_id:{_eq:${req?.id}}}){
+					  id
+					  name
+					}
+				  }
+				  `,
 					};
+
 					const response =
 						await this.hasuraServiceFromServices.getData(data);
-					const documentDetails =
-						response?.data?.users_by_pk?.program_beneficiaries[0]
-							?.document;
-					if (documentDetails?.id) {
+					const documentDetails = response?.data?.documents;
+					if (documentDetails?.length > 0) {
 						//delete document from documnet table
-						await this.hasuraService.delete('documents', {
-							id: documentDetails?.id,
-						});
-					}
-					if (documentDetails?.name) {
-						//delete document from s3 bucket
-						await this.s3Service.deletePhoto(documentDetails?.name);
+						// await this.hasuraService.delete('documents', {
+						// 	id: documentDetails?.id,
+						// });
+						// if (documentDetails?.name) {
+						// 	//delete document from s3 bucket
+						// 	await this.s3Service.deletePhoto(documentDetails?.name);
+						// }
+
+						for (const documentDetail of documentDetails) {
+							await this.uploadFileService.DeleteFile(
+								documentDetail,
+							);
+						}
 					}
 					const status = await this.statusUpdate(
 						{
@@ -3115,15 +3125,34 @@ export class BeneficiariesService {
 						request,
 					);
 				}
-				await this.hasuraService.q(
-					tableName,
-					{
-						...myRequest,
-						id: programDetails?.id ? programDetails.id : null,
-					},
-					userArr,
-					update,
-				);
+				const res =
+					await this.hasuraServiceFromServices.updateWithVariable(
+						programDetails?.id,
+						'program_beneficiaries',
+						{
+							...myRequest,
+						},
+						userArr,
+						update,
+						{
+							variable: [
+								{
+									key: 'payment_receipt_document_id',
+									type: 'jsonb',
+								},
+							],
+						},
+					);
+
+				// await this.hasuraService.q(
+				// 	tableName,
+				// 	{
+				// 		...myRequest,
+				// 		id: programDetails?.id ? programDetails.id : null,
+				// 	},
+				// 	userArr,
+				// 	update,
+				// );
 				break;
 			}
 
@@ -4036,5 +4065,64 @@ query MyQuery {
 		} else {
 			return true;
 		}
+	}
+
+	//Update scolarship_order_id
+	public async updateScholarshipId(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		const learner_id = id;
+		const scholarship_order_id = body?.scholarship_order_id;
+		if (!scholarship_order_id || scholarship_order_id === '') {
+			return response.status(422).json({
+				success: false,
+				message: 'required scholarship Id!',
+				data: {},
+			});
+		}
+
+		let check_id = {
+			query: `query MyQuery {
+				core_beneficiaries(where: {user_id: {_eq: ${learner_id}}}){
+					id
+					user_id
+				}
+			}`,
+		};
+		const response_data = await this.hasuraServiceFromServices.getData(
+			check_id,
+		);
+		if (!response_data || !response_data.data?.core_beneficiaries[0]) {
+			return response.status(422).json({
+				success: false,
+				message: 'Beneficiaries ID is not exists!',
+				data: {},
+			});
+		}
+
+		let data = {
+			query: `mutation MyMutation {
+			update_core_beneficiaries(where: {user_id: {_eq: ${learner_id}}}, _set: {scholarship_order_id: ${scholarship_order_id}}) {
+				affected_rows
+				returning {
+					scholarship_order_id
+					id
+					user_id
+				}
+			}
+		}`,
+		};
+		const newResult = await this.hasuraServiceFromServices.getData(data);
+		const updateResult =
+			newResult?.data?.update_core_beneficiaries?.returning[0];
+
+		return response.status(200).json({
+			success: true,
+			message: 'Beneficiaries Scholarship Updated',
+			data: updateResult || {},
+		});
 	}
 }
