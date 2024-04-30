@@ -90,7 +90,6 @@ export class BeneficiariesModule implements NestModule {
 				'/beneficiaries/admin/list/duplicates-by-aadhaar',
 				'/beneficiaries/:id/is_enrollment_exists',
 				//{ path: '/beneficiaries/:id', method: RequestMethod.GET },
-
 				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
 				'/beneficiaries/register',
 				//'/beneficiaries/statusUpdate',

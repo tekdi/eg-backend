@@ -233,9 +233,9 @@ export class BeneficiariesController {
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
 	@AclGuardData('beneficiary', ['read', 'read.own'])
-	async findOne(
+	public async findOne(
 		@Param('id') id: string,
-		@Req() request: any,
+		@Req() req: any,
 		@Res() response: Response,
 	) {
 		return this.beneficiariesService.findOne(+id, response);
