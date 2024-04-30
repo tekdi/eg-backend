@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { SessionsService } from './sessions.service';
+import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 
 @Controller('sessions')
 export class SessionsController {
@@ -22,6 +24,8 @@ export class SessionsController {
 	@Post('/add')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('session', ['create'])
 	createSession(
 		@Body() body: any,
 		@Req() request: any,
@@ -33,6 +37,8 @@ export class SessionsController {
 	@Patch('/update/:id')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('session', ['edit.own'])
 	updateSession(
 		@Body() body: any,
 		@Req() request: any,
@@ -45,6 +51,8 @@ export class SessionsController {
 	@Get('/list/:id')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('session', ['read.own'])
 	getSessionsListByCampId(
 		@Req() request: any,
 		@Res() response: Response,
@@ -60,6 +68,8 @@ export class SessionsController {
 	@Post('/details/:id')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('session', ['read.own'])
 	getSessionDetailsById(
 		@Req() request: any,
 		@Res() response: Response,
@@ -77,6 +87,8 @@ export class SessionsController {
 	@Post('/get-one/:id')
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('session', ['read.own'])
 	getSessionDetailsByIdGetOne(
 		@Req() request: any,
 		@Res() response: Response,

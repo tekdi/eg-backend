@@ -19,6 +19,8 @@ import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { AcceptEventDto } from './dto/accept-event.dto';
 import { CreateEventDto } from './dto/create-event.dto';
 import { EventsService } from './events.service';
+import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 @UseInterceptors(SentryInterceptor)
 @Controller('events')
 export class EventsController {
@@ -27,6 +29,8 @@ export class EventsController {
 	@Post('/create')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['create'])
 	create(
 		@Body() createEventDto: CreateEventDto,
 		@Req() header: Request,
@@ -35,8 +39,10 @@ export class EventsController {
 		return this.eventsService.create(createEventDto, header, response);
 	}
 
-	@Post('/list')
-	@UseGuards(new AuthGuard())
+	@Get('/list')
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read', 'read.own'])
 	getEventsList(
 		@Body() body: Body,
 		@Req() header: Request,
@@ -46,18 +52,25 @@ export class EventsController {
 	}
 
 	@Post()
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read', 'read.own'])
 	findAll(@Body() request: Record<string, any>) {
 		return this.eventsService.findAll(request);
 	}
 
 	@Get(':id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read.own'])
 	findOne(@Param('id') id: string, @Res() response: Response) {
 		return this.eventsService.findOne(+id, response);
 	}
 
 	@Patch(':id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['edit.own'])
 	update(
 		@Param('id') id: string,
 		@Req() header: Request,
@@ -70,6 +83,8 @@ export class EventsController {
 	@Patch('/accept/:id')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['edit.own'])
 	updateEventAcceptDetail(
 		@Param('id') id: string,
 		@Body() request: AcceptEventDto,
@@ -88,16 +103,20 @@ export class EventsController {
 		@Param('id') id: string,
 		@Body() request: string,
 		@Res() response: Response,
+		@Req() req: any,
 	) {
 		return this.eventsService.updateAttendanceDetail(
 			+id,
 			request,
 			response,
+			req,
 		);
 	}
 
 	@Delete(':id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['delete.own'])
 	remove(
 		@Param('id') id: string,
 		@Req() header: Request,
@@ -108,6 +127,8 @@ export class EventsController {
 
 	@Post('/:id/get-participants')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read.own'])
 	getParticipants(
 		@Req() req: any,
 		@Param('id') id: any,
@@ -120,6 +141,8 @@ export class EventsController {
 	@Post('/add/attendance')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['create'])
 	createEventAttendance(
 		@Req() request: any,
 		@Body() body: any,
@@ -131,9 +154,11 @@ export class EventsController {
 			response,
 		);
 	}
-
+	//the user_id being passed here will be of staff and event's access is given to staff so it cannot access its own value and resulting in false
 	@Get('/:id/get-events-by-user_id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read.own'])
 	getEventsListByUserId(
 		@Req() req: any,
 		@Param('id') id: any,
@@ -144,6 +169,9 @@ export class EventsController {
 	}
 
 	@Post('/camp-question-list')
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('event', ['read.own'])
 	campQuestionList(
 		@Body() body: string,
 		@Req() request: Request,
@@ -153,6 +181,9 @@ export class EventsController {
 	}
 
 	@Post('/questionset/hierarchy/:id')
+	@UseGuards(AuthGuard)
+	// @UseGuards(AclGuard)
+	// @AclGuardData('event',[''])
 	campParamsCross(
 		@Param('id') id: any,
 		@Body() body: string,

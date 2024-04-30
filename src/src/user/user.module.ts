@@ -8,6 +8,7 @@ import { HelperModule } from '../helper/helper.module';
 import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/hasura.module';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 
 @Module({
 	imports: [
@@ -16,7 +17,7 @@ import { UserService } from './user.service';
 		HasuraModuleFromServices,
 		KeycloakModule,
 	],
-	providers: [UserService, Method],
+	providers: [UserService, Method, AclHelper],
 	controllers: [UserController],
 	exports: [UserService],
 })

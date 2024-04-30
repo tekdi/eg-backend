@@ -13,6 +13,7 @@ import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
 import * as moment from 'moment';
+import { AclHelper } from 'src/common/helpers/acl.helper';
 @Injectable()
 export class CampService {
 	constructor(
@@ -26,6 +27,7 @@ export class CampService {
 		private campcoreservice: CampCoreService,
 		private beneficiariesService: BeneficiariesService,
 		private beneficiariesCoreService: BeneficiariesCoreService,
+		private aclHelper: AclHelper,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -377,11 +379,43 @@ export class CampService {
 	}
 
 	public async campList(body: any, req: any, resp) {
+		//ownership check
+
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForCamp(req);
+
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_faciltators')) {
+			relationQuery = `${ownershipWhereConditions['program_faciltators']}`; // ['program_faciltators'] = `, user_id: {_eq:${req.mw_userid}}`
+		} else if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; // '[program_users'] = `user:{program_faciltators:{parent_ip:{_eq:"${parent_ip"}}}`
+		}
+		let gqlQuery = {
+			query: `query MyQuery {
+				ownership: camps_aggregate(where: {group_users: {group: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}, user: {}}, member_type: {_eq: "owner"}, status: {_eq: "active"} ${relationQuery}}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }
+			  
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
+		const member_type = 'owner';
+		const status = 'active';
 		const facilitator_id = req.mw_userid;
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
-		let member_type = 'owner';
-		let status = 'active';
 
 		let qury = `query MyQuery {
 			camps:camps(where: {group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, user: {}, member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}},type:{_eq:"main"}},order_by: {id: asc}) {
@@ -2295,6 +2329,43 @@ export class CampService {
 	}
 
 	async getCampList(body: any, req: any, resp: any) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForCamp(req);
+
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_faciltators')) {
+			relationQuery = `${ownershipWhereConditions['program_faciltators']}`; // ['program_faciltators'] = `, user_id: {_eq:${req.mw_userid}}`
+		} else if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; // '[program_users'] = `user:{program_faciltators:{parent_ip:{_eq:"${parent_ip"}}}`
+		} else {
+			return true;
+		}
+		let gqlQuery = {
+			query: `query MyQuery {
+				ownership: camps_aggregate(where: {group: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}, status: {_in: ["registered", "inactive", "camp_ip_verified", "change_required"]}}, group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"}, ${relationQuery}}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }
+			  
+			  `,
+		};
+		console.log(gqlQuery.query);
+
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		console.log('COUNT ->>', result.data.ownership.aggregate.count);
+
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
+		const user = await this.userService.ipUserInfo(req);
+		if (!user?.data?.program_users?.[0]?.organisation_id) {
 		if (req.mw_roles?.includes('program_owner')) {
 			req.parent_ip_id = req.mw_ip_user_id;
 		} else {
@@ -2330,6 +2401,7 @@ export class CampService {
 			});
 		}
 	}
+}
 
 	async getCampDetailsForAdmin(id: any, req: any, resp: any) {
 		let camp_id = id;
@@ -2649,6 +2721,39 @@ export class CampService {
 	}
 
 	async getCampAttendanceById(id, body, req, res) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					attendance_aggregate(where: {context_id:{_eq:${id}}, created_by: {_eq:${req.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }`,
+			};
+		}
+		const result = await this.hasuraServiceFromServices.getData(gqlquery);
+		if (
+			!(
+				result?.data &&
+				result.data.attendance_aggregate.aggregate.count > 0
+			)
+		) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
+
 		let camp_attendance_body = { ...body };
 
 		const setStartAndEndDate = () => {
@@ -2724,6 +2829,39 @@ export class CampService {
 	}
 
 	async getAttendanceList(body, req, res) {
+		const user_roles = req.mw_roles;
+		let gqlquery;
+		if (user_roles.includes('staff')) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (user_roles.includes('facilitator')) {
+			gqlquery = {
+				query: `query MyQuery {
+					attendance_aggregate(where: {updated_by: {_eq: ${req.mw_userid}}}) {
+					  aggregate {
+						count
+					  }
+					}
+				  }
+				  `,
+			};
+		}
+		const result = await this.hasuraServiceFromServices.getData(gqlquery);
+		if (
+			!(
+				result?.data &&
+				result.data.attendance_aggregate.aggregate.count > 0
+			)
+		) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		let attendance_body = { ...body };
 
 		if (attendance_body?.start_date && attendance_body?.end_date) {
@@ -2753,6 +2891,7 @@ export class CampService {
 			});
 		}
 	}
+
 
 	public async getStatuswiseCount(req: any, body: any, resp: any) {
 		const status = this.enumService
@@ -2817,6 +2956,35 @@ export class CampService {
 	}
 
 	async getFilter_By_Camps(body: any, req: any, resp: any) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForCamp(req);
+
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_faciltators')) {
+			relationQuery = `${ownershipWhereConditions['program_faciltators']}`; // ['program_faciltators'] = `, user_id: {_eq:${req.mw_userid}}`
+		} else if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; // '[program_users'] = `user:{program_faciltators:{parent_ip:{_eq:"${parent_ip"}}}`
+		} else {
+			return true;
+		}
+		let gqlQuery = {
+			query: `query MyQuery {
+				ownership : users_aggregate(where: {_and: [{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq: ${req.mw_program_id}}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, status: {_in: ["registered", "inactive", "camp_ip_verified", "change_required"]}}, ${relationQuery}}}]}) {
+				  aggregate {
+					count
+				  }
+				}
+				}`,
+		};
+		console.log(gqlQuery.query);
+		const response = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(response?.data && response.data.ownership.aggregate.count > 0)) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return resp.status(404).send({
@@ -3460,6 +3628,35 @@ export class CampService {
 	}
 
 	async getAvailableFacilitatorList(body: any, req: any, resp: any) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForCamp(req);
+
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_faciltators')) {
+			relationQuery = `${ownershipWhereConditions['program_faciltators']}`; // ['program_faciltators'] = `, user_id: {_eq:${req.mw_userid}}`
+		} else if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; // '[program_users'] = `user:{program_faciltators:{parent_ip:{_eq:"${parent_ip"}}}`
+		} else {
+			return true;
+		}
+		let gqlQuery = {
+			query: `query MyQuery {
+				ownership : users_aggregate(where: {_and: [], program_faciltators: {program_id: {_eq: ${req.mw_program_id}}, academic_year_id: {_eq: ${req.mw_academic_year_id}}, status: {_in: ["selected_prerak", "selected_for_onboarding"]}, ${relationQuery}}, references: {context: {_eq: "community.user"}}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }`,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return resp.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
@@ -3654,6 +3851,30 @@ export class CampService {
 		req: any,
 		res: any,
 	) {
+		const camp_id_query = {
+			query: `query MyQuery {
+				camp_days_activities_tracker(where: {id: {_eq: ${id}}}) {
+				  camp_id
+				}
+			  }
+			  `,
+		};
+
+		const camp_id_result = await this.hasuraServiceFromServices.getData(
+			camp_id_query,
+		);
+
+		const camp_id =
+			camp_id_result?.data.camp_days_activities_tracker[0].camp_id;
+		const result = await this.aclHelper.doIHaveAccess(req, 'camp', camp_id);
+
+		if (!result) {
+			return res.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		let misc_activities = body.misc_activities;
 		switch (body?.edit_page_type) {
 			case 'edit_mood': {
@@ -4590,7 +4811,36 @@ export class CampService {
 			});
 		}
 	}
+	private async ownershipCheckForCamps(req) {
+		const ownershipWhereConditions =
+			await this.aclHelper.getOwnershipQueryConditionsForCamp(req);
 
+		let relationQuery;
+		if (ownershipWhereConditions.hasOwnProperty('program_faciltators')) {
+			relationQuery = `${ownershipWhereConditions['program_faciltators']}`; // ['program_faciltators'] = `, user_id: {_eq:${req.mw_userid}}`
+		} else if (ownershipWhereConditions.hasOwnProperty('program_users')) {
+			relationQuery = `${ownershipWhereConditions['program_users']}`; // '[program_users'] = `user:{program_faciltators:{parent_ip:{_eq:"${parent_ip"}}}`
+		} else {
+			return true;
+		}
+		let gqlQuery = {
+			query: `query MyQuery {
+				ownership: camps_aggregate(where: {group: {academic_year_id: {_eq: ${req.mw_academic_year_id}}, program_id: {_eq: ${req.mw_program_id}}}, group_users: {member_type: {_eq: "owner"}, status: {_eq: "active"} ${relationQuery}}}) {
+				  aggregate {
+					count
+				  }
+				}
+			  }
+			  `,
+		};
+		console.log(gqlQuery.query);
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+		if (!(result?.data && result.data.ownership.aggregate.count > 0)) {
+			return false;
+		} else {
+			return true;
+		}
+	}
 	async getCampLearnersListForEPCP(response: any, request: any) {
 		let program_id = request?.mw_program_id;
 		let academic_year_id = request?.mw_academic_year_id;

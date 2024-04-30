@@ -62,7 +62,10 @@ export class BeneficiariesController {
 
 	@Post('/admin/list/duplicates-by-aadhaar')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read', 'read.own'])
 	async getBeneficiariesDuplicatesByAadhaar(
+		@Req() request: any,
 		@Body() body: Record<string, any>,
 		@Query() query: any,
 		@Res() response: Record<string, any>,
@@ -100,6 +103,8 @@ export class BeneficiariesController {
 
 	@Post('admin/list/deactivate-duplicates')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async deactivateDuplicateBeneficiaries(
 		@Body() body: Record<string, any>,
 		@Req() req: any,
@@ -154,7 +159,7 @@ export class BeneficiariesController {
 	@Post('/admin/list')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['read', 'read.own'])
+	@AclGuardData('beneficiary', ['read.own', 'read'])
 	findAllBeneficiariesForIp(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -165,6 +170,8 @@ export class BeneficiariesController {
 
 	@Post('/:id/is_enrollment_exists')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async isEnrollmentNumberExists(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -180,7 +187,7 @@ export class BeneficiariesController {
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['read', 'read.own'])
+	@AclGuardData('beneficiary', ['read.own', 'read'])
 	async getStatuswiseCount(
 		@Body() body: any,
 		@Req() request: any,
@@ -195,6 +202,8 @@ export class BeneficiariesController {
 
 	@Get('admin/list/duplicates-count-by-aadhaar')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	async getAllDuplicateCountsByAadhaar(
 		@Req() request: any,
 		@Query() query: any,
@@ -305,7 +314,7 @@ export class BeneficiariesController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['edit.status', 'edit.status.own'])
+	@AclGuardData('beneficiary', ['edit.status.own'])
 	async statusUpdate(
 		@Body() body: StatusUpdateDTO,
 		@Res() response: any,
@@ -341,12 +350,25 @@ export class BeneficiariesController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['edit.status', 'edit.status.own'])
+	@AclGuardData('beneficiary', ['edit.status.own'])
 	async statusUpdateByIp(
 		@Body() body: StatusUpdateDTO,
 		@Res() response: any,
 		@Req() request: any,
 	) {
+		if (
+			!(await this.aclHelper.doIHaveAccess(
+				request,
+				'beneficiary',
+				parseInt(body?.user_id, 10),
+			))
+		) {
+			return response.status(403).json({
+				success: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		}
 		const result = await this.beneficiariesService.statusUpdateByIp(
 			body,
 			request,
@@ -361,7 +383,7 @@ export class BeneficiariesController {
 	@Post('/admin/export-csv')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['export.csv', 'export.csv.own'])
+	@AclGuardData('beneficiary', ['read.own'])
 	async exportCsv(
 		@Req() request: any,
 		@Body() body: any,
@@ -373,7 +395,7 @@ export class BeneficiariesController {
 	@Post('/admin/export-subjects-csv')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['export.csv', 'export.csv.own'])
+	@AclGuardData('beneficiary', ['read.own'])
 	async exportSubjectsCsv(
 		@Req() request: any,
 		@Body() body: any,
@@ -389,7 +411,7 @@ export class BeneficiariesController {
 	@Post('admin/verify-enrollment')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['edit.enrollement', 'edit.enrollement.own'])
+	@AclGuardData('beneficiary', ['edit.enrollement.own'])
 	async verifyEnrollment(
 		@Body() body: any,
 		@Res() response: any,
@@ -438,12 +460,29 @@ export class BeneficiariesController {
 	@Post('admin/reassign')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('beneficiary', ['reassign', 'reassign.own'])
+	@AclGuardData('beneficiary', ['reassign.facilitator.own'])
 	async reassignBeneficiary(
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
 	) {
+		const benId = body?.beneficiaryIds;
+		for (let id of benId) {
+			if (
+				!(await this.aclHelper.doIHaveAccess(
+					request,
+					'beneficiary',
+					parseInt(id, 10),
+				))
+			) {
+				return response.status(403).json({
+					success: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			}
+		}
+
 		// @TODO - validate access for all beneficiaryIds (if not checked below)
 
 		const result = {
@@ -546,6 +585,8 @@ export class BeneficiariesController {
 
 	@Patch('update-Beneficiaries-aadhar/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['aadhar.update.own'])
 	updateBeneficiariesAadhar(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -562,6 +603,8 @@ export class BeneficiariesController {
 
 	@Post('/beneficiaries-for-camp')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('beneficiary', ['read.own'])
 	notRegisteredBeneficiaries(
 		@Req() request: any,
 		@Body() body: any,

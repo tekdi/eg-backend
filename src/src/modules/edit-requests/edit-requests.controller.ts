@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { EditRequestService } from './edit-requests.service';
+import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 
 @Controller('edit-request')
 export class EditRequestController {
@@ -34,6 +36,8 @@ export class EditRequestController {
 
 	@Post('/create-edit-requests')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('edit-request', ['create'])
 	createEditRequests(
 		@Req() request: any,
 		@Body() body: any,
@@ -48,6 +52,8 @@ export class EditRequestController {
 
 	@Patch('/admin/update-edit-requests/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('edit-request', ['edit.own'])
 	updateEditRequests(
 		@Req() request: any,
 		@Body() body: any,

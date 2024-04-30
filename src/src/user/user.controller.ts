@@ -25,6 +25,8 @@ import { RegisterFacilitatorDto } from '../helper/dto/register-facilitator.dto';
 import { AuthGuard } from '../modules/auth/auth.guard';
 import { UserService } from './user.service';
 import { LinkValidationDTO } from './dto/link-validation.dto';
+import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 
 @UseInterceptors(SentryInterceptor)
 @Controller('/users')
@@ -37,6 +39,9 @@ export class UserController {
 	) {}
 
 	@Get('/qualification')
+	@UseGuards(AuthGuard)
+	// @UseGuards(AclGuard)
+	// @AclGuardData('user',['qualification'])
 	async getQualifications() {
 		const data = await lastValueFrom(
 			this.httpService
@@ -83,6 +88,9 @@ export class UserController {
 	@Put('/update/:id')
 	@HttpCode(200)
 	@UsePipes(ValidationPipe)
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['edit.own'])
 	public async update(
 		@Param('id') id: number,
 		@Body() req: Record<string, any>,
@@ -92,6 +100,9 @@ export class UserController {
 
 	// users/list API filter pagination
 	@Post('/list')
+	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['read.own'])
 	public async searchAttendance(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -101,6 +112,8 @@ export class UserController {
 
 	// users/list by ID API filter pagination
 	@Get('/info/:id')
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['read.own'])
 	public async searchById(
 		@Param('id') id: number,
 		@Res() response: Response,
@@ -127,6 +140,8 @@ export class UserController {
 	// users/update_facilitator/:id update facilitator status.
 	@Put('update_facilitator/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['edit.own'])
 	public async updateUser(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -188,6 +203,8 @@ export class UserController {
 
 	@Get('/audit/:context/:context_id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['read.own'])
 	getAuditLogs(
 		@Req() request: any,
 		@Res() response: Response,
@@ -204,6 +221,8 @@ export class UserController {
 
 	@Post('/is-camp-exist/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['read.own'])
 	public async userCampExist(
 		@Param('id') id: any,
 		@Req() request: any,
@@ -236,6 +255,8 @@ export class UserController {
 	//get IP list
 	@Post('/ip/list')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['read'])
 	getIpList(
 		@Body() request: Record<string, any>,
 		@Req() req: any,
@@ -246,6 +267,8 @@ export class UserController {
 	//get cohort list of ip
 	@Post('/cohort/ip_list')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('user', ['read'])
 	getCohortIpList(
 		@Body() request: Record<string, any>,
 		@Req() req: any,

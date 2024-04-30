@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { ReferencesService } from './references.service';
+import { AclGuard } from 'src/common/guards/acl.guard';
+import { AclGuardData } from 'src/common/decorators/aclguarddata.decorator';
 
 @Controller('references')
 @UseGuards(AuthGuard)
@@ -21,12 +23,16 @@ export class ReferencesController {
 
 	@Post('/create')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('reference', ['create'])
 	create(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.referencesService.create(body, request, response);
 	}
 
 	@Post('/list')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('reference', ['read.own'])
 	communityList(
 		@Req() request: any,
 		@Body() body: any,
@@ -37,6 +43,8 @@ export class ReferencesController {
 
 	@Post('/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('reference', ['read.own'])
 	communityById(
 		@Req() request: any,
 		@Body() body: any,
@@ -53,6 +61,8 @@ export class ReferencesController {
 
 	@Patch('/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('reference', ['edit.own'])
 	update(
 		@Req() request: any,
 		@Body() body: any,

@@ -281,6 +281,7 @@ export class PcrscoresService {
 		req: any,
 		resp: any,
 	) {
+		
 		const facilitator_id = req.mw_userid;
 
 		let query = `query MyQuery {

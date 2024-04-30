@@ -89,6 +89,24 @@ export class EditRequestService {
 	}
 
 	public async getEditRequestList(req, body, res) {
+		const user_roles = req.mw_roles;
+		if(user_roles.includes('staff')){
+			return res.status(403).json({
+				status:false,
+				message: 'FORBIDDEN',
+				data:{}
+			})
+		}else if(user_roles.includes('facilitator')){
+			let gqlquery = {
+				query : `query MyQuery {
+					edit_requests_aggregate(where: { edit_req__by: {_eq: ${req.mw_userid}}}) {
+					  aggregate {
+							count
+					  }
+					}
+			  }`
+			}
+		}
 		const edit_req_by = req.mw_userid;
 
 		const response = await this.editRequestCoreService.getEditRequestList(
@@ -104,6 +122,32 @@ export class EditRequestService {
 	}
 
 	public async getEditRequestListAdmin(req, body, res) {
+		const user_roles = req.mw_roles;
+		if(user_roles.includes('facilitator')){
+			return res.statud(403).json({
+				status:false,
+				message: 'FORBIDDEN',
+				data:{}
+			})
+		}else if(user_roles.includes('staff')){
+			let gqlquery = {
+				query : ` query MyQuery {
+					edit_requests_aggregate(where: { edit_req_approved_by: {_eq: ${req.mw_userid}}}) {
+					  aggregate {
+							count
+					  }
+					}
+			  }`
+			}
+			const result = await this.hasuraServiceFromServices.getData(gqlquery);
+			if(!result?.data && result.data.edit_requests_aggregate.aggregate.count > 0){
+				return  res.statud(403).json({
+					status:false,
+					message: 'FORBIDDEN',
+					data:{}
+				})
+			}
+		}
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.program_users?.[0]?.organisation_id) {
 			return res.status(404).send({

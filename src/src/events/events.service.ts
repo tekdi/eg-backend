@@ -347,6 +347,7 @@ export class EventsService {
 				}
 			}`,
 		};
+		console.log(getQuery.query);
 
 		const eventsList = await this.hasuraService.postData(getQuery);
 		if (eventsList?.data?.events?.length > 0) {
@@ -633,7 +634,75 @@ export class EventsService {
 		return respObject;
 	}
 
-	public async updateAttendanceDetail(id: number, req: any, response: any) {
+	public async updateAttendanceDetail(
+		id: number,
+		req: any,
+		response: any,
+		request: any,
+	) {
+		const user_roles = request.mw_roles;
+		console.log(user_roles);
+
+		if (
+			user_roles.includes('facilitator') ||
+			user_roles.includes('program_owner')
+		) {
+			return response.status(403).json({
+				status: false,
+				message: 'FORBIDDEN',
+				data: {},
+			});
+		} else if (user_roles.includes('staff')) {
+			let hasura_query = {
+				query: `query MyQuery {
+					attendance(where: {id: {_eq: ${id}}}) {
+					  context_id
+					}
+				  }`,
+			};
+
+			const hasura_response =
+				await this.hasuraServiceFromServices.getData(hasura_query);
+
+			let events_id;
+			if (
+				!hasura_response?.data &&
+				hasura_response.data.attendance[0].context_id
+			) {
+				return response.status(403).json({
+					status: false,
+					message: 'FORBIDDEN',
+					data: {},
+				});
+			} else {
+				events_id = hasura_response.data.attendance[0].context_id;
+				let gqlquery = {
+					query: `query MyQuery2 {
+						events_aggregate(where: {id: {_eq: ${events_id}}, user_id: {_eq: ${request.mw_userid}}}) {
+						  aggregate {
+							count
+						  }
+						}
+					  }`,
+				};
+				console.log(gqlquery.query);
+
+				const result = await this.hasuraServiceFromServices.getData(
+					gqlquery,
+				);
+
+				if (
+					!result?.data &&
+					result.data.events_aggregate.aggregate.count > 0
+				) {
+					return response.status(403).json({
+						status: false,
+						message: 'FORBIDDEN',
+						data: {},
+					});
+				}
+			}
+		}
 		let attendance_id = id;
 		const tableName = 'attendance';
 		if (req?.status == 'present') {

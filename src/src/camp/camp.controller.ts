@@ -38,7 +38,7 @@ export class CampController {
 	@Post('/list')
 	@UseGuards(AuthGuard)
 	@UseGuards(AclGuard)
-	@AclGuardData('camp', ['read', 'read.own'])
+	@AclGuardData('camp',['read.own','read'])
 	campList(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campList(body, request, response);
 	}
@@ -91,10 +91,11 @@ export class CampController {
 			response,
 		);
 	}
+
 	@Post('/consent/create')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('facilitator')
+	@UseGuards(AclGuard)
+	@AclGuardData('consent', ['create'])
 	createConsentBenficiaries(
 		@Req() request: any,
 		@Body() body: any,
@@ -109,8 +110,8 @@ export class CampController {
 
 	@Post('/admin/consent/create')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('consent', ['create'])
 	adminCreateConsentBenficiaries(
 		@Req() request: any,
 		@Body() body: any,
@@ -125,8 +126,8 @@ export class CampController {
 
 	@Post('/consent/get')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('facilitator')
+	@UseGuards(AclGuard)
+	@AclGuardData('consent', ['read', 'read.own'])
 	getConsentBenficiaries(
 		@Req() request: any,
 		@Body() body: any,
@@ -141,8 +142,8 @@ export class CampController {
 
 	@Post('/admin/consent/get')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('consent', ['read', 'read.own'])
 	getAdminConsentBenficiaries(
 		@Req() request: any,
 		@Body() body: any,
@@ -157,8 +158,8 @@ export class CampController {
 
 	@Patch('admin/:id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['edit', 'edit.own'])
 	updateCampStatus(
 		@Param('id') id: string,
 		@Body() body: Record<string, any>,
@@ -170,16 +171,16 @@ export class CampController {
 
 	@Post('admin/camp-list')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('camp',['read.own','read'])
 	getCampList(@Req() req: any, @Res() response: any, @Body() body: any) {
 		return this.campService.getCampList(body, req, response);
 	}
 
 	@Get('admin/camp-details/:id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read', 'read.own'])
 	getCampDetailsForAdmin(
 		@Param('id') id: number,
 		@Req() req: any,
@@ -190,8 +191,8 @@ export class CampController {
 
 	@Post('attendance/add')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('facilitator')
+	@UseGuards(AclGuard)
+	@AclGuardData('attendance', ['create'])
 	markCampAttendance(
 		@Req() req: any,
 		@Res() response: any,
@@ -202,8 +203,8 @@ export class CampController {
 
 	@Patch('attendance/update/:id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('facilitator')
+	@UseGuards(AclGuard)
+	@AclGuardData('attendance', ['edit.own'])
 	updateCampAttendance(
 		@Req() req: any,
 		@Res() response: any,
@@ -213,10 +214,11 @@ export class CampController {
 		return this.campService.updateCampAttendance(id, body, req, response);
 	}
 
+	//cannot apply aclguard as we are not passing anything that could be used as for validating access, it is only using timing
 	@Post('/attendances/list')
+	@UseGuards(AclGuard)
+	@AclGuardData('attendance', ['read.own'])
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('facilitator')
 	getAttendanceList(
 		@Req() req: any,
 		@Res() response: any,
@@ -227,8 +229,8 @@ export class CampController {
 
 	@Post('attendance/:id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('facilitator')
+	@UseGuards(AclGuard)
+	@AclGuardData('attendance', ['read.own'])
 	getCampAttendanceById(
 		@Req() req: any,
 		@Res() response: any,
@@ -240,8 +242,8 @@ export class CampController {
 
 	@Get('/getStatuswiseCount')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('facilitator')
+	@UseGuards(AclGuard)
+	@AclGuardData('camp',['read.own'])
 	getStatuswiseCount(
 		@Body() body: any,
 		@Req() request: any,
@@ -253,8 +255,8 @@ export class CampController {
 	@Post('/admin/filter-by-camps')
 	@UseGuards(AuthGuard)
 	@UsePipes(ValidationPipe)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read.own'])
 	async getFilter_By_Camps(
 		@Req() req: any,
 		@Res() response: any,
@@ -265,9 +267,9 @@ export class CampController {
 
 	@Patch('/admin/reassign/:id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
-	reassignBeneficiarytoCamp(
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['reassign.beneficiary.own'])
+	async reassignBeneficiarytoCamp(
 		@Req() request: any,
 		@Body() body: any,
 		@Param('id') id: number,
@@ -283,8 +285,8 @@ export class CampController {
 
 	@Post('/admin/facilitators')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('camp',['read.own'])
 	getAvailableFacilitatorList(
 		@Body() body: any,
 		@Req() request: any,
@@ -299,8 +301,8 @@ export class CampController {
 
 	@Patch('/admin/facilitator-reassign/:id')
 	@UseGuards(AuthGuard)
-	// @UseGuards(RoleGuard)
-	// @Roles('staff', 'program_owner')
+	@UseGuards(AclGuard)
+	@AclGuardData('facilitator', ['reassign.camp.own'])
 	reassignFaciltatorToCamp(
 		@Req() request: any,
 		@Body() body: any,
@@ -317,6 +319,8 @@ export class CampController {
 
 	@Post('/add/campdayactivity')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp-day-activity', ['create'])
 	createCampDayActivity(
 		@Req() request: any,
 		@Body() body: any,
@@ -327,6 +331,8 @@ export class CampController {
 
 	@Patch('/camp-day-activity/:id')
 	@UseGuards(AuthGuard)
+	// @UseGuards(AclGuard)
+	// @AclGuardData('camp',['edit.own'])
 	update_camp_day_activity(
 		@Req() request: any,
 		@Body() body: any,
@@ -343,6 +349,8 @@ export class CampController {
 
 	@Post('/camp-day-activity/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read', 'read.own'])
 	getCampDayActivityById(
 		@Param('id') id: number,
 		@Req() request: any,
@@ -359,12 +367,16 @@ export class CampController {
 
 	@Get('/:id/get-camp-sessions')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read', 'read.own'])
 	getCampSession(@Req() req: any, @Param('id') id: number, @Res() res) {
 		return this.campService.getCampSessions(req, id, res);
 	}
 
 	@Post('/incomplete/camp-day-activity/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read', 'read.own'])
 	getPreviousCampAcitivityById(
 		@Param('id') id: number,
 		@Req() request: any,
@@ -381,6 +393,8 @@ export class CampController {
 
 	@Get('/random-attendance/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read.own'])
 	getRandomAttendanceGeneration(
 		@Param('id') id: number,
 		@Req() request: any,
@@ -397,6 +411,8 @@ export class CampController {
 
 	@Post('/:id/camp_learners')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read', 'read.own'])
 	campLearnersById(
 		@Req() request: any,
 		@Body() body: any,
@@ -406,9 +422,10 @@ export class CampController {
 		return this.campService.campLearnersById(id, body, request, response);
 	}
 
-	//multiple reassigne learner from One camp to other
 	@Patch('/admin/multiplereassign/:id')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['reassign.beneficiary.own'])
 	multiplereassignBeneficiarytoCamp(
 		@Req() request: any,
 		@Body() body: any,
@@ -425,6 +442,8 @@ export class CampController {
 
 	@Post('campday/campdetails')
 	@UseGuards(AuthGuard)
+	@UseGuards(AclGuard)
+	@AclGuardData('camp', ['read.own'])
 	campDetails(@Req() request: any, @Body() body: any, @Res() response: any) {
 		return this.campService.campDetails(body, request, response);
 	}
