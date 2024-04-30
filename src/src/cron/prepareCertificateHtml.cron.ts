@@ -7,6 +7,7 @@ import { html_code } from 'src/lms/certificate_html';
 import { LMSCertificateDto } from 'src/lms/dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../services/hasura/hasura.service';
+import { json } from 'stream/consumers';
 
 const moment = require('moment');
 const qr = require('qrcode');
@@ -26,6 +27,7 @@ export class PrepareCertificateHtmlCron {
 	@Cron(CronExpression.EVERY_5_MINUTES)
 	async prepareCertificateHtml() {
 		console.log('cron job: issueCertificate started at time ' + new Date());
+
 		//fetch all test tracking data which has certificate_status null
 		const userForIssueCertificate = await this.fetchTestTrackingData(
 			parseInt(
@@ -48,42 +50,57 @@ export class PrepareCertificateHtmlCron {
 				let test_id = userTestData?.test_id;
 				let context = userTestData?.context;
 				let context_id = userTestData?.context_id;
-				let getUserList = await this.userService.getUserName(user_id);
-				let user_name = '';
-				if (getUserList.length > 0) {
-					user_name += getUserList[0]?.first_name
-						? (await this.method.CapitalizeEachWord(
-								getUserList[0].first_name,
-						  )) + ' '
-						: '';
-					user_name += getUserList[0]?.middle_name
-						? (await this.method.CapitalizeEachWord(
-								getUserList[0].middle_name,
-						  )) + ' '
-						: '';
-					user_name += getUserList[0]?.last_name
-						? (await this.method.CapitalizeEachWord(
-								getUserList[0].last_name,
-						  )) + ' '
-						: '';
-				}
+
+				const user_name = await this.method.CapitalizeEachWord(
+					[
+						userTestData?.user?.first_name,
+						userTestData?.user?.middle_name,
+						userTestData?.user?.last_name,
+					]
+						.filter((e) => e)
+						.join(' '),
+				);
+
+				const event_start_date = moment(
+					userTestData?.events?.[0]?.start_date,
+				).format('DD MMM YYYY');
+				const event_end_date = moment(
+					userTestData?.events?.[0]?.end_date,
+				).format('DD MMM YYYY');
+				const academic_year =
+					userTestData?.events?.[0]?.academic_year?.name;
+
 				//get attendance status
 				let attendance_valid = false;
+				const startMoment = moment(
+					userTestData?.events?.[0]?.start_date,
+				);
+				const endMoment = moment(userTestData?.events?.[0]?.end_date);
+				let datesD = [];
+				while (startMoment.isSameOrBefore(endMoment)) {
+					datesD.push(startMoment.format('YYYY-MM-DD'));
+					startMoment.add(1, 'day');
+				}
+
 				let usrAttendanceList =
 					await this.attendanceCoreService.getUserAttendancePresentList(
-						user_id,
-						context,
-						context_id,
+						{
+							user_id,
+							context,
+							context_id,
+							event_start_date: `${userTestData?.events?.[0]?.start_date}T00:00:00`,
+							event_end_date: `${userTestData?.events?.[0]?.end_date}T23:59:59`,
+						},
 					);
+
 				console.log('usrAttendanceList list', usrAttendanceList);
-				let minAttendance = parseInt(
-					this.configService.get<string>(
-						'LMS_CERTIFICATE_ISSUE_MIN_ATTENDANCE',
-					),
-				);
+				console.log('events-dates', JSON.stringify(datesD));
+				let minAttendance = datesD.length;
+
 				if (usrAttendanceList.length >= minAttendance) {
 					attendance_valid = true;
 				}
+
 				//check certificate criteria
 				if (userTestData?.score >= minPercentage && attendance_valid) {
 					issue_status = 'true';
@@ -112,6 +129,18 @@ export class PrepareCertificateHtmlCron {
 						let certificate_id = certificate_data?.id;
 						let uid = 'P-' + certificate_id + '-' + user_id;
 						//update html code
+						certificateTemplate = certificateTemplate.replace(
+							'{{academic_year}}',
+							academic_year,
+						);
+						certificateTemplate = certificateTemplate.replace(
+							'{{event_start_date}}',
+							event_start_date,
+						);
+						certificateTemplate = certificateTemplate.replace(
+							'{{event_end_date}}',
+							event_end_date,
+						);
 						certificateTemplate = certificateTemplate.replace(
 							'{{name}}',
 							user_name,
@@ -203,10 +232,19 @@ export class PrepareCertificateHtmlCron {
 				if (issue_status == 'true') {
 					testTrackingUpdateData['certificate_status'] = issue_status;
 				}
-				await this.updateTestTrackingData(
+				const result = await this.updateTestTrackingData(
 					userTestData?.id,
 					testTrackingUpdateData,
 				);
+				if (issue_status === 'false') {
+					console.log(
+						`user_id ${user_id} name ${user_name} testID ${test_id} Not Genrated event date count ${minAttendance} attendance count ${usrAttendanceList.length}`,
+					);
+				} else if (result) {
+					console.log(
+						`user_id ${user_id} name ${user_name} testID ${test_id} Certificate Genrated Sucssefully`,
+					);
+				}
 			}
 		}
 	}
@@ -247,13 +285,26 @@ export class PrepareCertificateHtmlCron {
 					score
 					context
 					context_id
+					user{
+						first_name
+						middle_name
+						last_name
+					}
+					events(where:{context:{_eq:"events"}}){
+						id
+						start_date
+						end_date
+						academic_year{
+							name
+						}
+
+					}
 				}
 			}
 			`;
-		console.log('fetchTestTrackingData query', query);
+
 		try {
 			const result_query = await this.hasuraService.getData({ query });
-			console.log('result_query', result_query);
 			const data_list = result_query?.data?.lms_test_tracking;
 			if (data_list) {
 				return data_list;
@@ -354,8 +405,6 @@ export class PrepareCertificateHtmlCron {
 		}
 	}
 	async updateTestTrackingData(id, testTrackingUpdateData) {
-		console.log('id', id);
-		console.log('testTrackingUpdateData', testTrackingUpdateData);
 		let setQuery = ``;
 		if (testTrackingUpdateData?.certificate_status) {
 			setQuery += `certificate_status: ${testTrackingUpdateData.certificate_status}`;

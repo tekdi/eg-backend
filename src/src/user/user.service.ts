@@ -1786,11 +1786,321 @@ export class UserService {
 								${tableName}(where: {program_id: {_eq: ${mw_program_id}},academic_year_id: {_eq: ${mw_academic_year_id}},organisation_id:{_eq:${org_id}}, program_organisation: {status: {_eq: "active"}}}){
 									id
 									user_id
+									role_slug
 								}
 							}`,
 		};
 
 		const result = await this.hasuraServiceFromServices.getData(data);
 		return result;
+	}
+
+	public async getIpUserList(body: any, req: any, resp: any) {
+		const academic_year_id = req.mw_academic_year_id;
+		const program_id = req.mw_program_id;
+		const organisation_id = body?.organisation_id;
+		if (!organisation_id) {
+			return resp.status(422).send({
+				success: false,
+				message: 'Organisation ID required',
+			});
+		}
+		const programUserFilter = `academic_year_id: { _eq: ${academic_year_id} },
+		program_id: { _eq: ${program_id}},organisation_id:{_eq:${organisation_id}}`;
+		let onlyfilter = [
+			'id',
+			'first_name',
+			'last_name',
+			'email_id',
+			'mobile',
+			'username',
+		];
+		body.filter = {
+			...(body.filter || {}),
+			core: `
+			program_users: {
+				${programUserFilter}
+			}`,
+		};
+
+		const result = await this.hasuraServiceFromServices.getAll(
+			'users',
+			[
+				...onlyfilter,
+				`program_users(where:{
+					${programUserFilter}
+				}){academic_year_id	program_id	status organisation_id role_id role_slug}`,
+			],
+			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
+		);
+
+		return resp.status(200).send({
+			...result,
+			success: true,
+			message: 'IP User List Found  Successfully',
+		});
+	}
+
+	public async getIpDetails(id: any, body: any, req: any, resp) {
+		const ip_id = id;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+
+		let qury = `query MyQuery {
+			users(where: {id: {_eq: ${ip_id}}, program_users: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}){
+				id
+				first_name
+				middle_name
+				last_name
+				mobile
+				username
+				program_users(where:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
+					user_id
+					academic_year_id
+					program_id
+					organisation_id
+					role_slug
+					programs{
+						name
+						state{
+							state_name
+						}
+					}
+					organisations{
+						name
+					}
+				}
+				
+			}
+		}
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.users;
+		if (newQdata.length == 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Data Not found!',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata || {},
+			});
+		}
+	}
+
+	public async getIpUserListExists(body: any, req: any, resp) {
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		if (!body?.organisation_id || body?.organisation_id == '') {
+			return resp.status(422).json({
+				success: false,
+				key: 'organisation_id',
+				message: 'organisation_id Not found!',
+				data: {},
+			});
+		}
+
+		const query = `query MyQuery {
+			users(where: {program_users: {program_id: {_eq: ${program_id}},organisation_id:{_eq:${body?.organisation_id}}, academic_year_id: {_neq: ${academic_year_id}}}}) {
+			  id
+			  first_name
+			  last_name
+			  middle_name
+			  program_users(where: {program_id: {_eq: ${program_id}},organisation_id:{_eq:${body?.organisation_id}}, academic_year_id: {_neq: ${academic_year_id}}}) {
+				academic_year_id
+				organisation_id
+				program_id
+				user_id
+			  }
+			}
+		  }
+		`;
+		const response = await this.hasuraServiceFromServices.getData({
+			query,
+		});
+		const newQdata = response?.data?.users;
+		if (newQdata.length == 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Data Not found!',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata || {},
+			});
+		}
+	}
+
+	public async getRoleList(body: any, req: any, resp) {
+		let qury = `query MyQuery {
+			roles(where: {_not: {slug: {_in: ["program_owner","facilitator","beneficiary","staff"]}}}) {
+				id
+				role_type
+				slug
+				actions
+			}
+		}
+		  `;
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+
+		const newQdata = response?.data?.roles;
+
+		if (newQdata.length == 0) {
+			return resp.status(422).json({
+				success: false,
+				message: 'Data Not found!',
+				data: {},
+			});
+		} else {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data found successfully!',
+				data: newQdata || {},
+			});
+		}
+	}
+
+	public async getCohortAcademicList(body: any, req: any, resp: any) {
+		try {
+			let data = {
+				query: `query MyQuery {
+					academic_years{
+						id
+						name
+					}
+				}
+			`,
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const list = response?.data?.academic_years || [];
+
+			return resp.status(200).send({
+				success: true,
+				message: 'Academic Year Id found successfully',
+				data: list,
+			});
+		} catch (error) {
+			console.error('Error fetching cohort IP list:', error);
+			return resp.status(500).send({
+				success: false,
+				message: 'An error occurred while fetching cohort IP list',
+				data: {},
+			});
+		}
+	}
+
+	public async getCohortProgramList(body: any, req: any, resp: any) {
+		try {
+			let data = {
+				query: `query MyQuery {
+					programs{
+						id name
+						state{
+							state_name
+						}
+					}
+				}
+			`,
+			};
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const list = response?.data?.programs || [];
+
+			return resp.status(200).send({
+				success: true,
+				message: 'Program Id found successfully',
+				data: list,
+			});
+		} catch (error) {
+			console.error('Error fetching cohort IP list:', error);
+			return resp.status(500).send({
+				success: false,
+				message: 'An error occurred while fetching cohort IP list',
+				data: {},
+			});
+		}
+	}
+
+	async addExistingIp(body: any, request: any, response: any) {
+		const user_id = body?.user_id;
+		const organisationId = body?.organisation_id;
+		const roleSlug = body?.role_slug;
+		// Check if required fields are present in the payload
+		if (!user_id) {
+			return response.status(422).send({
+				success: false,
+				message: 'Required fields are missing in the payload.',
+				data: {},
+			});
+		}
+		let data = {
+			query: `query MyQuery {
+				program_users(where: {program_id: {_eq: ${request.mw_program_id}}, user_id: {_eq: ${user_id}}})
+			{
+				academic_year_id
+				program_id
+				user_id
+			}
+		}`,
+		};
+
+		const existing = await this.hasuraServiceFromServices.getData(data);
+
+		const pu_academic_year =
+			existing?.data?.program_users?.[0]?.academic_year_id;
+
+		if (!pu_academic_year) {
+			response.status(422).json({
+				success: false,
+				key: 'user_id',
+				message: 'IP Users Does Not Have state Access',
+				data: {},
+			});
+		} else if (pu_academic_year == request.mw_academic_year_id) {
+			response.status(422).json({
+				success: false,
+				key: 'academic_year_id',
+				message: 'IP Users Already Exists in This Academic Year',
+				data: {},
+			});
+		} else {
+			// Check if required fields are present in the payload
+			if (!organisationId || !roleSlug || !user_id) {
+				return response.status(422).send({
+					success: false,
+					message: 'Required fields are missing in the payload.',
+					data: {},
+				});
+			}
+			const programUsersData = {
+				organisation_id: body?.organisation_id,
+				program_id: request.mw_program_id,
+				academic_year_id: request.mw_academic_year_id,
+				user_id: user_id,
+				role_slug: body?.role_slug,
+			};
+
+			const programUserTableName = 'program_users';
+			const program_users = await this.hasuraService.q(
+				programUserTableName,
+				programUsersData,
+			);
+
+			// 	// Return success response
+			response.status(200).json({
+				success: true,
+				message: 'Existing IP User created successfully.',
+				data: program_users,
+			});
+		}
 	}
 }

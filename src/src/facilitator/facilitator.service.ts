@@ -93,10 +93,6 @@ export class FacilitatorService {
 				status = `status: { _in: ["applied" ]}`;
 				break;
 			}
-			case 'gkp_training': {
-				status = `status: { _in: ["pragati_mobilizer" ]}`;
-				break;
-			}
 			case 'pcr_training': {
 				status = `status: { _in: ["pragati_mobilizer","selected_for_onboarding" ]}`;
 				break;
@@ -1567,18 +1563,30 @@ export class FacilitatorService {
 	}
 
 	async getFacilitators(req: any, body: any, resp: any) {
-		const user: any = await this.userService.ipUserInfo(req);
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
-		if (!user?.data?.program_users?.[0]?.organisation_id) {
-			return resp.status(400).send({
+
+		if (req.mw_roles?.includes('program_owner')) {
+			req.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			if (req.mw_roles?.includes('staff')) {
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			} else if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			}
+		}
+		if (!req.parent_ip_id) {
+			return resp.status(404).send({
 				success: false,
-				message: 'Invalid User',
+				message: 'Invalid Ip',
 				data: {},
 			});
 		}
+
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? 10 : parseInt(body.limit);
 
 		let skip = page > 1 ? limit * (page - 1) : 0;
 
@@ -1648,7 +1656,7 @@ export class FacilitatorService {
 		}
 
 		filterQueryArray.unshift(
-			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${user?.data?.program_users[0]?.organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}}}`,
+			`{program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${req.parent_ip_id}"}, academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}}}`,
 		);
 
 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
@@ -2524,6 +2532,7 @@ export class FacilitatorService {
 			academic_year_id: academic_year_id,
 			parent_ip: parent_ip,
 			program_id: program_id,
+			status: 'applied',
 			qualification_ids: JSON.stringify(
 				JSON.parse(otherData.qualification_ids),
 			).replace(/"/g, '\\"'),

@@ -5,7 +5,6 @@ const Sentry = require('@sentry/node');
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, { cors: true });
-
 	Sentry.init({
 		dsn: process.env.SENTRY_DSN_URL,
 		environment: process.env.SENTRY_ENVIRONMENT,

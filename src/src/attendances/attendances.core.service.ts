@@ -231,15 +231,22 @@ export class AttendancesCoreService {
 		return result;
 	}
 
-	async getUserAttendancePresentList(user_id, context, context_id) {
+	async getUserAttendancePresentList({
+		user_id,
+		context,
+		context_id,
+		event_end_date,
+		event_start_date,
+	}) {
 		const query = `query MyQuery {
-				attendance(where: {user_id: {_eq: ${user_id}}, context: {_eq: ${context}}, context_id: {_eq:${context_id}}, status: {_eq: "present"}}) {
+				attendance(where: {user_id: {_eq: ${user_id}}, context: {_eq: ${context}}, context_id: {_eq:${context_id}}, status: {_eq: "present"}, date_time: {_gte: "${event_start_date}", _lte: "${event_end_date}"}}, distinct_on: date_time) {
 					id
 					status
 					context
 					context_id
 				  }
 			  }`;
+
 		try {
 			const result_response =
 				await this.hasuraServiceFromServices.getData({ query });

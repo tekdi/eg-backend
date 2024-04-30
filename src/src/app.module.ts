@@ -39,6 +39,7 @@ import { SubjectsModule } from './subjects/subjects.module';
 import { UploadFileModule } from './upload-file/upload-file.module';
 import { UserModule } from './user/user.module';
 import { UserauthModule } from './userauth/userauth.module';
+import { ObservationsModule } from './observations/observations.module';
 @Module({
 	imports: [
 		ScheduleModule.forRoot(),
@@ -87,6 +88,7 @@ import { UserauthModule } from './userauth/userauth.module';
 		UserModule,
 		UserauthModule,
 		OrganisationModule,
+		ObservationsModule,
 	],
 	controllers: [],
 	providers: [CacheCleanerProvider],

@@ -21,6 +21,7 @@ import { KeycloakModule } from '../services/keycloak/keycloak.module';
 import { CampController } from './camp.controller';
 import { CampCoreService } from './camp.core.service';
 import { CampService } from './camp.service';
+import { IpMiddleware } from 'src/common/middlewares/ip.middleware';
 
 @Module({
 	imports: [
@@ -42,6 +43,9 @@ import { CampService } from './camp.service';
 })
 export class CampModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
+		consumer
+			.apply(IpMiddleware)
+			.forRoutes('/camp/admin/camp-details/:id', '/camp/admin/camp-list');
 		consumer
 			.apply(CohortMiddleware)
 			.exclude(
