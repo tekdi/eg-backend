@@ -1054,9 +1054,20 @@ export class ExamService {
 		// Calculate not_marked for each instance
 		result_report_result.forEach((report) => {
 			report.total_learners = total_learners?.toString();
+			if (report.tenth_passed == 'NULL') {
+				report.tenth_passed = 0;
+			}
+			if (report.pragati_syc == 'NULL') {
+				report.pragati_syc = 0;
+			}
 			report.not_uploaded = (
 				parseInt(total_learners) -
-				(parseInt(report.tenth_passed) + parseInt(report.pragati_syc))
+				(parseInt(
+					report.tenth_passed !== 'NULL' ? report.tenth_passed : 0,
+				) +
+					parseInt(
+						report.pragati_syc !== 'NULL' ? report.pragati_syc : 0,
+					))
 			)?.toString();
 		});
 
