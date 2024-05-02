@@ -1078,69 +1078,6 @@ export class ExamService {
 		});
 	}
 
-	// 	async getExamResultSubject(body: any, request: any, response: any) {
-	// 		let data;
-	// 		let validation_response;
-	// 		let program_id = request?.mw_program_id;
-	// 		let academic_year_id = request?.mw_academic_year_id;
-	// 		let user_id = request?.mw_userid;
-	// 		let learner_id = body.learner_id;
-
-	// 		data = {
-	// 			query: `query MyQuery {
-	// 				program_beneficiaries(where: {user_id: {_in: [${learner_id}]}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
-	// 					subjects
-	// 				}
-	// 			}
-	// 			  `,
-	// 		};
-	// 		validation_response =
-	// 			await this.hasuraServiceFromServices.queryWithVariable(data);
-
-	// 		let newQdata = validation_response?.data?.data?.program_beneficiaries;
-	// 		console.log('vala---', newQdata);
-	// 		let subjectsArray = [];
-	// cosnt subject_id =
-	// 		newQdata.forEach((newQdata) => {
-	// 			// Parse subjects JSON string to array
-	// 			const subjects = JSON.parse(newQdata.subjects);
-	// 			console.log('ss', subjects);
-	// 		});
-	// 			// Make a query to fetch subject details by ID
-	// 			if (subjects) {
-	// 				const data = {
-	// 					query: `query SubjectQuery {
-	// 							subjects(where: {id: {_in: [${subjects}]}}) {
-	// 									id
-	// 									name
-	// 									board
-	// 							}
-	// 					}`,
-	// 				};
-	// 				console.log('eee', data.query);
-
-	// 				validation_response =
-	// 					this.hasuraServiceFromServices.queryWithVariable(data);
-	// 				console.log('subjectResponse', validation_response);
-
-	// 				// Extract subject data (handle potential errors)
-	// 			}
-
-	// 		if (subjectsArray.length > 0) {
-	// 			return response.status(200).json({
-	// 				success: true,
-	// 				message: 'Data found successfully!',
-	// 				data: subjectsArray,
-	// 			});
-	// 		} else {
-	// 			return response.status(404).json({
-	// 				success: true,
-	// 				message: 'Data Not Found',
-	// 				data: {},
-	// 			});
-	// 		}
-	// 	}
-
 	async getExamResultSubject(body: any, request: any, response: any) {
 		let data;
 		let validation_response;
