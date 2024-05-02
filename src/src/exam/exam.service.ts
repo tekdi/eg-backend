@@ -1077,4 +1077,207 @@ export class ExamService {
 			data: result_report_result,
 		});
 	}
+
+	// 	async getExamResultSubject(body: any, request: any, response: any) {
+	// 		let data;
+	// 		let validation_response;
+	// 		let program_id = request?.mw_program_id;
+	// 		let academic_year_id = request?.mw_academic_year_id;
+	// 		let user_id = request?.mw_userid;
+	// 		let learner_id = body.learner_id;
+
+	// 		data = {
+	// 			query: `query MyQuery {
+	// 				program_beneficiaries(where: {user_id: {_in: [${learner_id}]}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
+	// 					subjects
+	// 				}
+	// 			}
+	// 			  `,
+	// 		};
+	// 		validation_response =
+	// 			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+	// 		let newQdata = validation_response?.data?.data?.program_beneficiaries;
+	// 		console.log('vala---', newQdata);
+	// 		let subjectsArray = [];
+	// cosnt subject_id =
+	// 		newQdata.forEach((newQdata) => {
+	// 			// Parse subjects JSON string to array
+	// 			const subjects = JSON.parse(newQdata.subjects);
+	// 			console.log('ss', subjects);
+	// 		});
+	// 			// Make a query to fetch subject details by ID
+	// 			if (subjects) {
+	// 				const data = {
+	// 					query: `query SubjectQuery {
+	// 							subjects(where: {id: {_in: [${subjects}]}}) {
+	// 									id
+	// 									name
+	// 									board
+	// 							}
+	// 					}`,
+	// 				};
+	// 				console.log('eee', data.query);
+
+	// 				validation_response =
+	// 					this.hasuraServiceFromServices.queryWithVariable(data);
+	// 				console.log('subjectResponse', validation_response);
+
+	// 				// Extract subject data (handle potential errors)
+	// 			}
+
+	// 		if (subjectsArray.length > 0) {
+	// 			return response.status(200).json({
+	// 				success: true,
+	// 				message: 'Data found successfully!',
+	// 				data: subjectsArray,
+	// 			});
+	// 		} else {
+	// 			return response.status(404).json({
+	// 				success: true,
+	// 				message: 'Data Not Found',
+	// 				data: {},
+	// 			});
+	// 		}
+	// 	}
+
+	async getExamResultSubject(body: any, request: any, response: any) {
+		let data;
+		let validation_response;
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		let user_id = request?.mw_userid;
+		let learner_id = body.learner_id;
+		//validation to check user_id is under the  same program as learner_id or not
+		data = {
+			query: `query MyQuery6 {
+				users(where: {id: {_eq: ${user_id}}}){
+				 program_users(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, user_id: {_eq: ${user_id}}}) {
+					organisation_id
+					academic_year_id
+					program_id
+					user_id
+				} 
+				}
+			}
+			  `,
+		};
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		const organisation_id =
+			validation_response?.data?.data?.users?.[0]?.program_users?.[0]
+				.organisation_id || '';
+		data = {
+			query: `query MyQuery {
+				program_beneficiaries(where: {user_id:{_eq:${learner_id}},facilitator_user: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}) {
+					user_id
+				}
+				
+			  }
+			  `,
+		};
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+		const user =
+			validation_response?.data?.data?.program_beneficiaries?.[0]
+				?.user_id;
+		if (!user) {
+			return response.status(422).json({
+				success: true,
+				message: 'Invalid IP!',
+				data: {},
+			});
+		}
+		//take subject id
+		data = {
+			query: `query MyQuery {
+      program_beneficiaries(where: {user_id: {_eq: ${learner_id}}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
+        subjects
+      }
+    } 
+      `,
+		};
+
+		try {
+			validation_response =
+				await this.hasuraServiceFromServices.queryWithVariable(data);
+
+			let newQdata =
+				validation_response?.data?.data?.program_beneficiaries;
+
+			let subjectsArray = [];
+
+			if (newQdata) {
+				for (newQdata of newQdata) {
+					try {
+						const subjects = JSON.parse(newQdata.subjects);
+						//get subject data
+						const subjectQuery = {
+							query: `query SubjectQuery {
+              subjects(where: {id: {_in: [${subjects}]}}) {
+                id
+                            name
+                            is_theory
+                            is_practical
+                            board_id
+                            boardById {
+                                id
+                                name
+                            }
+              }
+            }`,
+						};
+
+						const subjectResponse =
+							await this.hasuraServiceFromServices.queryWithVariable(
+								subjectQuery,
+							);
+
+						if (subjectResponse?.data?.data?.subjects) {
+							const learnerSubjectData =
+								subjectResponse.data.data.subjects.map(
+									(subject) => {
+										return {
+											...subject,
+										};
+									},
+								);
+							subjectsArray.push(...learnerSubjectData);
+						} else {
+							console.warn(
+								'Failed to fetch subject details:',
+								subjectResponse,
+							);
+						}
+					} catch (error) {
+						console.error(
+							'Error parsing subjects JSON or fetching subject details:',
+							error,
+						);
+					}
+				}
+			}
+
+			if (subjectsArray.length > 0) {
+				return response.status(200).json({
+					success: true,
+					message: 'Data found successfully!',
+					data: { learner_id, subjectsArray },
+				});
+			} else {
+				return response.status(404).json({
+					success: true,
+					message: 'Data Not Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			console.error('Error fetching exam result subjects:', error);
+			return response.status(500).json({
+				success: false,
+				message: 'Internal Server Error',
+			});
+		}
+	}
 }
