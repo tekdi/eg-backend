@@ -1131,6 +1131,24 @@ export class ExamService {
 			query: `query MyQuery {
       program_beneficiaries(where: {user_id: {_eq: ${learner_id}}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
         subjects
+				enrollment_number
+				enrollment_first_name
+    enrollment_last_name
+    enrollment_middle_name
+		enrollment_dob
+    user{
+      first_name
+      middle_name
+      last_name
+			core_beneficiaries{
+        father_first_name
+        father_middle_name
+        father_last_name
+        mother_first_name
+        mother_middle_name
+        mother_last_name
+      }
+    }
       }
     } 
       `,
@@ -1200,7 +1218,18 @@ export class ExamService {
 				return response.status(200).json({
 					success: true,
 					message: 'Data found successfully!',
-					data: { learner_id, subjectsArray },
+					data: {
+						learner_id,
+						enrollment_number: newQdata?.enrollment_number,
+						enrollment_first_name: newQdata?.enrollment_first_name,
+						enrollment_last_name: newQdata?.enrollment_last_name,
+						enrollment_middle_name:
+							newQdata?.enrollment_middle_name,
+						enrollment_dob: newQdata?.enrollment_dob,
+						user: newQdata?.user,
+
+						subjectsArray,
+					},
 				});
 			} else {
 				return response.status(404).json({
