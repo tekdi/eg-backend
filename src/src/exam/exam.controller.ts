@@ -121,7 +121,7 @@ export class ExamController {
 		return this.examService.createExamResult(body, request, response);
 	}
 
-	@Get('learner/list')
+	@Post('learner/list')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async getCampRegisteredLearners(

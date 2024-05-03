@@ -828,7 +828,24 @@ export class ExamService {
 		let program_id = request?.mw_program_id;
 		let role = request?.mw_roles;
 		let filter;
+		let searchQuery = '';
+		const page = isNaN(body.page) ? 1 : parseInt(body.page);
+		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+
+			if (last_name?.length > 0) {
+				searchQuery = `
+							first_name: { _ilike: "%${first_name}%" }, 
+							last_name: { _ilike: "%${last_name}%" }
+					`;
+			} else {
+				searchQuery = `first_name: { _ilike: "%${first_name}%" }`;
+			}
+		}
 		if (role?.includes('facilitator')) {
 			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"}}`;
 		} else if (role?.includes('staff')) {
@@ -849,13 +866,19 @@ export class ExamService {
 				validation_response?.data?.data?.program_users?.[0]
 					?.organisation_id;
 
-			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}}}
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}}}
 				`;
 		}
 
 		data = {
-			query: `query MyQuery {
-				program_beneficiaries(where: ${filter}) {
+			query: `query MyQuery($limit:Int, $offset:Int) {
+				program_beneficiaries_aggregate(where: ${filter}) {
+					aggregate{
+						count
+					}
+				}
+				program_beneficiaries(where: ${filter}, limit: $limit,
+					offset: $offset) {
 				  facilitator_id
 				  facilitator_user{
 					id
@@ -891,16 +914,27 @@ export class ExamService {
 				}
 			  }
 			  `,
+			variables: {
+				limit: limit,
+				offset: offset,
+			},
 		};
 
 		validation_response =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
 
 		result = validation_response?.data?.data?.program_beneficiaries;
+		const count =
+			validation_response?.data?.data?.program_beneficiaries_aggregate
+				?.aggregate?.count;
+		const totalPages = Math.ceil(count / limit);
 
 		if (result?.length > 0) {
 			return response.status(200).json({
 				message: 'Data Retrieved Successfully',
+				limit,
+				currentPage: page,
+				totalPages,
 				data: result,
 			});
 		} else if (result?.length == 0) {
