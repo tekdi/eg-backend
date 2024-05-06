@@ -207,7 +207,7 @@ export class ExamService {
 				attendance_validation_data = {
 					query: `
 						query MyQuery2 {
-							attendance(where: {context_id: {_eq:${event_id}}}){
+							attendance(where: {context_id: {_eq:${event_id}},context:{_eq:"events"}}){
 							id
 							}
 						}
