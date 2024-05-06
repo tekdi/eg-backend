@@ -1242,6 +1242,7 @@ export class ExamService {
                             is_theory
                             is_practical
                             board_id
+														code
                             boardById {
                                 id
                                 name
