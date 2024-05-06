@@ -1641,27 +1641,27 @@
 	"EXAM_RESULT_STATUS": [
 		{
 			"title": "EXAM_RESULT_STATUS_P",
-			"value": "p"
+			"value": "P"
 		},
 		{
 			"title": "EXAM_RESULT_STATUS_SYC",
-			"value": "syc"
+			"value": "SYC"
 		},
 		{
 			"title": "EXAM_RESULT_STATUS_SYCT",
-			"value": "syct"
+			"value": "SYCT"
 		},
 		{
 			"title": "EXAM_RESULT_STATUS_SYCP",
-			"value": "sycp"
+			"value": "SYCP"
 		},
 		{
 			"title": "EXAM_RESULT_STATUS_RWH",
-			"value": "rwh"
+			"value": "RWH"
 		},
 		{
 			"title": "EXAM_RESULT_STATUS_XXXX",
-			"value": "xxxx"
+			"value": "XXXX"
 		}
 	]
 }
