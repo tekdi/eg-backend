@@ -1021,26 +1021,38 @@ export class ExamService {
 	}
 
 	public async resultUpload(file: any, response: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		const board_name = request?.body?.board_name;
+		console.log('program_id', program_id);
+		console.log('academic_year_id', academic_year_id);
+		console.log('board_name', board_name);
 		//first check validations for all inputs
 		try {
-			const result = await this.extractResultFromPDF(file);
-			return response.status(200).json({
-				success: true,
-				extracted_data: {
-					result,
-				},
-				pdf_data: result?.data,
-			});
+			const result = await this.extractResultFromPDF(file, board_name);
+			if (result == null) {
+				return response
+					.status(200)
+					.json({ success: false, message: 'INVALID_PDF' });
+			} else {
+				return response.status(200).json({
+					success: true,
+					extracted_data: {
+						result,
+					},
+					pdf_data: result?.data,
+				});
+			}
 		} catch (error) {
 			console.log('error', error);
 			return response
 				.status(200)
-				.json({ success: false, error: 'Failed to read PDF file' });
+				.json({ success: false, message: 'Failed_Read_PDF' });
 		}
 	}
 
 	//extract result from pdf functions
-	async extractResultFromPDF(file: any): Promise<any> {
+	async extractResultFromPDF(file: any, board_name: any): Promise<any> {
 		//console.log('file', file);
 		const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
 		//console.log('data', data);
@@ -1048,20 +1060,24 @@ export class ExamService {
 		const pdfText = data.text; // Assuming data is the provided object containing the extracted PDF text
 		//console.log('pdfText', pdfText);
 
-		//version 1 rsos pdf file
-		let result = await this.parseResults_V1(pdfText);
-		//console.log('result', result);
-		if (result == null) {
-			//version 2 rsos pdf file
-			result = await this.parseResults_V2(pdfText);
+		if (board_name === 'RSOS') {
+			//version 1 rsos pdf file
+			let result = await this.parseResults_RSOS_V1(pdfText);
 			//console.log('result', result);
+			if (result == null) {
+				//version 2 rsos pdf file
+				result = await this.parseResults_RSOS_V2(pdfText);
+				//console.log('result', result);
+			}
+			return result;
+		} else {
+			return null;
 		}
-
-		return result;
 	}
 
 	//version 1 extract for RSOS Board
-	async parseResults_V1(content: string): Promise<any> {
+	async parseResults_RSOS_V1(content: string): Promise<any> {
+		//get general data
 		const regex =
 			/Enrollment : (\d+)\s+Name of Candidate : (.+?)\s+Father's Name : (.+?)\s+Mother's Name : (.+?)\s+Date of Birth : (.+?)\s+Class : (\d+th)\s+/;
 		const match = content.match(regex);
@@ -1069,8 +1085,46 @@ export class ExamService {
 		if (match) {
 			const [, enrollment, candidate, father, mother, dob, classGrade] =
 				match;
-			const subjects = await this.extractSubjects_V1(content);
-			const totalResult = await this.extractTotalResult_V1(content);
+			//get subject total
+			let subjects = [];
+			const subjectRegex =
+				/(\d+)\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
+			let match_subjects;
+
+			while ((match_subjects = subjectRegex.exec(content)) !== null) {
+				const [
+					,
+					no,
+					name,
+					code,
+					maxMarks,
+					theory,
+					practical,
+					sessional,
+					total,
+					result,
+				] = match_subjects;
+				subjects.push({
+					no,
+					name: name.replace(/\n/g, ''),
+					code,
+					maxMarks,
+					theory,
+					practical,
+					sessional,
+					total,
+					result,
+				});
+			}
+			//get result total
+			const regex = /TOTAL(\d+)RESULT(\w+)/;
+			const match_result = content.match(regex);
+			let totalResult = {};
+			if (match_result) {
+				const totalMarks = match_result[1];
+				const finalResult = match_result[2];
+				totalResult = { totalMarks, finalResult };
+			}
 			return {
 				enrollment,
 				candidate,
@@ -1087,68 +1141,18 @@ export class ExamService {
 		return null;
 	}
 
-	async extractSubjects_V1(content: string): Promise<any[]> {
-		const subjectRegex =
-			/(\d+)\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
-		let match;
-		const subjects = [];
-
-		while ((match = subjectRegex.exec(content)) !== null) {
-			const [
-				,
-				no,
-				name,
-				code,
-				maxMarks,
-				theory,
-				practical,
-				sessional,
-				total,
-				result,
-			] = match;
-			subjects.push({
-				no,
-				name,
-				code,
-				maxMarks,
-				theory,
-				practical,
-				sessional,
-				total,
-				result,
-			});
-		}
-
-		return subjects;
-	}
-
-	async extractTotalResult_V1(content: string): Promise<any> {
-		const regex = /TOTAL(\d+)RESULT(\w+)/;
-		const match = content.match(regex);
-
-		if (match) {
-			const totalMarks = match[1];
-			const finalResult = match[2];
-			return { totalMarks, finalResult };
-		}
-
-		return null;
-	}
-
 	//version 2 extract for RSOS Board
-	async parseResults_V2(content: string): Promise<any> {
+	async parseResults_RSOS_V2(content: string): Promise<any> {
 		const personalDetailsRegex =
 			/Enrollment : (\d+)\nName of Candidate : (.+?)\nFather's Name : (.+?)\nMother's Name : (.+?)\nDate of Birth : (.+?)\nClass : (\d+)/;
+
+		//working at drawing subject at end
 		/*const subjectRegex =
-			/(\d+)([A-Za-z ]+) \((\d+)\)(\d{2,3})([A-Z]+|[\d-]*)([\d-]*)([\d-]*)([\d-]+)([A-Z]+)/g;*/
-		//working
-		/*const subjectRegex =
+			///(\d+)\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
 			/(\d+)([A-Za-z ]+ \(\d+\))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;*/
-		/*const subjectRegex =
-			/(\d+)([A-Za-z ]+ \(\d+\))(\d+)([A-Z]+|[\d-]*)([\d-]*)([\d-]*)([\d-]+)([A-Z]+)/g;*/
-		//new
+		//working for additional subjects
 		const subjectRegex =
-			/(\d+)([A-Za-z ]+(?:\n\(Additional\))? \(\d+\))(\d{3})([A-Z]+|[\d-]*)([\d-]*)([\d-]*)([\d]+)([A-Z]+)/g;
+			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
 
 		const totalRegex = /TOTAL(\d+)RESULT(\w+)/;
 
@@ -1170,20 +1174,21 @@ export class ExamService {
 			const subjects = [];
 
 			let match: any;
-			while ((match = subjectRegex.exec(content)) !== null) {
+			while (
+				(match = subjectRegex.exec(content.replace(/\n/g, ''))) !== null
+			) {
 				subjects.push({
 					subjectNo: match[1],
 					subjectNameCode: match[2].trim().replace(/ \(\d+\)/, ''),
 					subjectCode: match[2].match(/\((\d+)\)/)[1],
-					maxMarks: match[3],
-					marksTheory: match[4] === '-' ? '0' : match[4],
-					marksPractical: match[5] === '-' ? '0' : match[5],
-					marksSessional: match[6] === '-' ? '0' : match[6],
-					totalMarks: match[7],
-					result: match[8],
+					maxMarks: match[4],
+					marksTheory: match[5] === '-' ? '0' : match[5],
+					marksPractical: match[6] === '-' ? '0' : match[6],
+					marksSessional: match[7] === '-' ? '0' : match[7],
+					totalMarks: match[8],
+					result: match[9].replace('TOTAL', ''),
 				});
 			}
-
 			const totalResult = totalMatch
 				? {
 						totalMarks: totalMatch[1],
@@ -1195,11 +1200,13 @@ export class ExamService {
 				personalDetails,
 				subjects,
 				totalResult,
+				data: content,
 			};
 		}
 
 		return null;
 	}
+
 	async getExamResultReport(body: any, request: any, response: any) {
 		let academic_year_id = request?.mw_academic_year_id;
 		let program_id = request?.mw_program_id;

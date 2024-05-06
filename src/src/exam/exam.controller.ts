@@ -34,7 +34,7 @@ export class ExamController {
 	}
 
 	@Post('/result/upload')
-	//@UseGuards(new AuthGuard())
+	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
 	@UseInterceptors(FileInterceptor('resultfile')) //  'jsonpayload' is the name of the field for the uploaded file
 	public async userOnboarding(
