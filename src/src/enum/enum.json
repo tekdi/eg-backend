@@ -1637,5 +1637,31 @@
 			"title": "MISCELLANEOUS_ACTIVITIES_PCR",
 			"value": "miscellaneous_activities_pcr"
 		}
+	],
+	"EXAM_RESULT_STATUS": [
+		{
+			"title": "EXAM_RESULT_STATUS_P",
+			"value": "p"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYC",
+			"value": "syc"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYCT",
+			"value": "syct"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYCP",
+			"value": "sycp"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_RWH",
+			"value": "rwh"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_XXXX",
+			"value": "xxxx"
+		}
 	]
 }
