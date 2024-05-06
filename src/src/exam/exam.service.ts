@@ -829,8 +829,10 @@ export class ExamService {
 		let role = request?.mw_roles;
 		let filter;
 		let searchQuery = '';
+		let filterStatus = '';
+		let filterQueryArray = [];
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
-		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
+		const limit = isNaN(body.limit) ? -1 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
 
 		if (body.search && body.search !== '') {
@@ -838,14 +840,34 @@ export class ExamService {
 			let last_name = body.search.split(' ')[1] || '';
 
 			if (last_name?.length > 0) {
-				searchQuery = `
-							first_name: { _ilike: "%${first_name}%" }, 
-							last_name: { _ilike: "%${last_name}%" }
-					`;
+				filterQueryArray.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+				last_name: { _ilike: "%${last_name}%" }
+		`);
 			} else {
-				searchQuery = `first_name: { _ilike: "%${first_name}%" }`;
+				filterQueryArray.push(
+					`first_name: { _ilike: "%${first_name}%" }`,
+				);
 			}
 		}
+		if (body?.district && body?.district.length > 0) {
+			filterQueryArray.push(
+				`district:{_in: ${JSON.stringify(body?.district)}}`,
+			);
+		}
+
+		if (body?.block && body?.block.length > 0) {
+			//searchQuery = `block:{_in: ${JSON.stringify(body?.block)}}`;
+			filterQueryArray.push(
+				`block:{_in: ${JSON.stringify(body?.block)}}`,
+			);
+		}
+		if (body?.status && body?.status.length > 0) {
+			filterStatus = `final_result:{_in: ${JSON.stringify(
+				body?.status,
+			)}}`;
+		}
+		searchQuery = '' + filterQueryArray.join(',') + '';
 		if (role?.includes('facilitator')) {
 			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"}}`;
 		} else if (role?.includes('staff')) {
@@ -866,20 +888,30 @@ export class ExamService {
 				validation_response?.data?.data?.program_users?.[0]
 					?.organisation_id;
 
-			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}}}
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}} ${
+				body?.status && body?.status.length > 0
+					? `,exam_results:{${filterStatus}}`
+					: ''
+			}}
 				`;
 		}
 
 		data = {
-			query: `query MyQuery($limit:Int, $offset:Int) {
+			query: `query MyQuery(${
+				limit != -1 ? '$limit:Int,' : ''
+			} $offset:Int) {
 				program_beneficiaries_aggregate(where: ${filter}) {
 					aggregate{
 						count
 					}
 				}
-				program_beneficiaries(where: ${filter}, limit: $limit,
+				program_beneficiaries(where: ${filter}, ${limit != -1 ? 'limit: $limit,' : ''}
 					offset: $offset) {
 				  facilitator_id
+					bordID{
+						id
+						name
+					}
 				  facilitator_user{
 					id
 					first_name
@@ -893,7 +925,7 @@ export class ExamService {
 					first_name
 					middle_name
 					last_name
-					exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1}}) {
+					exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1},${filterStatus}}) {
 					  id
 					  board_id
 					  program_id
