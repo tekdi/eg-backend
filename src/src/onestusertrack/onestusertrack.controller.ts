@@ -28,4 +28,18 @@ export class OnestusertrackController {
 	create(@Body() body: any, @Req() request: any, @Res() response: Response) {
 		return this.onestusertrackService.create(body, request, response);
 	}
+
+	@Post('/list')
+	@UseGuards(new AuthGuard())
+	getOnestUserTracking(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.onestusertrackService.getOnestUserTracking(
+			body,
+			req,
+			response,
+		);
+	}
 }
