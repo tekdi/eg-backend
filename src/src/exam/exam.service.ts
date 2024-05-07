@@ -1181,7 +1181,7 @@ export class ExamService {
 			while (
 				(match = subjectRegex.exec(content.replace(/\n/g, ''))) !== null
 			) {
-				console.log('match', match);
+				//console.log('match', match);
 				//get max marks
 				let max_marks = '-';
 				let theory_marks = '-';
