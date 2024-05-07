@@ -344,7 +344,7 @@ export class ExamService {
 
 			subject_data = {
 				query: `query MyQuery2 {
-					program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, academic_year_id:{_eq:${academic_year_id}}, program_id:{_eq:${program_id}}, subjects: {_ilike: "%"${input?.subject_id}"%"}, status: {_eq: "registered_in_camp"}}) {
+					program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, academic_year_id:{_eq:${academic_year_id}}, program_id:{_eq:${program_id}}, subjects: {_ilike: "%\"${input?.subject_id}\"%"}, status: {_eq: "registered_in_camp"}}) {
 						user_id
 					}
 				  }
