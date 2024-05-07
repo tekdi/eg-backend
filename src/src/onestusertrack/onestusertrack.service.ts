@@ -88,4 +88,30 @@ export class OnestusertrackService {
 			},
 		});
 	}
+
+	public async getOnestUserTracking(body: any, req: any, resp: any) {
+		let onlyfilter = [
+			'id',
+			'user_id',
+			'context',
+			'context_item_id',
+			'status',
+			'order_id',
+		];
+		body.filter = {
+			...(body.filter || {}),
+		};
+
+		const result = await this.hasuraServiceFromServices.getAll(
+			'onest_users_tracking',
+			[...onlyfilter],
+			{ ...body, onlyfilter },
+		);
+
+		return resp.status(200).send({
+			...result,
+			success: true,
+			message: 'Onest User Tracking data List Found Successfully',
+		});
+	}
 }
