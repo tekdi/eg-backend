@@ -75,7 +75,7 @@ export class OnestusertrackService {
 		);
 
 		if (!newDatainsert || !newDatainsert?.onest_users_tracking.id) {
-			throw new Error('Failed to create organisation.');
+			throw new Error('Failed to add data.');
 		}
 		const newdata = newDatainsert?.onest_users_tracking;
 
