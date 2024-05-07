@@ -12,6 +12,24 @@ export class OnestusertrackService {
 
 	async create(body: any, request: any, response: any) {
 		const { user_id, context, context_item_id, order_id, status } = body;
+		const missingFields = [
+			'user_id',
+			'context',
+			'context_item_id',
+			'status',
+			'order_id',
+		].filter((field) => !body[field] && body[field] != '');
+
+		if (missingFields.length > 0) {
+			return response.status(422).send({
+				success: false,
+				key: missingFields?.[0],
+				message: `Required fields are missing in the payload. ${missingFields.join(
+					',',
+				)}`,
+				data: {},
+			});
+		}
 
 		if (context == 'jobs' || context == 'scholarship') {
 			let checkcontext = {
@@ -41,24 +59,6 @@ export class OnestusertrackService {
 			}
 		}
 
-		const missingFields = [
-			'user_id',
-			'context',
-			'context_item_id',
-			'status',
-			'order_id',
-		].filter((field) => !body[field] && body[field] != '');
-
-		if (missingFields.length > 0) {
-			return response.status(422).send({
-				success: false,
-				key: missingFields?.[0],
-				message: `Required fields are missing in the payload. ${missingFields.join(
-					',',
-				)}`,
-				data: {},
-			});
-		}
 		const onestuserdata = {
 			user_id,
 			context,
