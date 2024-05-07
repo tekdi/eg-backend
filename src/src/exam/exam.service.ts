@@ -1056,7 +1056,7 @@ export class ExamService {
 	async extractResultFromPDF(file: any, board_name: any): Promise<any> {
 		//console.log('file', file);
 		const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-		//console.log('data', data);
+		console.log('data', data);
 		//extract data from pdf
 		const pdfText = data.text; // Assuming data is the provided object containing the extracted PDF text
 		//console.log('pdfText', pdfText);
