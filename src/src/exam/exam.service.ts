@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 //import * as pdfjsLib from 'pdfjs-dist';
+import * as Tesseract from 'tesseract.js';
 const parse = require('pdf-parse');
 
 @Injectable()
@@ -1024,11 +1025,12 @@ export class ExamService {
 		let program_id = request?.mw_program_id;
 		let academic_year_id = request?.mw_academic_year_id;
 		const board_name = request?.body?.board_name;
-		console.log('program_id', program_id);
-		console.log('academic_year_id', academic_year_id);
-		console.log('board_name', board_name);
 		//first check validations for all inputs
 		try {
+			//ocr read
+			const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
+			//console.log('data', data);
+			//text read
 			const result = await this.extractResultFromPDF(file, board_name);
 			if (result == null) {
 				return response
@@ -1040,7 +1042,6 @@ export class ExamService {
 					extracted_data: {
 						result,
 					},
-					pdf_data: result?.data,
 				});
 			}
 		} catch (error) {
@@ -1134,7 +1135,6 @@ export class ExamService {
 				classGrade,
 				subjects,
 				totalResult,
-				data: content,
 			};
 		}
 
@@ -1152,7 +1152,11 @@ export class ExamService {
 			/(\d+)([A-Za-z ]+ \(\d+\))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;*/
 		//working for additional subjects
 		const subjectRegex =
-			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
+			/*	
+		/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([A-Z]*|[\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
+			*/
+
+			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
 
 		const totalRegex = /TOTAL(\d+)RESULT(\w+)/;
 
@@ -1177,15 +1181,128 @@ export class ExamService {
 			while (
 				(match = subjectRegex.exec(content.replace(/\n/g, ''))) !== null
 			) {
+				console.log('match', match);
+				//get max marks
+				let max_marks = '-';
+				let theory_marks = '-';
+				let practical_marks = '-';
+				let sessional_marks = '-';
+				let total_marks = '-';
+				const regex_max_marks = /100/;
+				if (match[4] && regex_max_marks.test(match[4])) {
+					max_marks = '100';
+					theory_marks = match[4].replace('100', '') + match[5];
+					total_marks = match[7] + match[8];
+					//find practical marks and sessional marks
+					if (match[6]) {
+						let temp_theory_marks =
+							theory_marks == '-' || theory_marks == 'AB'
+								? '0'
+								: theory_marks;
+						const p_s_marks =
+							parseInt(total_marks) - parseInt(temp_theory_marks);
+						const concat_p_s_marks = match[6];
+						const text_concat_p_s_marks =
+							concat_p_s_marks.toString();
+						const char_text_concat_p_s_marks = [
+							...text_concat_p_s_marks,
+						];
+						console.log(
+							'text_concat_p_s_marks',
+							char_text_concat_p_s_marks,
+						);
+						//exract practical and sessional
+						let is_p_s_done = false;
+						//if practical -
+						if (char_text_concat_p_s_marks[0] == '-') {
+							practical_marks = char_text_concat_p_s_marks[0];
+							sessional_marks = text_concat_p_s_marks.replace(
+								practical_marks,
+								'',
+							);
+							is_p_s_done = true;
+						}
+						//if practical AB
+						if (char_text_concat_p_s_marks[0] == 'A') {
+							practical_marks = 'AB';
+							sessional_marks = text_concat_p_s_marks.replace(
+								practical_marks,
+								'',
+							);
+							is_p_s_done = true;
+						}
+						//if sessional -
+						if (
+							char_text_concat_p_s_marks[
+								char_text_concat_p_s_marks.length - 1
+							] == '-'
+						) {
+							sessional_marks = char_text_concat_p_s_marks[0];
+							practical_marks = text_concat_p_s_marks.replace(
+								sessional_marks,
+								'',
+							);
+							is_p_s_done = true;
+						}
+						//if sessional AB
+						if (
+							char_text_concat_p_s_marks[
+								char_text_concat_p_s_marks.length - 1
+							] == 'B'
+						) {
+							sessional_marks = 'AB';
+							practical_marks = text_concat_p_s_marks.replace(
+								sessional_marks,
+								'',
+							);
+							is_p_s_done = true;
+						}
+						//separate practical and sessional
+						if (!is_p_s_done) {
+							let practical = '';
+							for (
+								let i = 0;
+								i < char_text_concat_p_s_marks.length;
+								i++
+							) {
+								let temp_practical =
+									practical + char_text_concat_p_s_marks[i];
+								let temp_sessional = '';
+								for (
+									let j = i + 1;
+									j < char_text_concat_p_s_marks.length;
+									j++
+								) {
+									temp_sessional =
+										temp_sessional +
+										char_text_concat_p_s_marks[j];
+								}
+								if (
+									parseInt(total_marks) ===
+										parseInt(temp_practical) +
+											parseInt(temp_sessional) +
+											parseInt(temp_theory_marks) &&
+									parseInt(temp_sessional) <= 10
+								) {
+									practical_marks = temp_practical;
+									sessional_marks = temp_sessional;
+									break;
+								} else {
+									practical = temp_practical;
+								}
+							}
+						}
+					}
+				}
 				subjects.push({
 					subjectNo: match[1],
 					subjectNameCode: match[2].trim().replace(/ \(\d+\)/, ''),
 					subjectCode: match[2].match(/\((\d+)\)/)[1],
-					maxMarks: match[4],
-					marksTheory: match[5] === '-' ? '0' : match[5],
-					marksPractical: match[6] === '-' ? '0' : match[6],
-					marksSessional: match[7] === '-' ? '0' : match[7],
-					totalMarks: match[8],
+					maxMarks: max_marks,
+					marksTheory: theory_marks,
+					marksPractical: practical_marks,
+					marksSessional: sessional_marks,
+					totalMarks: total_marks,
 					result: match[9].replace('TOTAL', ''),
 				});
 			}
@@ -1200,7 +1317,6 @@ export class ExamService {
 				personalDetails,
 				subjects,
 				totalResult,
-				data: content,
 			};
 		}
 
