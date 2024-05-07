@@ -82,7 +82,7 @@ export class OnestusertrackService {
 		// Return success response
 		response.status(200).json({
 			success: true,
-			message: 'Organisation created successfully.',
+			message: 'Onest User tracking data added successfully.',
 			data: {
 				newdata,
 			},
