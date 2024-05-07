@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 //import * as pdfjsLib from 'pdfjs-dist';
-import * as Tesseract from 'tesseract.js';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
 const parse = require('pdf-parse');
 
 @Injectable()
 export class ExamService {
-	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
+	constructor(
+		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private uploadFileService: UploadFileService,
+	) {}
 
 	async getExamSchedule(id: any, resp: any, request: any) {
 		let program_id = request?.mw_program_id;
@@ -653,10 +656,11 @@ export class ExamService {
 				}
 			}
 		`;
-
+		//console.log('vquery', vquery);
 		vresponse = await this.hasuraServiceFromServices.getData({
 			query: vquery,
 		});
+		//console.log('vresponse', vresponse);
 
 		let exam_result_id = vresponse?.data?.exam_results?.[0]?.id;
 
@@ -710,6 +714,7 @@ export class ExamService {
 				}
 			`;
 
+		//console.log('mutation_query', mutation_query);
 		data = {
 			query: `${mutation_query}`,
 			variables: {},
@@ -717,6 +722,8 @@ export class ExamService {
 
 		const query_response =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		//console.log('query_response', query_response?.data);
 
 		exam_result_id =
 			set_update == 1
@@ -821,6 +828,57 @@ export class ExamService {
 		}
 
 		return result; // Return the modified result object
+	}
+
+	//upload pdf file
+	public async base64ToBlob(buffer, userId, res, documentDetails) {
+		//console.log('here-->>');
+		let fileObject;
+		let { document_type, document_sub_type } = documentDetails;
+
+		// Generate a unique filename with timestamp and userId
+		const now = new Date();
+		const formattedDateTime = now
+			.toISOString()
+			.slice(0, 19)
+			.replace('T', '-'); // YYYY-MM-DD-HH-MM-SS format
+		const filename = `${userId}-${formattedDateTime}.pdf`; // Extract file extension
+
+		fileObject = {
+			fieldname: 'file',
+			mimetype: 'application/pdf',
+			encoding: '7bit',
+			originalname: filename,
+			buffer: buffer,
+		};
+		let uploadresponse = await this.uploadFileService.addFile(
+			fileObject,
+			userId,
+			document_type,
+			document_sub_type,
+			res,
+			true,
+		);
+
+		//console.log(
+		//	'response of file upload-->>',
+		//	JSON.stringify(uploadresponse),
+		//	);
+		let document_id: any; // Adjust the type as per your requirement
+
+		if ('data' in uploadresponse && uploadresponse.data) {
+			document_id =
+				uploadresponse.data.data?.insert_documents?.returning[0]?.id;
+		} else {
+			// Handle the case where 'data' property is not present
+			// or uploadresponse.data is null/undefined
+			document_id = null; // Or any other fallback value
+		}
+		return {
+			filename,
+			mimeType: 'application/pdf',
+			document_id: document_id,
+		};
 	}
 
 	async getCampRegisteredLearners(body, request, response) {
@@ -1021,9 +1079,7 @@ export class ExamService {
 		}
 	}
 
-	public async resultUpload(file: any, response: any, request: any) {
-		let program_id = request?.mw_program_id;
-		let academic_year_id = request?.mw_academic_year_id;
+	public async pdfExtract(file: any, response: any, request: any) {
 		const board_name = request?.body?.board_name;
 		//first check validations for all inputs
 		try {
@@ -1037,6 +1093,8 @@ export class ExamService {
 					.status(200)
 					.json({ success: false, message: 'INVALID_PDF' });
 			} else {
+				//upload pdf file and store in exam result
+
 				return response.status(200).json({
 					success: true,
 					extracted_data: {
@@ -1052,11 +1110,85 @@ export class ExamService {
 		}
 	}
 
+	public async resultUpload(file: any, response: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		const board_name = request?.body?.board_name;
+		const user_id = request?.body?.user_id;
+		const board_id = request?.body?.board_id;
+		const enrollment = request?.body?.enrollment;
+		//first check validations for all inputs
+		try {
+			//ocr read
+			const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
+			//console.log('data', data);
+			//text read
+			const result = await this.extractResultFromPDF(file, board_name);
+			if (result == null) {
+				return response
+					.status(200)
+					.json({ success: false, message: 'INVALID_PDF' });
+			} else {
+				//check extracted enrollment
+				if (enrollment == result?.enrollment) {
+					result.user_id = user_id;
+					result.board_id = board_id;
+					//upload pdf file and get document id
+					let document: any = await this.base64ToBlob(
+						file.buffer,
+						user_id,
+						response,
+						{
+							document_type: 'exam_result',
+							document_sub_type: '',
+						},
+					);
+					//console.log('document', document);
+					//add document id in results
+					let document_id = document?.document_id;
+					result.document_id = document_id;
+					let examResult = await this.ExamResultUpsert(
+						result,
+						academic_year_id,
+						program_id,
+					);
+					if (examResult) {
+						return response.status(200).json({
+							data: examResult,
+							document: document,
+							extracted_data: {
+								result,
+							},
+						});
+					} else {
+						return response.status(500).json({
+							data: [],
+							document: [],
+							extracted_data: {
+								result,
+							},
+						});
+					}
+				} else {
+					return response.status(200).json({
+						success: false,
+						message: 'ENROLLMENT_NOT_MATCH',
+					});
+				}
+			}
+		} catch (error) {
+			console.log('error', error);
+			return response
+				.status(200)
+				.json({ success: false, message: 'Failed_Read_PDF' });
+		}
+	}
+
 	//extract result from pdf functions
 	async extractResultFromPDF(file: any, board_name: any): Promise<any> {
 		//console.log('file', file);
 		const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-		console.log('data', data);
+		//console.log('data', data);
 		//extract data from pdf
 		const pdfText = data.text; // Assuming data is the provided object containing the extracted PDF text
 		//console.log('pdfText', pdfText);
@@ -1084,10 +1216,10 @@ export class ExamService {
 		const match = content.match(regex);
 
 		if (match) {
-			const [, enrollment, candidate, father, mother, dob, classGrade] =
+			const [, enrollment, candidate, father, mother, dob, course_class] =
 				match;
 			//get subject total
-			let subjects = [];
+			let subject = [];
 			const subjectRegex =
 				/(\d+)\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
 			let match_subjects;
@@ -1105,22 +1237,21 @@ export class ExamService {
 					total,
 					result,
 				] = match_subjects;
-				subjects.push({
-					no,
-					name: name.replace(/\n/g, ''),
-					code,
-					maxMarks,
-					theory,
-					practical,
-					sessional,
-					total,
-					result,
+				subject.push({
+					subject_name: name.replace(/\n/g, ''),
+					subject_code: code,
+					max_marks: maxMarks,
+					theory: theory,
+					practical: practical,
+					tma_internal_sessional: sessional,
+					total: total,
+					result: result,
 				});
 			}
 			//get result total
 			const regex = /TOTAL(\d+)RESULT(\w+)/;
 			const match_result = content.match(regex);
-			let totalResult = {};
+			let totalResult: any = {};
 			if (match_result) {
 				const totalMarks = match_result[1];
 				const finalResult = match_result[2];
@@ -1132,9 +1263,11 @@ export class ExamService {
 				father,
 				mother,
 				dob,
-				classGrade,
-				subjects,
-				totalResult,
+				course_class,
+				exam_year: '-',
+				total_marks: totalResult?.totalMarks,
+				final_result: totalResult?.result,
+				subject,
 			};
 		}
 
@@ -1152,9 +1285,12 @@ export class ExamService {
 			/(\d+)([A-Za-z ]+ \(\d+\))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;*/
 		//working for additional subjects
 		const subjectRegex =
-			/*	
+			//working on new fringe case
+			/*
 		/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([A-Z]*|[\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
-			*/
+		*/
+
+			//working below regex with most of file if user has total marks large than 10
 
 			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
 
@@ -1175,7 +1311,7 @@ export class ExamService {
 				  }
 				: {};
 
-			const subjects = [];
+			const subject = [];
 
 			let match: any;
 			while (
@@ -1207,10 +1343,10 @@ export class ExamService {
 						const char_text_concat_p_s_marks = [
 							...text_concat_p_s_marks,
 						];
-						console.log(
+						/*console.log(
 							'text_concat_p_s_marks',
 							char_text_concat_p_s_marks,
-						);
+						);*/
 						//exract practical and sessional
 						let is_p_s_done = false;
 						//if practical -
@@ -1294,15 +1430,14 @@ export class ExamService {
 						}
 					}
 				}
-				subjects.push({
-					subjectNo: match[1],
-					subjectNameCode: match[2].trim().replace(/ \(\d+\)/, ''),
-					subjectCode: match[2].match(/\((\d+)\)/)[1],
-					maxMarks: max_marks,
-					marksTheory: theory_marks,
-					marksPractical: practical_marks,
-					marksSessional: sessional_marks,
-					totalMarks: total_marks,
+				subject.push({
+					subject_name: match[2].trim().replace(/ \(\d+\)/, ''),
+					subject_code: match[2].match(/\((\d+)\)/)[1],
+					max_marks: max_marks,
+					theory: theory_marks,
+					practical: practical_marks,
+					tma_internal_sessional: sessional_marks,
+					total: total_marks,
 					result: match[9].replace('TOTAL', ''),
 				});
 			}
@@ -1314,9 +1449,16 @@ export class ExamService {
 				: {};
 
 			return {
-				personalDetails,
-				subjects,
-				totalResult,
+				enrollment: personalDetails?.enrollment,
+				candidate: personalDetails?.name,
+				father: personalDetails?.fatherName,
+				mother: personalDetails?.motherName,
+				dob: personalDetails?.dob,
+				course_class: personalDetails?.class,
+				exam_year: '-',
+				total_marks: totalResult?.totalMarks,
+				final_result: totalResult?.result,
+				subject,
 			};
 		}
 

@@ -33,11 +33,23 @@ export class ExamController {
 		return this.examService.getExamSchedule(id, response, request);
 	}
 
+	@Post('/pdf/extract')
+	//@UseGuards(new AuthGuard())
+	//@UsePipes(ValidationPipe)
+	@UseInterceptors(FileInterceptor('resultfile')) //  'jsonpayload' is the name of the field for the uploaded file
+	public async pdfExtract(
+		@UploadedFile() file: Express.Multer.File,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.pdfExtract(file, response, request);
+	}
+
 	@Post('/result/upload')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
 	@UseInterceptors(FileInterceptor('resultfile')) //  'jsonpayload' is the name of the field for the uploaded file
-	public async userOnboarding(
+	public async resultUpload(
 		@UploadedFile() file: Express.Multer.File,
 		@Res() response: Response,
 		@Req() request: Request,

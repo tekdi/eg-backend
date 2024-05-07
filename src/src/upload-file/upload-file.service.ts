@@ -20,7 +20,7 @@ export class UploadFileService {
 		response: Response,
 		isCommonFunction?,
 	) {
-		console.log('file-->>', file);
+		//console.log('file-->>', file);
 		if (!file?.originalname) {
 			return response.status(400).send({
 				success: false,
@@ -121,7 +121,7 @@ export class UploadFileService {
 			if (res && isCommonFunction) {
 				return { data: { key: key, fileUrl: fileUrl, data: res.data } };
 			} else if (res) {
-				console.log('response file upload-->>', JSON.stringify(res));
+				//console.log('response file upload-->>', JSON.stringify(res));
 				return response.status(200).send({
 					success: true,
 					status: 'Success',
