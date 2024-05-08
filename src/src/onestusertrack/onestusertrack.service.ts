@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateOnestusertrackDto } from './dto/create-onestusertrack.dto';
 import { UpdateOnestusertrackDto } from './dto/update-onestusertrack.dto';
 import { HasuraService } from '../hasura/hasura.service';
+
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 @Injectable()
 export class OnestusertrackService {
@@ -11,7 +12,8 @@ export class OnestusertrackService {
 	) {}
 
 	async create(body: any, request: any, response: any) {
-		const { user_id, context, context_item_id, order_id, status } = body;
+		const { user_id, context, context_item_id, order_id, status, params } =
+			body;
 		const missingFields = [
 			'user_id',
 			'context',
@@ -59,20 +61,32 @@ export class OnestusertrackService {
 			}
 		}
 
-		const onestuserdata = {
+		let onestuserdata = {
 			user_id,
 			context,
 			context_item_id,
 			status,
 			order_id,
+			params,
 		};
 
 		const tableName = 'onest_users_tracking';
-		const newDatainsert = await this.hasuraService.q(
-			tableName,
-			onestuserdata,
-			['user_id', 'context', 'context_item_id', 'status', 'order_id'],
-		);
+		const fileds = [
+			'user_id',
+			'context',
+			'context_item_id',
+			'status',
+			'order_id',
+			'params',
+		];
+		const newDatainsert =
+			await this.hasuraServiceFromServices.createWithVariable(
+				tableName,
+				onestuserdata,
+				fileds,
+				[...fileds, 'id'],
+				[{ key: 'params', type: 'jsonb' }],
+			);
 
 		if (!newDatainsert || !newDatainsert?.onest_users_tracking.id) {
 			throw new Error('Failed to add data.');
@@ -97,6 +111,7 @@ export class OnestusertrackService {
 			'context_item_id',
 			'status',
 			'order_id',
+			'params',
 		];
 		body.filter = {
 			...(body.filter || {}),
