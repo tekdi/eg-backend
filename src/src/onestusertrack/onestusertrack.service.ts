@@ -60,13 +60,7 @@ export class OnestusertrackService {
 				});
 			}
 		}
-		// Convert params object to array of key-value pairs
-		// const paramsArray = Object.entries(params || {}).map(
-		// 	([key, value]) => ({
-		// 		key,
-		// 		value,
-		// 	}),
-		// );
+
 		let onestuserdata = {
 			user_id,
 			context,
