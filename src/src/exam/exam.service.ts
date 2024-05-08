@@ -917,11 +917,11 @@ export class ExamService {
 		if (body?.boardid) {
 			boardsearch = `id:{_eq: ${body?.boardid}}`;
 		}
-		if (body?.examstatus && body?.examstatus.length > 0) {
-			filterQueryArray.push(
-				`result_upload_status:{_eq: ${body?.examstatus}}`,
-			);
-		}
+		// if (body?.examstatus && body?.examstatus.length > 0) {
+		// 	filterQueryArray.push(
+		// 		`result_upload_status:{_eq: ${body?.examstatus}}`,
+		// 	);
+		// }
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`district:{_in: ${JSON.stringify(body?.district)}}`,
