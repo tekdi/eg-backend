@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
+import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 //import * as pdfjsLib from 'pdfjs-dist';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
@@ -892,6 +892,7 @@ export class ExamService {
 		let filter;
 		let searchQuery = '';
 		let filterStatus = '';
+		let boardsearch = '';
 		let filterQueryArray = [];
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? -1 : parseInt(body.limit);
@@ -911,6 +912,10 @@ export class ExamService {
 					`first_name: { _ilike: "%${first_name}%" }`,
 				);
 			}
+		}
+
+		if (body?.boardid) {
+			boardsearch = `id:{_eq: ${body?.boardid}}`;
 		}
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
@@ -950,7 +955,8 @@ export class ExamService {
 				validation_response?.data?.data?.program_users?.[0]
 					?.organisation_id;
 
-			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}} ${
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
+			}, ${
 				body?.status && body?.status.length > 0
 					? `,exam_results:{${filterStatus}}`
 					: ''
@@ -1028,6 +1034,7 @@ export class ExamService {
 				message: 'Data Retrieved Successfully',
 				limit,
 				currentPage: page,
+				totalCount: count,
 				totalPages,
 				data: result,
 			});
@@ -1760,6 +1767,162 @@ export class ExamService {
 			return response.status(500).json({
 				success: false,
 				message: 'Internal Server Error',
+			});
+		}
+	}
+
+	async exportCsv(req: any, body: any, resp: any) {
+		try {
+			let user = req?.mw_userid;
+			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
+			const variables: any = {};
+
+			let filterQueryArray = [];
+			let paramsQueryArray = [];
+
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					filterQueryArray.push(`{_or: [
+				{ user:{first_name: { _ilike: "%${first_name}%" }} }
+				{user:{ last_name: { _ilike: "%${last_name}%" } }}
+				 ]} `);
+				} else {
+					filterQueryArray.push(`{_or: [
+				{ user:{first_name: { _ilike: "%${first_name}%" }} }
+				{ user:{last_name: { _ilike: "%${first_name}%" } }}
+				 ]} `);
+				}
+			}
+
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{user:{state: { _in: $state }}}');
+				variables.state = body.state;
+			}
+
+			if (body.hasOwnProperty('district') && body.district.length) {
+				paramsQueryArray.push('$district: [String!]');
+				filterQueryArray.push('{user:{district: { _in: $district }}}');
+				variables.district = body.district;
+			}
+
+			if (body.hasOwnProperty('block') && body.block.length) {
+				paramsQueryArray.push('$block: [String!]');
+				filterQueryArray.push('user:{{block: { _in: $block }}}');
+				variables.block = body.block;
+			}
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+			let paramsQuery = '';
+			if (paramsQueryArray.length) {
+				paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+			}
+			let sortQuery = `{ user_id: desc }`;
+			const data = {
+				query: `query MyQuery ${paramsQuery}{
+							program_beneficiaries(where: ${filterQuery}, order_by: ${sortQuery}) {
+							  facilitator_id
+								bordID{
+									id
+									name
+								}
+							  facilitator_user{
+								id
+								first_name
+								last_name
+								middle_name
+								 
+							  }
+							  enrollment_number
+							  beneficiary_user:user {
+							   beneficiary_id: id
+								first_name
+								middle_name
+								last_name
+								exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1}}) {
+								  id
+								  board_id
+								  program_id
+								  academic_year_id
+								  board_id
+								  enrollment
+								  candidate
+								  father
+								  mother
+								  dob
+								  course_class
+								  exam_year
+								  total_marks
+								  final_result
+								  document_id
+								}
+							  }
+							}
+						  }
+						  `,
+				variables: variables,
+			};
+
+			const hasuraResponse = await this.hasuraServiceFromServices.getData(
+				data,
+			);
+			const allBeneficiaries =
+				hasuraResponse?.data?.program_beneficiaries;
+
+			const csvStringifier = createObjectCsvStringifier({
+				header: [
+					{ id: 'name', title: 'LearnerName' },
+					{ id: 'beneficiary_id', title: 'LearnerId' },
+					{ id: 'enrollment_number', title: 'Enrollment Number' },
+					{ id: 'facilitator_id', title: 'FacilitatorId' },
+					{ id: 'facilitator_name', title: 'FacilitatorName' },
+					{ id: 'exam_result', title: 'ExamResult' },
+				],
+			});
+
+			const records = [];
+			for (let data of allBeneficiaries) {
+				const dataObject = {};
+				dataObject[
+					'name'
+				] = `${data?.beneficiary_user?.first_name} ${data?.beneficiary_user?.last_name}`;
+				dataObject[
+					'beneficiary_id'
+				] = `${data?.beneficiary_user?.beneficiary_id}`;
+				dataObject['enrollment_number'] = data?.enrollment_number;
+				dataObject['facilitator_id'] = data?.facilitator_id;
+				dataObject[
+					'facilitator_name'
+				] = `${data?.facilitator_user?.first_name} ${data?.facilitator_user?.last_name}`;
+				dataObject['exam_result'] =
+					data?.beneficiary_user?.exam_results?.[0]?.final_result;
+				dataObject['beneficiary_user'] = {
+					beneficiary_id: data?.beneficiary_user?.beneficiary_id,
+					first_name: data?.beneficiary_user?.first_name,
+					middle_name: data?.beneficiary_user?.middle_name,
+					last_name: data?.beneficiary_user?.last_name,
+					exam_results: data?.beneficiary_user?.exam_results || [],
+				};
+				records.push(dataObject);
+			}
+			let fileName = `${
+				user?.data?.first_name + '_' + user?.data?.last_name
+			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			const fileData =
+				csvStringifier.getHeaderString() +
+				csvStringifier.stringifyRecords(records);
+			resp.header('Content-Type', 'text/csv');
+			return resp.attachment(fileName).send(fileData);
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: 'File Does Not Export!',
+				data: {},
 			});
 		}
 	}
