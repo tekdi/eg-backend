@@ -1298,7 +1298,7 @@ export class ExamService {
 				course_class,
 				exam_year: '-',
 				total_marks: totalResult?.totalMarks,
-				final_result: totalResult?.result,
+				final_result: totalResult?.finalResult,
 				subject,
 			};
 		}
