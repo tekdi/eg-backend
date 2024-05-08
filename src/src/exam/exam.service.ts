@@ -1154,6 +1154,7 @@ export class ExamService {
 					);
 					if (examResult) {
 						return response.status(200).json({
+							success: true,
 							data: examResult,
 							document: document,
 							extracted_data: {
@@ -1161,7 +1162,8 @@ export class ExamService {
 							},
 						});
 					} else {
-						return response.status(500).json({
+						return response.status(200).json({
+							success: false,
 							data: [],
 							document: [],
 							extracted_data: {
@@ -1317,7 +1319,7 @@ export class ExamService {
 			while (
 				(match = subjectRegex.exec(content.replace(/\n/g, ''))) !== null
 			) {
-				//console.log('match', match);
+				console.log('match', match);
 				//get max marks
 				let max_marks = '-';
 				let theory_marks = '-';
