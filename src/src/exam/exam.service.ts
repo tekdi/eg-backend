@@ -892,6 +892,7 @@ export class ExamService {
 		let filter;
 		let searchQuery = '';
 		let filterStatus = '';
+		let boardsearch = '';
 		let filterQueryArray = [];
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? -1 : parseInt(body.limit);
@@ -911,6 +912,10 @@ export class ExamService {
 					`first_name: { _ilike: "%${first_name}%" }`,
 				);
 			}
+		}
+
+		if (body?.boardid) {
+			boardsearch = `id:{_eq: ${body?.boardid}}`;
 		}
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
@@ -950,7 +955,8 @@ export class ExamService {
 				validation_response?.data?.data?.program_users?.[0]
 					?.organisation_id;
 
-			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}} ${
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
+			}, ${
 				body?.status && body?.status.length > 0
 					? `,exam_results:{${filterStatus}}`
 					: ''
@@ -1028,6 +1034,7 @@ export class ExamService {
 				message: 'Data Retrieved Successfully',
 				limit,
 				currentPage: page,
+				totalCount: count,
 				totalPages,
 				data: result,
 			});
