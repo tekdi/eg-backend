@@ -168,4 +168,14 @@ export class ExamController {
 	) {
 		return this.examService.getExamResultSubject(body, request, response);
 	}
+
+	@Post('/admin/export-csv')
+	@UseGuards(new AuthGuard())
+	async exportCsv(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.examService.exportCsv(request, body, response);
+	}
 }

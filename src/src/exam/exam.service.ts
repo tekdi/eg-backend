@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
+import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 @Injectable()
 export class ExamService {
@@ -1310,6 +1310,574 @@ export class ExamService {
 			return response.status(500).json({
 				success: false,
 				message: 'Internal Server Error',
+			});
+		}
+	}
+
+	// async exportCsv(req: any, body: any, resp: any) {
+	// 	try {
+	// 	//	const user = await this.userService.ipUserInfo(req);
+	// 		const academic_year_id = req.mw_academic_year_id;
+	// 		const program_id = req.mw_program_id;
+	// 		const variables: any = {};
+
+	// 		let filterQueryArray = [];
+	// 		let paramsQueryArray = [];
+
+	// 		filterQueryArray.push(
+	// 			`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
+	// 		);
+
+	// 		if (body.search && body.search !== '') {
+	// 			let first_name = body.search.split(' ')[0];
+	// 			let last_name = body.search.split(' ')[1] || '';
+
+	// 			if (last_name?.length > 0) {
+	// 				filterQueryArray.push(`{_or: [
+	// 			{ first_name: { _ilike: "%${first_name}%" } }
+	// 			{ last_name: { _ilike: "%${last_name}%" } }
+	// 			 ]} `);
+	// 			} else {
+	// 				filterQueryArray.push(`{_or: [
+	// 			{ first_name: { _ilike: "%${first_name}%" } }
+	// 			{ last_name: { _ilike: "%${first_name}%" } }
+	// 			 ]} `);
+	// 			}
+	// 		}
+	// 		if (body?.status && body?.status !== '') {
+	// 			if (body?.status === 'identified') {
+	// 				filterQueryArray.push(`{
+	// 					_or: [
+	// 						{ program_beneficiaries: { status: { _eq: "identified" } } },
+	// 						{ program_beneficiaries: { status: { _is_null: true } } },
+	// 						{ program_beneficiaries: { status: { _eq: "" } } },
+	// 					]
+	// 				}`);
+	// 			} else {
+	// 				filterQueryArray.push(
+	// 					`{program_beneficiaries:{status:{_eq:${body?.status}}}}`,
+	// 				);
+	// 			}
+	// 		}
+
+	// 		if (body.hasOwnProperty('state') && body.state.length) {
+	// 			paramsQueryArray.push('$state: [String!]');
+	// 			filterQueryArray.push('{state: { _in: $state }}');
+	// 			variables.state = body.state;
+	// 		}
+
+	// 		if (body.hasOwnProperty('district') && body.district.length) {
+	// 			paramsQueryArray.push('$district: [String!]');
+	// 			filterQueryArray.push('{district: { _in: $district }}');
+	// 			variables.district = body.district;
+	// 		}
+
+	// 		if (body.hasOwnProperty('block') && body.block.length) {
+	// 			paramsQueryArray.push('$block: [String!]');
+	// 			filterQueryArray.push('{block: { _in: $block }}');
+	// 			variables.block = body.block;
+	// 		}
+
+	// 		if (body.facilitator && body.facilitator.length > 0) {
+	// 			filterQueryArray.push(
+	// 				`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+	// 					body.facilitator,
+	// 				)}}}}`,
+	// 			);
+	// 		}
+
+	// 		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+	// 		let paramsQuery = '';
+	// 		if (paramsQueryArray.length) {
+	// 			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+	// 		}
+	// 		let sortQuery = `{ created_at: desc }`;
+
+	// 		const data = {
+	// 			query: `query MyQuery ${paramsQuery} {
+	// 				users(where:${filterQuery}, order_by: ${sortQuery}){
+	// 					first_name
+	// 					last_name
+	// 					dob
+	// 					aadhar_no
+	// 					aadhar_verified
+	// 					aadhaar_verification_mode
+	// 					village
+	// 					mobile
+	// 					block
+	// 					district
+	// 					program_beneficiaries{
+	// 						user_id
+	// 						facilitator_id
+	// 						status
+	// 						enrollment_number
+	// 						enrollment_first_name
+	// 						enrollment_last_name
+	// 						facilitator_user{
+	// 							first_name
+	// 							id
+	// 							last_name
+	// 						}
+	// 				  	}
+	// 				}
+	// 			  }
+	// 			  `,
+	// 			variables: variables,
+	// 		};
+	// 		data = {
+	// 			query: `query MyQuery(${
+	// 				limit != -1 ? '$limit:Int,' : ''
+	// 			} $offset:Int) {
+	// 				program_beneficiaries_aggregate(where: ${filter}) {
+	// 					aggregate{
+	// 						count
+	// 					}
+	// 				}
+	// 				program_beneficiaries(where: ${filter}, ${limit != -1 ? 'limit: $limit,' : ''}
+	// 					offset: $offset) {
+	// 					facilitator_id
+	// 					bordID{
+	// 						id
+	// 						name
+	// 					}
+	// 					facilitator_user{
+	// 					id
+	// 					first_name
+	// 					last_name
+	// 					middle_name
+
+	// 					}
+	// 					enrollment_number
+	// 					beneficiary_user:user {
+	// 					 beneficiary_id: id
+	// 					first_name
+	// 					middle_name
+	// 					last_name
+	// 					exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1},${filterStatus}}) {
+	// 						id
+	// 						board_id
+	// 						program_id
+	// 						academic_year_id
+	// 						board_id
+	// 						enrollment
+	// 						candidate
+	// 						father
+	// 						mother
+	// 						dob
+	// 						course_class
+	// 						exam_year
+	// 						total_marks
+	// 						final_result
+	// 						document_id
+	// 					}
+	// 					}
+	// 				}
+	// 				}
+	// 				`,
+	// 			variables: variables,
+	// 		};
+	// 		const hasuraResponse = await this.hasuraServiceFromServices.getData(
+	// 			data,
+	// 		);
+	// 		const allBeneficiaries = hasuraResponse?.data?.users;
+	// 		const csvStringifier = createObjectCsvStringifier({
+	// 			header: [
+	// 				{ id: 'name', title: 'Name' },
+	// 				{ id: 'user_id', title: 'LearnerId' },
+	// 				{ id: 'district', title: 'District' },
+	// 				{ id: 'block', title: 'Block' },
+	// 				{ id: 'village', title: 'Village' },
+	// 				{ id: 'dob', title: 'DOB' },
+	// 				{ id: 'prerak', title: 'Prerak' },
+	// 				{ id: 'facilitator_id', title: 'FacilitatorId' },
+	// 				{ id: 'mobile', title: 'Mobile Number' },
+	// 				{ id: 'status', title: 'Status' },
+	// 				{ id: 'enrollment_number', title: 'Enrollment Number' },
+	// 				{ id: 'aadhar_no', title: 'Aadhaar Number' },
+	// 				{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
+	// 				{
+	// 					id: 'aadhaar_verification_mode',
+	// 					title: 'Aadhaar Verification Mode',
+	// 				},
+	// 			],
+	// 		});
+
+	// 		const records = [];
+	// 		for (let data of allBeneficiaries) {
+	// 			const dataObject = {};
+	// 			dataObject['name'] =
+	// 				data?.program_beneficiaries[0]?.status !==
+	// 				'enrolled_ip_verified'
+	// 					? [data?.first_name, data?.last_name]
+	// 							.filter((e) => e)
+	// 							.join(' ')
+	// 					: [
+	// 							data?.program_beneficiaries[0]
+	// 								?.enrollment_first_name,
+	// 							data?.program_beneficiaries[0]
+	// 								?.enrollment_last_name,
+	// 					  ]
+	// 							.filter((e) => e)
+	// 							.join(' ');
+	// 			dataObject['user_id'] = data?.program_beneficiaries[0]?.user_id;
+	// 			dataObject['district'] = data?.district;
+	// 			dataObject['block'] = data?.block;
+	// 			dataObject['village'] = data?.village;
+	// 			dataObject['dob'] = data?.dob;
+	// 			dataObject['prerak'] =
+	// 				data?.program_beneficiaries[0]?.facilitator_user
+	// 					?.first_name +
+	// 				' ' +
+	// 				data?.program_beneficiaries[0]?.facilitator_user?.last_name;
+	// 			dataObject['facilitator_id'] =
+	// 				data?.program_beneficiaries[0]?.facilitator_id;
+	// 			dataObject['mobile'] = data?.mobile;
+	// 			dataObject['status'] = data?.program_beneficiaries[0]?.status;
+	// 			dataObject['enrollment_number'] =
+	// 				data?.program_beneficiaries[0]?.enrollment_number;
+
+	// 			dataObject['aadhar_no'] = data?.aadhar_no;
+	// 			dataObject['aadhar_verified'] = data?.aadhar_verified
+	// 				? data?.aadhar_verified
+	// 				: 'no';
+	// 			dataObject['aadhaar_verification_mode'] =
+	// 				data?.aadhaar_verification_mode;
+	// 			records.push(dataObject);
+	// 		}
+	// 		let fileName = `${
+	// 			user?.data?.first_name + '_' + user?.data?.last_name
+	// 		}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+	// 		const fileData =
+	// 			csvStringifier.getHeaderString() +
+	// 			csvStringifier.stringifyRecords(records);
+	// 		resp.header('Content-Type', 'text/csv');
+	// 		return resp.attachment(fileName).send(fileData);
+	// 	} catch (error) {
+	// 		return resp.status(500).json({
+	// 			success: false,
+	// 			message: 'File Does Not Export!',
+	// 			data: {},
+	// 		});
+	// 	}
+	// }
+
+	// async exportCsv(body, request, response) {
+	// 	let user_id = request?.mw_userid;
+	// 	let data;
+	// 	let validation_response;
+	// 	let result;
+	// 	let academic_year_id = request?.mw_academic_year_id;
+	// 	let program_id = request?.mw_program_id;
+	// 	let role = request?.mw_roles;
+	// 	let filter;
+	// 	let searchQuery = '';
+	// 	let filterStatus = '';
+	// 	let filterQueryArray = [];
+	// 	const page = isNaN(body.page) ? 1 : parseInt(body.page);
+	// 	const limit = isNaN(body.limit) ? -1 : parseInt(body.limit);
+	// 	let offset = page > 1 ? limit * (page - 1) : 0;
+
+	// 	if (body.search && body.search !== '') {
+	// 		let first_name = body.search.split(' ')[0];
+	// 		let last_name = body.search.split(' ')[1] || '';
+
+	// 		if (last_name?.length > 0) {
+	// 			filterQueryArray.push(`
+	// 			first_name: { _ilike: "%${first_name}%" },
+	// 			last_name: { _ilike: "%${last_name}%" }
+	// 	`);
+	// 		} else {
+	// 			filterQueryArray.push(
+	// 				`first_name: { _ilike: "%${first_name}%" }`,
+	// 			);
+	// 		}
+	// 	}
+	// 	if (body?.district && body?.district.length > 0) {
+	// 		filterQueryArray.push(
+	// 			`district:{_in: ${JSON.stringify(body?.district)}}`,
+	// 		);
+	// 	}
+
+	// 	if (body?.block && body?.block.length > 0) {
+	// 		//searchQuery = `block:{_in: ${JSON.stringify(body?.block)}}`;
+	// 		filterQueryArray.push(
+	// 			`block:{_in: ${JSON.stringify(body?.block)}}`,
+	// 		);
+	// 	}
+	// 	if (body?.status && body?.status.length > 0) {
+	// 		filterStatus = `final_result:{_in: ${JSON.stringify(
+	// 			body?.status,
+	// 		)}}`;
+	// 	}
+	// 	searchQuery = '' + filterQueryArray.join(',') + '';
+	// 	if (role?.includes('facilitator')) {
+	// 		filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"}}`;
+	// 	} else if (role?.includes('staff')) {
+	// 		//get organisation_id of the IP
+	// 		let query = {
+	// 			query: `query MyQuery {
+	// 				program_users(where: {academic_year_id: {_eq: 1}, program_id: {_eq: 1}, user_id: {_eq:${user_id}}}) {
+	// 				  organisation_id
+	// 				}
+	// 			  }
+	// 			  `,
+	// 		};
+
+	// 		validation_response =
+	// 			await this.hasuraServiceFromServices.queryWithVariable(query);
+
+	// 		let parent_ip =
+	// 			validation_response?.data?.data?.program_users?.[0]
+	// 				?.organisation_id;
+
+	// 		filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}} ${
+	// 			body?.status && body?.status.length > 0
+	// 				? `,exam_results:{${filterStatus}}`
+	// 				: ''
+	// 		}}
+	// 			`;
+	// 	}
+
+	// 	data = {
+	// 		query: `query MyQuery(${
+	// 			limit != -1 ? '$limit:Int,' : ''
+	// 		} $offset:Int) {
+	// 			program_beneficiaries_aggregate(where: ${filter}) {
+	// 				aggregate{
+	// 					count
+	// 				}
+	// 			}
+	// 			program_beneficiaries(where: ${filter}, ${limit != -1 ? 'limit: $limit,' : ''}
+	// 				offset: $offset) {
+	// 			  facilitator_id
+	// 				bordID{
+	// 					id
+	// 					name
+	// 				}
+	// 			  facilitator_user{
+	// 				id
+	// 				first_name
+	// 				last_name
+	// 				middle_name
+
+	// 			  }
+	// 			  enrollment_number
+	// 			  beneficiary_user:user {
+	// 			   beneficiary_id: id
+	// 				first_name
+	// 				middle_name
+	// 				last_name
+	// 				exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1},${filterStatus}}) {
+	// 				  id
+	// 				  board_id
+	// 				  program_id
+	// 				  academic_year_id
+	// 				  board_id
+	// 				  enrollment
+	// 				  candidate
+	// 				  father
+	// 				  mother
+	// 				  dob
+	// 				  course_class
+	// 				  exam_year
+	// 				  total_marks
+	// 				  final_result
+	// 				  document_id
+	// 				}
+	// 			  }
+	// 			}
+	// 		  }
+	// 		  `,
+	// 		variables: {
+	// 			limit: limit,
+	// 			offset: offset,
+	// 		},
+	// 	};
+	// 	console.log('sss', data.query);
+
+	// 	validation_response =
+	// 		await this.hasuraServiceFromServices.queryWithVariable(data);
+
+	// 	result = validation_response?.data?.data?.program_beneficiaries;
+	// 	const count =
+	// 		validation_response?.data?.data?.program_beneficiaries_aggregate
+	// 			?.aggregate?.count;
+	// 	const totalPages = Math.ceil(count / limit);
+
+	// 	if (result?.length > 0) {
+	// 		return response.status(200).json({
+	// 			message: 'Data Retrieved Successfully',
+	// 			limit,
+	// 			currentPage: page,
+	// 			totalPages,
+	// 			data: result,
+	// 		});
+	// 	} else if (result?.length == 0) {
+	// 		return response.status(404).json({
+	// 			message: 'Data Not found',
+	// 			data: [],
+	// 		});
+	// 	} else {
+	// 		return response.status(500).json({
+	// 			message: 'Error getting data',
+	// 			data: [],
+	// 		});
+	// 	}
+	// }
+
+	async exportCsv(req: any, body: any, resp: any) {
+		try {
+			let user = req?.mw_userid;
+			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
+			const variables: any = {};
+
+			let filterQueryArray = [];
+			let paramsQueryArray = [];
+
+			if (body.search && body.search !== '') {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					filterQueryArray.push(`{_or: [
+				{ user:{first_name: { _ilike: "%${first_name}%" }} }
+				{user:{ last_name: { _ilike: "%${last_name}%" } }}
+				 ]} `);
+				} else {
+					filterQueryArray.push(`{_or: [
+				{ user:{first_name: { _ilike: "%${first_name}%" }} }
+				{ user:{last_name: { _ilike: "%${first_name}%" } }}
+				 ]} `);
+				}
+			}
+
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{user:{state: { _in: $state }}}');
+				variables.state = body.state;
+			}
+
+			if (body.hasOwnProperty('district') && body.district.length) {
+				paramsQueryArray.push('$district: [String!]');
+				filterQueryArray.push('{user:{district: { _in: $district }}}');
+				variables.district = body.district;
+			}
+
+			if (body.hasOwnProperty('block') && body.block.length) {
+				paramsQueryArray.push('$block: [String!]');
+				filterQueryArray.push('user:{{block: { _in: $block }}}');
+				variables.block = body.block;
+			}
+
+			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+
+			let paramsQuery = '';
+			if (paramsQueryArray.length) {
+				paramsQuery = '(' + paramsQueryArray.join(',') + ')';
+			}
+			let sortQuery = `{ user_id: desc }`;
+			const data = {
+				query: `query MyQuery ${paramsQuery}{
+							program_beneficiaries(where: ${filterQuery}, order_by: ${sortQuery}) {
+							  facilitator_id
+								bordID{
+									id
+									name
+								}
+							  facilitator_user{
+								id
+								first_name
+								last_name
+								middle_name
+								 
+							  }
+							  enrollment_number
+							  beneficiary_user:user {
+							   beneficiary_id: id
+								first_name
+								middle_name
+								last_name
+								exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1}}) {
+								  id
+								  board_id
+								  program_id
+								  academic_year_id
+								  board_id
+								  enrollment
+								  candidate
+								  father
+								  mother
+								  dob
+								  course_class
+								  exam_year
+								  total_marks
+								  final_result
+								  document_id
+								}
+							  }
+							}
+						  }
+						  `,
+				variables: variables,
+			};
+
+			const hasuraResponse = await this.hasuraServiceFromServices.getData(
+				data,
+			);
+			const allBeneficiaries =
+				hasuraResponse?.data?.program_beneficiaries;
+
+			const csvStringifier = createObjectCsvStringifier({
+				header: [
+					{ id: 'name', title: 'LearnerName' },
+					{ id: 'beneficiary_id', title: 'LearnerId' },
+					{ id: 'enrollment_number', title: 'Enrollment Number' },
+					{ id: 'facilitator_id', title: 'FacilitatorId' },
+					{ id: 'facilitator_name', title: 'FacilitatorName' },
+					{ id: 'exam_result', title: 'ExamResult' },
+				],
+			});
+
+			const records = [];
+			for (let data of allBeneficiaries) {
+				const dataObject = {};
+				dataObject[
+					'name'
+				] = `${data?.beneficiary_user?.first_name} ${data?.beneficiary_user?.last_name}`;
+				dataObject[
+					'beneficiary_id'
+				] = `${data?.beneficiary_user?.beneficiary_id}`;
+				dataObject['enrollment_number'] = data?.enrollment_number;
+				dataObject['facilitator_id'] = data?.facilitator_id;
+				dataObject[
+					'facilitator_name'
+				] = `${data?.facilitator_user?.first_name} ${data?.facilitator_user?.last_name}`;
+				dataObject['exam_result'] =
+					data?.beneficiary_user?.exam_results?.[0]?.final_result;
+				dataObject['beneficiary_user'] = {
+					beneficiary_id: data?.beneficiary_user?.beneficiary_id,
+					first_name: data?.beneficiary_user?.first_name,
+					middle_name: data?.beneficiary_user?.middle_name,
+					last_name: data?.beneficiary_user?.last_name,
+					exam_results: data?.beneficiary_user?.exam_results || [],
+				};
+				records.push(dataObject);
+			}
+			let fileName = `${
+				user?.data?.first_name + '_' + user?.data?.last_name
+			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			const fileData =
+				csvStringifier.getHeaderString() +
+				csvStringifier.stringifyRecords(records);
+			resp.header('Content-Type', 'text/csv');
+			return resp.attachment(fileName).send(fileData);
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: 'File Does Not Export!',
+				data: {},
 			});
 		}
 	}
