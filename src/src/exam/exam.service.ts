@@ -893,6 +893,7 @@ export class ExamService {
 		let searchQuery = '';
 		let filterStatus = '';
 		let boardsearch = '';
+		let statussearch = '';
 		let filterQueryArray = [];
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? -1 : parseInt(body.limit);
@@ -917,6 +918,10 @@ export class ExamService {
 		if (body?.boardid) {
 			boardsearch = `id:{_eq: ${body?.boardid}}`;
 		}
+		if (body?.examstatus && body?.examstatus.length > 0) {
+			statussearch = `result_upload_status:{_eq: "${body?.examstatus}"}`;
+		}
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`district:{_in: ${JSON.stringify(body?.district)}}`,
@@ -936,12 +941,12 @@ export class ExamService {
 		}
 		searchQuery = '' + filterQueryArray.join(',') + '';
 		if (role?.includes('facilitator')) {
-			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"}}`;
+			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]}}`;
 		} else if (role?.includes('staff')) {
 			//get organisation_id of the IP
 			let query = {
 				query: `query MyQuery {
-					program_users(where: {academic_year_id: {_eq: 1}, program_id: {_eq: 1}, user_id: {_eq:${user_id}}}) {
+					program_users(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, user_id: {_eq:${user_id}}}) {
 					  organisation_id
 					}
 				  }
@@ -955,7 +960,7 @@ export class ExamService {
 				validation_response?.data?.data?.program_users?.[0]
 					?.organisation_id;
 
-			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]},enrollment_number:{_is_null:false},${statussearch},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
 			}, ${
 				body?.status && body?.status.length > 0
 					? `,exam_results:{${filterStatus}}`
@@ -988,12 +993,14 @@ export class ExamService {
 				   
 				  }
 				  enrollment_number
+					status
+					result_upload_status
 				  beneficiary_user:user {
 				   beneficiary_id: id
 					first_name
 					middle_name
 					last_name
-					exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1},${filterStatus}}) {
+					exam_results(where: {program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}},${filterStatus}}) {
 					  id
 					  board_id
 					  program_id
@@ -1853,7 +1860,7 @@ export class ExamService {
 								first_name
 								middle_name
 								last_name
-								exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1}}) {
+								exam_results(where: {program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}}) {
 								  id
 								  board_id
 								  program_id
