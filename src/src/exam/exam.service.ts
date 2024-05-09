@@ -1193,7 +1193,7 @@ export class ExamService {
 		//console.log('data', data);
 		//extract data from pdf
 		const pdfText = data.text; // Assuming data is the provided object containing the extracted PDF text
-		console.log('pdfText', pdfText);
+		//console.log('pdfText', pdfText);
 
 		if (board_name === 'RSOS') {
 			//version 1 rsos pdf file
@@ -1324,7 +1324,7 @@ export class ExamService {
 					content.replace(/\n/g, '').replace('TOTAL', '\nTOTAL'),
 				)) !== null
 			) {
-				console.log('match', match);
+				//console.log('match', match);
 				//get max marks
 				let max_marks = '-';
 				let theory_marks = '-';
