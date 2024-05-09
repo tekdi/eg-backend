@@ -1027,7 +1027,6 @@ export class ExamService {
 				offset: offset,
 			},
 		};
-		console.log('sss', data.query);
 
 		validation_response =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
