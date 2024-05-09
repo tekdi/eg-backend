@@ -826,7 +826,7 @@ export class ExamService {
 				}
 			}
 		}
-		// Check if status needs to be updated
+		// Update Learner status to Check if status needs to be updated
 		if (exam_result_response?.final_result) {
 			let status = '';
 			if (
