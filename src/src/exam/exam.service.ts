@@ -893,6 +893,7 @@ export class ExamService {
 		let searchQuery = '';
 		let filterStatus = '';
 		let boardsearch = '';
+		let statussearch = '';
 		let filterQueryArray = [];
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? -1 : parseInt(body.limit);
@@ -917,11 +918,10 @@ export class ExamService {
 		if (body?.boardid) {
 			boardsearch = `id:{_eq: ${body?.boardid}}`;
 		}
-		// if (body?.examstatus && body?.examstatus.length > 0) {
-		// 	filterQueryArray.push(
-		// 		`result_upload_status:{_eq: ${body?.examstatus}}`,
-		// 	);
-		// }
+		if (body?.examstatus && body?.examstatus.length > 0) {
+			statussearch = `result_upload_status:{_eq: "${body?.examstatus}"}`;
+		}
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`district:{_in: ${JSON.stringify(body?.district)}}`,
@@ -960,7 +960,7 @@ export class ExamService {
 				validation_response?.data?.data?.program_users?.[0]
 					?.organisation_id;
 
-			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]},enrollment_number:{_is_null:false},${statussearch},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
 			}, ${
 				body?.status && body?.status.length > 0
 					? `,exam_results:{${filterStatus}}`
