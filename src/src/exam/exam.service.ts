@@ -826,6 +826,43 @@ export class ExamService {
 				}
 			}
 		}
+		// Update Learner status to Check if status needs to be updated
+		if (exam_result_response?.final_result) {
+			let status = '';
+			if (
+				exam_result_response.final_result === 'P' ||
+				exam_result_response.final_result === 'PASS'
+			) {
+				status = '10th_passed';
+			} else if (
+				exam_result_response.final_result === 'SYC' ||
+				exam_result_response.final_result === 'SYCT' ||
+				exam_result_response.final_result === 'SYCP' ||
+				exam_result_response.final_result === 'XXXX'
+			) {
+				status = 'pragati_syc';
+			}
+
+			// Update program_beneficiaries status
+			if (status) {
+				const beneficiaryUpdateQuery = `
+							mutation UpdateBeneficiaryStatus {
+									update_program_beneficiaries(where: { user_id: { _eq: ${exam_result_response.user_id} } }, _set: { status: "${status}" }) {
+											affected_rows
+									}
+							}
+					`;
+
+				const beneficiaryUpdateData = {
+					query: beneficiaryUpdateQuery,
+					variables: {},
+				};
+
+				await this.hasuraServiceFromServices.queryWithVariable(
+					beneficiaryUpdateData,
+				);
+			}
+		}
 
 		return result; // Return the modified result object
 	}
@@ -941,7 +978,8 @@ export class ExamService {
 		}
 		searchQuery = '' + filterQueryArray.join(',') + '';
 		if (role?.includes('facilitator')) {
-			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]}}`;
+			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]},bordID:{${boardsearch}
+		}}`;
 		} else if (role?.includes('staff')) {
 			//get organisation_id of the IP
 			let query = {
@@ -1939,6 +1977,55 @@ export class ExamService {
 				success: false,
 				message: 'File Does Not Export!',
 				data: {},
+			});
+		}
+	}
+
+	//Update result_update_status
+	async updatestatus(body: any, request: any, response: any) {
+		try {
+			let program_id = request?.mw_program_id;
+			let academic_year_id = request?.mw_academic_year_id;
+			let user_id = request?.mw_userid;
+			let learner_id = body.learner_id;
+			let status = body?.status;
+
+			// Update the status in program_beneficiaries table
+			const updateQuery = {
+				query: `
+                mutation UpdateprogrambeneficiariesStatus {
+                    update_program_beneficiaries(where: { user_id: { _eq: ${learner_id} }, academic_year_id: { _eq: ${academic_year_id} }, program_id: { _eq: ${program_id} } }, _set: { result_upload_status: "${status}" }) {
+                        affected_rows
+                    }
+                }
+            `,
+			};
+
+			const updateResponse =
+				await this.hasuraServiceFromServices.queryWithVariable(
+					updateQuery,
+				);
+			const result =
+				updateResponse?.data?.data?.update_program_beneficiaries
+					?.affected_rows;
+
+			if (result > 0) {
+				return response.status(200).json({
+					success: true,
+					message: 'Status updated successfully!',
+				});
+			} else {
+				return response.status(404).json({
+					success: true,
+					message:
+						'No beneficiary found with the provided learner_id!',
+				});
+			}
+		} catch (error) {
+			console.error('Error updating status:', error);
+			return response.status(500).json({
+				success: false,
+				message: 'Internal Server Error',
 			});
 		}
 	}
