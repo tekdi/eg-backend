@@ -1221,7 +1221,7 @@ export class ExamService {
 			console.log('error', error);
 			return response
 				.status(200)
-				.json({ success: false, message: 'Failed_Read_PDF' });
+				.json({ success: false, message: 'FAILED_READ_PDF' });
 		}
 	}
 
@@ -1330,10 +1330,13 @@ export class ExamService {
 			/*
 		/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([A-Z]*|[\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
 		*/
-
 			//working below regex with most of file if user has total marks large than 10
-
+			/*
 			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
+			*/
+
+			//new pattern try
+			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ([A-Z\d-]+) ?(\d+)(\d+)([A-Z]+)/g;
 
 		const totalRegex = /TOTAL(\d+)RESULT(\w+)/;
 
@@ -1356,9 +1359,11 @@ export class ExamService {
 
 			let match: any;
 			while (
-				(match = subjectRegex.exec(content.replace(/\n/g, ''))) !== null
+				(match = subjectRegex.exec(
+					content.replace(/\n/g, '').replace('TOTAL', '\nTOTAL'),
+				)) !== null
 			) {
-				console.log('match', match);
+				//console.log('match', match);
 				//get max marks
 				let max_marks = '-';
 				let theory_marks = '-';
@@ -1371,7 +1376,11 @@ export class ExamService {
 					theory_marks = match[4].replace('100', '') + match[5];
 					total_marks = match[7] + match[8];
 					//find practical marks and sessional marks
-					if (match[6]) {
+					if (match[6] == 'AB' || match[6] == '-') {
+						practical_marks = match[6];
+						sessional_marks = match[7];
+						total_marks = match[8];
+					} else if (match[6]) {
 						let temp_theory_marks =
 							theory_marks == '-' || theory_marks == 'AB'
 								? '0'
