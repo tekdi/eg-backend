@@ -826,6 +826,43 @@ export class ExamService {
 				}
 			}
 		}
+		// Check if status needs to be updated
+		if (exam_result_response?.final_result) {
+			let status = '';
+			if (
+				exam_result_response.final_result === 'P' ||
+				exam_result_response.final_result === 'PASS'
+			) {
+				status = '10th_passed';
+			} else if (
+				exam_result_response.final_result === 'SYC' ||
+				exam_result_response.final_result === 'SYCT' ||
+				exam_result_response.final_result === 'SYCP' ||
+				exam_result_response.final_result === 'XXXX'
+			) {
+				status = 'pragati_syc';
+			}
+
+			// Update program_beneficiaries status
+			if (status) {
+				const beneficiaryUpdateQuery = `
+							mutation UpdateBeneficiaryStatus {
+									update_program_beneficiaries(where: { user_id: { _eq: ${exam_result_response.user_id} } }, _set: { status: "${status}" }) {
+											affected_rows
+									}
+							}
+					`;
+
+				const beneficiaryUpdateData = {
+					query: beneficiaryUpdateQuery,
+					variables: {},
+				};
+
+				await this.hasuraServiceFromServices.queryWithVariable(
+					beneficiaryUpdateData,
+				);
+			}
+		}
 
 		return result; // Return the modified result object
 	}
