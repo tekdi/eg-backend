@@ -893,6 +893,7 @@ export class ExamService {
 		let searchQuery = '';
 		let filterStatus = '';
 		let boardsearch = '';
+		let statussearch = '';
 		let filterQueryArray = [];
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? -1 : parseInt(body.limit);
@@ -917,6 +918,10 @@ export class ExamService {
 		if (body?.boardid) {
 			boardsearch = `id:{_eq: ${body?.boardid}}`;
 		}
+		if (body?.examstatus && body?.examstatus.length > 0) {
+			statussearch = `result_upload_status:{_eq: "${body?.examstatus}"}`;
+		}
+
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`district:{_in: ${JSON.stringify(body?.district)}}`,
@@ -936,12 +941,12 @@ export class ExamService {
 		}
 		searchQuery = '' + filterQueryArray.join(',') + '';
 		if (role?.includes('facilitator')) {
-			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"}}`;
+			filter = `{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]}}`;
 		} else if (role?.includes('staff')) {
 			//get organisation_id of the IP
 			let query = {
 				query: `query MyQuery {
-					program_users(where: {academic_year_id: {_eq: 1}, program_id: {_eq: 1}, user_id: {_eq:${user_id}}}) {
+					program_users(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, user_id: {_eq:${user_id}}}) {
 					  organisation_id
 					}
 				  }
@@ -955,7 +960,7 @@ export class ExamService {
 				validation_response?.data?.data?.program_users?.[0]
 					?.organisation_id;
 
-			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq: "registered_in_camp"},enrollment_number:{_is_null:false},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
+			filter = `{program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]},enrollment_number:{_is_null:false},${statussearch},facilitator_user:{program_faciltators:{parent_ip:{_eq:"${parent_ip}"},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}}},user:{${searchQuery}},bordID:{${boardsearch}
 			}, ${
 				body?.status && body?.status.length > 0
 					? `,exam_results:{${filterStatus}}`
@@ -988,12 +993,14 @@ export class ExamService {
 				   
 				  }
 				  enrollment_number
+					status
+					result_upload_status
 				  beneficiary_user:user {
 				   beneficiary_id: id
 					first_name
 					middle_name
 					last_name
-					exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1},${filterStatus}}) {
+					exam_results(where: {program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}},${filterStatus}}) {
 					  id
 					  board_id
 					  program_id
@@ -1221,7 +1228,7 @@ export class ExamService {
 			console.log('error', error);
 			return response
 				.status(200)
-				.json({ success: false, message: 'Failed_Read_PDF' });
+				.json({ success: false, message: 'FAILED_READ_PDF' });
 		}
 	}
 
@@ -1330,10 +1337,13 @@ export class ExamService {
 			/*
 		/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([A-Z]*|[\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
 		*/
-
 			//working below regex with most of file if user has total marks large than 10
-
+			/*
 			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
+			*/
+
+			//new pattern try
+			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ([A-Z\d-]+) ?(\d+)(\d+)([A-Z]+)/g;
 
 		const totalRegex = /TOTAL(\d+)RESULT(\w+)/;
 
@@ -1356,9 +1366,11 @@ export class ExamService {
 
 			let match: any;
 			while (
-				(match = subjectRegex.exec(content.replace(/\n/g, ''))) !== null
+				(match = subjectRegex.exec(
+					content.replace(/\n/g, '').replace('TOTAL', '\nTOTAL'),
+				)) !== null
 			) {
-				console.log('match', match);
+				//console.log('match', match);
 				//get max marks
 				let max_marks = '-';
 				let theory_marks = '-';
@@ -1371,7 +1383,11 @@ export class ExamService {
 					theory_marks = match[4].replace('100', '') + match[5];
 					total_marks = match[7] + match[8];
 					//find practical marks and sessional marks
-					if (match[6]) {
+					if (match[6] == 'AB' || match[6] == '-') {
+						practical_marks = match[6];
+						sessional_marks = match[7];
+						total_marks = match[8];
+					} else if (match[6]) {
 						let temp_theory_marks =
 							theory_marks == '-' || theory_marks == 'AB'
 								? '0'
@@ -1844,7 +1860,7 @@ export class ExamService {
 								first_name
 								middle_name
 								last_name
-								exam_results(where: {program_id: {_eq: 1}, academic_year_id: {_eq: 1}}) {
+								exam_results(where: {program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}}) {
 								  id
 								  board_id
 								  program_id
