@@ -1989,7 +1989,99 @@ export class ExamService {
 			let user_id = request?.mw_userid;
 			let learner_id = body.learner_id;
 			let status = body?.status;
+			if (!learner_id || !status) {
+				return response.status(422).json({
+					success: false,
+					message: 'Required Learner_id And Status ',
+				});
+			}
+			// Check user role
+			let role = request?.mw_roles;
 
+			if (role.includes('staff')) {
+				// If the user is staff, check if learner_id is under this staff
+				const data = {
+					query: `query MyQuery6 {
+						users(where: {id: {_eq: ${user_id}}}){
+						 program_users(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, user_id: {_eq: ${user_id}}}) {
+							organisation_id
+							academic_year_id
+							program_id
+							user_id
+						} 
+						}
+					}
+						`,
+				};
+				const validation_response =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						data,
+					);
+
+				const organisation_id =
+					validation_response?.data?.data?.users?.[0]
+						?.program_users?.[0].organisation_id || '';
+
+				const staffValidationQuery = {
+					query: `
+						query StaffValidationQuery {
+								program_beneficiaries(where: { user_id: { _eq: ${learner_id} },facilitator_user: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}){
+										user_id
+								}
+						}
+				`,
+				};
+
+				const staffValidationResponse =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						staffValidationQuery,
+					);
+
+				if (
+					!staffValidationResponse?.data?.data
+						?.program_beneficiaries[0]?.user_id
+				) {
+					return response.status(422).json({
+						success: false,
+						message:
+							'Forbidden: The learner_id does not belong to the staff user!',
+					});
+				}
+			} else if (role.includes('facilitator')) {
+				// If the user is facilitator, check if learner_id is under this facilitator
+				const facilitatorValidationQuery = {
+					query: `
+						query facilitatorValidationQuery {
+							program_beneficiaries(where:{user_id: { _eq: ${learner_id} },facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}	) {
+										user_id
+								}
+						}
+				`,
+				};
+
+				const facilitatorValidationResponse =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						facilitatorValidationQuery,
+					);
+
+				if (
+					!facilitatorValidationResponse?.data?.data
+						?.program_beneficiaries[0]?.user_id
+				) {
+					return response.status(422).json({
+						success: false,
+						message:
+							'Forbidden: The learner_id does not belong to the Facilitator user!',
+					});
+				}
+			} else {
+				// If the user is neither staff nor facilitator, return forbidden error
+				return response.status(422).json({
+					success: false,
+					message:
+						'Forbidden: You do not have permission to perform this action!',
+				});
+			}
 			// Update the status in program_beneficiaries table
 			const updateQuery = {
 				query: `
