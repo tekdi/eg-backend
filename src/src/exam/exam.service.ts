@@ -1989,6 +1989,12 @@ export class ExamService {
 			let user_id = request?.mw_userid;
 			let learner_id = body.learner_id;
 			let status = body?.status;
+			if (!learner_id || !status) {
+				return response.status(422).json({
+					success: false,
+					message: 'Required Learner_id And Status ',
+				});
+			}
 			// Check user role
 			let role = request?.mw_roles;
 
