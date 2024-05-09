@@ -2760,15 +2760,38 @@ export class CampService {
 			.data.map((item) => item.value);
 
 		const variables: any = {};
+		if (req.mw_roles?.includes('program_owner')) {
+			req.parent_ip_id = req.mw_ip_user_id;
+		} else {
+			const user = await this.userService.ipUserInfo(req);
+			if (req.mw_roles?.includes('staff')) {
+				req.parent_ip_id =
+					user?.data?.program_users?.[0]?.organisation_id;
+			} else if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			}
+		}
+		if (!req.parent_ip_id) {
+			return resp.status(404).send({
+				success: false,
+				message: 'Invalid Ip',
+				data: {},
+			});
+		}
 
-		let filterQueryArray = [];
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		const parent_ip_id = req?.parent_ip_id;
 
+		const filterQueryArray = [
+			`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
+		];
 		if (body.search && body.search !== '') {
 			filterQueryArray.push(`{_or: [
-		{ first_name: { _ilike: "%${body.search}%" } },
-		{ last_name: { _ilike: "%${body.search}%" } },
-		{ email_id: { _ilike: "%${body.search}%" } }
-	  ]} `);
+				{ first_name: { _ilike: "%${body.search}%" } },
+				{ last_name: { _ilike: "%${body.search}%" } },
+				{ email_id: { _ilike: "%${body.search}%" } }
+			]}`);
 		}
 
 		if (body?.district && body?.district.length > 0) {
@@ -2792,8 +2815,8 @@ export class CampService {
 			);
 		}
 
-		let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-
+		const filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
+		console.log('filterQuery', filterQuery);
 		const response = await this.campcoreservice.getStatuswiseCount(
 			filterQuery,
 			filterQueryArray,
