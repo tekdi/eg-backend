@@ -69,7 +69,8 @@ export class DistanceCalculation {
 		}
 	}
 
-	@Cron('*/20 * * * * *')
+	//cron runs for each hour's 30th minute 
+	@Cron('30 * * * *')
 	private async processData() {
 		const user = await this.fetchData(10);
 
