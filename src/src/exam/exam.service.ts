@@ -2213,7 +2213,7 @@ export class ExamService {
 
 			// Step 6-7: Compare current date with the added maximum date
 			//	const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
-			if (maxDate && maxDate > new Date()) {
+			if (maxDate && maxDate >= new Date()) {
 				const addedMaxDate = new Date(maxDate);
 				addedMaxDate.setDate(addedMaxDate.getDate() + 2);
 
