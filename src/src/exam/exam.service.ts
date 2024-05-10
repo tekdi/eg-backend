@@ -3,6 +3,7 @@ import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 //import * as pdfjsLib from 'pdfjs-dist';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
+import * as moment from 'moment';
 const parse = require('pdf-parse');
 
 @Injectable()
@@ -2134,6 +2135,108 @@ export class ExamService {
 			return response.status(500).json({
 				success: false,
 				message: 'Internal Server Error',
+			});
+		}
+	}
+
+	//board List
+	async getBoardList(resp: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		let user_id = request?.mw_userid;
+		let data;
+		data = {
+			query: `query facilitatorValidationQuery {
+				program_beneficiaries(where:{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}	) {
+							user_id
+							enrolled_for_board
+					}
+			}      
+              `,
+		};
+		let response = await this.hasuraServiceFromServices.queryWithVariable(
+			data,
+		);
+		let newQdata = response?.data?.data?.program_beneficiaries;
+
+		let boardIds = [];
+		for (const beneficiary of newQdata) {
+			if (beneficiary?.enrolled_for_board) {
+				boardIds = boardIds.concat(beneficiary.enrolled_for_board);
+			}
+		}
+
+		// Step 2: Combine the board IDs into a unique array
+		boardIds = [...new Set(boardIds)];
+
+		// Step 3-7: Process each board ID
+		let boardList = [];
+		for (const boardId of boardIds) {
+			// Step 3: Get board details, subjects, and related events
+			const boardQuery = {
+				query: `
+                    query BoardQuery {
+                        boards_by_pk(id: ${boardId}) {
+                            id
+                            name
+                            subjects {
+                                id
+                                name
+                                events(order_by: { start_date: desc }, limit: 1) {
+																	start_date
+                                }
+                            }
+                        }
+                    }
+                `,
+			};
+
+			const boardResponse =
+				await this.hasuraServiceFromServices.queryWithVariable(
+					boardQuery,
+				);
+			const boardData = boardResponse?.data?.data?.boards_by_pk;
+			// Step 4-5: Determine the maximum date among all subject events
+			let maxDate = null;
+			if (boardData && boardData.subjects) {
+				for (const subject of boardData.subjects) {
+					if (subject?.events?.[0]?.start_date) {
+						const eventDate = new Date(
+							subject.events[0].start_date,
+						);
+						if (!maxDate || eventDate > maxDate) {
+							maxDate = eventDate;
+						}
+					}
+				}
+			}
+
+			// Step 6-7: Compare current date with the added maximum date
+			//	const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+			if (maxDate && maxDate > new Date()) {
+				const addedMaxDate = new Date(maxDate);
+				addedMaxDate.setDate(addedMaxDate.getDate() + 2);
+
+				boardList.push({
+					id: boardData.id,
+					name: boardData.name,
+					addedMaxDate: addedMaxDate.toISOString(),
+				});
+			}
+		}
+
+		// Step 8: Send the board list in the response
+		if (boardList.length > 0) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Board list retrieved successfully!',
+				data: boardList,
+			});
+		} else {
+			return resp.status(422).json({
+				success: false,
+				message: 'No boards found for the selected learners!',
+				data: [],
 			});
 		}
 	}

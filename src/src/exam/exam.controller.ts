@@ -216,4 +216,14 @@ export class ExamController {
 	) {
 		return this.examService.updatestatus(body, request, response);
 	}
+
+	@Get('/board/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getBoardList(
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.getBoardList(response, request);
+	}
 }
