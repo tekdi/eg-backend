@@ -850,7 +850,7 @@ export class ExamService {
 									update_program_beneficiaries(where: { user_id: { _eq: ${exam_result_response.user_id} } }, _set: { status: "${status}" }) {
 											affected_rows
 									}
-							}
+							}						
 					`;
 
 				const beneficiaryUpdateData = {
@@ -863,6 +863,22 @@ export class ExamService {
 				);
 			}
 		}
+		const beneficiaryUpdateQuery = `
+							mutation resultUploadStatusChange {
+								update_program_beneficiaries(where: { user_id: { _eq: ${exam_result_response.user_id} } }, _set: { result_upload_status: "uploaded" }) {
+									affected_rows
+							}
+							}						
+					`;
+
+		const beneficiaryUpdateData = {
+			query: beneficiaryUpdateQuery,
+			variables: {},
+		};
+
+		await this.hasuraServiceFromServices.queryWithVariable(
+			beneficiaryUpdateData,
+		);
 
 		return result; // Return the modified result object
 	}
