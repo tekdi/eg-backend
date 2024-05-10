@@ -206,7 +206,7 @@ export class ExamController {
 		return this.examService.exportCsv(request, body, response);
 	}
 
-	@Post('/status/update')
+	@Post('/result/status/update')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	public async updatestatus(
