@@ -1588,7 +1588,7 @@ export class ExamService {
 
 		data = {
 			query: `query MyQuery {
-				program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, status: {_eq: "registered_in_camp"}}){
+				program_beneficiaries(where: {facilitator_id: {_eq:${user_id}}, academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, status: {_in: ["registered_in_camp","10th_passed","pragati_syc"]}}){
 				  id
 				  user_id
 				}
@@ -1614,8 +1614,8 @@ export class ExamService {
 
 		sql = ` SELECT 
     
-		SUM(CASE WHEN er.final_result = '10th_passed' THEN 1 ELSE 0 END) AS "tenth_passed",
-		SUM(CASE WHEN er.final_result = 'pragati_syc' THEN 1 ELSE 0 END) AS pragati_syc
+		SUM(CASE WHEN er.final_result in ('P','PASS') THEN 1 ELSE 0 END) AS "tenth_passed",
+		SUM(CASE WHEN er.final_result in('SYC','SYCT','XXXX','SYCP') THEN 1 ELSE 0 END) AS pragati_syc
 		
 	FROM 
 		program_beneficiaries pb
