@@ -258,7 +258,8 @@ export class OrganisationService {
 						email_id
 						address
             program_organisations(where:{program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, status: {_eq: "active"}}){
-              program_id
+              id
+							program_id
               academic_year_id
               status
 							organisation_id
@@ -270,8 +271,10 @@ export class OrganisationService {
 							camp_target
 							program{
 								name
+								state_id
 								state{
 									state_name
+									state_id
 								}
 							}
             }
@@ -472,7 +475,6 @@ export class OrganisationService {
 			];
 			let orgResponse = {};
 			let programOrgResponse = {};
-
 			if (body?.program_organisation) {
 				const { learner_target, learner_per_camp, camp_target } =
 					body.program_organisation;
