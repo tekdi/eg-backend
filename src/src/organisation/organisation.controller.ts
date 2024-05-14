@@ -2,6 +2,7 @@ import {
 	Controller,
 	Get,
 	Post,
+	Patch,
 	Body,
 	Req,
 	Res,
@@ -72,5 +73,16 @@ export class OrganisationController {
 		@Res() response: Response,
 	) {
 		return this.organisationService.addExisting(body, request, response);
+	}
+
+	@Patch('/:id')
+	@UseGuards(new AuthGuard())
+	update(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.organisationService.update(id, body, request, response);
 	}
 }
