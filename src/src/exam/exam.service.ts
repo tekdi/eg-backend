@@ -268,7 +268,8 @@ export class ExamService {
 		request: any,
 	) {
 		let board_id = id;
-
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
 		let data;
 		let subject_id_data;
 
@@ -291,14 +292,14 @@ export class ExamService {
 
 		data = {
 			query: `query MyQuery {
-				subjects(where: {board_id: {_eq:${board_id}}, events: {context_id: {_in:[${ids}]}, context: {_eq: "subjects"}, start_date: {_eq: "${date}"}}}) {
+				subjects(where: {board_id: {_eq:${board_id}}, events: {context_id: {_in:[${ids}]}, context: {_eq: "subjects"}, start_date: {_eq: "${date}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}}) {
 				  name
 				  id
 				  board
 				  board_id
 				  is_theory
 				  is_practical
-				  events(where: {start_date: {_eq: "${date}"}}) {
+				  events(where: {start_date: {_eq: "${date}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}) {
 					context
 					context_id
 					program_id
