@@ -1351,7 +1351,7 @@ export class CampService {
 					let updatebody = {
 						status: 'camp_initiated',
 					};
-					let updatStatus = await this.hasuraService.q(
+					await this.hasuraService.q(
 						'groups',
 						{
 							...updatebody,
@@ -1846,7 +1846,7 @@ export class CampService {
 			[...this.returnFieldsProperties, 'id'],
 		);
 
-		let audit = await this.userService.addAuditLogAction(auditData);
+		await this.userService.addAuditLogAction(auditData);
 
 		return response.json({
 			status: 200,
@@ -4646,7 +4646,7 @@ export class CampService {
 				data: {},
 			});
 		}
-		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		user?.data?.program_users?.[0]?.organisation_id;
 		//validation check is camp type and camp-day-activity is PCR type
 		let data = {
 			query: `query MyQuery {
@@ -4729,7 +4729,7 @@ export class CampService {
 				data: {},
 			});
 		}
-		let ip_id = user?.data?.program_users?.[0]?.organisation_id;
+		user?.data?.program_users?.[0]?.organisation_id;
 		// Check if camp_id is provided and is an array
 		if (!camp_id || !Array.isArray(camp_id) || camp_id.length === 0) {
 			return response.status(422).json({
@@ -4784,7 +4784,7 @@ export class CampService {
 			updateResponse?.data?.update_camps_many?.[0].returning ?? [];
 
 		// activity logs old camp to new camp
-		const userData = await Promise.all(
+		await Promise.all(
 			updatedCamps?.map(async (item) => {
 				const auditData = {
 					userId: request?.mw_userid,

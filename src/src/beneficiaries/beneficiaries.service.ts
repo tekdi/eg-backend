@@ -1530,13 +1530,9 @@ export class BeneficiariesService {
 		}
 	}
 
-	update(id: number, req: any) {
-		// return this.hasuraService.update(+id, this.table, req, this.returnFields);
-	}
+	update(id: number, req: any) {}
 
-	remove(id: number) {
-		// return this.hasuraService.delete(this.table, { id: +id });
-	}
+	remove(id: number) {}
 
 	public async deactivateDuplicateBeneficiaries(
 		AadhaarNo: string,
@@ -1973,7 +1969,7 @@ export class BeneficiariesService {
 	}
 
 	public async registerBeneficiary(body, request) {
-		const user = await this.userService.ipUserInfo(request);
+		await this.userService.ipUserInfo(request);
 		const password = body.mobile;
 		let username = body.first_name;
 		username += `_${body.mobile}`;
@@ -2915,7 +2911,7 @@ export class BeneficiariesService {
 							);
 						}
 					}
-					const status = await this.statusUpdate(
+					await this.statusUpdate(
 						{
 							user_id: req.id,
 							status: req.enrollment_status,
@@ -2930,7 +2926,7 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
-					const status = await this.statusUpdate(
+					await this.statusUpdate(
 						{
 							user_id: req.id,
 							status: req.enrollment_status,
@@ -2939,34 +2935,24 @@ export class BeneficiariesService {
 						request,
 					);
 				}
-				const res =
-					await this.hasuraServiceFromServices.updateWithVariable(
-						programDetails?.id,
-						'program_beneficiaries',
-						{
-							...myRequest,
-						},
-						userArr,
-						update,
-						{
-							variable: [
-								{
-									key: 'payment_receipt_document_id',
-									type: 'jsonb',
-								},
-							],
-						},
-					);
 
-				// await this.hasuraService.q(
-				// 	tableName,
-				// 	{
-				// 		...myRequest,
-				// 		id: programDetails?.id ? programDetails.id : null,
-				// 	},
-				// 	userArr,
-				// 	update,
-				// );
+				await this.hasuraServiceFromServices.updateWithVariable(
+					programDetails?.id,
+					'program_beneficiaries',
+					{
+						...myRequest,
+					},
+					userArr,
+					update,
+					{
+						variable: [
+							{
+								key: 'payment_receipt_document_id',
+								type: 'jsonb',
+							},
+						],
+					},
+				);
 				break;
 			}
 
@@ -2975,11 +2961,6 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
 						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
 
 				let tableName = 'program_beneficiaries';
@@ -3068,11 +3049,6 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.document_status
 						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 
@@ -3161,8 +3137,8 @@ export class BeneficiariesService {
 		res?: any,
 	) {
 		const user = (await this.findOne(id)).data;
-		const academic_year_id = req.mw_academic_year_id;
-		const program_id = req.mw_program_id;
+		req.mw_academic_year_id;
+		req.mw_program_id;
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3819,7 +3795,7 @@ export class BeneficiariesService {
 		const response_data = await this.hasuraServiceFromServices.getData(
 			check_id,
 		);
-		if (!response_data || !response_data.data?.core_beneficiaries[0]) {
+		if (!response_data?.data?.core_beneficiaries[0]) {
 			return response.status(422).json({
 				success: false,
 				message: 'Beneficiaries ID is not exists!',

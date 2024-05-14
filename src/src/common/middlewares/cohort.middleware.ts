@@ -17,18 +17,6 @@ export class CohortMiddleware implements NestMiddleware {
 		// 	req?.mw_roles?.includes('program_owner')
 		// ) {
 		// 	req.mw_ip_user_id = req.headers['x-ip-org-id'];
-
-		// 	const ip_user_id = parseInt(req.mw_ip_user_id, 10);
-		// 	if (isNaN(ip_user_id)) {
-		// 		return res.json({
-		// 			success: false,
-		// 			message: `${
-		// 				req.mw_ip_user_id ? 'Invalid' : 'Required'
-		// 			} Ip org Id`,
-		// 		});
-		// 	}
-		// }
-
 		if (req?.headers?.['x-program-id']) {
 			req.mw_program_id = req.headers['x-program-id'];
 			const program_id = parseInt(req.mw_program_id, 10);
