@@ -475,8 +475,6 @@ export class OrganisationService {
 			];
 			let orgResponse = {};
 			let programOrgResponse = {};
-			console.log();
-
 			if (body?.program_organisation) {
 				const { learner_target, learner_per_camp, camp_target } =
 					body.program_organisation;
