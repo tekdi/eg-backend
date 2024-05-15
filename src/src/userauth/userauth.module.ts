@@ -37,11 +37,19 @@ export class UserauthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
 			.apply(AuthMiddleware)
-			.exclude('/userauth/register/:role', 'userauth/is-user-exists')
+			.exclude(
+				'/userauth/register/:role',
+				'userauth/is-user-exists',
+				'/userauth/volunteer/register/:role',
+			)
 			.forRoutes(UserauthController);
 		consumer
 			.apply(CohortMiddleware)
-			.exclude('/userauth/register/:role', 'userauth/is-user-exists')
+			.exclude(
+				'/userauth/register/:role',
+				'userauth/is-user-exists',
+				'/userauth/volunteer/register/:role',
+			)
 			.forRoutes(UserauthController);
 	}
 }

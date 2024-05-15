@@ -84,4 +84,14 @@ export class UserauthController {
 			id,
 		);
 	}
+
+	@Post('/volunteer/register/:role')
+	@UsePipes(ValidationPipe)
+	public async volunteerRegister(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Param('role') role: string,
+	) {
+		return this.userauthService.volunteerRegister(body, response, role);
+	}
 }
