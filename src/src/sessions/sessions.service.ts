@@ -210,8 +210,36 @@ export class SessionsService {
 	}
 
 	public async getSessionsListByCampId(id: any, request: any, response: any) {
+		// Query to get the camp type
+		let campTypeQuery = {
+			query: `query GetCampType {
+				camps_by_pk(id: ${id}) {
+						type
+				}
+		}`,
+		};
+
+		// Fetch the camp type
+		const campTypeRes = await this.hasuraServiceFromServices.getData(
+			campTypeQuery,
+		);
+		// Check if the camp type query returned valid data
+		if (!campTypeRes?.data || !campTypeRes.data.camps_by_pk) {
+			return response.status(422).json({
+				success: false,
+				message: 'Error retrieving camp type data',
+				data: [],
+			});
+		}
+		const type = campTypeRes?.data?.camps_by_pk?.type;
+
+		let limitClause = '';
+
+		if (type === 'pcr') {
+			limitClause = 'limit: 20, ';
+		}
 		let query = `query MyQuery {
-			learning_lesson_plans_master(order_by: {ordering: asc}){
+			learning_lesson_plans_master(order_by: {ordering: asc},${limitClause}){
 			  ordering
 			  id
 							title
@@ -232,8 +260,8 @@ export class SessionsService {
 			  }
 			}
 		  }
-
 		  `;
+
 		const res = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
