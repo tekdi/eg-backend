@@ -426,4 +426,21 @@ export class ObservationsController {
 			request,
 		);
 	}
+
+	/****************************************************CUSTOM OBSERVATION API ************************************************************************** */
+
+	@Get('exam/result/subjects/:id')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async getExamResultSubjectForObservation(
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('id') id: number,
+	) {
+		return this.observationsService.getExamResultSubjectForObservation(
+			id,
+			request,
+			response,
+		);
+	}
 }
