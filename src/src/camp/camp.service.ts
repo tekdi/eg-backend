@@ -2816,7 +2816,7 @@ export class CampService {
 		}
 
 		const filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
-		console.log('filterQuery', filterQuery);
+
 		const response = await this.campcoreservice.getStatuswiseCount(
 			filterQuery,
 			filterQueryArray,
