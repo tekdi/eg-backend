@@ -1764,4 +1764,192 @@ export class UserauthService {
 			document_id: document_id,
 		};
 	}
+
+	//Register volunteer
+	public async volunteerRegister(body, response, role) {
+		let misssingFieldsFlag = false;
+		if (role === 'volunteer') {
+			//validation to check if the mobile exists for another facilitator
+
+			let query = `query MyQuery {
+				users(where: {mobile: {_eq: "${body?.mobile}"}}){
+				  id
+				  mobile
+				}
+			  }
+			  `;
+			const hasura_response =
+				await this.hasuraServiceFromServices.getData({
+					query: query,
+				});
+
+			let users = hasura_response?.data?.users;
+
+			// if (users?.length > 0) {
+			// 	let facilitator_data = users.filter(
+			// 		(user) => user.program_faciltators.length > 0,
+			// 	);
+
+			// 	if (facilitator_data.length > 0) {
+			// 		return response.status(422).send({
+			// 			success: false,
+			// 			message: 'Mobile Number Already Exist',
+			// 			data: {},
+			// 		});
+			// 	}
+			// }
+
+			// Generate random password
+			const password = `@${this.userHelperService.generateRandomPassword()}`;
+
+			// Generate username
+			let username = `${body.first_name}`;
+			if (body?.last_name) {
+				username += `${body.last_name.charAt(0)}`;
+			}
+			username += `${body.mobile}`;
+			username = username.toLowerCase();
+
+			// Role to group mapping
+			let group = role;
+
+			if (role == 'volunteer') {
+				group = `volunteer`;
+			}
+
+			let data_to_create_user = {
+				enabled: 'true',
+				firstName: body?.first_name,
+				lastName: body?.last_name,
+				username: username,
+				credentials: [
+					{
+						type: 'password',
+						value: password,
+						temporary: false,
+					},
+				],
+				groups: [`${group}`],
+			};
+
+			const token = await this.keycloakService.getAdminKeycloakToken();
+
+			if (token?.access_token) {
+				const findUsername = await this.keycloakService.findUser(
+					username,
+					token?.access_token,
+				);
+
+				const registerUserRes = await this.keycloakService.registerUser(
+					data_to_create_user,
+					token.access_token,
+				);
+
+				if (registerUserRes.error) {
+					if (
+						registerUserRes.error.message ==
+						'Request failed with status code 409'
+					) {
+						return response.status(200).json({
+							success: false,
+							message: 'User already exists!',
+							data: {},
+						});
+					} else {
+						return response.status(200).json({
+							success: false,
+							message: registerUserRes.error.message,
+							data: {},
+						});
+					}
+				} else if (registerUserRes.headers.location) {
+					const split = registerUserRes.headers.location.split('/');
+					const keycloak_id = split[split.length - 1];
+					body.keycloak_id = keycloak_id;
+					body.username = data_to_create_user.username;
+					body.password = password;
+
+					if (role === 'volunteer' && body.hasOwnProperty('dob')) {
+						delete body.dob;
+					}
+					body.role = role;
+
+					const result = await this.authService.newCreate(body);
+
+					let user_id = result?.data?.id;
+					if (body.qualification) {
+						// get datafrom qulification name get id
+						const data = {
+							query: `query MyQuery {
+								qualification_masters(where: {name: {_eq: "${body.qualification}"}}) {
+									id
+								}
+							}`,
+						};
+
+						const hasura_response =
+							await this.hasuraServiceFromServices.getData(data);
+
+						const qualification_master_id =
+							hasura_response?.data?.qualification_masters?.[0]
+								?.id; // Access first element's id
+
+						await this.hasuraService.q(
+							`qualifications`,
+							{
+								user_id,
+								qualification_master_id,
+							},
+							['user_id', 'qualification_master_id'],
+						);
+					}
+					if (user_id && role === 'volunteer') {
+						// Set the timezone to Indian Standard Time (Asia/Kolkata)
+						const formattedISTTime =
+							this.method.getFormattedISTTime();
+
+						// Format the time as per datetime
+
+						let acknowledgement_create_body = {
+							user_id: user_id,
+							date_time: formattedISTTime,
+							doc_version: 1,
+							doc_id: 1,
+							context: 'volunteer.profile',
+							context_id: user_id,
+							accepted: true,
+						};
+
+						//add acknowledgment details
+						await this.acknowledgementService.createAcknowledgement(
+							acknowledgement_create_body,
+						);
+					}
+
+					return response.status(200).send({
+						success: true,
+						message: 'User created successfully',
+						data: {
+							user: result?.data,
+							keycloak_id: keycloak_id,
+							username: data_to_create_user.username,
+							password: password,
+						},
+					});
+				} else {
+					return response.status(200).json({
+						success: false,
+						message: 'Unable to create user in keycloak',
+						data: {},
+					});
+				}
+			} else {
+				return response.status(200).json({
+					success: false,
+					message: 'Unable to get keycloak token',
+					data: {},
+				});
+			}
+		}
+	}
 }
