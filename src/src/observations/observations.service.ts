@@ -193,6 +193,7 @@ export class ObservationsService {
 			  name
 			  title
 			  enum
+			  label_type
 
 
 			}
@@ -277,6 +278,8 @@ export class ObservationsService {
 			  context
 			  context_id
 			  field_id
+			  field_status
+
 			}
 		  }
 		  `,
@@ -773,10 +776,11 @@ export class ObservationsService {
 						id
 						name
 						title
-						observation_fields{
+						observation_fields(where:{field_status:{_eq:"enabled"}}){
 							id
 							observation_id
 							field_id
+							field_status
 							context
 							context_id
 							fields_sequence
@@ -786,6 +790,7 @@ export class ObservationsService {
 							  description
 							  title
 							  enum
+							  label_type
 							}
 						  }
 						updated_at
@@ -803,10 +808,11 @@ export class ObservationsService {
 					  id
 					  name
 					  title
-					  observation_fields{
+					  observation_fields(where: {field_status: {_eq: "enabled"}}) {
 						id
 						observation_id
 						field_id
+						field_status
 						context
 						context_id
 						fields_sequence
@@ -816,6 +822,7 @@ export class ObservationsService {
 						  description
 						  title
 						  enum
+						  label_type
 						}
 					  }
 					  created_at
@@ -832,7 +839,7 @@ export class ObservationsService {
 
 		newQdata = response?.data?.data?.observations;
 
-		if (newQdata.length > 0) {
+		if (newQdata?.length > 0) {
 			return resp.status(200).json({
 				success: true,
 				message: 'Data found successfully!',
@@ -863,6 +870,12 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
+			if (body?.filters?.observation_fields) {
+				body.filters.observation_fields.field_status = {
+					_eq: 'enabled',
+				};
+			}
+
 			function traverseFilters(filters) {
 				if (typeof filters === 'object') {
 					Object.keys(filters).forEach((key) => {
@@ -893,10 +906,11 @@ export class ObservationsService {
 						id
 						name
 						title
-						observation_fields{
+						observation_fields(where: {field_status: {_eq: "enabled"}}) {
 							id
 							observation_id
 							field_id
+							field_status
 							context
 							context_id
 							fields_sequence
@@ -906,6 +920,7 @@ export class ObservationsService {
 							  description
 							  title
 							  enum
+							  label_type
 							}
 						  }
 						updated_at
@@ -929,6 +944,7 @@ export class ObservationsService {
 								id
 								observation_id
 								field_id
+								field_status
 								context
 								context_id
 								fields_sequence
@@ -938,6 +954,7 @@ export class ObservationsService {
 									description
 									title
 									enum
+									label_type
 								}
 								field_responses(where: $field_responses) {
 									id
@@ -1019,6 +1036,7 @@ export class ObservationsService {
 						extra_all_info
 						title
 						enum
+						label_type
 					  }
 					}`,
 				variables: {
@@ -1040,6 +1058,7 @@ export class ObservationsService {
 					  extra_all_info
 					  title
 					  enum
+					  label_type
 					}
 				  }
 				  
@@ -1083,7 +1102,10 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
-			let filters = new Object(body);
+			body.filters.field_status = { _eq: 'enabled' };
+			let filters = {
+				...body.filters,
+			} as any;
 
 			Object.keys(body.filters).forEach((item) => {
 				Object.keys(body.filters[item]).forEach((e) => {
@@ -1111,11 +1133,13 @@ export class ObservationsService {
 							description
 							data_type
 							extra_all_info
+							label_type
 						  }
 						context
 						context_id
 						fields_sequence
 						field_id
+						field_status
 						updated_at
 						updated_by
 					  }
@@ -1127,7 +1151,7 @@ export class ObservationsService {
 		} else {
 			data = {
 				query: `query MyQuery {
-					observation_fields {
+					observation_fields(where: {field_status: {_eq: "enabled"}}) {
 					  created_at
 					  created_by
 					  id
@@ -1142,11 +1166,13 @@ export class ObservationsService {
 						description
 						data_type
 						extra_all_info
+						label_type
 					  }
 					  context
 					  context_id
 					  fields_sequence
 					  field_id
+					  field_status
 					  updated_at
 					  updated_by
 					}
@@ -1156,6 +1182,8 @@ export class ObservationsService {
 				  `,
 			};
 		}
+
+		console.log('query-->>', data?.query);
 
 		response = await this.hasuraServiceFromServices.queryWithVariable(data);
 
@@ -1211,7 +1239,8 @@ export class ObservationsService {
 						id
 						observation_id
 						observation_fields_id
-						observation_fields{
+						observation_fields(where: {field_status: {_eq: "enabled"}}) {
+							field_status
 							observations{
 							  id
 							  name
@@ -1221,6 +1250,7 @@ export class ObservationsService {
 							  data_type
 							  description
 							  title
+							  label_type
 							  
 							}
 						  }
@@ -1244,7 +1274,7 @@ export class ObservationsService {
 						id
 						observation_id
 						observation_fields_id
-						observation_fields{
+						observation_fields(where: {field_status: {_eq: "enabled"}}) {
 							observations{
 							  id
 							  name
@@ -1254,6 +1284,7 @@ export class ObservationsService {
 							  data_type
 							  description
 							  title
+							  label_type
 							  
 							}
 						  }
@@ -1368,6 +1399,7 @@ export class ObservationsService {
               data_type
               description
               extra_all_info
+			  label_type
             }
           }
           
@@ -1413,7 +1445,7 @@ export class ObservationsService {
 		}
 
 		let query = `query MyQuery {
-            observation_fields_by_pk(id:${id}) {
+            observation_fields(where:{id:{_eq:${id}},field_status:{_eq:"enabled"}}) {
 				created_at
 				created_by
 				id
@@ -1428,11 +1460,13 @@ export class ObservationsService {
 					description
 					data_type
 					extra_all_info
+					label_type
 				  }
 				context
 				context_id
 				fields_sequence
 				field_id
+				field_status
 				updated_at
 				updated_by
             }
@@ -1444,7 +1478,9 @@ export class ObservationsService {
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
-		const newQdata = response?.data?.observation_fields_by_pk;
+
+		console.log('query-->>', query);
+		const newQdata = response?.data?.observation_fields[0];
 
 		if (newQdata) {
 			return resp.status(200).json({
@@ -1454,7 +1490,7 @@ export class ObservationsService {
 			});
 		} else {
 			return resp.json({
-				status: 400,
+				status: 404,
 				message: 'Data Not Found',
 				data: {},
 			});
@@ -1485,7 +1521,8 @@ export class ObservationsService {
 				id
 				observation_id
 				observation_fields_id
-				observation_fields {
+				observation_fields(where: {field_status: {_eq: "enabled"}}) {
+				field_status
 				  observations {
 					id
 					name
@@ -1495,6 +1532,7 @@ export class ObservationsService {
 					data_type
 					description
 					title
+					label_type
 				  }
 				}
 				context
@@ -1873,16 +1911,28 @@ export class ObservationsService {
 
 		const observationData = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
-		).result;
+		)?.result;
+
+		if (observationData == undefined) {
+			return resp.status(422).json({
+				message: 'Data Not Found',
+				data: [],
+			});
+		}
 
 		let observationResult =
 			this.hasuraServiceFromServices.getFormattedData(observationData);
 
 		let observation_id = observationResult?.[0]?.id;
 
+		console.log('observation_id-->>', observation_id);
+
 		//get observation_fields_data;
 
-		sql = `select * from observation_fields where observation_id='${observation_id}' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'`;
+		sql = `select * from observation_fields where observation_id='${observation_id}' and field_status = 'enabled' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'`;
+
+		console.log('sql-->>', sql);
+
 		const observationFieldsData = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		)?.result;
@@ -1908,8 +1958,10 @@ export class ObservationsService {
 		observationFieldIds = observationFieldIds.slice(0, -1); // Remove the trailing comma
 
 		//get count of observation_fields
-		sql = `SELECT COUNT(*) FROM observation_fields WHERE observation_id='${observation_id}' AND context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'
+		sql = `SELECT COUNT(*) FROM observation_fields WHERE observation_id='${observation_id}' AND field_status = 'enabled' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'
 		`;
+
+		console.log('sql2-->>', sql);
 
 		const observationFieldsDataCount = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
