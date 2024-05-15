@@ -223,6 +223,14 @@ export class SessionsService {
 		const campTypeRes = await this.hasuraServiceFromServices.getData(
 			campTypeQuery,
 		);
+		// Check if the camp type query returned valid data
+		if (!campTypeRes?.data || !campTypeRes.data.camps_by_pk) {
+			return response.status(422).json({
+				success: false,
+				message: 'Error retrieving camp type data',
+				data: [],
+			});
+		}
 		const type = campTypeRes?.data?.camps_by_pk?.type;
 
 		let limitClause = '';
