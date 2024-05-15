@@ -274,7 +274,6 @@ export class OrganisationService {
 								state_id
 								state{
 									state_name
-									state_id
 								}
 							}
             }
