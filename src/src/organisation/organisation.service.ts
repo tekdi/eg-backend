@@ -258,7 +258,8 @@ export class OrganisationService {
 						email_id
 						address
             program_organisations(where:{program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}}, status: {_eq: "active"}}){
-              program_id
+              id
+							program_id
               academic_year_id
               status
 							organisation_id
@@ -270,6 +271,7 @@ export class OrganisationService {
 							camp_target
 							program{
 								name
+								state_id
 								state{
 									state_name
 								}
@@ -441,6 +443,114 @@ export class OrganisationService {
 				key: 'organisation_id',
 				message:
 					'Organisation ALready Exists for the Program and Academic Year.',
+				data: {},
+			});
+		}
+	}
+
+	async update(id: any, body: any, request: any, resp: any) {
+		try {
+			// Check if id:organisation is a valid ID
+			if (!id || isNaN(id) || id === 'string' || id <= 0) {
+				return resp.status(422).send({
+					success: false,
+					message:
+						'Invalid organisation ID. Please provide a valid ID.',
+					data: {},
+				});
+			}
+
+			const orgUpdateFields = [
+				'name',
+				'contact_person',
+				'mobile',
+				'address',
+			];
+			const programOrgUpdateFields = [
+				'id',
+				'learner_target',
+				'learner_per_camp',
+				'camp_target',
+			];
+			let orgResponse = {};
+			let programOrgResponse = {};
+			if (body?.program_organisation) {
+				const { learner_target, learner_per_camp, camp_target } =
+					body.program_organisation;
+
+				// Check if all fields are present
+				if (!learner_target || !learner_per_camp || !camp_target) {
+					return resp.status(422).send({
+						success: false,
+						message:
+							'All fields (learner_target, learner_per_camp, camp_target) are required.',
+						data: {},
+					});
+				}
+
+				// Check if learner_target and learner_per_camp are valid numbers
+				if (isNaN(learner_target) || isNaN(learner_per_camp)) {
+					return resp.status(422).send({
+						success: false,
+						message:
+							'Invalid input. Learner target and learner per camp must be numbers.',
+						data: {},
+					});
+				}
+
+				// Validate camp_target calculation
+				if (
+					Math.ceil(learner_target / learner_per_camp) !== camp_target
+				) {
+					return resp.status(422).send({
+						success: false,
+						message: 'Camp target is wrong',
+						data: {},
+					});
+				}
+
+				// Update camp_target in the program_organisation object
+				body.program_organisation.camp_target = camp_target;
+
+				// Update program_organisations table
+				const programOrganisationId = body.program_organisation.id;
+				if (!programOrganisationId) {
+					return resp.status(422).json({
+						success: false,
+						message:
+							'Please provide the ID for program_organisation.',
+						data: {},
+					});
+				}
+				programOrgResponse = await this.hasuraService.q(
+					'program_organisation',
+					{ ...body.program_organisation, id: programOrganisationId },
+					programOrgUpdateFields,
+					true,
+					['id', 'learner_target', 'learner_per_camp', 'camp_target'],
+				);
+			}
+
+			// Update organisations table
+			if (body?.organisation) {
+				orgResponse = await this.hasuraService.q(
+					'organisations',
+					{ ...body.organisation, id },
+					orgUpdateFields,
+					true,
+					['id', 'name', 'contact_person', 'mobile', 'address'],
+				);
+			}
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Updated successfully!',
+				data: { orgResponse, programOrgResponse },
+			});
+		} catch (error) {
+			return resp.status(422).json({
+				success: false,
+				message: "Couldn't update the organisation.",
 				data: {},
 			});
 		}

@@ -75,6 +75,23 @@ export class EventsService {
 		const userDetail = await this.userService.ipUserInfo(header);
 		let user_id = userDetail.data.id;
 		//get do_id for event exam master data
+		// Convert start_date and end_date to UTC
+		const startDateTimeUTC = moment
+			.tz(
+				req.start_date + ' ' + req.start_time,
+				'YYYY-MM-DD HH:mm',
+				'Asia/Kolkata',
+			)
+			.utc();
+
+		const endDateTimeUTC = moment
+			.tz(
+				req.end_date + ' ' + req.end_time,
+				'YYYY-MM-DD HH:mm',
+				'Asia/Kolkata',
+			)
+			.utc();
+
 		let eventExamData = {
 			query: `query MyQuery {
 				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"}}){
@@ -117,10 +134,10 @@ export class EventsService {
 			name: req.name,
 			master_trainer: req.master_trainer,
 			created_by: user_id,
-			end_date: req.end_date,
-			end_time: req.end_time,
-			start_date: req.start_date,
-			start_time: req.start_time,
+			end_date: endDateTimeUTC.format('YYYY-MM-DD'),
+			end_time: endDateTimeUTC.format('HH:mm'),
+			start_time: startDateTimeUTC.format('HH:mm'),
+			start_date: startDateTimeUTC.format('YYYY-MM-DD'),
 			updated_by: user_id,
 			type: req.type,
 			program_id: program_id,
@@ -184,6 +201,7 @@ export class EventsService {
 
 		const count = geteventData?.data?.events_aggregate?.aggregate?.count;
 		//if event created show this message
+
 		if (count > 0) {
 			return response.status(422).send({
 				success: false,
@@ -249,7 +267,8 @@ export class EventsService {
 		}
 	}
 
-	public async getEventsList(header, response) {
+	public async getEventsList(body, header, response) {
+		let filter = [];
 		let program_id = header?.mw_program_id;
 		let academic_year_id = header?.mw_academic_year_id;
 		const userDetail: any = await this.userService.ipUserInfo(header);
@@ -277,6 +296,20 @@ export class EventsService {
 			});
 		}
 
+		filter.push(
+			`{academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}`,
+		);
+
+		if (body?.start_date) {
+			filter.push(`start_date: {_gte:"${body?.start_date}"}`);
+		}
+
+		if (body?.end_date) {
+			filter.push(`end_date: {_lte:"${body?.end_date}"}`);
+		} else if (body?.start_date) {
+			filter.push(`end_date: {_lte:"${body?.start_date}"}`);
+		}
+
 		const allIpList = getIps?.data?.users.map((curr) => curr.id);
 		let getQuery = {
 			query: `query MyQuery {
@@ -293,7 +326,7 @@ export class EventsService {
 							}
 						}
 					],
-					_and: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}
+					_and: ${filter}
 				}}) {
 					id
 					location
@@ -311,28 +344,6 @@ export class EventsService {
 					created_by
 					updated_by
 					user_id
-					attendances {
-						context
-						context_id
-						created_by
-						date_time
-						id
-						lat
-						long
-						rsvp
-						status
-						updated_by
-						user_id
-						user {
-							first_name
-							id
-							last_name
-							middle_name
-							profile_url
-							aadhar_verified
-							aadhaar_verification_mode
-						}
-					}
 				}
 			}`,
 		};
@@ -378,37 +389,6 @@ export class EventsService {
 		type
 		updated_by
 		user_id
-		attendances(order_by: {
-		  created_at: asc
-		  }) {
-		  created_by
-		  created_at
-		  context
-		  context_id
-		  date_time
-		  id
-		  lat
-		  user_id
-		  updated_by
-		  status
-		  long
-		  rsvp
-		  fa_is_processed
-		  fa_similarity_percentage
-		  user{
-			first_name
-			id
-			last_name
-			middle_name
-			profile_url
-			aadhar_verified
-			aadhaar_verification_mode
-			program_faciltators{
-			documents_status
-			  }
-		  }
-		}
-
 	  }
 	}
 	`,
@@ -435,6 +415,76 @@ export class EventsService {
 		try {
 			const userDetail = await this.userService.ipUserInfo(header);
 			const user_id = userDetail.data.id;
+			let data = {
+				query: `query MyQuery {
+					events_by_pk(id: ${id}) {
+								id
+								params
+							}
+					}`,
+			};
+
+			const result = await this.hasuraServiceFromServices.getData(data);
+			const event_res = result?.data?.events_by_pk;
+			const check_params = event_res?.params;
+			if (check_params?.start_exam === 'yes') {
+				return resp.status(422).send({
+					success: false,
+					message:
+						'Event Can Not Edited As Event Exam has already started!',
+					data: {},
+				});
+			}
+
+			// Validate start date
+			const daysDiff = moment
+				.utc(req.end_date)
+				.diff(moment.utc(req.start_date), 'days');
+			const currentDateTime = moment.utc();
+
+			const startDateTime = moment(
+				req.start_date + ' ' + req.start_time,
+				'YYYY-MM-DD HH:mm',
+				true, // Parse in strict mode
+			).utc();
+
+			let errorMessage = {};
+			if (startDateTime.isBefore(currentDateTime, 'day')) {
+				errorMessage = {
+					key: 'start_date',
+					message: 'Start date cannot be a back date.',
+				};
+			} else if (daysDiff < 0 || daysDiff > 5) {
+				errorMessage = {
+					key: 'event_days',
+					message: 'Event duration must be between 1 and 5 days.',
+				};
+			}
+			if (Object.keys(errorMessage).length) {
+				return resp.status(422).send({
+					success: false,
+					...errorMessage,
+					data: {},
+				});
+			}
+
+			// Convert start_date and end_date to UTC
+			const startDateTimeUTC = moment
+				.tz(
+					req.start_date + ' ' + req.start_time,
+					'YYYY-MM-DD HH:mm',
+					'Asia/Kolkata',
+				)
+				.utc();
+
+			const endDateTimeUTC = moment
+				.tz(
+					req.end_date + ' ' + req.end_time,
+					'YYYY-MM-DD HH:mm',
+					'Asia/Kolkata',
+				)
+				.utc();
+
 			const attendees = req.attendees;
 			if (attendees) {
 				const data = {
@@ -509,8 +559,13 @@ export class EventsService {
 				}
 			}
 			//update events fields
+
 			const newRequest = {
-				...req,
+				...req, // Spread req object first
+				end_date: endDateTimeUTC.format('YYYY-MM-DD'),
+				end_time: endDateTimeUTC.format('HH:mm'),
+				start_time: startDateTimeUTC.format('HH:mm'),
+				start_date: startDateTimeUTC.format('YYYY-MM-DD'),
 				...(req.reminders && {
 					reminders: JSON.stringify(req.reminders).replace(
 						/"/g,
@@ -594,15 +649,12 @@ export class EventsService {
 		}
 		try {
 			const format = 'YYYY-MM-DD';
-			const dateString = moment().startOf('day').format(format);
-			const currentTime = moment().format('HH:mm');
-			const currentTimeWithOffset = moment()
-				.subtract(5, 'hours')
-				.subtract(30, 'minutes')
-				.format('HH:mm');
+			const dateString = moment.utc().startOf('day').format(format);
+			const currentTime = moment.utc().format('HH:mm');
+
 			let data = {
 				query: `query MyQuery1 {
-					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTimeWithOffset}"}, end_time: {_gte: "${currentTimeWithOffset}"}}) {
+					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTime}"}, end_time: {_gte: "${currentTime}"}}) {
 						aggregate {
 							count
 						}
@@ -981,33 +1033,27 @@ export class EventsService {
 				events(where: {end_date:{_gte:"${todayDate}"},academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},attendances: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}}, limit: $limit, offset: $offset) {
 					id
 					user_id
-					context
-					context_id
-					created_by
-					updated_by
-					created_at
-					updated_at
 					start_date
 					start_time
 					end_date
 					end_time
 					name
-					location
-					location_type
 					type
 					params
 					master_trainer
 					lms_test_tracking(where: {user_id: {_eq: ${id}},context:{_eq:${context}}}) {
-						context
-						context_id
 						status
-						created_at
-						updated_at
 						id
 						test_id
 						score
 						user_id
 						certificate_status
+					}
+					attendances(where: {context: {_eq: ${context}}, user_id: {_eq: ${id}}}){
+						id
+						user_id
+						status
+						date_time
 					}
 				}
 
@@ -1092,5 +1138,85 @@ export class EventsService {
 			console.log(e);
 			return response.status(400).json({ message: e.message });
 		}
+	}
+
+	public async eventStartExam(id: number, req: any, resp: any) {
+		const user_id = req?.mw_userid;
+		const role = req?.mw_roles;
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
+
+		let data = {
+			query: `query MyQuery {
+						events(where: {id: {_eq: ${id}},academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
+							id
+							params
+							created_by
+						}
+				}`,
+		};
+		const result = await this.hasuraServiceFromServices.getData(data);
+		const event_res = result?.data?.events?.[0];
+		const check_params = event_res?.params;
+		const created_by = event_res?.created_by;
+
+		//if params already have exam started
+		if (
+			check_params?.do_id &&
+			check_params.do_id.length > 0 &&
+			check_params?.start_exam === 'yes'
+		) {
+			return resp.status(422).send({
+				success: false,
+				message: 'Event exam has already started!',
+				data: {},
+			});
+		}
+		if (!event_res || event_res === '') {
+			return resp.status(422).send({
+				success: false,
+				message: 'Event Does Not Exist!',
+				data: {},
+			});
+		} else if (!check_params || check_params === '') {
+			return resp.status(422).send({
+				success: false,
+				message: 'Does Not Have Exam IDS',
+				data: {},
+			});
+		}
+
+		//if role is not equal to PO admin
+		if (!role.includes('program_owner') && created_by != user_id) {
+			//IS created by IP user check with created by id
+			return resp.status(422).send({
+				success: false,
+				message: 'Admin Dont have access to Start Exam of this Event!',
+				data: {},
+			});
+		}
+
+		// Update the params object with start_exam: "yes"
+		const eventResult = await this.hasuraService.updateWithVariable(
+			id,
+			'events',
+			{ params: { ...check_params, start_exam: 'yes' } },
+			[],
+			['id', 'params'],
+			{
+				variable: [
+					{
+						key: 'params',
+						type: 'json',
+					},
+				],
+			},
+		);
+
+		return resp.status(200).send({
+			success: true,
+			message: 'Exam Started!',
+			data: eventResult,
+		});
 	}
 }
