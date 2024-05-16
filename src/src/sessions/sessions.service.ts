@@ -151,7 +151,6 @@ export class SessionsService {
 	}
 
 	async updateSession(id: any, body: any, request: any, response: any) {
-		console.log('here');
 		switch (body?.edit_session_type) {
 			case 'edit_incomplete_session': {
 				if (body?.session_feedback == '' || !body?.session_feedback) {
