@@ -66,6 +66,41 @@ export class SessionsService {
 		);
 
 		if (createSessionResponse?.learning_sessions_tracker?.id) {
+			// If the learning_lesson_plan_id is 20, update the camp type if it's "PCR"
+			if (
+				body?.learning_lesson_plan_id === 20 &&
+				body?.status === 'complete'
+			) {
+				// Query to get the current camp type
+				let campTypeQuery = `query GetCampType {
+						camps_by_pk(id: ${body?.camp_id}) {
+								id
+								type
+						}
+				}`;
+
+				const campTypeRes =
+					await this.hasuraServiceFromServices.getData({
+						query: campTypeQuery,
+					});
+
+				const campType = campTypeRes?.data?.camps_by_pk?.type;
+
+				if (campType === 'pcr') {
+					// Mutation query to update the camp type
+					let updateCampTypeQuery = `mutation UpdateCampType {
+								update_camps_by_pk(pk_columns: {id: ${body?.camp_id}}, _set: {type: "main"}) {
+										id
+										type
+								}
+						}`;
+
+					await this.hasuraServiceFromServices.getData({
+						query: updateCampTypeQuery,
+					});
+				}
+			}
+
 			return response.json({
 				status: 200,
 				success: true,
@@ -189,6 +224,40 @@ export class SessionsService {
 					);
 
 					if (update_response?.learning_sessions_tracker?.id) {
+						// Check if the camp type is "PCR" and learning_lesson_plan_id is 20
+						if (
+							update_response?.learning_sessions_tracker
+								?.learning_lesson_plan_id === 20
+						) {
+							let campTypeQuery = `query GetCampType {
+									camps_by_pk(id: ${update_response?.learning_sessions_tracker?.camp_id}) {
+											id
+											type
+									}
+							}`;
+
+							const campTypeRes =
+								await this.hasuraServiceFromServices.getData({
+									query: campTypeQuery,
+								});
+
+							const campType =
+								campTypeRes?.data?.camps_by_pk?.type;
+
+							if (campType === 'pcr') {
+								// Mutation query to update the camp type
+								let updateCampTypeQuery = `mutation UpdateCampType {
+											update_camps_by_pk(pk_columns: {id: ${update_response?.learning_sessions_tracker?.camp_id}}, _set: {type: "main"}) {
+													id
+													type
+											}
+									}`;
+
+								await this.hasuraServiceFromServices.getData({
+									query: updateCampTypeQuery,
+								});
+							}
+						}
 						return response.json({
 							status: 200,
 							message: 'Successfully updated data',
