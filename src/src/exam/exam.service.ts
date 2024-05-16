@@ -569,7 +569,7 @@ export class ExamService {
 		su.name,
 		bo.id AS boardid,
 		bo.name AS boardname,
-		(SELECT COUNT(id) FROM program_beneficiaries WHERE facilitator_id = ${user_id} AND EXISTS (SELECT 1 FROM json_array_elements_text(subjects::json) AS item WHERE item::text = CAST(su.id AS TEXT))) AS total_students,
+		(SELECT COUNT(id) FROM program_beneficiaries WHERE status IN ('registered_in_camp','pragati_syc','10th_pass') AND facilitator_id = ${user_id} AND EXISTS (SELECT 1 FROM json_array_elements_text(subjects::json) AS item WHERE item::text = CAST(su.id AS TEXT))) AS total_students,
 		(SELECT COUNT(id) FROM attendance att WHERE att.context_id = events.id AND att.context = 'events' AND att.status = 'present' AND att.created_by = ${user_id}) AS present,
 		(SELECT COUNT(id) FROM attendance att WHERE att.context_id = events.id AND att.context = 'events' AND att.status = 'absent'  AND att.created_by = ${user_id}) AS absent
 	FROM 
