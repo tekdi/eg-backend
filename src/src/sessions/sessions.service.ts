@@ -72,7 +72,7 @@ export class SessionsService {
 				body?.status === 'complete'
 			) {
 				// Query to get the current camp type
-				let campTypeQuery = `query GetCampType {
+				const campTypeQuery = `query GetCampType {
 						camps_by_pk(id: ${body?.camp_id}) {
 								id
 								type
@@ -88,7 +88,7 @@ export class SessionsService {
 
 				if (campType === 'pcr') {
 					// Mutation query to update the camp type
-					let updateCampTypeQuery = `mutation UpdateCampType {
+					const updateCampTypeQuery = `mutation UpdateCampType {
 								update_camps_by_pk(pk_columns: {id: ${body?.camp_id}}, _set: {type: "main"}) {
 										id
 										type
@@ -229,7 +229,7 @@ export class SessionsService {
 							update_response?.learning_sessions_tracker
 								?.learning_lesson_plan_id === 20
 						) {
-							let campTypeQuery = `query GetCampType {
+							const campTypeQuery = `query GetCampType {
 									camps_by_pk(id: ${update_response?.learning_sessions_tracker?.camp_id}) {
 											id
 											type
@@ -246,7 +246,7 @@ export class SessionsService {
 
 							if (campType === 'pcr') {
 								// Mutation query to update the camp type
-								let updateCampTypeQuery = `mutation UpdateCampType {
+								const updateCampTypeQuery = `mutation UpdateCampType {
 											update_camps_by_pk(pk_columns: {id: ${update_response?.learning_sessions_tracker?.camp_id}}, _set: {type: "main"}) {
 													id
 													type
