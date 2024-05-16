@@ -66,11 +66,22 @@ export class SessionsService {
 		);
 
 		if (createSessionResponse?.learning_sessions_tracker?.id) {
-			// If the learning_lesson_plan_id is 20, update the camp type if it's "PCR"
-			if (
-				body?.learning_lesson_plan_id === 20 &&
-				body?.status === 'complete'
-			) {
+			// Query to get the ordering of the current learning_lesson_plan_id
+			const orderQuery = `query GetOrder {
+				learning_lesson_plans_master(where: {id: {_eq: ${body?.learning_lesson_plan_id}}}) {
+						ordering
+				}
+		}`;
+
+			const orderRes = await this.hasuraServiceFromServices.getData({
+				query: orderQuery,
+			});
+
+			const ordering =
+				orderRes?.data?.learning_lesson_plans_master?.[0]?.ordering;
+
+			// If the ordering is 20, check the conditions and update the camp type
+			if (ordering === 20 && body?.status === 'complete') {
 				// Query to check if lesson plan 19 is complete
 				const checkLesson19Query = `query CheckLesson19 {
 				learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq: 19}, camp_id: {_eq: ${body?.camp_id}}, status: {_eq: "complete"}}) {
@@ -246,11 +257,24 @@ export class SessionsService {
 					);
 
 					if (update_response?.learning_sessions_tracker?.id) {
-						// Check if the camp type is "PCR" and learning_lesson_plan_id is 20
-						if (
-							update_response?.learning_sessions_tracker
-								?.learning_lesson_plan_id === 20
-						) {
+						// Check if the ordering is 20
+						const orderQuery = `query GetOrder {
+							learning_lesson_plans_master(where: {id: {_eq: ${update_response?.learning_sessions_tracker?.learning_lesson_plan_id}}}) {
+									ordering
+							}
+					}`;
+
+						const orderRes =
+							await this.hasuraServiceFromServices.getData({
+								query: orderQuery,
+							});
+
+						const ordering =
+							orderRes?.data?.learning_lesson_plans_master?.[0]
+								?.ordering;
+
+						// If the ordering is 20 and the status is complete
+						if (ordering === 20) {
 							// Query to check if lesson plan 19 is complete
 							const checkLesson19Query = `query CheckLesson19 {
 				learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq: 19}, camp_id: {_eq: ${body?.camp_id}}, status: {_eq: "complete"}}) {
