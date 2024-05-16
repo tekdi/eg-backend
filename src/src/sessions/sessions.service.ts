@@ -71,6 +71,28 @@ export class SessionsService {
 				body?.learning_lesson_plan_id === 20 &&
 				body?.status === 'complete'
 			) {
+				// Query to check if lesson plan 19 is complete
+				const checkLesson19Query = `query CheckLesson19 {
+				learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq: 19}, camp_id: {_eq: ${body?.camp_id}}, status: {_eq: "complete"}}) {
+					id
+				}
+			}`;
+
+				const checkLesson19Res =
+					await this.hasuraServiceFromServices.getData({
+						query: checkLesson19Query,
+					});
+
+				if (
+					checkLesson19Res?.data?.learning_sessions_tracker.length ===
+					0
+				) {
+					return response.status(422).json({
+						success: false,
+						message:
+							'Lesson plan 19 must be completed before updating camp type.',
+					});
+				}
 				// Query to get the current camp type
 				const campTypeQuery = `query GetCampType {
 						camps_by_pk(id: ${body?.camp_id}) {
@@ -229,6 +251,28 @@ export class SessionsService {
 							update_response?.learning_sessions_tracker
 								?.learning_lesson_plan_id === 20
 						) {
+							// Query to check if lesson plan 19 is complete
+							const checkLesson19Query = `query CheckLesson19 {
+				learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq: 19}, camp_id: {_eq: ${body?.camp_id}}, status: {_eq: "complete"}}) {
+					id
+				}
+			}`;
+
+							const checkLesson19Res =
+								await this.hasuraServiceFromServices.getData({
+									query: checkLesson19Query,
+								});
+
+							if (
+								checkLesson19Res?.data
+									?.learning_sessions_tracker.length === 0
+							) {
+								return response.status(422).json({
+									success: false,
+									message:
+										'Lesson plan 19 must be completed before updating camp type.',
+								});
+							}
 							const campTypeQuery = `query GetCampType {
 									camps_by_pk(id: ${update_response?.learning_sessions_tracker?.camp_id}) {
 											id
