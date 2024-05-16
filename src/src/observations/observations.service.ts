@@ -1183,8 +1183,6 @@ export class ObservationsService {
 			};
 		}
 
-		console.log('query-->>', data?.query);
-
 		response = await this.hasuraServiceFromServices.queryWithVariable(data);
 
 		newQdata = response?.data?.data?.observation_fields;
@@ -1220,6 +1218,11 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
+			if (body?.filters?.observation_fields) {
+				body.filters.observation_fields.field_status = {
+					_eq: 'enabled',
+				};
+			}
 			let filters = new Object(body);
 
 			Object.keys(body.filters).forEach((item) => {
@@ -1479,7 +1482,6 @@ export class ObservationsService {
 			query: query,
 		});
 
-		console.log('query-->>', query);
 		const newQdata = response?.data?.observation_fields[0];
 
 		if (newQdata) {
@@ -1880,7 +1882,6 @@ export class ObservationsService {
 				result = response?.data?.data?.insert_field_responses_one;
 			}
 
-			console.log('result-->>', result);
 			if (!result) {
 				return resp.status(500).json({
 					success: false,
@@ -1925,13 +1926,9 @@ export class ObservationsService {
 
 		let observation_id = observationResult?.[0]?.id;
 
-		console.log('observation_id-->>', observation_id);
-
 		//get observation_fields_data;
 
 		sql = `select * from observation_fields where observation_id='${observation_id}' and field_status = 'enabled' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'`;
-
-		console.log('sql-->>', sql);
 
 		const observationFieldsData = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
@@ -1960,8 +1957,6 @@ export class ObservationsService {
 		//get count of observation_fields
 		sql = `SELECT COUNT(*) FROM observation_fields WHERE observation_id='${observation_id}' AND field_status = 'enabled' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'
 		`;
-
-		console.log('sql2-->>', sql);
 
 		const observationFieldsDataCount = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
