@@ -808,6 +808,7 @@ export class AuthService {
 				'mobile',
 				'email_id',
 				'dob',
+				'gender',
 				'keycloak_id',
 				'username',
 				'aadhar_verified',
