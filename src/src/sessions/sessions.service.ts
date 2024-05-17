@@ -369,19 +369,15 @@ export class SessionsService {
 		}
 		const type = campTypeRes?.data?.camps_by_pk?.type;
 
-		let limitClause = '';
-
-		if (type === 'pcr') {
-			limitClause = 'limit: 20, ';
-		}
 		let query = `query MyQuery {
-			learning_lesson_plans_master(order_by: {ordering: asc},${limitClause}){
+			learning_lesson_plans_master(order_by: {ordering: asc}, where: {type: {_eq: "${type}"}}){
 			  ordering
 			  id
 							title
 							cms_lesson_id
 							academic_year_id
 							program_id
+							type
 			  session_tracks(where:{camp_id:{_eq:${id}}}){
 								id
 				learning_lesson_plan_id
@@ -397,6 +393,7 @@ export class SessionsService {
 			}
 		  }
 		  `;
+		console.log('sss', query);
 
 		const res = await this.hasuraServiceFromServices.getData({
 			query: query,
