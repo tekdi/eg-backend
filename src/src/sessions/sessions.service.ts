@@ -66,74 +66,6 @@ export class SessionsService {
 		);
 
 		if (createSessionResponse?.learning_sessions_tracker?.id) {
-			// Query to get the ordering of the current learning_lesson_plan_id
-			const orderQuery = `query GetOrder {
-				learning_lesson_plans_master(where: {id: {_eq: ${body?.learning_lesson_plan_id}}}) {
-						ordering
-				}
-		}`;
-
-			const orderRes = await this.hasuraServiceFromServices.getData({
-				query: orderQuery,
-			});
-
-			const ordering =
-				orderRes?.data?.learning_lesson_plans_master?.[0]?.ordering;
-
-			// If the ordering is 20, check the conditions and update the camp type
-			if (ordering === 20 && body?.status === 'complete') {
-				// Query to check if lesson plan 19 is complete
-				const checkLesson19Query = `query CheckLesson19 {
-				learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq: 19}, camp_id: {_eq: ${body?.camp_id}}, status: {_eq: "complete"}}) {
-					id
-				}
-			}`;
-
-				const checkLesson19Res =
-					await this.hasuraServiceFromServices.getData({
-						query: checkLesson19Query,
-					});
-
-				if (
-					checkLesson19Res?.data?.learning_sessions_tracker.length ===
-					0
-				) {
-					return response.status(422).json({
-						success: false,
-						message:
-							'Lesson plan 19 must be completed before updating camp type.',
-					});
-				}
-				// Query to get the current camp type
-				const campTypeQuery = `query GetCampType {
-						camps_by_pk(id: ${body?.camp_id}) {
-								id
-								type
-						}
-				}`;
-
-				const campTypeRes =
-					await this.hasuraServiceFromServices.getData({
-						query: campTypeQuery,
-					});
-
-				const campType = campTypeRes?.data?.camps_by_pk?.type;
-
-				if (campType === 'pcr') {
-					// Mutation query to update the camp type
-					const updateCampTypeQuery = `mutation UpdateCampType {
-								update_camps_by_pk(pk_columns: {id: ${body?.camp_id}}, _set: {type: "main"}) {
-										id
-										type
-								}
-						}`;
-
-					await this.hasuraServiceFromServices.getData({
-						query: updateCampTypeQuery,
-					});
-				}
-			}
-
 			return response.json({
 				status: 200,
 				success: true,
@@ -256,75 +188,6 @@ export class SessionsService {
 					);
 
 					if (update_response?.learning_sessions_tracker?.id) {
-						// Check if the ordering is 20
-						const orderQuery = `query GetOrder {
-							learning_lesson_plans_master(where: {id: {_eq: ${update_response?.learning_sessions_tracker?.learning_lesson_plan_id}}}) {
-									ordering
-							}
-					}`;
-
-						const orderRes =
-							await this.hasuraServiceFromServices.getData({
-								query: orderQuery,
-							});
-
-						const ordering =
-							orderRes?.data?.learning_lesson_plans_master?.[0]
-								?.ordering;
-
-						// If the ordering is 20 and the status is complete
-						if (ordering === 20) {
-							// Query to check if lesson plan 19 is complete
-							const checkLesson19Query = `query CheckLesson19 {
-				learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq: 19}, camp_id: {_eq: ${body?.camp_id}}, status: {_eq: "complete"}}) {
-					id
-				}
-			}`;
-
-							const checkLesson19Res =
-								await this.hasuraServiceFromServices.getData({
-									query: checkLesson19Query,
-								});
-
-							if (
-								checkLesson19Res?.data
-									?.learning_sessions_tracker.length === 0
-							) {
-								return response.status(422).json({
-									success: false,
-									message:
-										'Lesson plan 19 must be completed before updating camp type.',
-								});
-							}
-							const campTypeQuery = `query GetCampType {
-									camps_by_pk(id: ${update_response?.learning_sessions_tracker?.camp_id}) {
-											id
-											type
-									}
-							}`;
-
-							const campTypeRes =
-								await this.hasuraServiceFromServices.getData({
-									query: campTypeQuery,
-								});
-
-							const campType =
-								campTypeRes?.data?.camps_by_pk?.type;
-
-							if (campType === 'pcr') {
-								// Mutation query to update the camp type
-								const updateCampTypeQuery = `mutation UpdateCampType {
-											update_camps_by_pk(pk_columns: {id: ${update_response?.learning_sessions_tracker?.camp_id}}, _set: {type: "main"}) {
-													id
-													type
-											}
-									}`;
-
-								await this.hasuraServiceFromServices.getData({
-									query: updateCampTypeQuery,
-								});
-							}
-						}
 						return response.json({
 							status: 200,
 							message: 'Successfully updated data',
@@ -369,19 +232,15 @@ export class SessionsService {
 		}
 		const type = campTypeRes?.data?.camps_by_pk?.type;
 
-		let limitClause = '';
-
-		if (type === 'pcr') {
-			limitClause = 'limit: 20, ';
-		}
 		let query = `query MyQuery {
-			learning_lesson_plans_master(order_by: {ordering: asc},${limitClause}){
+			learning_lesson_plans_master(order_by: {ordering: asc}, where: {type: {_eq: "${type}"}}){
 			  ordering
 			  id
 							title
 							cms_lesson_id
 							academic_year_id
 							program_id
+							type
 			  session_tracks(where:{camp_id:{_eq:${id}}}){
 								id
 				learning_lesson_plan_id
