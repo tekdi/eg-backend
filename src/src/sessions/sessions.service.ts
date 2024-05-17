@@ -393,7 +393,6 @@ export class SessionsService {
 			}
 		  }
 		  `;
-		console.log('sss', query);
 
 		const res = await this.hasuraServiceFromServices.getData({
 			query: query,
