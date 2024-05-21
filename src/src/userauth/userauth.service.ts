@@ -1785,20 +1785,6 @@ export class UserauthService {
 
 			let users = hasura_response?.data?.users;
 
-			// if (users?.length > 0) {
-			// 	let facilitator_data = users.filter(
-			// 		(user) => user.program_faciltators.length > 0,
-			// 	);
-
-			// 	if (facilitator_data.length > 0) {
-			// 		return response.status(422).send({
-			// 			success: false,
-			// 			message: 'Mobile Number Already Exist',
-			// 			data: {},
-			// 		});
-			// 	}
-			// }
-
 			// Generate random password
 			const password = `@${this.userHelperService.generateRandomPassword()}`;
 
