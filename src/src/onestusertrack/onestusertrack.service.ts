@@ -20,6 +20,7 @@ export class OnestusertrackService {
 			status,
 			params,
 			item_name,
+			provider_name,
 		} = body;
 		const missingFields = [
 			'user_id',
@@ -28,6 +29,7 @@ export class OnestusertrackService {
 			'status',
 			'order_id',
 			'item_name',
+			'provider_name',
 		].filter((field) => !body[field] && body[field] != '');
 
 		if (missingFields.length > 0) {
@@ -77,6 +79,7 @@ export class OnestusertrackService {
 			order_id,
 			params,
 			item_name,
+			provider_name,
 		};
 
 		const tableName = 'onest_users_tracking';
@@ -88,6 +91,7 @@ export class OnestusertrackService {
 			'order_id',
 			'params',
 			'item_name',
+			'provider_name',
 		];
 		const newDatainsert =
 			await this.hasuraServiceFromServices.createWithVariable(
@@ -123,6 +127,7 @@ export class OnestusertrackService {
 			'order_id',
 			'params',
 			'item_name',
+			'provider_name',
 		];
 		body.filter = {
 			...(body.filter || {}),
