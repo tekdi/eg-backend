@@ -175,6 +175,9 @@ export class BeneficiariesCoreService {
 			is_eligible
 			enrollment_verification_reason
 			enrollment_verification_status
+			exam_fee_document_id
+			syc_subjects
+			is_continued
 			document {
 				context
 				context_id

@@ -1518,6 +1518,9 @@ export class UserauthService {
 				type_of_support_needed
 				facilitator_id
 				status
+				exam_fee_document_id
+				syc_subjects
+				is_continued
 			  }
 			  references {
 				first_name

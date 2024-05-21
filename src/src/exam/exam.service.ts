@@ -533,6 +533,9 @@ export class ExamService {
 				program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, status:{_eq:"registered_in_camp"},program_id: {_eq:${program_id}}, facilitator_id: {_eq:${user_id}}}){
 				  id
 				  subjects
+				  is_continued
+	   			  syc_subjects
+				  exam_fee_document_id
 				}
 			  }
 			  `,
@@ -1726,11 +1729,14 @@ export class ExamService {
 			query: `query MyQuery {
       program_beneficiaries(where: {user_id: {_eq: ${learner_id}}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
         subjects
-				enrollment_number
-				enrollment_first_name
-    enrollment_last_name
-    enrollment_middle_name
+		enrollment_number
+		enrollment_first_name
+        enrollment_last_name
+        enrollment_middle_name
 		enrollment_dob
+		is_continued
+	    syc_subjects
+	    exam_fee_document_id
     user{
       first_name
       middle_name
@@ -2151,6 +2157,9 @@ export class ExamService {
 				program_beneficiaries(where:{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}	) {
 							user_id
 							enrolled_for_board
+							exam_fee_document_id
+							syc_subjects
+							is_continued	
 					}
 			}      
               `,
@@ -2238,6 +2247,99 @@ export class ExamService {
 				success: false,
 				message: 'No boards found for the selected learners!',
 				data: [],
+			});
+		}
+	}
+
+	async updateExamStatus(body: any, request: any, response: any) {
+		let user_id = request?.mw_userid;
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+
+		body.updated_by = user_id;
+		if (!user_id) {
+			return response.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let vquery = `query MyQuery {
+			program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, user_id: {_eq:${body?.user_id}}, facilitator_id: {_eq:${user_id}}}){
+			  id
+			  user_id
+			  facilitator_id
+			}
+		  }
+		  `;
+
+		const vresponse = await this.hasuraServiceFromServices.getData({
+			query: vquery,
+		});
+
+		let id = vresponse?.data?.program_beneficiaries?.[0]?.id;
+
+		if (!id) {
+			return response.status(422).json({
+				success: false,
+				message: 'Unauthorised access !',
+				data: {},
+			});
+		}
+
+		let query = '';
+		Object.keys(body).forEach((e) => {
+			if (body[e] && body[e] != '') {
+				if (e === 'render') {
+					query += `${e}: ${body[e]}, `;
+				} else if (Array.isArray(body[e])) {
+					query += `${e}: "${JSON.stringify(body[e]).replace(
+						/"/g,
+						'\\"',
+					)}", `;
+				} else {
+					query += `${e}: "${body[e]}", `;
+				}
+			}
+		});
+
+		let data = {
+			query: `
+      mutation UpdateProgramBeneficiaries($id:Int!) {
+        update_program_beneficiaries_by_pk(
+            pk_columns: {
+              id: $id
+            },
+            _set: {
+                ${query}
+            }
+        ) {
+          id
+        }
+    }
+    `,
+			variables: {
+				id: id,
+			},
+		};
+
+		let validation_result =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		let result =
+			validation_result?.data?.data?.update_program_beneficiaries_by_pk;
+
+		if (result) {
+			return response.status(200).json({
+				success: true,
+				message: 'Status updated successfully!',
+				data: result,
+			});
+		} else {
+			return response.status(500).json({
+				success: false,
+				message: 'Unable to update status !',
+				data: {},
 			});
 		}
 	}
