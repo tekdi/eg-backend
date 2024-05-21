@@ -12,14 +12,22 @@ export class OnestusertrackService {
 	) {}
 
 	async create(body: any, request: any, response: any) {
-		const { user_id, context, context_item_id, order_id, status, params } =
-			body;
+		const {
+			user_id,
+			context,
+			context_item_id,
+			order_id,
+			status,
+			params,
+			item_name,
+		} = body;
 		const missingFields = [
 			'user_id',
 			'context',
 			'context_item_id',
 			'status',
 			'order_id',
+			'item_name',
 		].filter((field) => !body[field] && body[field] != '');
 
 		if (missingFields.length > 0) {
@@ -68,6 +76,7 @@ export class OnestusertrackService {
 			status,
 			order_id,
 			params,
+			item_name,
 		};
 
 		const tableName = 'onest_users_tracking';
@@ -78,6 +87,7 @@ export class OnestusertrackService {
 			'status',
 			'order_id',
 			'params',
+			'item_name',
 		];
 		const newDatainsert =
 			await this.hasuraServiceFromServices.createWithVariable(
@@ -112,6 +122,7 @@ export class OnestusertrackService {
 			'status',
 			'order_id',
 			'params',
+			'item_name',
 		];
 		body.filter = {
 			...(body.filter || {}),
