@@ -538,6 +538,9 @@ export class CampService {
 					enrollment_first_name
 					enrollment_last_name
 					enrollment_middle_name
+					is_continued
+					syc_subjects
+					exam_fee_document_id
 				  }
 				}
 			  }
@@ -2418,6 +2421,9 @@ export class CampService {
 								enrollment_first_name
 								enrollment_middle_name
 								enrollment_last_name
+								is_continued
+				   				syc_subjects
+								exam_fee_document_id
 							}
 
 						}
@@ -4059,6 +4065,9 @@ export class CampService {
 					enrollment_first_name
 					enrollment_last_name
 					enrollment_middle_name
+					is_continued
+	   				syc_subjects
+					exam_fee_document_id
 				  }
 				}
 			}

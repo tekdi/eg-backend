@@ -2196,6 +2196,9 @@ export class FacilitatorService {
 				enrollment_date
 				enrollment_first_name
 				enrollment_last_name
+				exam_fee_document_id
+				syc_subjects
+				is_continued
 			  }
 			}
 		  }`;

@@ -533,6 +533,9 @@ export class ExamService {
 				program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, status:{_eq:"registered_in_camp"},program_id: {_eq:${program_id}}, facilitator_id: {_eq:${user_id}}}){
 				  id
 				  subjects
+				  is_continued
+	   			  syc_subjects
+				  exam_fee_document_id
 				}
 			  }
 			  `,
@@ -1726,11 +1729,14 @@ export class ExamService {
 			query: `query MyQuery {
       program_beneficiaries(where: {user_id: {_eq: ${learner_id}}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
         subjects
-				enrollment_number
-				enrollment_first_name
-    enrollment_last_name
-    enrollment_middle_name
+		enrollment_number
+		enrollment_first_name
+        enrollment_last_name
+        enrollment_middle_name
 		enrollment_dob
+		is_continued
+	    syc_subjects
+	    exam_fee_document_id
     user{
       first_name
       middle_name
@@ -2151,6 +2157,9 @@ export class ExamService {
 				program_beneficiaries(where:{facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}	) {
 							user_id
 							enrolled_for_board
+							exam_fee_document_id
+							syc_subjects
+							is_continued	
 					}
 			}      
               `,
