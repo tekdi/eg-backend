@@ -24,7 +24,7 @@ export class DistanceCalculation {
 			).result;
 			const formattedData =
 				this.hasuraServiceFromService.getFormattedData(response);
-			return formattedData[0].round;
+			return formattedData[0]?.round;
 		} catch {
 			return [];
 		}
@@ -69,7 +69,7 @@ export class DistanceCalculation {
 		}
 	}
 
-	//cron runs for each hour's 30th minute 
+	//cron runs for each hour's 30th minute
 	@Cron('30 * * * *')
 	private async processData() {
 		const user = await this.fetchData(10);
@@ -90,16 +90,6 @@ export class DistanceCalculation {
 				const campLong = parseFloat(campData.long);
 				const attendanceLat = parseFloat(attendanceData.lat);
 				const attendanceLong = parseFloat(attendanceData.long);
-				console.log(
-					'campLat ',
-					campLat,
-					'campLong ',
-					campLong,
-					'attendanceLat ',
-					attendanceLat,
-					'attendanceLong ',
-					attendanceLong,
-				);
 				if (
 					isNaN(campLat) ||
 					isNaN(campLong) ||
@@ -132,7 +122,6 @@ export class DistanceCalculation {
                       
               `,
 				};
-				console.log(updateQuery.query);
 
 				const updatedResult =
 					await this.hasuraServiceFromService.getData(updateQuery);
