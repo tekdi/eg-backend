@@ -83,7 +83,6 @@ export class SessionsService {
 	}
 
 	async updateSession(id: any, body: any, request: any, response: any) {
-		console.log('here');
 		switch (body?.edit_session_type) {
 			case 'edit_incomplete_session': {
 				if (body?.session_feedback == '' || !body?.session_feedback) {
@@ -210,14 +209,38 @@ export class SessionsService {
 	}
 
 	public async getSessionsListByCampId(id: any, request: any, response: any) {
+		// Query to get the camp type
+		let campTypeQuery = {
+			query: `query GetCampType {
+				camps_by_pk(id: ${id}) {
+						type
+				}
+		}`,
+		};
+
+		// Fetch the camp type
+		const campTypeRes = await this.hasuraServiceFromServices.getData(
+			campTypeQuery,
+		);
+		// Check if the camp type query returned valid data
+		if (!campTypeRes?.data || !campTypeRes.data.camps_by_pk) {
+			return response.status(422).json({
+				success: false,
+				message: 'Error retrieving camp type data',
+				data: [],
+			});
+		}
+		const type = campTypeRes?.data?.camps_by_pk?.type;
+
 		let query = `query MyQuery {
-			learning_lesson_plans_master(order_by: {ordering: asc}){
+			learning_lesson_plans_master(order_by: {ordering: asc}, where: {type: {_eq: "${type}"}}){
 			  ordering
 			  id
 							title
 							cms_lesson_id
 							academic_year_id
 							program_id
+							type
 			  session_tracks(where:{camp_id:{_eq:${id}}}){
 								id
 				learning_lesson_plan_id
@@ -232,8 +255,8 @@ export class SessionsService {
 			  }
 			}
 		  }
-
 		  `;
+
 		const res = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});

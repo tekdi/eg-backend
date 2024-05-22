@@ -40,6 +40,7 @@ import { UserauthModule } from './userauth/userauth.module';
 import { BoardModule } from './modules/board/board.module';
 import { OrganisationModule } from './organisation/organisation.module';
 import { ObservationsModule } from './observations/observations.module';
+import { ExamModule } from './exam/exam.module';
 import { OnestusertrackModule } from './onestusertrack/onestusertrack.module';
 @Module({
 	imports: [
@@ -90,6 +91,7 @@ import { OnestusertrackModule } from './onestusertrack/onestusertrack.module';
 		UserauthModule,
 		OrganisationModule,
 		ObservationsModule,
+		ExamModule,
 		OnestusertrackModule,
 	],
 	controllers: [],

@@ -223,6 +223,10 @@
 		{
 			"title": "BENEFICIARY_STATUS_10TH_PASSED",
 			"value": "10th_passed"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_PRAGATI_SYC",
+			"value": "pragati_syc"
 		}
 	],
 	"TYPE_OF_LEARNER": [
@@ -1636,6 +1640,50 @@
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_PCR",
 			"value": "miscellaneous_activities_pcr"
+		}
+	],
+	"EXAM_RESULT_STATUS": [
+		{
+			"title": "EXAM_RESULT_STATUS_P",
+			"value": "P"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYC",
+			"value": "SYC"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYCT",
+			"value": "SYCT"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYCP",
+			"value": "SYCP"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_RWH",
+			"value": "RWH"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_XXXX",
+			"value": "XXXX"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_PASS",
+			"value": "PASS"
+		}
+	],
+	"EXAM_PDF_UPLOAD_STATUS": [
+		{
+			"title": "EXAM_PDF_UPLOAD_STATUS_FIRST_TIME_UPLOAD_FAILED",
+			"value": "first_time_upload_failed"
+		},
+		{
+			"title": "EXAM_PDF_UPLOAD_STATUS_ASSIGN_TO_IP",
+			"value": "assign_to_ip"
+		},
+		{
+			"title": "EXAM_PDF_UPLOAD_STATUS_UPLOADED",
+			"value": "uploaded"
 		}
 	]
 }
