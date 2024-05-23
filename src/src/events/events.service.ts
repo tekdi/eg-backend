@@ -782,10 +782,22 @@ export class EventsService {
 
 	async getParticipants(req, id, body, res) {
 		const auth_users = await this.userService.ipUserInfo(req, 'staff');
+		let variables = {};
+		let limitquery = '';
+		let limitvariables = '';
 
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 6 : parseInt(body?.limit);
 		const offset = page > 1 ? limit * (page - 1) : 0;
+		if (!isNaN(body?.limit)) {
+			limitquery = `limit: $limit,offset: $offset`;
+			limitvariables = `($limit: Int, $offset: Int)`;
+			variables = {
+				limit: limit,
+				offset: offset,
+			};
+		}
+
 		let facilitator_id;
 		let searchQuery = '';
 
@@ -812,14 +824,13 @@ export class EventsService {
 		}
 
 		const data = {
-			query: `query MyQuery($limit: Int, $offset: Int) {
+			query: `query MyQuery${limitvariables} {
 				users_aggregate(where: {program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}},attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}) {
 					aggregate {
 						count
 					}
 				}
-				users(where: {${searchQuery}program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}}, attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, limit: $limit,
-				offset: $offset${order_by}) {
+				users(where: {${searchQuery}program_faciltators: {id: {_is_null: false}, parent_ip: {_eq: "${auth_users?.data?.program_users[0]?.organisation_id}"}}, attendances: {context: {_eq: "events"}, context_id: {_eq: ${id}}}}, ${limitquery} ${order_by}) {
 				  id
 				  first_name
 				  middle_name
@@ -858,10 +869,7 @@ export class EventsService {
 			}
 		}
 	`,
-			variables: {
-				limit: limit,
-				offset: offset,
-			},
+			variables,
 		};
 		const result = await this.hasuraServiceFromServices.getData(data);
 		const count = result?.data?.users_aggregate?.aggregate?.count;
@@ -875,7 +883,7 @@ export class EventsService {
 				totalPages: totalPages,
 				currentPage: page,
 				totalCount: count,
-				limit,
+				limit: limit,
 			});
 		} else {
 			return res.status(401).send({
