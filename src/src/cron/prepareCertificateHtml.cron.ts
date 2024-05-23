@@ -3,11 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AttendancesCoreService } from 'src/attendances/attendances.core.service';
 import { Method } from 'src/common/method/method';
-import { html_code } from 'src/lms/certificate_html';
 import { LMSCertificateDto } from 'src/lms/dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 import { json } from 'stream/consumers';
+import { pragati_orientation, pcr_training } from 'src/lms/templates';
 
 const moment = require('moment');
 const qr = require('qrcode');
@@ -24,7 +24,7 @@ export class PrepareCertificateHtmlCron {
 	) {}
 
 	//cron issue certificate run every 5 minutes
-	@Cron(CronExpression.EVERY_5_MINUTES)
+	@Cron(CronExpression.EVERY_SECOND)
 	async prepareCertificateHtml() {
 		console.log('cron job: issueCertificate started at time ' + new Date());
 
@@ -61,6 +61,7 @@ export class PrepareCertificateHtmlCron {
 						.join(' '),
 				);
 
+				const event_type = userTestData?.events?.[0]?.type;
 				const event_start_date = moment(
 					userTestData?.events?.[0]?.start_date,
 				).format('DD MMM YYYY');
@@ -109,7 +110,10 @@ export class PrepareCertificateHtmlCron {
 				}
 				//issue certificate
 				if (issue_status == 'true') {
-					let certificateTemplate = html_code;
+					let certificateTemplate = pragati_orientation;
+					if (event_type === 'pcr_training') {
+						certificateTemplate = pcr_training;
+					}
 					let issuance_date = moment().format('YYYY-MM-DD');
 					let issuance_date_tx = moment().format('DD MMM YYYY');
 					let expiration_date = moment(issuance_date)
@@ -259,6 +263,7 @@ export class PrepareCertificateHtmlCron {
 		let filterTimestamp = new Date(
 			dt.setHours(dt.getHours() - LMS_CERTIFICATE_LAST_PROCESS_HOURS),
 		).toISOString();
+
 		const query = `
 			query Getlms_test_tracking {
 				lms_test_tracking(
@@ -294,10 +299,10 @@ export class PrepareCertificateHtmlCron {
 						id
 						start_date
 						end_date
+						type
 						academic_year{
 							name
 						}
-
 					}
 				}
 			}
