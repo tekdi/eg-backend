@@ -883,7 +883,7 @@ export class EventsService {
 				totalPages: totalPages,
 				currentPage: page,
 				totalCount: count,
-				limit: limit,
+				limit,
 			});
 		} else {
 			return res.status(401).send({
