@@ -13,6 +13,7 @@ import {
 	UseInterceptors,
 	Response,
 	Request,
+	Patch,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
 import { ExamService } from './exam.service';
@@ -225,5 +226,16 @@ export class ExamController {
 		@Req() request: Request,
 	) {
 		return this.examService.getBoardList(response, request);
+	}
+
+	@Patch('/psyc')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	public async updateExamStatus(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+	) {
+		return this.examService.updateExamStatus(body, request, response);
 	}
 }

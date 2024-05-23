@@ -808,6 +808,7 @@ export class AuthService {
 				'mobile',
 				'email_id',
 				'dob',
+				'gender',
 				'keycloak_id',
 				'username',
 				'aadhar_verified',
@@ -950,6 +951,9 @@ export class AuthService {
 				reason_for_status_update
 				academic_year_id
 				user_id
+				exam_fee_document_id
+				syc_subjects
+				is_continued
 			  }
 			  program_faciltators {
 				parent_ip

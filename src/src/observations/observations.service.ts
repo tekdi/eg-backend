@@ -193,6 +193,7 @@ export class ObservationsService {
 			  name
 			  title
 			  enum
+			  label_type
 
 
 			}
@@ -277,6 +278,8 @@ export class ObservationsService {
 			  context
 			  context_id
 			  field_id
+			  field_status
+
 			}
 		  }
 		  `,
@@ -773,10 +776,11 @@ export class ObservationsService {
 						id
 						name
 						title
-						observation_fields{
+						observation_fields(where:{field_status:{_eq:"enabled"}}){
 							id
 							observation_id
 							field_id
+							field_status
 							context
 							context_id
 							fields_sequence
@@ -786,6 +790,7 @@ export class ObservationsService {
 							  description
 							  title
 							  enum
+							  label_type
 							}
 						  }
 						updated_at
@@ -803,10 +808,11 @@ export class ObservationsService {
 					  id
 					  name
 					  title
-					  observation_fields{
+					  observation_fields(where: {field_status: {_eq: "enabled"}}) {
 						id
 						observation_id
 						field_id
+						field_status
 						context
 						context_id
 						fields_sequence
@@ -816,6 +822,7 @@ export class ObservationsService {
 						  description
 						  title
 						  enum
+						  label_type
 						}
 					  }
 					  created_at
@@ -832,7 +839,7 @@ export class ObservationsService {
 
 		newQdata = response?.data?.data?.observations;
 
-		if (newQdata.length > 0) {
+		if (newQdata?.length > 0) {
 			return resp.status(200).json({
 				success: true,
 				message: 'Data found successfully!',
@@ -863,6 +870,12 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
+			if (body?.filters?.observation_fields) {
+				body.filters.observation_fields.field_status = {
+					_eq: 'enabled',
+				};
+			}
+
 			function traverseFilters(filters) {
 				if (typeof filters === 'object') {
 					Object.keys(filters).forEach((key) => {
@@ -893,10 +906,11 @@ export class ObservationsService {
 						id
 						name
 						title
-						observation_fields{
+						observation_fields(where: {field_status: {_eq: "enabled"}}) {
 							id
 							observation_id
 							field_id
+							field_status
 							context
 							context_id
 							fields_sequence
@@ -906,6 +920,7 @@ export class ObservationsService {
 							  description
 							  title
 							  enum
+							  label_type
 							}
 						  }
 						updated_at
@@ -929,6 +944,7 @@ export class ObservationsService {
 								id
 								observation_id
 								field_id
+								field_status
 								context
 								context_id
 								fields_sequence
@@ -938,6 +954,7 @@ export class ObservationsService {
 									description
 									title
 									enum
+									label_type
 								}
 								field_responses(where: $field_responses) {
 									id
@@ -1019,6 +1036,7 @@ export class ObservationsService {
 						extra_all_info
 						title
 						enum
+						label_type
 					  }
 					}`,
 				variables: {
@@ -1040,6 +1058,7 @@ export class ObservationsService {
 					  extra_all_info
 					  title
 					  enum
+					  label_type
 					}
 				  }
 				  
@@ -1083,7 +1102,10 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
-			let filters = new Object(body);
+			body.filters.field_status = { _eq: 'enabled' };
+			let filters = {
+				...body.filters,
+			} as any;
 
 			Object.keys(body.filters).forEach((item) => {
 				Object.keys(body.filters[item]).forEach((e) => {
@@ -1111,11 +1133,13 @@ export class ObservationsService {
 							description
 							data_type
 							extra_all_info
+							label_type
 						  }
 						context
 						context_id
 						fields_sequence
 						field_id
+						field_status
 						updated_at
 						updated_by
 					  }
@@ -1127,7 +1151,7 @@ export class ObservationsService {
 		} else {
 			data = {
 				query: `query MyQuery {
-					observation_fields {
+					observation_fields(where: {field_status: {_eq: "enabled"}}) {
 					  created_at
 					  created_by
 					  id
@@ -1142,11 +1166,13 @@ export class ObservationsService {
 						description
 						data_type
 						extra_all_info
+						label_type
 					  }
 					  context
 					  context_id
 					  fields_sequence
 					  field_id
+					  field_status
 					  updated_at
 					  updated_by
 					}
@@ -1192,6 +1218,11 @@ export class ObservationsService {
 		}
 
 		if (body?.filters) {
+			if (body?.filters?.observation_fields) {
+				body.filters.observation_fields.field_status = {
+					_eq: 'enabled',
+				};
+			}
 			let filters = new Object(body);
 
 			Object.keys(body.filters).forEach((item) => {
@@ -1211,7 +1242,8 @@ export class ObservationsService {
 						id
 						observation_id
 						observation_fields_id
-						observation_fields{
+						observation_fields(where: {field_status: {_eq: "enabled"}}) {
+							field_status
 							observations{
 							  id
 							  name
@@ -1221,6 +1253,7 @@ export class ObservationsService {
 							  data_type
 							  description
 							  title
+							  label_type
 							  
 							}
 						  }
@@ -1244,7 +1277,7 @@ export class ObservationsService {
 						id
 						observation_id
 						observation_fields_id
-						observation_fields{
+						observation_fields(where: {field_status: {_eq: "enabled"}}) {
 							observations{
 							  id
 							  name
@@ -1254,6 +1287,7 @@ export class ObservationsService {
 							  data_type
 							  description
 							  title
+							  label_type
 							  
 							}
 						  }
@@ -1368,6 +1402,7 @@ export class ObservationsService {
               data_type
               description
               extra_all_info
+			  label_type
             }
           }
           
@@ -1413,7 +1448,7 @@ export class ObservationsService {
 		}
 
 		let query = `query MyQuery {
-            observation_fields_by_pk(id:${id}) {
+            observation_fields(where:{id:{_eq:${id}},field_status:{_eq:"enabled"}}) {
 				created_at
 				created_by
 				id
@@ -1428,11 +1463,13 @@ export class ObservationsService {
 					description
 					data_type
 					extra_all_info
+					label_type
 				  }
 				context
 				context_id
 				fields_sequence
 				field_id
+				field_status
 				updated_at
 				updated_by
             }
@@ -1444,7 +1481,8 @@ export class ObservationsService {
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
-		const newQdata = response?.data?.observation_fields_by_pk;
+
+		const newQdata = response?.data?.observation_fields[0];
 
 		if (newQdata) {
 			return resp.status(200).json({
@@ -1454,7 +1492,7 @@ export class ObservationsService {
 			});
 		} else {
 			return resp.json({
-				status: 400,
+				status: 404,
 				message: 'Data Not Found',
 				data: {},
 			});
@@ -1485,7 +1523,8 @@ export class ObservationsService {
 				id
 				observation_id
 				observation_fields_id
-				observation_fields {
+				observation_fields(where: {field_status: {_eq: "enabled"}}) {
+				field_status
 				  observations {
 					id
 					name
@@ -1495,6 +1534,7 @@ export class ObservationsService {
 					data_type
 					description
 					title
+					label_type
 				  }
 				}
 				context
@@ -1842,7 +1882,6 @@ export class ObservationsService {
 				result = response?.data?.data?.insert_field_responses_one;
 			}
 
-			console.log('result-->>', result);
 			if (!result) {
 				return resp.status(500).json({
 					success: false,
@@ -1873,7 +1912,14 @@ export class ObservationsService {
 
 		const observationData = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
-		).result;
+		)?.result;
+
+		if (observationData == undefined) {
+			return resp.status(422).json({
+				message: 'Data Not Found',
+				data: [],
+			});
+		}
 
 		let observationResult =
 			this.hasuraServiceFromServices.getFormattedData(observationData);
@@ -1882,7 +1928,8 @@ export class ObservationsService {
 
 		//get observation_fields_data;
 
-		sql = `select * from observation_fields where observation_id='${observation_id}' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'`;
+		sql = `select * from observation_fields where observation_id='${observation_id}' and field_status = 'enabled' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'`;
+
 		const observationFieldsData = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
 		)?.result;
@@ -1908,7 +1955,7 @@ export class ObservationsService {
 		observationFieldIds = observationFieldIds.slice(0, -1); // Remove the trailing comma
 
 		//get count of observation_fields
-		sql = `SELECT COUNT(*) FROM observation_fields WHERE observation_id='${observation_id}' AND context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'
+		sql = `SELECT COUNT(*) FROM observation_fields WHERE observation_id='${observation_id}' AND field_status = 'enabled' and context = '${observation_fields_body?.context}' and context_id = '${observation_fields_body?.context_id}'
 		`;
 
 		const observationFieldsDataCount = (
@@ -2034,5 +2081,173 @@ export class ObservationsService {
 			}
 		}
 		return data;
+	}
+
+	async getExamResultSubjectForObservation(
+		id: any,
+		request: any,
+		response: any,
+	) {
+		let data;
+		let validation_response;
+		let program_id = request?.mw_program_id;
+		let academic_year_id = request?.mw_academic_year_id;
+		let user_id = request?.mw_userid;
+		let learner_id = id;
+
+		//validation to check user_id is under the  same program as learner_id or not
+		data = {
+			query: `query MyQuery6 {
+				users(where: {id: {_eq: ${user_id}}}){
+					program_faciltators(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, user_id: {_eq: ${user_id}}}) {
+					parent_ip
+					academic_year_id
+					program_id
+					user_id
+				} 
+				}
+			}
+			  `,
+		};
+
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+
+		const organisation_id =
+			validation_response?.data?.data?.users?.[0]
+				?.program_faciltators?.[0].parent_ip || '';
+		data = {
+			query: `query MyQuery {
+				program_beneficiaries(where: {user_id:{_eq:${learner_id}},facilitator_user: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}) {
+					user_id
+				}
+				
+			  }
+			  `,
+		};
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable(data);
+		const user =
+			validation_response?.data?.data?.program_beneficiaries?.[0]
+				?.user_id;
+		if (!user) {
+			return response.status(422).json({
+				success: true,
+				message: 'Invalid IP!',
+				data: {},
+			});
+		}
+		//take subject id
+		data = {
+			query: `query MyQuery {
+      program_beneficiaries(where: {user_id: {_eq: ${learner_id}}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
+       			    subjects
+					enrollment_number
+					enrollment_first_name
+					enrollment_last_name
+					enrollment_middle_name
+					enrollment_dob
+				user{
+					first_name
+					middle_name
+					last_name
+				core_beneficiaries{
+					father_first_name
+					father_middle_name
+					father_last_name
+					mother_first_name
+					mother_middle_name
+					mother_last_name
+      }
+    }
+      }
+    } 
+      `,
+		};
+
+		try {
+			validation_response =
+				await this.hasuraServiceFromServices.queryWithVariable(data);
+
+			let newQdata =
+				validation_response?.data?.data?.program_beneficiaries;
+
+			let subjectsArray = [];
+
+			if (newQdata) {
+				for (newQdata of newQdata) {
+					try {
+						const subjects = JSON.parse(newQdata.subjects);
+						//get subject data
+						const subjectQuery = {
+							query: `query SubjectQuery {
+              subjects(where: {id: {_in: [${subjects}]}}) {
+                			id
+                            name
+                            is_theory
+                            is_practical
+                            board_id
+							code
+                          boardById {
+                                id
+                                name
+                            }
+              }
+            }`,
+						};
+
+						const subjectResponse =
+							await this.hasuraServiceFromServices.queryWithVariable(
+								subjectQuery,
+							);
+
+						if (subjectResponse?.data?.data?.subjects) {
+							const learnerSubjectData =
+								subjectResponse.data.data.subjects.map(
+									(subject) => {
+										return {
+											...subject,
+										};
+									},
+								);
+							subjectsArray.push(...learnerSubjectData);
+						} else {
+							console.warn(
+								'Failed to fetch subject details:',
+								subjectResponse,
+							);
+						}
+					} catch (error) {
+						console.error(
+							'Error parsing subjects JSON or fetching subject details:',
+							error,
+						);
+					}
+				}
+			}
+
+			if (subjectsArray.length > 0) {
+				return response.status(200).json({
+					success: true,
+					message: 'Data found successfully!',
+					data: {
+						learner_id,
+						subjectsArray,
+					},
+				});
+			} else {
+				return response.status(404).json({
+					success: true,
+					message: 'Data Not Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			console.error('Error fetching exam result subjects:', error);
+			return response.status(500).json({
+				success: false,
+				message: 'Internal Server Error',
+			});
+		}
 	}
 }
