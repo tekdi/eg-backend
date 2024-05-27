@@ -2197,6 +2197,7 @@ export class FacilitatorService {
 				enrollment_first_name
 				enrollment_last_name
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }

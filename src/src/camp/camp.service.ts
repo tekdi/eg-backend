@@ -540,6 +540,7 @@ export class CampService {
 					enrollment_middle_name
 					is_continued
 					syc_subjects
+					exam_fee_date
 					exam_fee_document_id
 				  }
 				}
@@ -2423,6 +2424,7 @@ export class CampService {
 								enrollment_last_name
 								is_continued
 				   				syc_subjects
+								exam_fee_date
 								exam_fee_document_id
 							}
 
@@ -4067,6 +4069,7 @@ export class CampService {
 					enrollment_middle_name
 					is_continued
 	   				syc_subjects
+				    exam_fee_date
 					exam_fee_document_id
 				  }
 				}

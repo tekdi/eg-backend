@@ -952,6 +952,7 @@ export class AuthService {
 				academic_year_id
 				user_id
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
