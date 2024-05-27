@@ -2000,7 +2000,7 @@ export class UserService {
 
 	public async getCohortProgramList(body: any, req: any, resp: any) {
 		try {
-			const programIdBlockList = process?.env?.Program_id_block_list;
+			const programIdBlockList = process?.env?.PROGRAM_IDS_BLACKLIST;
 			let add = '';
 			if (programIdBlockList) {
 				add = `(where: {id: {_neq: ${programIdBlockList}}})`;
