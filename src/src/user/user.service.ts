@@ -2000,9 +2000,14 @@ export class UserService {
 
 	public async getCohortProgramList(body: any, req: any, resp: any) {
 		try {
+			const programIdBlockList = process?.env?.Program_id_block_list;
+			let add = '';
+			if (programIdBlockList) {
+				add = `(where: {id: {_neq: ${programIdBlockList}}})`;
+			}
 			let data = {
 				query: `query MyQuery {
-					programs{
+					programs${add}{
 						id name
 						state{
 							state_name
@@ -2011,6 +2016,7 @@ export class UserService {
 				}
 			`,
 			};
+
 			const response = await this.hasuraServiceFromServices.getData(data);
 
 			const list = response?.data?.programs || [];
