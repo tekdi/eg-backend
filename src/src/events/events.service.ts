@@ -1255,17 +1255,15 @@ export class EventsService {
 				});
 			}
 
-			const event_master = {
-				do_id,
-				event_type,
-				academic_year_id,
-				program_id,
-			};
-
-			const tableName = 'event_exams_master';
 			const newEventDoId = await this.hasuraService.q(
-				tableName,
-				event_master,
+				'event_exams_master',
+				{
+					do_id,
+					event_type,
+					academic_year_id,
+					program_id,
+				},
+
 				['do_id', 'event_type', 'academic_year_id', 'program_id'],
 			);
 
