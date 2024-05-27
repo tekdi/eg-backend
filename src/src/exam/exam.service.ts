@@ -2292,7 +2292,7 @@ export class ExamService {
 
 		let query = '';
 		Object.keys(body).forEach((e) => {
-			if (body[e] && body[e] != '') {
+			if (body[e] !== undefined && body[e] !== null && body[e] !== '') {
 				if (e === 'render') {
 					query += `${e}: ${body[e]}, `;
 				} else if (Array.isArray(body[e])) {
@@ -2300,6 +2300,8 @@ export class ExamService {
 						/"/g,
 						'\\"',
 					)}", `;
+				} else if (typeof body[e] === 'boolean') {
+					query += `${e}: ${body[e]}, `;
 				} else {
 					query += `${e}: "${body[e]}", `;
 				}
