@@ -329,6 +329,7 @@ export class BeneficiariesService {
 							enrollment_last_name
 							exam_fee_document_id
 							syc_subjects
+							exam_fee_date
 							is_continued
 							facilitator_user{
 								first_name
@@ -513,6 +514,7 @@ export class BeneficiariesService {
 					status
 					exam_fee_document_id
 					syc_subjects
+					exam_fee_date
 					is_continued
 
 				  	}
@@ -858,6 +860,7 @@ export class BeneficiariesService {
 						enrollment_verification_reason
 						exam_fee_document_id
 						syc_subjects
+						exam_fee_date
 						is_continued
 						facilitator_user {
 							id
@@ -1125,6 +1128,7 @@ export class BeneficiariesService {
 						enrollment_verification_reason
 						exam_fee_document_id
 						syc_subjects
+						exam_fee_date
 						is_continued
 						document {
 							context
@@ -1389,6 +1393,7 @@ export class BeneficiariesService {
 				enrollment_verification_reason
 				enrollment_mobile_no
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 				document {
@@ -3699,6 +3704,7 @@ export class BeneficiariesService {
 				enrollment_middle_name,
 				enrollment_last_name
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
