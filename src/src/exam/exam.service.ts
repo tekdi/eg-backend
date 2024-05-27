@@ -2259,6 +2259,7 @@ export class ExamService {
 		let academic_year_id = request?.mw_academic_year_id;
 		let program_id = request?.mw_program_id;
 
+		console.log('body-->>', body);
 		body.updated_by = user_id;
 		if (!user_id) {
 			return response.status(422).json({
@@ -2292,7 +2293,7 @@ export class ExamService {
 
 		let query = '';
 		Object.keys(body).forEach((e) => {
-			if (body[e] && body[e] != '') {
+			if (body[e] !== undefined && body[e] !== null && body[e] !== '') {
 				if (e === 'render') {
 					query += `${e}: ${body[e]}, `;
 				} else if (Array.isArray(body[e])) {
@@ -2300,6 +2301,8 @@ export class ExamService {
 						/"/g,
 						'\\"',
 					)}", `;
+				} else if (typeof body[e] === 'boolean') {
+					query += `${e}: ${body[e]}, `;
 				} else {
 					query += `${e}: "${body[e]}", `;
 				}
