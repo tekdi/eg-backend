@@ -172,7 +172,7 @@ export class EventsController {
 		return this.eventsService.eventStartExam(id, request, response);
 	}
 
-	@Post('/add/event_do_id')
+	@Post('/add_do_id')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
 	addEventDoId(
