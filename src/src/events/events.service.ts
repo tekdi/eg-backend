@@ -1226,14 +1226,13 @@ export class EventsService {
 			const academic_year_id = req.mw_academic_year_id;
 			const program_id = req.mw_program_id;
 			const { do_id, event_type } = body;
-			const user_role = req?.mw_roles; // Assuming the user role is stored in req.user_role
+			const user_role = req?.mw_roles;
 
 			// Validate user role
-			if (!user_role.includes('staff')) {
+			if (!user_role.includes('program_owner')) {
 				return response.status(403).json({
 					success: false,
-					message:
-						'Permission denied. Only staff can create an event.',
+					message: 'Permission denied. Only PO can create an event.',
 				});
 			}
 			// Validate do_id and event_type
@@ -1289,14 +1288,13 @@ export class EventsService {
 		try {
 			const academic_year_id = req.mw_academic_year_id;
 			const program_id = req.mw_program_id;
-			const user_role = req?.mw_roles; // Assuming the user role is stored in req.user_role
+			const user_role = req?.mw_roles;
 
 			// Validate user role
-			if (!user_role.includes('staff')) {
+			if (!user_role.includes('program_owner')) {
 				return response.status(403).json({
 					success: false,
-					message:
-						'Permission denied. Only staff can create an event.',
+					message: 'Permission denied. Only PO can create an event.',
 				});
 			}
 
