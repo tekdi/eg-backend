@@ -145,7 +145,7 @@ export class GeolocationController {
 	@Post('/')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
-	create(@Body() body: any, @Req() request: any, @Res() response: Response) {
+	add(@Body() body: any, @Req() request: any, @Res() response: Response) {
 		return this.geolocationService.add(body, request, response);
 	}
 }
