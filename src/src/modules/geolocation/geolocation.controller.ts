@@ -140,4 +140,12 @@ export class GeolocationController {
 			},
 		};
 	}
+
+	//Add Address master data API
+	@Post('/add')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	create(@Body() body: any, @Req() request: any, @Res() response: Response) {
+		return this.geolocationService.add(body, request, response);
+	}
 }
