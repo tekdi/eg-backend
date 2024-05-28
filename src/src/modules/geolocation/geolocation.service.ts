@@ -215,7 +215,7 @@ export class GeolocationService {
 		if (!user_role.includes('program_owner')) {
 			return response.status(403).json({
 				success: false,
-				message: 'Permission denied. Only PO can create an event.',
+				message: 'Permission denied. Only PO can Add the Address.',
 			});
 		}
 
@@ -309,14 +309,14 @@ export class GeolocationService {
 		);
 
 		if (!newAddressadd || !newAddressadd?.address.id) {
-			throw new Error('Failed to create organisation.');
+			throw new Error('Failed to Add Address.');
 		}
 		const address = newAddressadd?.address;
 
 		// Return success response
 		response.status(200).json({
 			success: true,
-			message: 'Organisation created successfully.',
+			message: 'Address Added successfully.',
 			data: address,
 		});
 	}
