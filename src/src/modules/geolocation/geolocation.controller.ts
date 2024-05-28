@@ -142,7 +142,7 @@ export class GeolocationController {
 	}
 
 	//Add Address master data API
-	@Post('/add')
+	@Post('/')
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	create(@Body() body: any, @Req() request: any, @Res() response: Response) {
