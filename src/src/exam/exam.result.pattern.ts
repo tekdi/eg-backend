@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 //import * as pdfjsLib from 'pdfjs-dist';
@@ -11,11 +12,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { NotFoundException } from '@nestjs/common';
 //python in nest js
-import { spawn } from 'child_process';
+//import { spawn } from 'child_process';
+import axios from 'axios';
+import * as FormData from 'form-data';
 
 @Injectable()
 export class ExamResultPattern {
 	constructor(
+		private configService: ConfigService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 	) {}
@@ -26,47 +30,52 @@ export class ExamResultPattern {
 		board_name: any,
 	): Promise<any> {
 		//console.log('file', file);
-		const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-		//console.log('data', data);
-		//extract data from pdf
-		const pdfText = data.text; // Assuming data is the provided object containing the extracted PDF text
-		//console.log('pdfText', pdfText);
-
-		if (board_name === 'RSOS') {
-			//version 1 rsos pdf file
-			let result = await this.parseResults_RSOS_V1(pdfText);
-			//console.log('result', result);
-			if (result == null) {
-				//version 2 rsos pdf file
-				result = await this.parseResults_RSOS_V2(pdfText);
-				//console.log('result', result);
-				if (result == null) {
-					//version 2 rsos pdf to image and then text
-					//image read
-					// Usage
-					const pdfBuffer = Buffer.from(file.buffer);
-					await this.convertPdfBufferToImageAndExtractText(pdfBuffer)
-						.then((extractedText) => {
-							// Do something with the extracted text
-							//console.log('extractedText', extractedText);
-							result = extractedText;
-						})
-						.catch((error) => {
-							// Handle error
-							console.log('error', error);
-							result = null;
-						});
+		const python_service_url =
+			this.configService.get<string>('PYTHON_SERVICE_URL');
+		//console.log('python_service_url', python_service_url);
+		//extract text from file using python service
+		let data = new FormData();
+		data.append('file', file.buffer, {
+			filename: file.originalname,
+			contentType: file.mimetype,
+		});
+		let config = {
+			method: 'post',
+			maxBodyLength: Infinity,
+			url: `${python_service_url}/ocr-extract-text`,
+			headers: {
+				...data.getHeaders(),
+			},
+			data: data,
+		};
+		let result = null;
+		await axios
+			.request(config)
+			.then(async (response) => {
+				//console.log(JSON.stringify(response.data));
+				if (response?.data?.success === true) {
+					const pdfText = response?.data?.data;
+					if (board_name === 'RSOS') {
+						//version 1 rsos pdf file
+						result = await this.parseResults_RSOS_V3(pdfText);
+						//console.log('result', result);
+						if (result == null) {
+							//version 2 rsos pdf file
+							result = await this.parseResults_RSOS_V2(pdfText);
+							//console.log('result', result);
+						}
+					} else if (board_name === 'NIOS') {
+						//version 1 nios pdf file
+						result = await this.parseResults_NIOS_V1(pdfText);
+						//console.log('result', result);
+					}
 				}
-			}
-			return result;
-		} else if (board_name === 'NIOS') {
-			//version 1 nios pdf file
-			let result = await this.parseResults_NIOS_V1(pdfText);
-			//console.log('result', result);
-			return result;
-		} else {
-			return null;
-		}
+			})
+			.catch((error) => {
+				//console.log(error);
+			});
+
+		return result;
 	}
 
 	//RSOS
@@ -336,86 +345,253 @@ export class ExamResultPattern {
 		return null;
 	}
 
+	//version 3 extract for RSOS Board from image pdf
+	async parseResults_RSOS_V3(text: string): Promise<any> {
+		const data: any = {};
+
+		// Extract Enrollment
+		const enrollmentMatch = text.match(/Enrollment\s*:\s*(\d+)/);
+		data.enrollment = enrollmentMatch ? enrollmentMatch[1] : null;
+
+		// Extract Name of Candidate
+		const nameMatch = text.match(/Name of Candidate\s*:\s*([A-Za-z\s]+)/);
+		data.candidate = nameMatch
+			? nameMatch[1].trim().replace(/\nFather/g, '')
+			: null;
+
+		// Extract Father's Name
+		const fatherNameMatch = text.match(/Father's Name\s*:\s*([A-Za-z\s]+)/);
+		data.father = fatherNameMatch
+			? fatherNameMatch[1].trim().replace(/\nMother/g, '')
+			: null;
+
+		// Extract Mother's Name
+		const motherNameMatch = text.match(/Mother's Name\s*:\s*([A-Za-z\s]+)/);
+		data.mother = motherNameMatch
+			? motherNameMatch[1]
+					.trim()
+					.replace(/\nDate of Birth/g, '')
+					.replace(/\n/g, '')
+			: null;
+
+		// Extract Date of Birth v3
+		const dobMatch = text.match(/Date of Birth\s*:\s*([\d/]+)/);
+		data.dob = dobMatch ? dobMatch[1] : null;
+
+		if (data.dob && data?.dob.length === 4) {
+			// Extract Date of Birth v4
+			const dobMatch = text.match(/Date of Birth\s*:\s*([\d-]+)/);
+			data.dob = dobMatch ? dobMatch[1] : null;
+		}
+
+		// Extract Class
+		const classMatch = text.match(/Class\s*:\s*(\d+)/);
+		data.course_class = classMatch ? classMatch[1] : null;
+		data.exam_year = '-';
+
+		// Extract TOTAL
+		const totalMatch = text.match(/TOTAL\s*(\d+)/);
+		data.total_marks = totalMatch ? totalMatch[1] : null;
+
+		// Extract RESULT
+		const resultMatch = text.match(/RESULT\s*([A-Z]+)/);
+		data.final_result = resultMatch ? resultMatch[1] : null;
+
+		//replace /n from text
+		text = text
+			.replace(/\n/g, ' ')
+			.replace(/\s\s+/g, ' ')
+			.replace(/\|/g, '')
+			.trim();
+		console.log('text', text);
+		// Extract table data
+		/*const tableData = [];
+		const tablePattern = /(\d+\s\|[^\n]+)/g;
+		const tableMatches = text.match(tablePattern);
+		const subjects =
+			tableMatches?.map((row) => {
+				const columns = row.split(/\s*\|\s*|\s+/).filter(Boolean);
+				return {
+					srNo: columns[0],
+					subjectName: columns[1] + ' ' + columns[2],
+					maxMarks: columns[3],
+					marksTheory: columns[4],
+					marksPractical: columns[5],
+					marksSessional: columns[6],
+					totalMarks: columns[7],
+					result: columns[8],
+				};
+			}) || [];
+		console.log('subjects', subjects);*/
+		// Extract table rows using regex, handling multi-line subject names
+		// Extract table rows using regex, handling multi-line subject names
+		// Extract the table rows using regex
+		// Extract the table rows using regex
+		// Regex pattern to extract subject marks
+		const regexPattern =
+			/\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
+
+		// Extracting subject marks using regex
+		const matches = text.match(regexPattern);
+
+		const subjects = matches.map((match) => ({
+			srNo: match[1],
+			subjectName: match[2].trim(),
+			subjectCode: match[3],
+			maxMarks: match[4],
+			marksTheory: match[5],
+			marksPractical: match[6],
+			marksSessional: match[7],
+			totalMarks: match[8],
+			result: match[9],
+		}));
+		console.log('matches', matches);
+		//console.log('subjects', subjects);
+		//console.log('data', data);
+		return data;
+	}
+
 	//NIOS
 	//version 1 extract for NIOS Board
-	async parseResults_NIOS_V1(content: string): Promise<any> {
+	async parseResults_NIOS_V1(text: string): Promise<any> {
+		console.log('text', text);
+		const data: any = {};
+
+		// Extract Enrollment
+		const enrollmentMatch = text.match(/Enrolment\s*No\s*:\s*(\d+)/);
+		data.enrollment = enrollmentMatch ? enrollmentMatch[1] : null;
+		if (data.enrollment == null) {
+			const enrollmentMatch = text.match(/Enrolment\s*No\s*(\d+)/);
+			data.enrollment = enrollmentMatch ? enrollmentMatch[1] : null;
+		}
+		// Extract Name of Candidate
+		const nameMatch = text.match(/Candidate\s*Name\s*:\s*([\w\s]+)/);
+		data.candidate = nameMatch
+			? nameMatch[1]
+					.replace(/\n\nDOB/g, '')
+					.replace(/\nDOB/g, '')
+					.replace(/\d/g, '')
+					.trim()
+			: null;
+
+		// Extract Father's Name
+		const fatherNameMatch = text.match(
+			/Father's\s*Name\s*=\s*:\s*([\w\s]+)/,
+		);
+		data.father = fatherNameMatch
+			? fatherNameMatch[1].replace(/\nExamination Year/g, '').trim()
+			: null;
+		if (data.father == null) {
+			const fatherNameMatch = text.match(/Father's\s*Name\s*([\w\s]+)/);
+			data.father = fatherNameMatch
+				? fatherNameMatch[1].replace(/\nExamination Year/g, '').trim()
+				: null;
+		}
+		// Extract Mother's Name
+		const motherNameMatch = text.match(/Mother's\s*Name\s*:\s*([\w\s]+)/);
+		data.mother = motherNameMatch
+			? motherNameMatch[1].replace(/temper\nFather/g, '').trim()
+			: null;
+		if (data.mother == null) {
+			const motherNameMatch = text.match(/Mother's\s*Name\s*([\w\s]+)/);
+			data.mother = motherNameMatch
+				? motherNameMatch[1].replace(/temper\nFather/g, '').trim()
+				: null;
+		}
+
+		// Extract Date of Birth v3
+		const dobMatch = text.match(/DOB\s*:\s*([\d/]+)/);
+		data.dob = dobMatch ? dobMatch[1] : null;
+		if (data.dob == null) {
+			const dobMatch = text.match(/DOB\s*([\d/]+)/);
+			data.dob = dobMatch ? dobMatch[1] : null;
+		}
+
+		// Extract Class
+		const classMatch = text.match(/Course\s*:\s*(\w+)/);
+		data.course_class = classMatch ? classMatch[1] : null;
+
+		// Exam Year
+		const examYear = text.match(/Examination\s*Year\s*:\s*([\w-]+)/);
+		data.exam_year = examYear ? examYear[1] : null;
+
+		// Extract TOTAL
+		data.total_marks = '-';
+
+		// Extract RESULT
+		const resultMatch = text.match(/Result:\s*([A-Z]+)/);
+		data.final_result = resultMatch ? resultMatch[1] : null;
+
 		//get general data
+		// Regex pattern to extract enrollment and candidate information
+		// Regex pattern to extract enrollment and candidate information
+		/*const enrollmentPattern =
+			/Enrolment No\s*:\s*(\d+)\s*Course\s*:\s*(\w+)\s*Candidate Name\s*:\s*([\w\s]+)\s*DOB\s*:\s*([\d/]+)\s*Mother's Name\s*:\s*([\w\s]+)\s*Father's Name\s*:\s*([\w\s]+)\s*Examination Year\s*:\s*([\w-]+)\s*Result:\s*(PASS)/;
 
-		return { content: content };
-	}
-
-	//PDF to Image to Text
-	async ensureDirectoryExists(directory: string): Promise<void> {
-		if (!fs.existsSync(directory)) {
-			fs.mkdirSync(directory, { recursive: true });
+		// Extract enrollment and candidate information
+		const enrollmentMatch = text.match(enrollmentPattern);
+		let enrollmentInfo = '';
+		if (enrollmentMatch) {
+			const [
+				,
+				enrolmentNo,
+				course,
+				candidateName,
+				dob,
+				motherName,
+				fatherName,
+				examYear,
+				result,
+			] = enrollmentMatch;
+			enrollmentInfo = `Enrolment No: ${enrolmentNo}\nCourse: ${course}\nCandidate Name: ${candidateName}\nDOB: ${dob}\nMother's Name: ${motherName}\nFather's Name: ${fatherName}\nExamination Year: ${examYear}\nResult: ${result}`;
 		}
-	}
 
-	async convertPdfBufferToImageAndExtractText(
-		pdfBuffer: Buffer,
-	): Promise<any> {
-		const outputDirectory = path.resolve(__dirname, 'images');
+		// Regex pattern to extract subject marks
+		const subjectPattern =
+			/(\d+)\s+([\w\s.&]+)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+\|\s+(\w+)/g;
 
-		try {
-			// Ensure the output directory exists
-			await this.ensureDirectoryExists(outputDirectory);
-			//console.log(outputDirectory);
-			// Initialize pdf2pic instance
-			const pdf2picInstance = fromBuffer(pdfBuffer, {
-				density: 500, // output pixels per inch
-				saveFilename: 'page',
-				savePath: outputDirectory, // save path for the images
-				format: 'png', // image format
-				width: 1500, // image width
-				height: 2000, // image height
-			});
-
-			// Convert the first page to image
-			const firstPageImage = await pdf2picInstance(1);
-
-			// Extract file path from the response
-			const imagePath = firstPageImage.path;
-			//console.log('Extracted Text:', text);
-			//extract table from image
-			const imageText = await this.extractText(imagePath);
-			return { imageText: imageText }; // Return the extracted text
-		} catch (error) {
-			console.error('Error:', error);
-			throw error;
+		// Extract subject marks using regex
+		const subjects = [];
+		let match;
+		while ((match = subjectPattern.exec(text)) !== null) {
+			const [, code, name, theory, practical, tma, total, result] = match;
+			subjects.push(
+				`Subject Code: ${code}\nSubject Name: ${name}\nTheory: ${theory}\nPractical: ${practical}\nTMA: ${tma}\nTotal: ${total}\nResult: ${result}`,
+			);
 		}
-	}
-	async extractText(uploadPath: string): Promise<string> {
-		const pythonProcess = spawn('python3', [
-			'/home/ttpl-rt-161/GIT/EG/eg-backend/src/src/services/python/ocr_script.py',
-			uploadPath,
-		]);
 
-		return new Promise((resolve, reject) => {
-			let output = '';
-			pythonProcess.stdout.on('data', (data) => {
-				output += data.toString();
-			});
+		// Combining extracted information
+		const resultText = `${enrollmentInfo}\n\nSubjects:\n${subjects.join(
+			'\n\n',
+		)}`;*/
 
-			pythonProcess.stderr.on('data', (data) => {
-				console.error(data.toString());
-				reject(data.toString());
-			});
+		/*	const pattern =
+			/Enrolment No\s*:\s*(\d+)\s*Course\s*:\s*([^\n]+)\s*Candidate Name\s*:\s*([^\n]+)\s*DOB\s*:\s*([^\n]+)\s*; Do not fold or\s*Mother's Name\s*:\s*([^\n]+)\s*Father's Name\s*[=:]\s*([^\n]+)\s*Examination Year\s*:\s*([^\n]+)/;
 
-			pythonProcess.on('close', () => {
-				fs.unlinkSync(uploadPath); // Clean up the uploaded file
-				resolve(output);
-			});
-		});
-	}
-	async imagePathToBuffer(imagePath: string): Promise<Buffer> {
-		return new Promise((resolve, reject) => {
-			fs.readFile(imagePath, (err, data) => {
-				if (err) {
-					reject(new NotFoundException('Image file not found'));
-				} else {
-					resolve(data);
-				}
-			});
-		});
+		const match = text.match(pattern);
+
+		if (match) {
+			const [
+				,
+				enrolmentNo,
+				course,
+				candidateName,
+				dob,
+				motherName,
+				fatherName,
+				examYear,
+			] = match;
+			data.enrollment = enrolmentNo;
+			data.candidate = candidateName;
+			data.father = fatherName;
+			data.mother = motherName.replace(/ temper/g, '');
+			data.dob = dob;
+			data.course_class = course;
+			data.exam_year = examYear;
+			data.total_marks = '-';
+			data.final_result;
+		}*/
+
+		return data;
 	}
 }

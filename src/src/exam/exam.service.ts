@@ -1189,11 +1189,12 @@ export class ExamService {
 		const board_name = request?.body?.board_name;
 		//first check validations for all inputs
 		try {
-			//ocr read
-			const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-			//console.log('data', data);
 			//text read
-			const result = await this.examResultPattern.extractResultFromPDF(file, board_name);
+			const result = await this.examResultPattern.extractResultFromPDF(
+				file,
+				board_name,
+			);
+			console.log('result', result);
 			if (result == null) {
 				return response
 					.status(200)
@@ -1224,9 +1225,6 @@ export class ExamService {
 		const enrollment = request?.body?.enrollment;
 		//first check validations for all inputs
 		try {
-			//ocr read
-			const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-			//console.log('data', data);
 			//text read
 			const result = await this.examResultPattern.extractResultFromPDF(
 				file,
