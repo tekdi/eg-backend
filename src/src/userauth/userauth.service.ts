@@ -1858,10 +1858,8 @@ export class UserauthService {
 					body.keycloak_id = keycloak_id;
 					body.username = data_to_create_user.username;
 					body.password = password;
+					let role_id;
 
-					if (role === 'volunteer' && body.hasOwnProperty('dob')) {
-						delete body.dob;
-					}
 					body.role = role;
 
 					const result = await this.authService.newCreate(body);
@@ -1891,6 +1889,29 @@ export class UserauthService {
 								qualification_master_id,
 							},
 							['user_id', 'qualification_master_id'],
+						);
+					}
+					if (role === 'volunteer') {
+						const data = {
+							query: `query MyQuery {
+								roles(where: { slug: {_eq: "volunteer"}}) {
+									id
+								}
+							}`,
+						};
+						const hasura_response =
+							await this.hasuraServiceFromServices.getData(data);
+						role_id = hasura_response?.data?.roles?.[0]?.id;
+
+						await this.hasuraService.q(
+							`user_roles`,
+							{
+								user_id,
+								status: 'active',
+								role_id: role_id,
+								role_slug: 'volunteer',
+							},
+							['user_id', 'status', 'role_id', 'role_slug'],
 						);
 					}
 					if (user_id && role === 'volunteer') {
