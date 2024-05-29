@@ -148,4 +148,15 @@ export class GeolocationController {
 	add(@Body() body: any, @Req() request: any, @Res() response: Response) {
 		return this.geolocationService.add(body, request, response);
 	}
+
+	@Post('/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	getAddressList(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.geolocationService.getAddressList(body, request, response);
+	}
 }

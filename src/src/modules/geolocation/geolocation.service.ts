@@ -320,4 +320,36 @@ export class GeolocationService {
 			data: address,
 		});
 	}
+
+	public async getAddressList(body: any, request: any, response: any) {
+		const user_role = request?.mw_roles;
+		// Validate user role
+		if (!user_role.includes('program_owner')) {
+			return response.status(403).json({
+				success: false,
+				message: 'Permission denied. Only PO can Add the Address.',
+			});
+		}
+		console.log('ssss', user_role);
+
+		const hasura_response = await this.hasuraServiceFromServices.getAll(
+			'address',
+			[
+				'id',
+				'state_name',
+				'state_cd',
+				'district_name',
+				'block_name',
+				// 'vill_ward_name',
+			],
+			body,
+		);
+
+		// Return success response
+		response.status(200).json({
+			success: true,
+			message: 'Address Added successfully.',
+			...(hasura_response || {}),
+		});
+	}
 }
