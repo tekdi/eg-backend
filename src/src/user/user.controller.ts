@@ -340,7 +340,7 @@ export class UserController {
 
 	//check for volunteer is uer exist
 	@Version('2')
-	@Post('/is_user_exist_new')
+	@Post('/is_volunteer_user_exist')
 	public async checkVolunterUserExistsV2(
 		@Param('role') role: any,
 		@Res() response: any,
