@@ -337,4 +337,15 @@ export class UserController {
 	) {
 		return this.userService.checkUserExistsV2(role, body, response);
 	}
+
+	//check for volunteer is uer exist
+	@Version('2')
+	@Post('/is_user_exist_new')
+	public async checkVolunterUserExistsV2(
+		@Param('role') role: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.userService.checkVolunterUserExistsV2(role, body, response);
+	}
 }
