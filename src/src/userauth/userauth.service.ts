@@ -1785,7 +1785,9 @@ export class UserauthService {
 		];
 
 		// Check for missing required fields
-		const missingFields = requiredFields.filter((field) => !body[field]);
+		const missingFields = requiredFields.filter(
+			(field) => !body[field] || body[field]?.trim() === '',
+		);
 		if (missingFields.length > 0) {
 			return response.status(400).json({
 				success: false,
