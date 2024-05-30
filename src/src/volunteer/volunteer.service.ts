@@ -33,7 +33,7 @@ export class VolunteerService {
 		// Return success response
 		response.status(200).json({
 			success: true,
-			message: 'List Of Address Fetch Successfully.',
+			message: 'List Of Volunteer Fetch Successfully.',
 			...(hasura_response || {}),
 		});
 	}
