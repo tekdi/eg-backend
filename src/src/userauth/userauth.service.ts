@@ -1774,17 +1774,12 @@ export class UserauthService {
 		let misssingFieldsFlag = false;
 		const requiredFields = [
 			'first_name',
-			'middle_name',
 			'last_name',
 			'gender',
 			'mobile',
 			'email_id',
 			'dob',
 			'state',
-			'district',
-			'block',
-			'village',
-			'grampanchayat',
 			'pincode',
 			'qualification',
 		];
