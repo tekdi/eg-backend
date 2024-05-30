@@ -45,7 +45,7 @@ export class UserModule implements NestModule {
 				'users/cohort/ip_list',
 				'users/cohort/academic_list',
 				'users/cohort/program_list',
-				'v2/users/is_user_exist_new',
+				'v2/users/is_volunteer_user_exist',
 			)
 			.forRoutes(UserController);
 	}
