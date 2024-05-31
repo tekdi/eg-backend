@@ -1942,7 +1942,7 @@ export class UserauthService {
 							`user_roles`,
 							{
 								user_id,
-								status: 'active',
+								status: 'applied',
 								role_id: role_id,
 								role_slug: 'volunteer',
 							},
