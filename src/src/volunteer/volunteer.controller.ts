@@ -27,6 +27,17 @@ export class VolunteerController {
 		return this.volunteerService.getvolunteerList(body, req, response);
 	}
 
+	@Patch('/:id')
+	@UseGuards(new AuthGuard())
+	update(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.volunteerService.update(id, body, request, response);
+	}
+
 	@Post('/:id')
 	@UseGuards(new AuthGuard())
 	getVolunteerDetails(
