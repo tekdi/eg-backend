@@ -50,7 +50,7 @@ export class VolunteerService {
 			}
 			// Check if id:volunteer and user role id is a valid ID
 			if (!id || isNaN(id) || id === 'string' || id <= 0) {
-				return resp.status(422).send({
+				return resp.status(404).send({
 					success: false,
 					message: 'Invalid volunteer ID. Please provide a valid ID.',
 					data: {},
@@ -107,7 +107,7 @@ export class VolunteerService {
 				data: { userResponse, userRoleResponse },
 			});
 		} catch (error) {
-			return resp.status(422).json({
+			return resp.status(500).json({
 				success: false,
 				message: "Couldn't update the Volunteer.",
 				data: {},
