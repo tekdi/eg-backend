@@ -1942,7 +1942,7 @@ export class UserauthService {
 							`user_roles`,
 							{
 								user_id,
-								status: 'active',
+								status: 'applied',
 								role_id: role_id,
 								role_slug: 'volunteer',
 							},
@@ -1955,16 +1955,6 @@ export class UserauthService {
 							this.method.getFormattedISTTime();
 
 						// Format the time as per datetime
-
-						let acknowledgement_create_body = {
-							user_id: user_id,
-							date_time: formattedISTTime,
-							doc_version: 1,
-							doc_id: 1,
-							context: 'volunteer.profile',
-							context_id: user_id,
-							accepted: true,
-						};
 					}
 
 					return response.status(200).send({
