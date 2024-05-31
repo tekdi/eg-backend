@@ -21,7 +21,7 @@ export class VolunteerService {
 		const hasura_response = await this.hasuraServiceFromServices.getAll(
 			'user_roles',
 			[
-				'user { id email_id dob district}',
+				'user { id first_name middle_name last_name mobile email_id dob state gender qualifications {id qualification_master_id qualification_master {name } }}',
 				'status',
 				'role_slug',
 				'user_id',
