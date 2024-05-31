@@ -107,7 +107,7 @@ export class VolunteerService {
 			const volunteer = response?.data?.users || [];
 
 			if (volunteer.length === 0) {
-				return resp.status(422).send({
+				return resp.status(404).send({
 					success: false,
 					message: 'volunteer Details Not found!',
 					data: volunteer,
