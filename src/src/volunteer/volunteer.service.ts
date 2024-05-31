@@ -49,7 +49,7 @@ export class VolunteerService {
 		}
 		const user_id = id;
 		try {
-			let data = {
+			const data = {
 				query: `query MyQuery {
           users(where: {id: {_eq: ${user_id}},user_roles:{role_slug:{_eq:"volunteer"}}}) {
             id
