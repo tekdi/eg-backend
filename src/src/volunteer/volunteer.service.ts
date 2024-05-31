@@ -18,7 +18,7 @@ export class VolunteerService {
 				message: 'Permission denied. Only Volunteer Admin can See.',
 			});
 		}
-		let onlyfilter = [
+		const onlyfilter = [
 			'id',
 			'first_name',
 			'middle_name',
