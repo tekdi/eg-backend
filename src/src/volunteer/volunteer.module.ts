@@ -19,7 +19,7 @@ export class VolunteerModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer
 			.apply(CohortMiddleware)
-			.exclude('/volunteer/list')
+			.exclude('/volunteer/list', '/volunteer/:id')
 			.forRoutes(VolunteerController);
 	}
 }
