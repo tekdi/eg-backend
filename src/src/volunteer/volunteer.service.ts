@@ -121,7 +121,7 @@ export class VolunteerService {
 			}
 		} catch (error) {
 			console.error('Error fetching volunteer:', error);
-			return resp.status(422).send({
+			return resp.status(500).send({
 				success: false,
 				message: 'An error occurred while fetching volunteer',
 				data: {},
