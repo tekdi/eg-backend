@@ -18,18 +18,41 @@ export class VolunteerService {
 				message: 'Permission denied. Only Volunteer Admin can See.',
 			});
 		}
-		const hasura_response = await this.hasuraServiceFromServices.getAll(
-			'user_roles',
-			[
-				'user { id first_name middle_name last_name mobile email_id dob state gender qualifications {id qualification_master_id qualification_master {name } }}',
-				'status',
-				'role_slug',
-				'user_id',
-				'id',
-			],
-			body,
-		);
+		let onlyfilter = [
+			'id',
+			'first_name',
+			'middle_name',
+			'last_name',
+			'mobile',
+			'email_id',
+			'dob',
+			'state',
+			'gender',
+			'pincode',
+		];
+		body.filters = {
+			...(body.filter || {}),
+			core: `user_roles:{role_slug:{_eq:"volunteer"}}`,
+		};
 
+		const hasura_response = await this.hasuraServiceFromServices.getAll(
+			'users',
+			[
+				'id',
+				'first_name',
+				'middle_name',
+				'last_name',
+				'mobile',
+				'email_id',
+				'dob',
+				'state',
+				'gender',
+				'pincode',
+				' qualifications {id qualification_master_id qualification_master {name } }',
+				'user_roles{status role_slug user_id id}',
+			],
+			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
+		);
 		// Return success response
 		response.status(200).json({
 			success: true,
