@@ -112,13 +112,12 @@ export class VolunteerService {
 					message: 'volunteer Details Not found!',
 					data: volunteer,
 				});
-			} else {
-				return resp.status(200).send({
-					success: true,
-					message: 'volunteer Details found successfully!',
-					data: volunteer?.[0],
-				});
 			}
+			return resp.status(200).send({
+				success: true,
+				message: 'volunteer Details found successfully!',
+				data: volunteer?.[0],
+			});
 		} catch (error) {
 			console.error('Error fetching volunteer:', error);
 			return resp.status(500).send({
