@@ -349,19 +349,24 @@ export class QueryGeneratorService {
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
 		const getObjStr = (request: any, is_aggregate = false) => {
-			const { filter, page, limit, order_by, onlyfilter } = request;
-			const filters = this.filterObjectByKeyArray(
-				filter || {},
+			const { filters, page, limit, order_by, onlyfilter } = request;
+			const filter = this.filterObjectByKeyArray(
+				filters || {},
 				onlyfilter || [],
 			);
 
 			let str = '';
-			if (
-				(limit && limit != '0') ||
-				(filters && Object.keys(filters).length > 0) ||
-				(order_by && Object.keys(order_by).length > 0)
-			) {
-				str += '(';
+			const isLimitExist = limit && limit != '0';
+			const isFilterExist = filters && Object.keys(filters).length > 0;
+			const isOrderByExist = order_by && Object.keys(order_by).length > 0;
+			if (isLimitExist || isFilterExist || isOrderByExist) {
+				if (
+					isFilterExist ||
+					(isLimitExist && !is_aggregate) ||
+					isOrderByExist
+				) {
+					str += '(';
+				}
 				let paramArr = [];
 
 				if (filters && Object.keys(filters).length > 0) {
@@ -404,7 +409,13 @@ export class QueryGeneratorService {
 					paramArr = [...paramArr, `order_by: {${data.join(',')}}`];
 				}
 				str += paramArr.join(', ');
-				str += ')';
+				if (
+					isFilterExist ||
+					(isLimitExist && !is_aggregate) ||
+					isOrderByExist
+				) {
+					str += ')';
+				}
 			}
 			return str;
 		};
