@@ -811,6 +811,10 @@ export class BeneficiariesService {
 						{ program_beneficiaries: { status: { _eq: "" } } },
 					]
 				}`);
+			} else if (status == '10th_passed') {
+				filterQueryArray.push(
+					`{program_beneficiaries:{status:{_eq:"${status}"}}}`,
+				);
 			} else {
 				filterQueryArray.push(
 					`{program_beneficiaries:{status:{_eq:${status}}}}`,
@@ -962,6 +966,10 @@ export class BeneficiariesService {
 						{ program_beneficiaries: { status: { _eq: "" } } },
 					]
 				}`);
+			} else if (status == '10th_passed') {
+				filterQueryArray.push(
+					`{program_beneficiaries:{status:{_eq:"${status}"}}}`,
+				);
 			} else {
 				filterQueryArray.push(
 					`{program_beneficiaries:{status:{_eq:${status}}}}`,
