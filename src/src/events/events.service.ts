@@ -1270,9 +1270,16 @@ export class EventsService {
 					event_type,
 					academic_year_id,
 					program_id,
+					status: 'active',
 				},
 
-				['do_id', 'event_type', 'academic_year_id', 'program_id'],
+				[
+					'do_id',
+					'event_type',
+					'academic_year_id',
+					'program_id',
+					'status',
+				],
 			);
 
 			response.status(200).json({
@@ -1313,6 +1320,7 @@ export class EventsService {
 							event_type
 							academic_year_id
 							program_id
+							status
 						}
 				}
 					`,
@@ -1385,7 +1393,7 @@ export class EventsService {
 				data: doIdResponse,
 			});
 		} catch (error) {
-			return resp.status(422).json({
+			return resp.status(500).json({
 				success: false,
 				message: "Couldn't update the DO Ids.",
 				data: {},
