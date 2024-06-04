@@ -534,6 +534,7 @@ export class ExamService {
 				  id
 				  subjects
 				  is_continued
+				  exam_fee_date
 	   			  syc_subjects
 				  exam_fee_document_id
 				}
@@ -1735,6 +1736,7 @@ export class ExamService {
         enrollment_middle_name
 		enrollment_dob
 		is_continued
+		exam_fee_date
 	    syc_subjects
 	    exam_fee_document_id
     user{
@@ -2159,6 +2161,7 @@ export class ExamService {
 							enrolled_for_board
 							exam_fee_document_id
 							syc_subjects
+							exam_fee_date
 							is_continued	
 					}
 			}      
@@ -2289,7 +2292,7 @@ export class ExamService {
 
 		let query = '';
 		Object.keys(body).forEach((e) => {
-			if (body[e] && body[e] != '') {
+			if (body[e] !== undefined && body[e] !== null && body[e] !== '') {
 				if (e === 'render') {
 					query += `${e}: ${body[e]}, `;
 				} else if (Array.isArray(body[e])) {
@@ -2297,6 +2300,8 @@ export class ExamService {
 						/"/g,
 						'\\"',
 					)}", `;
+				} else if (typeof body[e] === 'boolean') {
+					query += `${e}: ${body[e]}, `;
 				} else {
 					query += `${e}: "${body[e]}", `;
 				}

@@ -177,6 +177,7 @@ export class BeneficiariesCoreService {
 			enrollment_verification_status
 			exam_fee_document_id
 			syc_subjects
+			exam_fee_date
 			is_continued
 			document {
 				context
