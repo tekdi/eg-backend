@@ -7,9 +7,9 @@ import { EventsService } from './events.service';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { Method } from '../common/method/method';
-
+import { EnumModule } from '../enum/enum.module';
 @Module({
-	imports: [UserModule, HasuraModule, HasuraModuleFromServices],
+	imports: [UserModule, HasuraModule, HasuraModuleFromServices, EnumModule],
 	controllers: [EventsController],
 	providers: [EventsService, Method],
 })

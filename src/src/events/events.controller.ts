@@ -171,4 +171,15 @@ export class EventsController {
 	) {
 		return this.eventsService.eventStartExam(id, request, response);
 	}
+
+	@Patch('update_do_id/:id')
+	@UseGuards(new AuthGuard())
+	do_id_update(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.eventsService.do_id_update(id, body, request, response);
+	}
 }
