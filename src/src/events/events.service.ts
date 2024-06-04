@@ -6,7 +6,6 @@ import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { EnumService } from '../enum/enum.service';
 const moment = require('moment');
-
 @Injectable()
 export class EventsService {
 	public table = 'events';
@@ -1230,9 +1229,120 @@ export class EventsService {
 		});
 	}
 
+	public async addEventDoId(body, req, response) {
+		try {
+			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
+			const { do_id, event_type } = body;
+			const user_role = req?.mw_roles;
+
+			// Validate user role
+			if (!user_role.includes('program_owner')) {
+				return response.status(403).json({
+					success: false,
+					message: 'Permission denied. Only PO can create an event.',
+				});
+			}
+			// Validate do_id and event_type
+			if (!do_id || !event_type) {
+				return response.status(422).json({
+					success: false,
+					message: 'do_id and event_type are required.',
+				});
+			}
+			const allStatus = this.enumService.getEnumValue(
+				'FACILITATOR_EVENT_TYPE',
+			).data;
+			const status = allStatus.map((item) => item.value);
+			if (!status.includes(event_type)) {
+				return response.status(422).json({
+					success: false,
+					message: `Invalid event_type. Must be one of: ${status.join(
+						', ',
+					)}`,
+				});
+			}
+
+			const newEventDoId = await this.hasuraService.q(
+				'event_exams_master',
+				{
+					do_id,
+					event_type,
+					academic_year_id,
+					program_id,
+				},
+
+				['do_id', 'event_type', 'academic_year_id', 'program_id'],
+			);
+
+			response.status(200).json({
+				success: true,
+				message: 'Event DO_ID Added Successfully.',
+				data: newEventDoId,
+			});
+		} catch (error) {
+			// Handle any errors
+			response.status(500).json({
+				success: false,
+				message: 'An error occurred while adding the event DO_ID.',
+				error: error.message,
+			});
+		}
+	}
+
+	public async getEventsDoIdList(req: any, body: any, response: any) {
+		try {
+			const academic_year_id = req.mw_academic_year_id;
+			const program_id = req.mw_program_id;
+			const user_role = req?.mw_roles;
+
+			// Validate user role
+			if (!user_role.includes('program_owner')) {
+				return response.status(403).json({
+					success: false,
+					message: 'Permission denied. Only PO can create an event.',
+				});
+			}
+
+			const data = {
+				query: `query MyQuery {
+					event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}})
+						{
+							id
+							do_id
+							event_type
+							academic_year_id
+							program_id
+						}
+				}
+					`,
+			};
+			const result = await this.hasuraServiceFromServices.getData(data);
+			const list = result?.data?.event_exams_master;
+			if (list.length > 0) {
+				response.status(200).json({
+					success: true,
+					message: 'Data Found successfully',
+					data: list,
+				});
+			} else {
+				response.status(422).json({
+					success: false,
+					message: 'Data Not Found ',
+					data: {},
+				});
+			}
+		} catch (error) {
+			response.status(500).json({
+				success: false,
+				message: 'An error occurred while fetaching data.',
+				error: error.message,
+			});
+		}
+	}
+
 	async do_id_update(id: any, body: any, request: any, resp: any) {
 		try {
-			console.log('sss', id);
 			const user_role = request?.mw_roles;
 			// Check if id:organisation is a valid ID
 			if (!id || isNaN(id) || id === 'string' || id <= 0) {

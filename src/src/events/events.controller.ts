@@ -182,4 +182,21 @@ export class EventsController {
 	) {
 		return this.eventsService.do_id_update(id, body, request, response);
 	}
+
+	@Post('/add_do_id')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	addEventDoId(
+		@Body() body: any,
+		@Req() request: Request,
+		@Res() response: Response,
+	) {
+		return this.eventsService.addEventDoId(body, request, response);
+	}
+
+	@Get('/do_id/list')
+	@UseGuards(new AuthGuard())
+	getEventsDoIdList(@Req() req: any, @Body() body: any, @Res() res: any) {
+		return this.eventsService.getEventsDoIdList(req, body, res);
+	}
 }
