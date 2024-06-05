@@ -26,6 +26,10 @@ export class ExamService {
                   board_id
                   is_theory
                   is_practical
+				  theory_marks
+				  practical_marks
+				  sessional_marks
+				  total_marks
 				  events(where: {context: {_eq: "subjects"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}){
                     context
                     context_id
@@ -299,6 +303,10 @@ export class ExamService {
 				  board_id
 				  is_theory
 				  is_practical
+				  theory_marks
+				  practical_marks
+				  sessional_marks
+				  total_marks
 				  events(where: {start_date: {_eq: "${date}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}) {
 					context
 					context_id
@@ -1774,12 +1782,16 @@ export class ExamService {
 						const subjectQuery = {
 							query: `query SubjectQuery {
               subjects(where: {id: {_in: [${subjects}]}}) {
-                id
+               				id
                             name
                             is_theory
                             is_practical
+							theory_marks
+							practical_marks
+							sessional_marks
+							total_marks
                             board_id
-														code
+							code
                             boardById {
                                 id
                                 name
