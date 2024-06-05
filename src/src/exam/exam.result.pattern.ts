@@ -454,7 +454,7 @@ export class ExamResultPattern {
 	//NIOS
 	//version 1 extract for NIOS Board
 	async parseResults_NIOS_V1(text: string): Promise<any> {
-		console.log('text', text);
+		//console.log('text', text);
 		const data: any = {};
 
 		// Extract Enrollment
@@ -538,21 +538,132 @@ export class ExamResultPattern {
 		data.final_result = resultMatch ? resultMatch[1] : null;
 
 		// Extract SUBJECT
+		let subjects = [];
 		// Regex pattern to extract subject marks
-		const subjectPattern =
-			/(\d+)\s+([\w\s.&]+)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+\|\s+(\w+)/g;
+		//pattern 1
+		let pattern =
+			/(\d{3})\s([A-Z.&()\s]+)\s(\d{2,3}|[A-Z]{2})\s(\d{2,3}|[A-Z]{2})\s(\d{2,3})\s(\d{2,3})?\s?\|\s([A-Z]+)/g;
 
-		// Extract subject marks using regex
-		const subjects = [];
-		let match;
-		while ((match = subjectPattern.exec(text)) !== null) {
-			const [, code, name, theory, practical, tma, total, result] = match;
-			subjects.push(
-				`Subject Code: ${code}\nSubject Name: ${name}\nTheory: ${theory}\nPractical: ${practical}\nTMA: ${tma}\nTotal: ${total}\nResult: ${result}`,
-			);
+		let matches = text.matchAll(pattern);
+
+		for (const match of matches) {
+			const [
+				fullMatch,
+				subjectCode,
+				subjectName,
+				theoryMarks,
+				practicalMarks,
+				tmaMarks,
+				totalMarks,
+				result,
+			] = match;
+			if (totalMarks) {
+				subjects.push({
+					subject_name: subjectName.trim(),
+					subject_code: subjectCode,
+					max_marks: '-',
+					theory: theoryMarks,
+					practical: practicalMarks,
+					tma_internal_sessional: tmaMarks,
+					total: totalMarks || '',
+					result: result,
+				});
+			} else {
+				subjects.push({
+					subject_name: subjectName.trim(),
+					subject_code: subjectCode,
+					max_marks: '-',
+					theory: theoryMarks,
+					practical: '',
+					tma_internal_sessional: practicalMarks,
+					total: tmaMarks || '',
+					result: result,
+				});
+			}
+		}
+
+		//pattern 2
+		pattern =
+			/\d{3}\s+[A-Z.&()\s]+\s+\d{2,3}\s+[A-Z0-9]{2,3}\s+[A-Z0-9]{2,3}\s+\d{2,3}\s+\|\s[P|SYC]+/g;
+
+		matches = text.matchAll(pattern);
+
+		for (const match of matches) {
+			try {
+				const wordsArray = match[0].split(/\s+/);
+				if (wordsArray.length == 9) {
+					//check if subjectcode added or not
+					if (
+						!(await this.isTextAssignedToKey(
+							subjects,
+							'subject_code',
+							wordsArray[0],
+						))
+					) {
+						subjects.push({
+							subject_name: wordsArray[1] + ' ' + wordsArray[2],
+							subject_code: wordsArray[0],
+							max_marks: '-',
+							theory: wordsArray[3],
+							practical: wordsArray[4],
+							tma_internal_sessional: wordsArray[5],
+							total: wordsArray[6] || '',
+							result: wordsArray[8],
+						});
+					}
+				}
+			} catch (e) {
+				console.log('e', e);
+			}
+		}
+
+		//pattern 3
+		pattern =
+			/(\d{3})\s+([A-Z\s]+)\s+([A-Z0-9]{2,3})\s+(\d{3})\s+(\d{3})\s+(\d{3})\s+\|\s+(P|SYC)/g;
+
+		matches = text.matchAll(pattern);
+
+		for (const match of matches) {
+			try {
+				const wordsArray = match[0].split(/\s+/);
+				//console.log('wordsArray', wordsArray);
+				if (wordsArray.length == 10) {
+					//check if subjectcode added or not
+					if (
+						!(await this.isTextAssignedToKey(
+							subjects,
+							'subject_code',
+							wordsArray[0],
+						))
+					) {
+						subjects.push({
+							subject_name: wordsArray[1] + ' ' + wordsArray[2] + ' ' + wordsArray[3],
+							subject_code: wordsArray[0],
+							max_marks: '-',
+							theory: wordsArray[4],
+							practical: wordsArray[5],
+							tma_internal_sessional: wordsArray[6],
+							total: wordsArray[7] || '',
+							result: wordsArray[9],
+						});
+					}
+				}
+			} catch (e) {
+				console.log('e', e);
+			}
 		}
 		data.subject = subjects;
 
 		return data;
+	}
+
+	//common function
+	async isTextAssignedToKey(arr, key, text) {
+		for (const obj of arr) {
+			if (obj[key] === text) {
+				return true; // If text is found for the given key, return true
+			}
+		}
+		return false; // If text is not found for the given key, return false
 	}
 }
