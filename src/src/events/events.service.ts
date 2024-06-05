@@ -1310,28 +1310,24 @@ export class EventsService {
 					message: 'Permission denied. Only PO can create an event.',
 				});
 			}
-
-			const data = {
-				query: `query MyQuery {
-					event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}})
-						{
-							id
-							do_id
-							event_type
-							academic_year_id
-							program_id
-							status
-						}
-				}
-					`,
+			const programUserFilter = `academic_year_id: { _eq: ${academic_year_id} },
+		program_id: { _eq: ${program_id}}`;
+			const onlyfilter = ['id', 'do_id', 'event_type', 'status'];
+			body.filters = {
+				...(body.filter || {}),
+				core: `${programUserFilter}`,
 			};
-			const result = await this.hasuraServiceFromServices.getData(data);
-			const list = result?.data?.event_exams_master;
-			if (list.length > 0) {
+			const data = await this.hasuraServiceFromServices.getAll(
+				'event_exams_master',
+				[...onlyfilter],
+				{ ...body, onlyfilter: [...onlyfilter, 'core'] },
+			);
+
+			if (data) {
 				response.status(200).json({
 					success: true,
 					message: 'Data Found successfully',
-					data: list,
+					...(data || {}),
 				});
 			} else {
 				response.status(422).json({

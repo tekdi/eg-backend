@@ -194,7 +194,7 @@ export class EventsController {
 		return this.eventsService.addEventDoId(body, request, response);
 	}
 
-	@Get('/do_id/list')
+	@Post('/do_id/list')
 	@UseGuards(new AuthGuard())
 	getEventsDoIdList(@Req() req: any, @Body() body: any, @Res() res: any) {
 		return this.eventsService.getEventsDoIdList(req, body, res);
