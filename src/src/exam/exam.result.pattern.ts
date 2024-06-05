@@ -471,6 +471,7 @@ export class ExamResultPattern {
 					.replace(/\n\nDOB/g, '')
 					.replace(/\nDOB/g, '')
 					.replace(/\d/g, '')
+					.replace(/\n\nstitute of Open SchoolingPrint Date/g, '')
 					.trim()
 			: null;
 
@@ -482,10 +483,22 @@ export class ExamResultPattern {
 			? fatherNameMatch[1].replace(/\nExamination Year/g, '').trim()
 			: null;
 		if (data.father == null) {
-			const fatherNameMatch = text.match(/Father's\s*Name\s*([\w\s]+)/);
+			const fatherNameMatch = text.match(
+				/Father's\s*Name\s*:\s*([\w\s]+)/,
+			);
 			data.father = fatherNameMatch
 				? fatherNameMatch[1].replace(/\nExamination Year/g, '').trim()
 				: null;
+			if (data.father == null) {
+				const fatherNameMatch = text.match(
+					/Father's\s*Name\s*\s*([\w\s]+)/,
+				);
+				data.father = fatherNameMatch
+					? fatherNameMatch[1]
+							.replace(/\nExamination Year/g, '')
+							.trim()
+					: null;
+			}
 		}
 		// Extract Mother's Name
 		const motherNameMatch = text.match(/Mother's\s*Name\s*:\s*([\w\s]+)/);
@@ -500,11 +513,13 @@ export class ExamResultPattern {
 		}
 
 		// Extract Date of Birth v3
-		const dobMatch = text.match(/DOB\s*:\s*([\d/]+)/);
-		data.dob = dobMatch ? dobMatch[1] : null;
+		const dobMatch = text.match(/DOB\s*\d{2}[-/]\d{2}[-/]\d{4}/);
+		data.dob = dobMatch ? dobMatch[0].replace(/DOB/g, '').trim() : null;
 		if (data.dob == null) {
-			const dobMatch = text.match(/DOB\s*([\d/]+)/);
-			data.dob = dobMatch ? dobMatch[1] : null;
+			const dobMatch = text.match(/DOB\s*:\s*\d{2}[-/]\d{2}[-/]\d{4}/);
+			data.dob = dobMatch
+				? dobMatch[0].replace(/DOB :/g, '').trim()
+				: null;
 		}
 
 		// Extract Class
@@ -522,30 +537,7 @@ export class ExamResultPattern {
 		const resultMatch = text.match(/Result:\s*([A-Z]+)/);
 		data.final_result = resultMatch ? resultMatch[1] : null;
 
-		//get general data
-		// Regex pattern to extract enrollment and candidate information
-		// Regex pattern to extract enrollment and candidate information
-		/*const enrollmentPattern =
-			/Enrolment No\s*:\s*(\d+)\s*Course\s*:\s*(\w+)\s*Candidate Name\s*:\s*([\w\s]+)\s*DOB\s*:\s*([\d/]+)\s*Mother's Name\s*:\s*([\w\s]+)\s*Father's Name\s*:\s*([\w\s]+)\s*Examination Year\s*:\s*([\w-]+)\s*Result:\s*(PASS)/;
-
-		// Extract enrollment and candidate information
-		const enrollmentMatch = text.match(enrollmentPattern);
-		let enrollmentInfo = '';
-		if (enrollmentMatch) {
-			const [
-				,
-				enrolmentNo,
-				course,
-				candidateName,
-				dob,
-				motherName,
-				fatherName,
-				examYear,
-				result,
-			] = enrollmentMatch;
-			enrollmentInfo = `Enrolment No: ${enrolmentNo}\nCourse: ${course}\nCandidate Name: ${candidateName}\nDOB: ${dob}\nMother's Name: ${motherName}\nFather's Name: ${fatherName}\nExamination Year: ${examYear}\nResult: ${result}`;
-		}
-
+		// Extract SUBJECT
 		// Regex pattern to extract subject marks
 		const subjectPattern =
 			/(\d+)\s+([\w\s.&]+)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+(\d{3}|AB|-)\s+\|\s+(\w+)/g;
@@ -559,38 +551,7 @@ export class ExamResultPattern {
 				`Subject Code: ${code}\nSubject Name: ${name}\nTheory: ${theory}\nPractical: ${practical}\nTMA: ${tma}\nTotal: ${total}\nResult: ${result}`,
 			);
 		}
-
-		// Combining extracted information
-		const resultText = `${enrollmentInfo}\n\nSubjects:\n${subjects.join(
-			'\n\n',
-		)}`;*/
-
-		/*	const pattern =
-			/Enrolment No\s*:\s*(\d+)\s*Course\s*:\s*([^\n]+)\s*Candidate Name\s*:\s*([^\n]+)\s*DOB\s*:\s*([^\n]+)\s*; Do not fold or\s*Mother's Name\s*:\s*([^\n]+)\s*Father's Name\s*[=:]\s*([^\n]+)\s*Examination Year\s*:\s*([^\n]+)/;
-
-		const match = text.match(pattern);
-
-		if (match) {
-			const [
-				,
-				enrolmentNo,
-				course,
-				candidateName,
-				dob,
-				motherName,
-				fatherName,
-				examYear,
-			] = match;
-			data.enrollment = enrolmentNo;
-			data.candidate = candidateName;
-			data.father = fatherName;
-			data.mother = motherName.replace(/ temper/g, '');
-			data.dob = dob;
-			data.course_class = course;
-			data.exam_year = examYear;
-			data.total_marks = '-';
-			data.final_result;
-		}*/
+		data.subject = subjects;
 
 		return data;
 	}
