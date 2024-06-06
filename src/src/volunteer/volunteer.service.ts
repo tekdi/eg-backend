@@ -160,6 +160,7 @@ export class VolunteerService {
             gender
             dob
             state
+						username
             qualifications {
               id
               qualification_master_id
@@ -200,6 +201,118 @@ export class VolunteerService {
 			return resp.status(500).send({
 				success: false,
 				message: 'An error occurred while fetching volunteer',
+				data: {},
+			});
+		}
+	}
+
+	//update self data
+	async updatevolunteer(body: any, request: any, resp: any) {
+		try {
+			const user_role = request?.mw_roles;
+			//Validate user role
+			if (!user_role.includes('volunteer')) {
+				return resp.status(403).json({
+					success: false,
+					message: 'Permission denied. Only Volunteer can Update.',
+				});
+			}
+
+			const id = request.mw_userid;
+			// Check if id:volunteer and user role id is a valid ID
+			if (!id || isNaN(id) || id === 'string' || id <= 0) {
+				return resp.status(404).send({
+					success: false,
+					message: 'Invalid volunteer ID. Please provide a valid ID.',
+					data: {},
+				});
+			}
+
+			const usersFields = [
+				'first_name',
+				'last_name',
+				'gender',
+				'mobile',
+				'email_id',
+				'dob',
+				'state',
+				'pincode',
+			];
+
+			let userResponse = {};
+			let qualificationResponse = {};
+			if (body?.qualification) {
+				// get datafrom qulification name get id
+				const data = {
+					query: `query MyQuery {
+						qualification_masters(where: {name: {_eq: "${body?.qualification?.qualification_name}"}}) {
+							id
+						}
+					}`,
+				};
+
+				const hasura_response =
+					await this.hasuraServiceFromServices.getData(data);
+
+				const qualification_master_id =
+					hasura_response?.data?.qualification_masters?.[0]?.id; // Access first element's id
+
+				if (!qualification_master_id) {
+					return resp.status(404).json({
+						success: false,
+						message: 'Qualification not found.',
+					});
+				}
+				const qualificationId = body.qualification.id;
+				if (qualificationId) {
+					qualificationResponse = await this.hasuraService.q(
+						'qualifications',
+						{
+							...body.qualification,
+							id: qualificationId,
+							qualification_master_id,
+						},
+						['id', 'qualification_master_id'],
+						true,
+						['id', 'qualification_master_id'],
+					);
+				} else {
+					return resp.status(400).json({
+						success: false,
+						message: 'Invalid qualification ID.',
+					});
+				}
+			}
+
+			if (body?.users) {
+				userResponse = await this.hasuraService.q(
+					'users',
+					{ ...body.users, id },
+					usersFields,
+					true,
+					[
+						'id',
+						'first_name',
+						'last_name',
+						'gender',
+						'mobile',
+						'email_id',
+						'dob',
+						'state',
+						'pincode',
+					],
+				);
+			}
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Updated successfully!',
+				data: { userResponse, qualificationResponse },
+			});
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: "Couldn't update the Volunteer.",
 				data: {},
 			});
 		}
