@@ -95,13 +95,25 @@ export class VolunteerService {
 			let userRoleResponse = {};
 			if (body?.user_roles) {
 				const userRoleId = body.user_roles.id;
-				userRoleResponse = await this.hasuraService.q(
-					'user_roles',
-					{ ...body.user_roles, id: userRoleId },
-					userRoleUpdateFields,
-					true,
-					['id', 'status'],
-				);
+				if (
+					userRoleId &&
+					!isNaN(Number(userRoleId)) &&
+					Number(userRoleId) > 0
+				) {
+					userRoleResponse = await this.hasuraService.q(
+						'user_roles',
+						{ ...body.user_roles, id: userRoleId },
+						userRoleUpdateFields,
+						true,
+						['id', 'status'],
+					);
+				} else {
+					return resp.status(400).json({
+						success: false,
+						message:
+							'Invalid user role ID. Please provide a valid ID.',
+					});
+				}
 			}
 
 			if (body?.users) {
