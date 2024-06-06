@@ -4615,6 +4615,16 @@ export class CampService {
 					first_name
 					middle_name
 					last_name
+					program_beneficiaries{
+						enrollment_first_name
+						enrollment_last_name
+						enrollment_middle_name
+						enrollment_dob
+						enrollment_date
+						enrollment_number
+						enrollment_status
+						enrolled_for_board
+					  }
 				  }
 				}
 			  }
