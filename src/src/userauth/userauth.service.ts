@@ -1519,6 +1519,7 @@ export class UserauthService {
 				facilitator_id
 				status
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
