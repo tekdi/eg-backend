@@ -56,12 +56,18 @@ export class ExamResultPattern {
 				if (response?.data?.success === true) {
 					const pdfText = response?.data?.data;
 					if (board_name === 'RSOS') {
+						//fix
+						//console.log('file', file);
+						const data2 = await parse(file.buffer); // Read data from uploaded PDF file buffer
+						//console.log('data', data);
+						//extract data from pdf
+						const pdfText2 = data2.text; // Assuming data is the provided object containing the extracted PDF text
 						//version 1 rsos pdf file
-						result = await this.parseResults_RSOS_V3(pdfText);
+						result = await this.parseResults_RSOS_V1(pdfText2);
 						//console.log('result', result);
 						if (result == null) {
 							//version 2 rsos pdf file
-							result = await this.parseResults_RSOS_V2(pdfText);
+							result = await this.parseResults_RSOS_V2(pdfText2);
 							//console.log('result', result);
 						}
 					} else if (board_name === 'NIOS') {
@@ -637,7 +643,12 @@ export class ExamResultPattern {
 						))
 					) {
 						subjects.push({
-							subject_name: wordsArray[1] + ' ' + wordsArray[2] + ' ' + wordsArray[3],
+							subject_name:
+								wordsArray[1] +
+								' ' +
+								wordsArray[2] +
+								' ' +
+								wordsArray[3],
 							subject_code: wordsArray[0],
 							max_marks: '-',
 							theory: wordsArray[4],
