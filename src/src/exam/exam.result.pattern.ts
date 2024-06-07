@@ -650,7 +650,7 @@ export class ExamResultPattern {
 								' ' +
 								wordsArray[3],
 							subject_code: wordsArray[0],
-							max_marks: '-',
+							max_marks: '0',
 							theory: wordsArray[4],
 							practical: wordsArray[5],
 							tma_internal_sessional: wordsArray[6],
