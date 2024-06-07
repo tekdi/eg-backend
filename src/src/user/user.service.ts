@@ -726,6 +726,12 @@ export class UserService {
 			status
 			user_id
 		  }
+			user_roles{
+				id
+				user_id
+				status
+				role_slug
+			}
 		  extended_users{
 			id
 			user_id
