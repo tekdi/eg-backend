@@ -720,7 +720,7 @@ export class ExamService {
 				}
 			`;
 
-		//console.log('mutation_query', mutation_query);
+		console.log('mutation_query', mutation_query);
 		data = {
 			query: `${mutation_query}`,
 			variables: {},
@@ -729,7 +729,7 @@ export class ExamService {
 		const query_response =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
 
-		//console.log('query_response', query_response?.data);
+		console.log('query_response', query_response?.data);
 
 		exam_result_id =
 			set_update == 1
