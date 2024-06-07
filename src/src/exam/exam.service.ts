@@ -382,6 +382,11 @@ export class ExamService {
 							context
 							context_id
 							status
+							event{
+								id
+								start_date
+								end_date
+							}
 						}
 					}
 				  }`,
