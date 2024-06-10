@@ -389,16 +389,16 @@ export class ExamService {
 						first_name
 						middle_name
 						last_name
+						events(where: {id: {_eq:${input?.event_id}}}){
+							id
+							start_date
+							end_date
+						}
 						attendances(where: {context: {_eq: "events"}, context_id: {_eq:${input?.event_id}}}) {
 							id
 							context
 							context_id
 							status
-							event{
-								id
-								start_date
-								end_date
-							}
 						}
 					}
 				  }`,
