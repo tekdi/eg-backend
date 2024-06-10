@@ -95,7 +95,7 @@ export class EventsService {
 
 		let eventExamData = {
 			query: `query MyQuery {
-				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"}}){
+				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"},status:{_eq:"active"}}){
 					id
 					do_id
 					event_type
