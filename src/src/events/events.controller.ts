@@ -172,6 +172,17 @@ export class EventsController {
 		return this.eventsService.eventStartExam(id, request, response);
 	}
 
+	@Patch('update_do_id/:id')
+	@UseGuards(new AuthGuard())
+	do_id_update(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.eventsService.do_id_update(id, body, request, response);
+	}
+
 	@Post('/add_do_id')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
@@ -183,7 +194,7 @@ export class EventsController {
 		return this.eventsService.addEventDoId(body, request, response);
 	}
 
-	@Get('/do_id/list')
+	@Post('/do_id/list')
 	@UseGuards(new AuthGuard())
 	getEventsDoIdList(@Req() req: any, @Body() body: any, @Res() res: any) {
 		return this.eventsService.getEventsDoIdList(req, body, res);

@@ -4,8 +4,8 @@ import { lastValueFrom, map } from 'rxjs';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-const moment = require('moment');
 import { EnumService } from '../enum/enum.service';
+const moment = require('moment');
 @Injectable()
 export class EventsService {
 	public table = 'events';
@@ -95,7 +95,7 @@ export class EventsService {
 
 		let eventExamData = {
 			query: `query MyQuery {
-				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"}}){
+				event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, event_type: {_eq: "${req.type}"},status:{_eq:"active"}}){
 					id
 					do_id
 					event_type
@@ -1270,9 +1270,16 @@ export class EventsService {
 					event_type,
 					academic_year_id,
 					program_id,
+					status: 'active',
 				},
 
-				['do_id', 'event_type', 'academic_year_id', 'program_id'],
+				[
+					'do_id',
+					'event_type',
+					'academic_year_id',
+					'program_id',
+					'status',
+				],
 			);
 
 			response.status(200).json({
@@ -1303,27 +1310,24 @@ export class EventsService {
 					message: 'Permission denied. Only PO can create an event.',
 				});
 			}
-
-			const data = {
-				query: `query MyQuery {
-					event_exams_master(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}})
-						{
-							id
-							do_id
-							event_type
-							academic_year_id
-							program_id
-						}
-				}
-					`,
+			const programUserFilter = `academic_year_id: { _eq: ${academic_year_id} },
+		program_id: { _eq: ${program_id}}`;
+			const onlyfilter = ['id', 'do_id', 'event_type', 'status'];
+			body.filters = {
+				...(body.filter || {}),
+				core: `${programUserFilter}`,
 			};
-			const result = await this.hasuraServiceFromServices.getData(data);
-			const list = result?.data?.event_exams_master;
-			if (list.length > 0) {
+			const data = await this.hasuraServiceFromServices.getAll(
+				'event_exams_master',
+				[...onlyfilter],
+				{ ...body, onlyfilter: [...onlyfilter, 'core'] },
+			);
+
+			if (data) {
 				response.status(200).json({
 					success: true,
 					message: 'Data Found successfully',
-					data: list,
+					...(data || {}),
 				});
 			} else {
 				response.status(422).json({
@@ -1337,6 +1341,58 @@ export class EventsService {
 				success: false,
 				message: 'An error occurred while fetaching data.',
 				error: error.message,
+			});
+		}
+	}
+
+	async do_id_update(id: any, body: any, request: any, resp: any) {
+		try {
+			const user_role = request?.mw_roles;
+			// Check if id:organisation is a valid ID
+			if (!id || isNaN(id) || id === 'string' || id <= 0) {
+				return resp.status(422).send({
+					success: false,
+					message: 'Invalid ID for DoId. Please provide a valid ID.',
+					data: {},
+				});
+			}
+			if (!user_role.includes('program_owner')) {
+				return resp.status(403).json({
+					success: false,
+					message: 'Permission denied. Only PO can create an event.',
+				});
+			}
+			const diIdFields = ['do_id', 'event_type', 'status'];
+			const allStatus = this.enumService.getEnumValue(
+				'FACILITATOR_EVENT_TYPE',
+			).data;
+			const status = allStatus.map((item) => item.value);
+			if (!status.includes(body.event_type)) {
+				return resp.status(422).json({
+					success: false,
+					message: `Invalid event_type. Must be one of: ${status.join(
+						', ',
+					)}`,
+				});
+			}
+			const doIdResponse = await this.hasuraService.q(
+				'event_exams_master',
+				{ ...body, id },
+				diIdFields,
+				true,
+				['id', 'do_id', 'event_type', 'status'],
+			);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Updated successfully!',
+				data: doIdResponse,
+			});
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: "Couldn't update the DO Ids.",
+				data: {},
 			});
 		}
 	}
