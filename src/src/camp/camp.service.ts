@@ -4609,7 +4609,7 @@ export class CampService {
 			  camp_id: id
 			  group {
 				group_id: id
-				group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}, user: {program_beneficiaries: {status: {_eq: "registered_in_camp"}}}}) {
+				group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}, user: {program_beneficiaries: {status: {_eq: "registered_in_camp"},enrolled_for_board:{_eq:2}}}}) {
 				  user {
 					user_id: id
 					first_name
