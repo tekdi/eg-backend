@@ -71,6 +71,8 @@ export class LMSService {
 		lmsTestTrackingDto.user_id = user_id;
 		lmsTestTrackingDto.created_by = user_id;
 		const test_id = lmsTestTrackingDto?.test_id;
+		const context = lmsTestTrackingDto?.context;
+		const context_id = lmsTestTrackingDto?.context_id;
 
 		let query_user_test = `query Getlms_test_tracking {
 			lms_test_tracking(
@@ -80,6 +82,12 @@ export class LMSService {
 				},
 				test_id:{
 				  _eq: "${test_id}"
+				},
+				context:{
+				  _eq: "${context}"
+				},
+				context_id:{
+				  _eq: "${context_id}"
 				}
 			  }
 			){
