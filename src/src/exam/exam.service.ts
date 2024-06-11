@@ -389,17 +389,17 @@ export class ExamService {
 						first_name
 						middle_name
 						last_name
-						events(where: {id: {_eq:${input?.event_id}}}){
-							id
-							start_date
-							end_date
-						}
 						attendances(where: {context: {_eq: "events"}, context_id: {_eq:${input?.event_id}}}) {
 							id
 							context
 							context_id
 							status
 						}
+					}
+					events(where: {id: {_eq: ${input?.event_id}}}) {
+						id
+						start_date
+						end_date
 					}
 				  }`,
 			};
@@ -410,13 +410,14 @@ export class ExamService {
 				);
 
 			users_data = attendance_result?.data?.data?.users;
-
+			const events_data = attendance_result?.data?.data?.events;
 			resultArray.push({
 				subject_id: input?.subject_id,
 				subject_name: input?.subject_name,
 				event_id: input?.event_id,
 				type: input?.type,
 				data: users_data,
+				events_data,
 			});
 		}
 
