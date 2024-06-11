@@ -42,6 +42,7 @@ import { OrganisationModule } from './organisation/organisation.module';
 import { ObservationsModule } from './observations/observations.module';
 import { ExamModule } from './exam/exam.module';
 import { OnestusertrackModule } from './onestusertrack/onestusertrack.module';
+import { ProgramCoordinatorModule } from './program-coordinator/program-coordinator.module';
 @Module({
 	imports: [
 		ScheduleModule.forRoot(),
@@ -93,6 +94,7 @@ import { OnestusertrackModule } from './onestusertrack/onestusertrack.module';
 		ObservationsModule,
 		ExamModule,
 		OnestusertrackModule,
+		ProgramCoordinatorModule,
 	],
 	controllers: [],
 	providers: [CacheCleanerProvider],
