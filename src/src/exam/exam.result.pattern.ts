@@ -52,7 +52,7 @@ export class ExamResultPattern {
 		await axios
 			.request(config)
 			.then(async (response) => {
-				//console.log(JSON.stringify(response.data));
+				console.log(JSON.stringify(response.data));
 				if (response?.data?.success === true) {
 					const pdfText = response?.data?.data;
 					if (board_name === 'RSOS') {
@@ -537,7 +537,7 @@ export class ExamResultPattern {
 		data.exam_year = examYear ? examYear[1] : null;
 
 		// Extract TOTAL
-		data.total_marks = '-';
+		data.total_marks = '0';
 
 		// Extract RESULT
 		const resultMatch = text.match(/Result:\s*([A-Z]+)/);
@@ -650,7 +650,7 @@ export class ExamResultPattern {
 								' ' +
 								wordsArray[3],
 							subject_code: wordsArray[0],
-							max_marks: '-',
+							max_marks: '0',
 							theory: wordsArray[4],
 							practical: wordsArray[5],
 							tma_internal_sessional: wordsArray[6],

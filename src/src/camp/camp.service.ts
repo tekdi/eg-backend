@@ -4607,17 +4607,43 @@ export class CampService {
 		let program_id = request?.mw_program_id;
 		let academic_year_id = request?.mw_academic_year_id;
 		let user_id = request?.mw_userid;
+
+		//get board_id for RSOS board
+		let board_query = `query MyQuery {
+			boards(where: {name: {_in: ["RSOS"]}}) {
+			  id
+			  name
+			}
+		  }
+		  
+		  `;
+		const board_result = await this.hasuraServiceFromServices.getData({
+			query: board_query,
+		});
+
+		const board_id = board_result?.data?.boards?.[0]?.id;
+
 		let query = `query MyQuery {
 			camps(where: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},status: {_in: ["registered","camp_ip_verified","change_required"]}, group_users: {user_id: {_eq:${user_id}}, member_type: {_eq: "owner"}, status: {_eq: "active"}}}}) {
 			  camp_id: id
 			  group {
 				group_id: id
-				group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}, user: {program_beneficiaries: {status: {_eq: "registered_in_camp"}}}}) {
+				group_users(where: {member_type: {_eq: "member"}, status: {_eq: "active"}, user: {program_beneficiaries: {status: {_eq: "registered_in_camp"},enrolled_for_board:{_eq:${board_id}}}}}) {
 				  user {
 					user_id: id
 					first_name
 					middle_name
 					last_name
+					program_beneficiaries{
+						enrollment_first_name
+						enrollment_last_name
+						enrollment_middle_name
+						enrollment_dob
+						enrollment_date
+						enrollment_number
+						enrollment_status
+						enrolled_for_board
+					  }
 				  }
 				}
 			  }

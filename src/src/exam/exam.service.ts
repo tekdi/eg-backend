@@ -389,6 +389,11 @@ export class ExamService {
 						first_name
 						middle_name
 						last_name
+						events(where: {id: {_eq:${input?.event_id}}}){
+							id
+							start_date
+							end_date
+						}
 						attendances(where: {context: {_eq: "events"}, context_id: {_eq:${input?.event_id}}}) {
 							id
 							context
@@ -732,7 +737,7 @@ export class ExamService {
 				}
 			`;
 
-		//console.log('mutation_query', mutation_query);
+		console.log('mutation_query', mutation_query);
 		data = {
 			query: `${mutation_query}`,
 			variables: {},
@@ -741,7 +746,7 @@ export class ExamService {
 		const query_response =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
 
-		//console.log('query_response', query_response?.data);
+		console.log('query_response', query_response?.data);
 
 		exam_result_id =
 			set_update == 1
