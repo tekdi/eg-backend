@@ -549,6 +549,7 @@ export class ProgramCoordinatorService {
               block
               grampanchayat
               mobile
+			  email_id
              }
           }
           `;
@@ -598,6 +599,7 @@ export class ProgramCoordinatorService {
 			gender
 			aadhar_verified
 			mobile
+			email_id
 		  }
 		}
 	  }
@@ -621,10 +623,11 @@ export class ProgramCoordinatorService {
 		}
 
 		return response.status(200).json({
-			message: 'Data retrieved12 successfully',
+			message: 'Data retrieved successfully',
 			data: {
 				program_coordinator_data: program_coordinator_data,
 				program_facilitator_data: program_facilitator_data,
+				preraks_assigned: program_facilitator_data?.length,
 			},
 		});
 	}
