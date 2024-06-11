@@ -1091,7 +1091,6 @@ export class AuthService {
 				}`,
 			};
 
-			//await this.hasuraService.q(updateLastLoginQuery);
 			const result = await this.hasuraService.getData(
 				updateLastLoginQuery,
 			);
