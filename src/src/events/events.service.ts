@@ -1402,7 +1402,7 @@ export class EventsService {
 		const program_id = req?.mw_program_id;
 
 		const user_role = req?.mw_roles;
-		if (!user_role.includes('program_owner')) {
+		if (!user_role?.includes('program_owner')) {
 			return resp.status(403).json({
 				success: false,
 				message: 'Permission denied. Only PO can create an event.',
@@ -1434,13 +1434,12 @@ export class EventsService {
 					message: 'event_master Details Not found!',
 					data: event_master,
 				});
-			} else {
-				return resp.status(200).send({
-					success: true,
-					message: 'event_master Details found successfully!',
-					data: event_master?.[0],
-				});
 			}
+			return resp.status(200).send({
+				success: true,
+				message: 'event_master Details found successfully!',
+				data: event_master?.[0],
+			});
 		} catch (error) {
 			console.error('Error fetching event_master:', error.message);
 			return resp.status(422).send({
