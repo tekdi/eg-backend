@@ -366,4 +366,143 @@ export class GeolocationService {
 			...(hasura_response || {}),
 		});
 	}
+
+	public async getAddressDetails(req: any, resp: any, id: any) {
+		try {
+			const user_role = req?.mw_roles;
+			if (!user_role.includes('program_owner')) {
+				return resp.status(403).json({
+					success: false,
+					message: 'Permission denied. Only PO can See.',
+				});
+			}
+			let data = {
+				query: `query MyQuery {
+          address(where: {id:{_eq:${id}}
+          }) {
+            id
+						state_name,
+						state_cd,
+						district_name,
+						district_cd,
+						udise_block_code,
+						block_name,
+						grampanchayat_cd,
+						grampanchayat_name,
+						vill_ward_cd,
+						village_ward_name,
+						school_name,
+						udise_sch_code,
+						sch_category_id,
+						sch_mgmt_id,
+						open_school_type,
+						nodal_code,
+          }
+        }
+			`,
+			};
+
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const addr = response?.data?.address || [];
+
+			if (addr.length == 0) {
+				return resp.status(422).send({
+					success: false,
+					message: 'Address Details Not found!',
+					data: addr,
+				});
+			} else {
+				return resp.status(200).send({
+					success: true,
+					message: 'Address Details found successfully!',
+					data: addr?.[0],
+				});
+			}
+		} catch (error) {
+			// Log error and return a generic error response
+			console.error('Error fetching Address:', error.message);
+			return resp.status(422).send({
+				success: false,
+				message: 'An error occurred while fetching Address',
+				data: {},
+			});
+		}
+	}
+
+	async addressUpdate(id: any, body: any, request: any, resp: any) {
+		try {
+			const user_role = request?.mw_roles;
+			// Check if id:organisation is a valid ID
+			if (!id || isNaN(id) || id === 'string' || id <= 0) {
+				return resp.status(422).send({
+					success: false,
+					message: 'Invalid ID for DoId. Please provide a valid ID.',
+					data: {},
+				});
+			}
+			if (!user_role.includes('program_owner')) {
+				return resp.status(403).json({
+					success: false,
+					message: 'Permission denied. Only PO can Edit.',
+				});
+			}
+			const AddressFields = [
+				'state_name',
+				'state_cd',
+				'district_name',
+				'district_cd',
+				'udise_block_code',
+				'block_name',
+				'grampanchayat_cd',
+				'grampanchayat_name',
+				'vill_ward_cd',
+				'village_ward_name',
+				'school_name',
+				'udise_sch_code',
+				'sch_category_id',
+				'sch_mgmt_id',
+				'open_school_type',
+				'nodal_code',
+			];
+
+			const addressResponse = await this.hasuraService.q(
+				'address',
+				{ ...body, id },
+				AddressFields,
+				true,
+				[
+					'id',
+					'state_name',
+					'state_cd',
+					'district_name',
+					'district_cd',
+					'udise_block_code',
+					'block_name',
+					'grampanchayat_cd',
+					'grampanchayat_name',
+					'vill_ward_cd',
+					'village_ward_name',
+					'school_name',
+					'udise_sch_code',
+					'sch_category_id',
+					'sch_mgmt_id',
+					'open_school_type',
+					'nodal_code',
+				],
+			);
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Updated successfully!',
+				data: addressResponse,
+			});
+		} catch (error) {
+			return resp.status(500).json({
+				success: false,
+				message: "Couldn't update the Address.",
+				data: {},
+			});
+		}
+	}
 }
