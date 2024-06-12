@@ -330,28 +330,33 @@ export class GeolocationService {
 				message: 'Permission denied. Only PO can Add the Address.',
 			});
 		}
+		const onlyfilter = [
+			'id',
+			'state_name',
+			'state_cd',
+			'district_name',
+			'district_cd',
+			'udise_block_code',
+			'block_name',
+			'grampanchayat_cd',
+			'grampanchayat_name',
+			'vill_ward_cd',
+			'village_ward_name',
+			'school_name',
+			'udise_sch_code',
+			'sch_category_id',
+			'sch_mgmt_id',
+			'open_school_type',
+			'nodal_code',
+		];
+		body.filters = {
+			...(body.filters || {}),
+		};
+
 		const hasura_response = await this.hasuraServiceFromServices.getAll(
 			'address',
-			[
-				'id',
-				'state_name',
-				'state_cd',
-				'district_name',
-				'district_cd',
-				'udise_block_code',
-				'block_name',
-				'grampanchayat_cd',
-				'grampanchayat_name',
-				'vill_ward_cd',
-				'village_ward_name',
-				'school_name',
-				'udise_sch_code',
-				'sch_category_id',
-				'sch_mgmt_id',
-				'open_school_type',
-				'nodal_code',
-			],
-			body,
+			[...onlyfilter],
+			{ ...body, onlyfilter: [...onlyfilter, 'core'] },
 		);
 
 		// Return success response
