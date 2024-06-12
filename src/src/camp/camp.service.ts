@@ -2581,9 +2581,53 @@ export class CampService {
 	}
 
 	async markCampAttendance(body: any, req: any, resp: any) {
+		const gqlQuery = {
+			query: `query MyQuery {
+				response : camp_days_activities_tracker(where: {id: {_eq: ${body.context_id}}}) {
+				  camp{
+					property_id
+					properties{
+					  lat
+					  long
+					}
+				  }
+				}
+			  }`,
+		};
+		const result = await this.hasuraServiceFromServices.getData(gqlQuery);
+
+		const campLat = result?.data?.response?.[0]?.camp?.properties?.lat;
+		const campLong = result?.data?.response?.[0]?.camp?.properties?.long;
+
+		const sql = `SELECT CASE WHEN COALESCE(NULLIF('${campLat}', ''), 'null') = 'null'
+        OR     COALESCE(NULLIF('${body.lat}', ''), 'null') = 'null'
+        OR     COALESCE(NULLIF('${campLong}', ''), 'null') = 'null'
+        OR     COALESCE(NULLIF('${body.long}', ''), 'null') = 'null' THEN
+        0::numeric
+        ELSE round( cast( 6371 * 2 * asin( sqrt( power(sin(radians(COALESCE(NULLIF('${campLat}', '0')::DOUBLE PRECISION, 0) - COALESCE(NULLIF('${body.lat}', '0')::DOUBLE PRECISION, 0)) / 2), 2) + cos(radians(COALESCE(NULLIF('${campLat}', '0')::DOUBLE PRECISION, 0))) * cos(radians(COALESCE(NULLIF('${campLat}', '0')::DOUBLE PRECISION, 0))) * power(sin(radians(COALESCE(NULLIF('${campLong}', '0')::DOUBLE PRECISION, 0) - COALESCE(NULLIF('${body.long}', '0')::DOUBLE PRECISION, 0)) / 2), 2) ) ) AS numeric ), 2 )
+        END`;
+
+		let calculatedDistance;
+		try {
+			const sqlResult = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+			const formattedData =
+				this.hasuraServiceFromServices.getFormattedData(sqlResult);
+			calculatedDistance = formattedData[0].round;
+		} catch (error) {
+			console.log('Error occurred in calculating distance ');
+			return resp.json({
+				status: 500,
+				message: 'CAMP_ATTENDANCE_ERROR',
+				data: error,
+			});
+		}
+
 		const camp_attendance_body = {
 			...body,
 			context: 'camp_days_activities_tracker',
+			camp_to_attendance_location_distance: calculatedDistance,
 		};
 
 		const response = await this.attendancesService.createAttendance(
@@ -2600,6 +2644,7 @@ export class CampService {
 				'created_by',
 				'updated_by',
 				'context',
+				'camp_to_attendance_location_distance',
 			],
 		);
 
@@ -2617,7 +2662,6 @@ export class CampService {
 			});
 		}
 	}
-
 	async updateCampAttendance(id: any, body: any, req: any, resp: any) {
 		let UPDATE_TABLE_DETAILS = {
 			edit_attendance: {
