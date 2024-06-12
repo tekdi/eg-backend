@@ -199,4 +199,14 @@ export class EventsController {
 	getEventsDoIdList(@Req() req: any, @Body() body: any, @Res() res: any) {
 		return this.eventsService.getEventsDoIdList(req, body, res);
 	}
+
+	@Post('/do_id/:id')
+	@UseGuards(new AuthGuard())
+	getDoIdDetails(
+		@Req() req: any,
+		@Res() response: Response,
+		@Param('id') id: number,
+	) {
+		return this.eventsService.getDoIdDetails(req, response, id);
+	}
 }
