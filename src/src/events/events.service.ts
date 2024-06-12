@@ -1442,7 +1442,7 @@ export class EventsService {
 				});
 			}
 		} catch (error) {
-			console.error('Error fetching event_master:', error);
+			console.error('Error fetching event_master:', error.message);
 			return resp.status(422).send({
 				success: false,
 				message: 'An error occurred while fetching event_master',
