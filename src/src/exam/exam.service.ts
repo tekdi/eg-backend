@@ -1893,6 +1893,7 @@ export class ExamService {
 			}      
               `,
 		};
+
 		let response = await this.hasuraServiceFromServices.queryWithVariable(
 			data,
 		);
@@ -1904,18 +1905,17 @@ export class ExamService {
 				boardIds = boardIds.concat(beneficiary.enrolled_for_board);
 			}
 		}
-
 		// Step 2: Combine the board IDs into a unique array
 		boardIds = [...new Set(boardIds)];
 
 		// Step 3-7: Process each board ID
 		let boardList = [];
-		for (const boardId of boardIds) {
-			// Step 3: Get board details, subjects, and related events
-			const boardQuery = {
-				query: `
+
+		// Step 3: Get board details, subjects, and related events
+		const boardQuery = {
+			query: `
                     query BoardQuery {
-                        boards_by_pk(id: ${boardId}) {
+                        boards(where:{id:{_in:[${boardIds}]}}) {
                             id
                             name
                             subjects {
@@ -1928,40 +1928,38 @@ export class ExamService {
                         }
                     }
                 `,
-			};
+		};
 
-			const boardResponse =
-				await this.hasuraServiceFromServices.queryWithVariable(
-					boardQuery,
-				);
-			const boardData = boardResponse?.data?.data?.boards_by_pk;
-			// Step 4-5: Determine the maximum date among all subject events
-			let maxDate = null;
-			if (boardData && boardData.subjects) {
-				for (const subject of boardData.subjects) {
-					if (subject?.events?.[0]?.start_date) {
-						const eventDate = new Date(
-							subject.events[0].start_date,
-						);
-						if (!maxDate || eventDate > maxDate) {
-							maxDate = eventDate;
-						}
-					}
-				}
-			}
+		const boardResponse =
+			await this.hasuraServiceFromServices.queryWithVariable(boardQuery);
+		const boardData = boardResponse?.data?.data?.boards;
 
-			// Step 6-7: Compare current date with the added maximum date
-			//	const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
-			if (maxDate && maxDate >= new Date()) {
-				const addedMaxDate = new Date(maxDate);
-				addedMaxDate.setDate(addedMaxDate.getDate() + 2);
+		// Step 4-5: Determine the maximum date among all subject events
+		let maxDate = null;
+		const subjects_data = boardData?.map((board) => board.subjects);
 
-				boardList.push({
-					id: boardData.id,
-					name: boardData.name,
-					addedMaxDate: addedMaxDate.toISOString(),
-				});
-			}
+		// Flatten the events arrays from both parts of the JSON
+		const events = subjects_data.flatMap((section) =>
+			section.flatMap((item) => item.events),
+		);
+
+		// Extract all start_date values
+		const startDates = events.map((event) => new Date(event.start_date));
+
+		// Find the maximum date
+		maxDate = new Date(Math.max(...startDates));
+
+		// Add 2 days to the maximum date
+		maxDate.setDate(maxDate.getDate() + 2);
+
+		// Format the date to a string
+		const maxDateString = maxDate.toISOString().split('T')[0];
+
+		if (maxDateString) {
+			boardList.push({
+				boardData,
+				addedMaxDate: maxDateString,
+			});
 		}
 
 		// Step 8: Send the board list in the response
