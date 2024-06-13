@@ -1396,4 +1396,57 @@ export class EventsService {
 			});
 		}
 	}
+
+	public async getDoIdDetails(req: any, resp: any, id: any) {
+		const academic_year_id = req?.mw_academic_year_id;
+		const program_id = req?.mw_program_id;
+
+		const user_role = req?.mw_roles;
+		if (!user_role?.includes('program_owner')) {
+			return resp.status(403).json({
+				success: false,
+				message: 'Permission denied. Only PO can create an event.',
+			});
+		}
+		try {
+			let data = {
+				query: `query MyQuery {
+          event_exams_master(where: {id:{_eq:${id}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}
+          }) {
+            id
+            do_id
+						event_type
+            academic_year_id
+            program_id
+						status            
+          }
+        }
+			`,
+			};
+
+			const response = await this.hasuraServiceFromServices.getData(data);
+
+			const event_master = response?.data?.event_exams_master || [];
+
+			if (event_master.length == 0) {
+				return resp.status(422).send({
+					success: false,
+					message: 'event_master Details Not found!',
+					data: event_master,
+				});
+			}
+			return resp.status(200).send({
+				success: true,
+				message: 'event_master Details found successfully!',
+				data: event_master?.[0],
+			});
+		} catch (error) {
+			console.error('Error fetching event_master:', error.message);
+			return resp.status(422).send({
+				success: false,
+				message: 'An error occurred while fetching event_master',
+				data: {},
+			});
+		}
+	}
 }
