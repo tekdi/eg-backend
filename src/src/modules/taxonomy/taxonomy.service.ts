@@ -153,4 +153,64 @@ export class TaxonomyService {
 			});
 		}
 	}
+
+	public async getAcademicYearDetailsForCycleFilters(
+		body: any,
+		response: any,
+	) {
+		let filters = [];
+
+		if (body?.academic_year_id) {
+			filters.push(`id:{_eq:${body?.academic_year_id}}`);
+		}
+
+		if (body?.program_id) {
+			filters.push(`program_id:{_eq:${body?.program_id}}`);
+		}
+
+		if (body?.academic_year_cycle_id) {
+			filters.push(
+				`academic_year_cycle_id:{_eq:${body?.academic_year_cycle_id}}`,
+			);
+		}
+
+		let query = `query MyQuery {
+			academic_years(where:{${filters}}) {
+			  id
+			  name
+			  program_id
+			  programs {
+				id
+				name
+			  }
+			  academic_year_cycle_id
+			  academic_years_cycles {
+				id
+				name
+			  }
+			}
+		  }
+		  
+		  `;
+
+		let result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let academic_year_data = result?.data?.academic_years;
+
+		if (academic_year_data?.length > 0) {
+			return response.status(200).json({
+				success: true,
+				message: 'Data retrieved successfully',
+				data: academic_year_data,
+			});
+		} else {
+			return response.status(404).json({
+				success: false,
+				message: 'Data not found',
+				data: [],
+			});
+		}
+	}
 }
