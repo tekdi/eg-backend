@@ -5,6 +5,7 @@ import {
 	Get,
 	Param,
 	Post,
+	Patch,
 	Req,
 	Res,
 	UseGuards,
@@ -158,5 +159,31 @@ export class GeolocationController {
 		@Res() response: Response,
 	) {
 		return this.geolocationService.getAddressList(body, request, response);
+	}
+
+	@Post('/:id')
+	@UseGuards(new AuthGuard())
+	getAddressDetails(
+		@Req() req: any,
+		@Res() response: Response,
+		@Param('id') id: number,
+	) {
+		return this.geolocationService.getAddressDetails(req, response, id);
+	}
+
+	@Patch('/update/:id')
+	@UseGuards(new AuthGuard())
+	addressUpdate(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.geolocationService.addressUpdate(
+			id,
+			body,
+			request,
+			response,
+		);
 	}
 }
