@@ -494,6 +494,7 @@ export class ExamService {
 							context_id
 							context
 							status
+							attendance_reason
 							date_time
 							user_id
 							created_by
