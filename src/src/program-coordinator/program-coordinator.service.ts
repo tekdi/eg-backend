@@ -366,8 +366,8 @@ export class ProgramCoordinatorService {
 						grampanchayat
 						mobile
 						email_id
-						program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}} ${filterQuery}}}, limit: ${limit}, offset: ${offset}) {
-								program_facilitators {
+						program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
+								program_facilitators(where: {${filterQuery}}, limit: ${limit}, offset: ${offset})  {
 										facilitator_id: id
 										status
 										user {
@@ -388,12 +388,20 @@ export class ProgramCoordinatorService {
 								count
 						}
 				}
+				program_faciltators_aggregate(where:{pc_id:{_eq:${id}}}){
+					aggregate{
+						count
+					}
 		}
+	}
 `;
 
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
+		const preraks_assigned =
+			hasura_response?.data?.program_faciltators_aggregate?.aggregate
+				?.count;
 
 		let program_coordinator_data = hasura_response?.data;
 		if (
@@ -463,8 +471,8 @@ export class ProgramCoordinatorService {
 			data: {
 				users: users,
 				facilitators: facilitators,
-				preraks_assigned: facilitators?.length,
-				total_count: total_count,
+				preraks_assigned: preraks_assigned,
+				total_count: preraks_assigned,
 				limit: limit,
 				totalPages: totalPages,
 				currentPage: page,
