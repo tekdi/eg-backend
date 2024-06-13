@@ -65,4 +65,92 @@ export class TaxonomyService {
 			});
 		}
 	}
+
+	public async getAcademicYearCycleDetails(id: any, response: any) {
+		let academic_year_cycles_id = id;
+
+		let query = `query MyQuery {
+			academic_year_cycles_by_pk(id:${academic_year_cycles_id}){
+			  id
+			  name
+			  academic_years{
+				id
+				name
+				program_id
+				programs{
+				  id
+				  name
+				}
+				academic_year_cycle_id
+				
+			  }
+			  
+			}
+		  
+		  
+		}`;
+
+		let result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let academic_year_cycle_data = result?.data?.academic_year_cycles_by_pk;
+
+		if (academic_year_cycle_data != null) {
+			return response.status(200).json({
+				success: true,
+				message: 'Data retrieved successfully',
+				data: academic_year_cycle_data,
+			});
+		} else {
+			return response.status(404).json({
+				success: false,
+				message: 'Data not found',
+				data: [],
+			});
+		}
+	}
+
+	public async getAcademicYearDetailsForCycle(id: any, response: any) {
+		let academic_year_id = id;
+
+		let query = `query MyQuery {
+			academic_years_by_pk(id:${academic_year_id}){
+			  id
+			  name
+			  program_id
+			  programs{
+				id
+				name
+				
+			  }
+			  academic_year_cycle_id
+			  academic_years_cycles{
+				id
+				name
+			  }
+			}
+		  }
+		  `;
+
+		let result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let academic_year_data = result?.data?.academic_years_by_pk;
+
+		if (academic_year_data != null) {
+			return response.status(200).json({
+				success: true,
+				message: 'Data retrieved successfully',
+				data: academic_year_data,
+			});
+		} else {
+			return response.status(404).json({
+				success: false,
+				message: 'Data not found',
+				data: [],
+			});
+		}
+	}
 }
