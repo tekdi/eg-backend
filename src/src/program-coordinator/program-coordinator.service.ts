@@ -312,50 +312,107 @@ export class ProgramCoordinatorService {
 				data: {},
 			});
 		}
+		let userFilter = [];
 
+		if (body?.search) {
+			if (body.search) {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					userFilter.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+			  last_name: { _ilike: "%${last_name}%" } 
+				  `);
+				} else {
+					userFilter.push(
+						`first_name: { _ilike: "%${first_name}%" }`,
+					);
+				}
+			}
+
+			if (body.district) {
+				userFilter.push(`district: {_eq: "${body.district}"}`);
+			}
+			if (body.block) {
+				userFilter.push(`block: {_eq: "${body.block}"}`);
+			}
+		}
+		let filter = [];
+		if (userFilter.length > 0) {
+			filter.push(`user: {${userFilter.join(', ')}}`);
+		}
+
+		let filterQuery = filter.join(', ');
+
+		// Pagination parameters
+		const limit = body.limit || 10;
+		const page = body.page || 1;
+		const offset = (page - 1) * limit;
 		//query to get program coordinator details
 
-		query = `query MyQuery {
-            users(where: {id: {_eq: ${id}}, program_users: {ip_user_id: {_eq:${ip_id}}}}) {
-              user_id: id
-			  first_name
-			  middle_name
-			  last_name
-              address
-              state
-              district
-              village
-              block
-              grampanchayat
-              mobile
-              program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
-                program_facilitators {
-                  facilitator_id: id
-                  status
-                  user {
-                    first_name
-                    last_name
-                    district
-                    aadhar_verified
-                    mobile
-                    gender
-                  }
-                }
-              }
-            }
-          }
-          `;
+		query = `
+		query MyQuery {
+				users(where: {id: {_eq: ${id}}, program_users: {ip_user_id: {_eq:${ip_id}}}}) {
+						user_id: id
+						first_name
+						middle_name
+						last_name
+						address
+						state
+						district
+						village
+						block
+						grampanchayat
+						mobile
+						email_id
+						program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}} ${filterQuery}}}, limit: ${limit}, offset: ${offset}) {
+								program_facilitators {
+										facilitator_id: id
+										status
+										user {
+												first_name
+												middle_name
+												last_name
+												district
+												aadhar_verified
+												mobile
+												gender
+												email_id
+										}
+								}
+						}
+				}
+				users_aggregate(where: {id: {_eq: ${id}}, program_users: {ip_user_id: {_eq:${ip_id}}}}) {
+						aggregate {
+								count
+						}
+				}
+		}
+`;
 
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
 
 		let program_coordinator_data = hasura_response?.data;
-
+		if (
+			!program_coordinator_data ||
+			!program_coordinator_data.users ||
+			program_coordinator_data.users.length === 0
+		) {
+			return response.status(422).json({
+				success: false,
+				message: 'Data not found',
+				data: {},
+			});
+		}
 		// Extract users and program facilitators
 		let users = [];
 		let facilitators = [];
-
+		let total_count =
+			hasura_response?.data?.users_aggregate?.aggregate?.count || 0;
+		const totalPages = Math.ceil(total_count / limit);
 		if (program_coordinator_data?.users) {
 			program_coordinator_data.users.forEach((user) => {
 				users.push({
@@ -367,6 +424,7 @@ export class ProgramCoordinatorService {
 					block: user.block,
 					grampanchayat: user.grampanchayat,
 					mobile: user.mobile,
+					email_id: user.email_id,
 				});
 
 				if (user.program_users) {
@@ -389,6 +447,7 @@ export class ProgramCoordinatorService {
 													.aadhar_verified,
 											mobile: facilitator.user.mobile,
 											gender: facilitator.user.gender,
+											email_id: facilitator.user.email_id,
 										},
 									});
 								},
@@ -405,6 +464,10 @@ export class ProgramCoordinatorService {
 				users: users,
 				facilitators: facilitators,
 				preraks_assigned: facilitators?.length,
+				total_count: total_count,
+				limit: limit,
+				totalPages: totalPages,
+				currentPage: page,
 			},
 		});
 	}
@@ -439,30 +502,50 @@ export class ProgramCoordinatorService {
 				data: {},
 			});
 		}
-
-		// query to get the program coordinator data under the given ip user
+		let userFilter = [];
 
 		if (body?.search) {
-			if (body?.search?.first_name && !body?.search?.last_name) {
-				filter.push(
-					`users:{first_name:{_eq:"${body?.search?.first_name}"}}`,
-				);
-			}
-			if (body?.search?.last_name && !body?.search?.first_name) {
-				filter.push(
-					`users:{last_name:{_eq:"${body?.search?.last_name}"}}`,
-				);
+			if (body.search) {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					userFilter.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+			  last_name: { _ilike: "%${last_name}%" } 
+				  `);
+				} else {
+					userFilter.push(
+						`first_name: { _ilike: "%${first_name}%" }`,
+					);
+				}
 			}
 
-			if (body?.search?.last_name && body?.search?.first_name) {
-				filter.push(
-					`users:{last_name:{_eq:"${body?.search?.last_name}"},first_name:{_eq:"${body?.search?.first_name}"}}`,
-				);
+			if (body.district) {
+				userFilter.push(`district: {_eq: "${body.district}"}`);
+			}
+			if (body.block) {
+				userFilter.push(`block: {_eq: "${body.block}"}`);
 			}
 		}
 
-		query = `query MyQuery {
-			program_users(where:{${filter}}){
+		if (userFilter.length > 0) {
+			filter.push(`users: {${userFilter.join(', ')}}`);
+		}
+
+		let filterQuery = filter.join(', ');
+		// Pagination parameters
+		const limit = body.limit || 10;
+		const page = body.page || 1;
+		const offset = (page - 1) * limit;
+
+		query = ` query MyQuery {
+			program_users_aggregate(where: {${filterQuery}}) {
+					aggregate {
+							count
+					}
+			}
+			program_users(where: {${filterQuery}}, limit: ${limit}, offset: ${offset}) {
 			  users{
 				user_id:id
 				first_name
@@ -472,19 +555,21 @@ export class ProgramCoordinatorService {
 				email_id
 				state
 				district
-					  
+				block
 			  }
 			}
 		  }
-		  
-	      `;
+
+		    `;
 
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
 
 		let program_coordinator_data = hasura_response?.data?.program_users;
-
+		let total_count =
+			hasura_response?.data?.program_users_aggregate?.aggregate?.count;
+		const totalPages = Math.ceil(total_count / limit);
 		if (program_coordinator_data?.length == 0) {
 			return response.status(422).json({
 				success: false,
@@ -498,6 +583,10 @@ export class ProgramCoordinatorService {
 				success: true,
 				message: 'Data retrieved successfully',
 				data: userData,
+				total_count: total_count,
+				limit: limit,
+				totalPages: totalPages,
+				currentPage: page,
 			});
 		}
 	}
@@ -539,9 +628,9 @@ export class ProgramCoordinatorService {
 		query = `query MyQuery {
             users(where: {id: {_eq: ${id}}, program_users: {ip_user_id: {_eq:${ip_id}}}}) {
               user_id: id
-			  first_name
-			  middle_name
-			  last_name
+			  			first_name
+			  			middle_name
+			  			last_name
               address
               state
               district
@@ -557,8 +646,6 @@ export class ProgramCoordinatorService {
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
-
-		console.log('query-->.', query);
 
 		let program_coordinator_data = hasura_response?.data?.users;
 
@@ -580,9 +667,43 @@ export class ProgramCoordinatorService {
 		let org_id = hasura_response?.data?.program_users?.[0]?.organisation_id;
 
 		//get list of available prerak list for given cohort.
+		let userFilter = [];
+
+		if (body?.search) {
+			if (body.search) {
+				let first_name = body.search.split(' ')[0];
+				let last_name = body.search.split(' ')[1] || '';
+
+				if (last_name?.length > 0) {
+					userFilter.push(`
+                    first_name: { _ilike: "%${first_name}%" }, 
+                    last_name: { _ilike: "%${last_name}%" } 
+                `);
+				} else {
+					userFilter.push(
+						`first_name: { _ilike: "%${first_name}%" }`,
+					);
+				}
+			}
+		}
+		if (body.district) {
+			userFilter.push(`district: { _eq: "${body.district}" }`);
+		}
+
+		if (body.block) {
+			userFilter.push(`block: { _eq: "${body.block}" }`);
+		}
+
+		let filterQuery =
+			userFilter.length > 0 ? `, user: { ${userFilter.join(', ')} }` : '';
+
+		// Pagination parameters
+		const limit = body.limit || 10;
+		const page = body.page || 1;
+		const offset = (page - 1) * limit;
 
 		query = `query MyQuery {
-		program_faciltators(where: {parent_ip: {_eq: "${org_id}"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, pc_id: {_is_null: true}}) {
+		program_faciltators(where: {parent_ip: {_eq: "${org_id}"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, pc_id: {_is_null: true}${filterQuery}},limit: ${limit}, offset: ${offset}) {
 		  user_id
 		  pc_id
 		  parent_ip
@@ -602,6 +723,18 @@ export class ProgramCoordinatorService {
 			email_id
 		  }
 		}
+		program_faciltators_aggregate(
+			where: {
+					parent_ip: {_eq: "${org_id}"},
+					program_id: {_eq:${program_id}},
+					academic_year_id: {_eq:${academic_year_id}},
+					pc_id: {_is_null: true}${filterQuery}
+			}
+	) {
+			aggregate {
+					count
+			}
+	}
 	  }
 	  `;
 
@@ -611,7 +744,11 @@ export class ProgramCoordinatorService {
 
 		let program_facilitator_data =
 			hasura_response?.data?.program_faciltators;
+		let total_count =
+			hasura_response?.data?.program_faciltators_aggregate?.aggregate
+				?.count;
 
+		const totalPages = Math.ceil(total_count / limit);
 		if (program_coordinator_data?.length == 0) {
 			return response.status(422).json({
 				message: 'Data not found',
@@ -628,6 +765,10 @@ export class ProgramCoordinatorService {
 				program_coordinator_data: program_coordinator_data,
 				program_facilitator_data: program_facilitator_data,
 				preraks_assigned: program_facilitator_data?.length,
+				total_count: total_count,
+				limit: limit,
+				totalPages: totalPages,
+				currentPage: page,
 			},
 		});
 	}
