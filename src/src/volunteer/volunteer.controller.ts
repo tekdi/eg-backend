@@ -27,7 +27,7 @@ export class VolunteerController {
 		return this.volunteerService.getvolunteerList(body, req, response);
 	}
 	//volunteer self data update
-	@Patch('/self_update/')
+	@Patch('/self_update')
 	@UseGuards(new AuthGuard())
 	updatevolunteer(
 		@Req() request: any,
