@@ -1821,7 +1821,7 @@ export class UserauthService {
 			if (body?.last_name) {
 				username += `${body.last_name.charAt(0)}`;
 			}
-			username += `${body.mobile}`;
+			username += `${body.mobile}_v`;
 			username = username.toLowerCase();
 
 			// Role to group mapping
@@ -1853,7 +1853,6 @@ export class UserauthService {
 					username,
 					token?.access_token,
 				);
-
 				const registerUserRes = await this.keycloakService.registerUser(
 					data_to_create_user,
 					token.access_token,
