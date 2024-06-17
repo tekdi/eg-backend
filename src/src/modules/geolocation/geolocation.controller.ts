@@ -140,4 +140,11 @@ export class GeolocationController {
 			},
 		};
 	}
+
+	@Get('/state_lists')
+	//	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	getStateLists(@Res() response: Response) {
+		return this.geolocationService.getStateLists(response);
+	}
 }
