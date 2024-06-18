@@ -133,7 +133,7 @@ export class CampService {
 			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
 
 			let query = `query MyQuery {
-				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}){
+				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}},pcr_scores: {baseline_learning_level: {_in: ["a", "a+", "b", "c"]}}}){
 				  id
 				}
 			  }`;
@@ -4783,6 +4783,65 @@ export class CampService {
 				data: {},
 			});
 		}
+
+		// Check if all learners have completed the endline assessment
+		let learnerQuery = `query MyQuery {
+			users(where: {
+					group_users: {
+							member_type: {_eq: "member"},
+							group: {camp: {id: {_in: [${camp_id}]}}}
+					},
+					_and: {pcr_scores: {endline_learning_level: {_is_null: true}}}
+			}) {
+					id
+					first_name
+			}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: learnerQuery,
+		});
+
+		const learnersWithoutEndline = learnerRes?.data?.users;
+
+		if (learnersWithoutEndline.length > 0) {
+			const learnerIdsWithoutEndline = learnersWithoutEndline.map(
+				(learner: any) => learner.id,
+			);
+			return response.json({
+				status: 400,
+				success: false,
+				key: 'ID',
+				message:
+					'Not all learners have completed their endline assessment',
+				data: learnerIdsWithoutEndline,
+			});
+		}
+
+		// Check if the camp has completed 20 sessions
+		let sessionQuery = `query MyQuery {
+		learning_sessions_tracker(where: {camp_id: {_in: [${camp_id}]}, status: {_eq: "complete"}}) {
+					camp_id
+			}
+	}`;
+
+		const sessionRes = await this.hasuraServiceFromServices.getData({
+			query: sessionQuery,
+		});
+
+		const completedSessions =
+			sessionRes?.data?.learning_sessions_tracker ?? [];
+
+		if (completedSessions.length < 20) {
+			return response.json({
+				status: 400,
+				success: false,
+				key: 'session',
+				message: 'Not enough sessions have been completed',
+				data: { completedSessionsCount: completedSessions.length },
+			});
+		}
+
 		const type = 'main';
 
 		let updatecamp = {

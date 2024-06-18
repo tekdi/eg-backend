@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { EnumService } from '../enum/enum.service';
 const moment = require('moment');
 
 @Injectable()
@@ -10,9 +11,102 @@ export class SessionsService {
 		private userService: UserService,
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private enumService: EnumService,
 	) {}
 
 	async createSession(body: any, request: any, response: any) {
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
+
+		// Step 1: Retrieve the camp details to check the camp_type
+		let campQuery = `query GetCampType {
+			camps(where: {id: {_eq: ${body?.camp_id}}}) {
+					id
+					type
+			}
+			learning_lesson_plans_master_by_pk(id: ${body.learning_lesson_plan_id}) {
+				ordering
+		}
+	}`;
+
+		const campRes = await this.hasuraServiceFromServices.getData({
+			query: campQuery,
+		});
+
+		const campData = campRes?.data?.camps?.[0];
+		const camp_type = campRes?.data?.camps?.[0]?.type;
+		const session_number =
+			campRes?.data?.learning_lesson_plans_master_by_pk.ordering;
+
+		if (!campData) {
+			return response.json({
+				status: 404,
+				success: false,
+				message: 'Camp not found',
+			});
+		}
+
+		// Step 2: If camp_type is "PCR", check the baseline assessment for all learners
+		if (camp_type === 'pcr') {
+			let learnerQuery = '';
+			let validationMessage = '';
+
+			const status = this.enumService
+				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+				.data.map((item) => item.value);
+			if (session_number >= 1 && session_number <= 6) {
+				learnerQuery = `baseline_learning_level`;
+				validationMessage =
+					'Not all learners have completed their baseline assessment';
+			} else if (session_number >= 7 && session_number <= 13) {
+				learnerQuery = `rapid_assessment_first_learning_level`;
+				validationMessage =
+					'Not all learners have completed their first rapid assessment';
+			} else if (session_number >= 14 && session_number <= 20) {
+				learnerQuery = `rapid_assessment_second_learning_level`;
+				validationMessage =
+					'Not all learners have completed their second rapid assessment';
+			}
+			let learnerQuerys = `query MyQuery {
+				users(where:{
+					group_users:{
+						member_type:{_eq:"member"},
+						group:{
+							camp:{id:{_eq:${body?.camp_id}}},
+						}
+					}
+					program_beneficiaries:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}
+					_not:{
+						pcr_scores: {
+							${learnerQuery}: {_in: ${JSON.stringify(status)}}
+					}
+					}
+					}) {
+					id
+				}
+			}`;
+
+			const learnerRes = await this.hasuraServiceFromServices.getData({
+				query: learnerQuerys,
+			});
+
+			const learnersWithoutBaseline = learnerRes?.data?.users;
+
+			if (learnersWithoutBaseline.length > 0) {
+				const learnerIdsWithoutBaseline = learnersWithoutBaseline.map(
+					(learner: any) => learner.id,
+				);
+				return response.json({
+					status: 400,
+					success: false,
+					key: 'ID',
+					message:
+						'Not all learners have added their baseline assessment',
+					data: learnerIdsWithoutBaseline,
+				});
+			}
+		}
+
 		//validation to check if the data is already present in the
 		let validation_query = `query MyQuery {
 			learning_sessions_tracker(where: {learning_lesson_plan_id: {_eq:${body?.learning_lesson_plan_id}}, camp_id: {_eq:${body?.camp_id}}}){
@@ -83,6 +177,124 @@ export class SessionsService {
 	}
 
 	async updateSession(id: any, body: any, request: any, response: any) {
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
+		// Step 1: Retrieve session details
+		let sessionQuery = `query GetSessionDetails {
+			learning_lesson_plans_master(where:{session_tracks:{id:{_eq:${id}}}}) {
+				id
+					title
+        ordering
+				session_tracks(where:{id:{_eq:${id}}}){
+					id
+					camp_id
+				}
+					
+			}
+	}`;
+
+		const sessionRes = await this.hasuraServiceFromServices.getData({
+			query: sessionQuery,
+		});
+
+		const session_number =
+			sessionRes?.data?.learning_lesson_plans_master?.[0]?.ordering;
+		const camp_id =
+			sessionRes?.data?.learning_lesson_plans_master?.[0]
+				?.session_tracks?.[0]?.camp_id;
+
+		const sessionData =
+			sessionRes?.data?.learning_lesson_plans_master?.[0]
+				?.session_tracks?.[0]?.id;
+
+		if (!sessionData) {
+			return response.json({
+				status: 404,
+				success: false,
+				message: 'Session not found',
+			});
+		}
+
+		//const { session_number, camp_id } = sessionData;
+		// Step 2: Validate learners' assessment completion based on session number
+		let learnerQuery = '';
+		let validationMessage = '';
+		// Step 2: Retrieve the camp details to check the camp_type
+		let campQuery = `query GetCampType {
+				camps(where: {id: {_eq: ${camp_id}}}) {
+						id
+						type
+				}
+		}`;
+
+		const campRes = await this.hasuraServiceFromServices.getData({
+			query: campQuery,
+		});
+
+		const campData = campRes?.data?.camps?.[0];
+		const camp_type = campData?.type;
+
+		if (!campData) {
+			return response.json({
+				status: 404,
+				success: false,
+				message: 'Camp not found',
+			});
+		}
+
+		if (camp_type === 'pcr') {
+			if (session_number >= 1 && session_number <= 6) {
+				learnerQuery = `baseline_learning_level`;
+				validationMessage =
+					'Not all learners have completed their baseline assessment';
+			} else if (session_number >= 7 && session_number <= 13) {
+				learnerQuery = `rapid_assessment_first_learning_level`;
+				validationMessage =
+					'Not all learners have completed their first rapid assessment';
+			} else if (session_number >= 14 && session_number <= 20) {
+				learnerQuery = `rapid_assessment_second_learning_level`;
+				validationMessage =
+					'Not all learners have completed their second rapid assessment';
+			}
+			const query = `query MyQuery {
+					users(where:{
+							group_users:{
+									member_type:{_eq:"member"},
+									group:{
+											camp:{id:{_eq:${camp_id}}},
+									}
+							}
+							program_beneficiaries:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}
+							_not:{
+									pcr_scores: {
+											${learnerQuery}: {_is_null: false}
+									}
+							}
+					}) {
+							id
+					}
+			}`;
+
+			const learnerRes = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+
+			const learnersWithoutAssessment = learnerRes?.data?.users;
+
+			if (learnersWithoutAssessment.length > 0) {
+				const learnerIdsWithoutAssessment =
+					learnersWithoutAssessment.map((learner: any) => learner.id);
+				return response.json({
+					status: 400,
+					success: false,
+					key: 'ID',
+					message: validationMessage,
+					data: learnerIdsWithoutAssessment,
+				});
+			}
+		}
+
+		//main code
 		switch (body?.edit_session_type) {
 			case 'edit_incomplete_session': {
 				if (body?.session_feedback == '' || !body?.session_feedback) {
