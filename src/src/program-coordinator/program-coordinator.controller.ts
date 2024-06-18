@@ -14,6 +14,7 @@ import {
 	UploadedFile,
 	UseInterceptors,
 	Patch,
+	Delete,
 } from '@nestjs/common';
 
 import { AuthGuard } from 'src/modules/auth/auth.guard';
@@ -105,4 +106,53 @@ export class ProgramCoordinatorController {
 			response,
 		);
 	}
+
+	//daily activities
+	@Post('/activities/create')
+	@UseGuards(new AuthGuard())
+	public async activitiesCreate(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.activitiesCreate(
+			request,
+			body,
+			response,
+		);
+	}
+	@Patch('/activities/:id')
+	@UseGuards(new AuthGuard())
+	public async activitiesUpdate(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param('id') id: Number,
+	) {
+		return this.programCoordinatorService.activitiesUpdate(
+			request,
+			body,
+			response,
+			id,
+		);
+	}
+	@Delete('/activities/:id')
+	@UseGuards(new AuthGuard())
+	public async activitiesDelete(
+		@Req() request: any,
+		@Res() response: any,
+		@Param('id') id: Number,
+	) {
+		return this.programCoordinatorService.activitiesDelete(
+			request,
+			response,
+			id,
+		);
+	}
+	@Post('/activities/list')
+	@UseGuards(new AuthGuard())
+	public async activitiesList(@Req() request: any, @Body() body: any, @Res() response: any) {
+		return this.programCoordinatorService.activitiesList(body, request, response);
+	}
+
 }

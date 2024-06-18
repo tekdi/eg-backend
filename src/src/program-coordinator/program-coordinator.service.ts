@@ -924,4 +924,265 @@ export class ProgramCoordinatorService {
 			data: facilitator_id,
 		});
 	}
+
+	//daily activities
+	public async activitiesCreate(request: any, body: any, resp: any) {
+		try {
+			let user_id = request.mw_userid;
+			let context = 'pc_users';
+			let context_id = request.mw_userid;
+			let created_by = request.mw_userid;
+			let updated_by = request.mw_userid;
+			let academic_year_id = request.mw_academic_year_id;
+			let program_id = request.mw_program_id;
+
+			const response = await this.hasuraService.create(
+				'activities',
+				{
+					...body,
+					user_id: user_id,
+					context: context,
+					context_id: context_id,
+					created_by: created_by,
+					updated_by: updated_by,
+					academic_year_id: academic_year_id,
+					program_id: program_id,
+				},
+				[
+					'id',
+					'user_id',
+					'type',
+					'activity_data',
+					'context',
+					'context_id',
+					'date',
+					'created_by',
+					'updated_by',
+					'academic_year_id',
+					'program_id',
+					'description',
+					'hours',
+					'minutes',
+					'village',
+				],
+			);
+
+			if (response) {
+				return resp.status(200).json({
+					message: 'Activity created Successfully',
+					data: response,
+				});
+			}
+		} catch (error) {
+			return resp.json({
+				status: 500,
+				message: 'Internal server error',
+				data: [],
+			});
+		}
+	}
+	public async activitiesUpdate(request: any, body: any, resp: any, id: any) {
+		try {
+			body.updated_by = request.mw_userid;
+
+			const response = await this.hasuraService.q(
+				'activities',
+				{
+					...body,
+					id: id,
+				},
+				[
+					'type',
+					'date',
+					'updated_by',
+					'description',
+					'hours',
+					'minutes',
+					'village',
+				],
+				true,
+				[
+					'id',
+					'user_id',
+					'type',
+					'activity_data',
+					'context',
+					'context_id',
+					'date',
+					'created_by',
+					'updated_by',
+					'academic_year_id',
+					'program_id',
+					'description',
+					'hours',
+					'minutes',
+					'village',
+				],
+			);
+
+			if (response) {
+				return resp.status(200).json({
+					message: 'Activity Updated Successfully',
+					data: response,
+				});
+			}
+		} catch (error) {
+			return resp.json({
+				status: 500,
+				message: 'Internal server error',
+				data: [],
+			});
+		}
+	}
+	async activitiesDelete(request: any, resp: any, id: any) {
+		let user_id = request?.mw_userid;
+
+		if (!id) {
+			return resp.status(422).json({
+				message: 'Please provide a valid get id',
+				data: null,
+			});
+		}
+
+		if (!user_id) {
+			return resp.status(422).json({
+				message: 'Invalid User Entity',
+				data: null,
+			});
+		}
+
+		let query = `mutation MyMutation {
+            delete_activities_by_pk(id:${id}) {
+				id
+				user_id
+				type
+				date
+				activity_data
+				academic_year_id
+				program_id
+				context
+				context_id
+				created_by
+				updated_by
+            }
+          }
+                      
+          `;
+
+		const response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const newQdata = response?.data?.delete_activities_by_pk;
+
+		if (newQdata) {
+			return resp.status(200).json({
+				success: true,
+				message: 'Data deleted successfully!',
+				data: newQdata,
+			});
+		} else {
+			return resp.json({
+				status: 400,
+				message: 'Data Not Found',
+				data: {},
+			});
+		}
+	}
+	public async activitiesList(body: any, req: any, resp: any) {
+		try {
+			const program_id = req.mw_program_id;
+			const academic_year_id = req.mw_academic_year_id;
+			let context_id = req.mw_userid;
+			let context = 'pc_users';
+			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
+			let offset = page > 1 ? limit * (page - 1) : 0;
+
+			const { type, date } = body;
+			let filterConditions = '';
+
+			if (type) {
+				filterConditions += `, type: {_eq: "${type}"}`;
+			}
+
+			if (date) {
+				const dateString = date.split('T')[0]; // Extracting only the date part
+
+				filterConditions += `, date: {
+				_gte: "${dateString}",
+				_lt: "${dateString} 24:00:00"
+				}`;
+			}
+
+			let query = `query MyQuery {
+			activities_aggregate(
+				where: {
+					context : {_eq:${context}},
+					context_id: {_eq: ${context_id}},
+					program_id: {_eq: ${program_id}},
+					academic_year_id: {_eq: ${academic_year_id}}${filterConditions}
+				}
+			) {
+				aggregate {
+					count
+				}
+			}
+			activities(
+				where: {
+					context_id: {_eq: ${context_id}},
+					program_id: {_eq: ${program_id}},
+					academic_year_id: {_eq: ${academic_year_id}}${filterConditions}
+				}, limit: ${limit}, offset: ${offset},
+
+			) {
+				id
+				user_id
+				type
+				date
+				activity_data
+				academic_year_id
+				program_id
+				context
+				context_id
+				created_by
+				updated_by
+			}
+		}`;
+
+			const response = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+
+			const count =
+				response?.data?.activities_aggregate?.aggregate?.count;
+
+			const totalPages = Math.ceil(count / limit);
+			const newQdata = response?.data?.activities;
+
+			if (newQdata && newQdata.length > 0) {
+				return resp.status(200).json({
+					success: true,
+					message: 'Data found successfully!',
+					data: { activities: newQdata },
+					totalCount: count,
+					limit,
+					currentPage: page,
+					totalPages: `${totalPages}`,
+				});
+			} else {
+				return resp.status(400).json({
+					success: false,
+					message: 'Data Not Found',
+					data: {},
+				});
+			}
+		} catch (error) {
+			console.log('error', error);
+			return resp.status(500).json({
+				success: false,
+				message: 'Internal server error',
+				data: {},
+			});
+		}
+	}
 }
