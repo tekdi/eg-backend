@@ -38,6 +38,11 @@ export class ProgramCoordinatorModule implements NestModule {
 		consumer.apply(AuthMiddleware).forRoutes(ProgramCoordinatorController);
 		consumer
 			.apply(CohortMiddleware)
+			.exclude(
+				'/program-coordinator/activities/create',
+				'/program-coordinator/activities/:id',
+				'/program-coordinator/activities/list',
+			)
 			.forRoutes(ProgramCoordinatorController);
 	}
 }
