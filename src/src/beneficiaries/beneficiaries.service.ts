@@ -3714,10 +3714,6 @@ export class BeneficiariesService {
 				syc_subjects
 				is_continued
 			  }
-				pcr_scores {
-					baseline_learning_level
-					rapid_assessment_first_learning_level
-				}
 			}
 		  }
 		  `;

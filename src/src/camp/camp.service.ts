@@ -131,9 +131,14 @@ export class CampService {
 			}
 
 			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
+			const baseLine = this.enumService
+				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+				.data.map((item) => item.value);
 
 			let query = `query MyQuery {
-				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}},pcr_scores: {baseline_learning_level: {_in: ["a", "a+", "b", "c"]}}}){
+				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}},pcr_scores: {baseline_learning_level: {_in: ${JSON.stringify(
+				baseLine,
+			)}}}}){
 				  id
 				}
 			  }`;
@@ -4783,7 +4788,9 @@ export class CampService {
 				data: {},
 			});
 		}
-
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
 		// Check if all learners have completed the endline assessment
 		let learnerQuery = `query MyQuery {
 			users(where: {
@@ -4791,7 +4798,7 @@ export class CampService {
 							member_type: {_eq: "member"},
 							group: {camp: {id: {_in: [${camp_id}]}}}
 					},
-					_and: {pcr_scores: {endline_learning_level: {_is_null: true}}}
+					_not: {pcr_scores: {endline_learning_level: {_in: ${JSON.stringify(baseLine)}}}}
 			}) {
 					id
 					first_name
@@ -4805,16 +4812,13 @@ export class CampService {
 		const learnersWithoutEndline = learnerRes?.data?.users;
 
 		if (learnersWithoutEndline.length > 0) {
-			const learnerIdsWithoutEndline = learnersWithoutEndline.map(
-				(learner: any) => learner.id,
-			);
 			return response.json({
 				status: 400,
 				success: false,
 				key: 'ID',
 				message:
 					'Not all learners have completed their endline assessment',
-				data: learnerIdsWithoutEndline,
+				data: learnersWithoutEndline,
 			});
 		}
 

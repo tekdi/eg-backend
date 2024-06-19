@@ -38,11 +38,13 @@ export class SessionsService {
 		const session_number =
 			campRes?.data?.learning_lesson_plans_master_by_pk.ordering;
 
-		if (!campData) {
+		if (!campData || !session_number) {
 			return response.json({
 				status: 404,
 				success: false,
-				message: 'Camp not found',
+				message: `${
+					!campData ? 'Camp' : !session_number ? 'Session number' : ''
+				} not found`,
 			});
 		}
 
@@ -51,9 +53,13 @@ export class SessionsService {
 			let learnerQuery = '';
 			let validationMessage = '';
 
-			const status = this.enumService
+			const status1 = this.enumService
 				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 				.data.map((item) => item.value);
+			const status2 = this.enumService
+				.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+				.data.map((item) => item.value);
+			const status = [...(status1 || []), ...(status2 || [])];
 			if (session_number >= 1 && session_number <= 6) {
 				learnerQuery = `baseline_learning_level`;
 				validationMessage =
@@ -93,16 +99,13 @@ export class SessionsService {
 			const learnersWithoutBaseline = learnerRes?.data?.users;
 
 			if (learnersWithoutBaseline.length > 0) {
-				const learnerIdsWithoutBaseline = learnersWithoutBaseline.map(
-					(learner: any) => learner.id,
-				);
 				return response.json({
 					status: 400,
 					success: false,
 					key: 'ID',
 					message:
 						'Not all learners have added their baseline assessment',
-					data: learnerIdsWithoutBaseline,
+					data: learnersWithoutBaseline,
 				});
 			}
 		}
@@ -215,7 +218,6 @@ export class SessionsService {
 			});
 		}
 
-		//const { session_number, camp_id } = sessionData;
 		// Step 2: Validate learners' assessment completion based on session number
 		let learnerQuery = '';
 		let validationMessage = '';
