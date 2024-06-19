@@ -4792,6 +4792,17 @@ export class CampService {
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
 		// Check if all learners have completed the endline assessment
+		let sessionQ = [];
+
+		if (Array.isArray(camp_id)) {
+			sessionQ = camp_id.map(
+				(item) =>
+					`camp_${item}:learning_lesson_plans_master(where: {_not: {session_tracks: {camp_id: {_eq: ${item}}, status: {_eq: "complete"}}}, type: {_eq: "pcr"}}) {
+					ordering
+			}`,
+			);
+		}
+
 		let learnerQuery = `query MyQuery {
 			users(where: {
 					group_users: {
@@ -4803,6 +4814,7 @@ export class CampService {
 					id
 					first_name
 			}
+			${sessionQ.join(' ')}
 	}`;
 
 		const learnerRes = await this.hasuraServiceFromServices.getData({
@@ -4810,39 +4822,37 @@ export class CampService {
 		});
 
 		const learnersWithoutEndline = learnerRes?.data?.users;
-
-		if (learnersWithoutEndline.length > 0) {
-			return response.json({
-				status: 400,
-				success: false,
-				key: 'ID',
-				message:
-					'Not all learners have completed their endline assessment',
-				data: learnersWithoutEndline,
-			});
+		let sessionData = [];
+		if (Array.isArray(camp_id)) {
+			sessionData = camp_id
+				.map((item) => {
+					if (learnerRes?.data?.[`camp_${item}`]?.length > 0) {
+						return {
+							camp_id: item,
+							session: learnerRes?.data?.[`camp_${item}`],
+						};
+					}
+				})
+				.filter((e) => e);
 		}
 
-		// Check if the camp has completed 20 sessions
-		let sessionQuery = `query MyQuery {
-		learning_sessions_tracker(where: {camp_id: {_in: [${camp_id}]}, status: {_eq: "complete"}}) {
-					camp_id
-			}
-	}`;
-
-		const sessionRes = await this.hasuraServiceFromServices.getData({
-			query: sessionQuery,
-		});
-
-		const completedSessions =
-			sessionRes?.data?.learning_sessions_tracker ?? [];
-
-		if (completedSessions.length < 20) {
+		if (sessionData.length > 0) {
 			return response.json({
-				status: 400,
+				status: 422,
 				success: false,
 				key: 'session',
 				message: 'Not enough sessions have been completed',
-				data: { completedSessionsCount: completedSessions.length },
+				data: sessionData,
+			});
+		}
+		if (learnersWithoutEndline.length > 0) {
+			return response.json({
+				status: 422,
+				success: false,
+				key: 'user_id',
+				message:
+					'Not all learners have completed their endline assessment',
+				data: learnersWithoutEndline,
 			});
 		}
 

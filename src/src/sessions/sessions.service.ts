@@ -245,6 +245,13 @@ export class SessionsService {
 		}
 
 		if (camp_type === 'pcr') {
+			const status1 = this.enumService
+				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+				.data.map((item) => item.value);
+			const status2 = this.enumService
+				.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+				.data.map((item) => item.value);
+			const status = [...(status1 || []), ...(status2 || [])];
 			if (session_number >= 1 && session_number <= 6) {
 				learnerQuery = `baseline_learning_level`;
 				validationMessage =
@@ -269,7 +276,7 @@ export class SessionsService {
 							program_beneficiaries:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}
 							_not:{
 									pcr_scores: {
-											${learnerQuery}: {_is_null: false}
+											${learnerQuery}: {_in: ${JSON.stringify(status)}}
 									}
 							}
 					}) {
@@ -284,14 +291,12 @@ export class SessionsService {
 			const learnersWithoutAssessment = learnerRes?.data?.users;
 
 			if (learnersWithoutAssessment.length > 0) {
-				const learnerIdsWithoutAssessment =
-					learnersWithoutAssessment.map((learner: any) => learner.id);
 				return response.json({
 					status: 400,
 					success: false,
 					key: 'ID',
-					message: validationMessage,
-					data: learnerIdsWithoutAssessment,
+					message: 'Not all learners have added their  assessment',
+					data: learnersWithoutAssessment,
 				});
 			}
 		}
