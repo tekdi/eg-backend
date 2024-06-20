@@ -1922,7 +1922,7 @@ export class ExamService {
                             subjects {
                                 id
                                 name
-                                events(order_by: { start_date: desc }, limit: 1) {
+                                events(order_by: { start_date: desc },,where:{program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} limit: 1) {
 																	start_date
                                 }
                             }
@@ -1934,35 +1934,52 @@ export class ExamService {
 		const boardResponse =
 			await this.hasuraServiceFromServices.queryWithVariable(boardQuery);
 		const boardData = boardResponse?.data?.data?.boards;
+		// Process each board separately
+		for (const board of boardData) {
+			// Determine the maximum date among all subject events for this board
+			let maxDate = null;
+			const subjects = board.subjects;
 
-		// Step 4-5: Determine the maximum date among all subject events
-		let maxDate = null;
-		const subjects_data = boardData?.map((board) => board.subjects);
+			// Extract events for this board
+			const events = subjects.flatMap((subject) => subject.events);
 
-		// Flatten the events arrays from both parts of the JSON
-		const events = subjects_data.flatMap((section) =>
-			section.flatMap((item) => item.events),
-		);
+			// Extract all start_date values
+			const startDates = events.map(
+				(event) => new Date(event.start_date),
+			);
 
-		// Extract all start_date values
-		const startDates = events.map((event) => new Date(event.start_date));
+			// Find the maximum date if there are any dates
+			if (startDates.length > 0) {
+				maxDate = new Date(Math.max(...startDates));
 
-		// Find the maximum date
-		maxDate = new Date(Math.max(...startDates));
+				// Add 2 days to the maximum date
+				maxDate.setDate(maxDate.getDate() + 2);
 
-		// Add 2 days to the maximum date
-		maxDate.setDate(maxDate.getDate() + 2);
+				// Format the date to a string
+				const maxDateString = maxDate.toISOString().split('T')[0];
 
-		// Format the date to a string
-		const maxDateString = maxDate.toISOString().split('T')[0];
-
-		if (maxDateString) {
-			boardList.push({
-				boardData,
-				addedMaxDate: maxDateString,
-			});
+				if (maxDateString) {
+					boardList.push({
+						board: {
+							id: board.id,
+							name: board.name,
+							subjects: board.subjects,
+						},
+						addedMaxDate: maxDateString,
+					});
+				}
+			} else {
+				// No events found for this board
+				boardList.push({
+					board: {
+						id: board.id,
+						name: board.name,
+						subjects: board.subjects,
+					},
+					addedMaxDate: null,
+				});
+			}
 		}
-
 		// Step 8: Send the board list in the response
 		if (boardList.length > 0) {
 			return resp.status(200).json({
