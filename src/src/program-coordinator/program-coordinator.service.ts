@@ -1132,6 +1132,10 @@ export class ProgramCoordinatorService {
 				context_id
 				created_by
 				updated_by
+				description
+				hours
+				minutes
+				village
 			}
 		}`;
 
