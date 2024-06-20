@@ -933,8 +933,6 @@ export class ProgramCoordinatorService {
 			let context_id = request.mw_userid;
 			let created_by = request.mw_userid;
 			let updated_by = request.mw_userid;
-			let academic_year_id = request.mw_academic_year_id;
-			let program_id = request.mw_program_id;
 
 			const response = await this.hasuraService.create(
 				'activities',
@@ -945,8 +943,6 @@ export class ProgramCoordinatorService {
 					context_id: context_id,
 					created_by: created_by,
 					updated_by: updated_by,
-					academic_year_id: academic_year_id,
-					program_id: program_id,
 				},
 				[
 					'id',
@@ -958,15 +954,13 @@ export class ProgramCoordinatorService {
 					'date',
 					'created_by',
 					'updated_by',
-					'academic_year_id',
-					'program_id',
 					'description',
 					'hours',
 					'minutes',
 					'village',
 				],
 			);
-
+			console.log('response', response);
 			if (response) {
 				return resp.status(200).json({
 					message: 'Activity created Successfully',
@@ -1011,7 +1005,6 @@ export class ProgramCoordinatorService {
 					'date',
 					'created_by',
 					'updated_by',
-					'academic_year_id',
 					'program_id',
 					'description',
 					'hours',
@@ -1058,7 +1051,6 @@ export class ProgramCoordinatorService {
 				type
 				date
 				activity_data
-				academic_year_id
 				program_id
 				context
 				context_id
@@ -1090,8 +1082,6 @@ export class ProgramCoordinatorService {
 	}
 	public async activitiesList(body: any, req: any, resp: any) {
 		try {
-			const program_id = req.mw_program_id;
-			const academic_year_id = req.mw_academic_year_id;
 			let context_id = req.mw_userid;
 			let context = 'pc_users';
 			const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
@@ -1118,9 +1108,7 @@ export class ProgramCoordinatorService {
 			activities_aggregate(
 				where: {
 					context : {_eq:${context}},
-					context_id: {_eq: ${context_id}},
-					program_id: {_eq: ${program_id}},
-					academic_year_id: {_eq: ${academic_year_id}}${filterConditions}
+					context_id: {_eq: ${context_id}}${filterConditions}
 				}
 			) {
 				aggregate {
@@ -1129,9 +1117,7 @@ export class ProgramCoordinatorService {
 			}
 			activities(
 				where: {
-					context_id: {_eq: ${context_id}},
-					program_id: {_eq: ${program_id}},
-					academic_year_id: {_eq: ${academic_year_id}}${filterConditions}
+					context_id: {_eq: ${context_id}}${filterConditions}
 				}, limit: ${limit}, offset: ${offset},
 
 			) {
