@@ -958,6 +958,7 @@ export class ProgramCoordinatorService {
 					'hours',
 					'minutes',
 					'village',
+					'block',
 				],
 			);
 			console.log('response', response);
@@ -993,6 +994,7 @@ export class ProgramCoordinatorService {
 					'hours',
 					'minutes',
 					'village',
+					'block',
 				],
 				true,
 				[
@@ -1010,6 +1012,7 @@ export class ProgramCoordinatorService {
 					'hours',
 					'minutes',
 					'village',
+					'block',
 				],
 			);
 
@@ -1136,6 +1139,7 @@ export class ProgramCoordinatorService {
 				hours
 				minutes
 				village
+				block
 			}
 		}`;
 
