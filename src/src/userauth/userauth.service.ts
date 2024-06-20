@@ -1519,6 +1519,7 @@ export class UserauthService {
 				facilitator_id
 				status
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
@@ -1771,6 +1772,30 @@ export class UserauthService {
 	//Register volunteer
 	public async volunteerRegister(body, response, role) {
 		let misssingFieldsFlag = false;
+		const requiredFields = [
+			'first_name',
+			'last_name',
+			'gender',
+			'mobile',
+			'email_id',
+			'dob',
+			'state',
+			'pincode',
+			'qualification',
+		];
+
+		// Check for missing required fields
+		const missingFields = requiredFields.filter(
+			(field) =>
+				!body[field] ||
+				(typeof body[field] === 'string' && body[field]?.trim() === ''),
+		);
+		if (missingFields.length > 0) {
+			return response.status(400).json({
+				success: false,
+				message: `Missing required fields: ${missingFields.join(', ')}`,
+			});
+		}
 		if (role === 'volunteer') {
 			//validation to check if the mobile exists for another facilitator
 
@@ -1857,13 +1882,22 @@ export class UserauthService {
 					body.keycloak_id = keycloak_id;
 					body.username = data_to_create_user.username;
 					body.password = password;
+					let role_id;
 
-					if (role === 'volunteer' && body.hasOwnProperty('dob')) {
-						delete body.dob;
-					}
 					body.role = role;
 
 					const result = await this.authService.newCreate(body);
+					// Send login details SMS
+					// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
+					if (body.role === 'volunteer') {
+						const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%85%E0%A4%95%E0%A4%BE%E0%A4%89%E0%A4%82%E0%A4%9F%20%E0%A4%AC%E0%A4%A8%E0%A4%BE%E0%A4%AF%E0%A4%BE%20%E0%A4%97%E0%A4%AF%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A5%8B%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A5%8D%E0%A4%A4%E0%A4%BE%20%E0%A4%A8%E0%A4%BE%E0%A4%AE%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%20%E0%A4%94%E0%A4%B0%20%E0%A4%AA%E0%A4%BE%E0%A4%B8%E0%A4%B5%E0%A4%B0%E0%A5%8D%E0%A4%A1%20%3Carg2%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
+						const args = `arg1:${body.username},arg2:${body.password}`;
+						const otpRes = await this.authService.sendSMS(
+							body.mobile,
+							message,
+							args,
+						);
+					}
 
 					let user_id = result?.data?.id;
 					if (body.qualification) {
@@ -1892,27 +1926,35 @@ export class UserauthService {
 							['user_id', 'qualification_master_id'],
 						);
 					}
+					if (role === 'volunteer') {
+						const data = {
+							query: `query MyQuery {
+								roles(where: { slug: {_eq: "volunteer"}}) {
+									id
+								}
+							}`,
+						};
+						const hasura_response =
+							await this.hasuraServiceFromServices.getData(data);
+						role_id = hasura_response?.data?.roles?.[0]?.id;
+
+						await this.hasuraService.q(
+							`user_roles`,
+							{
+								user_id,
+								status: 'applied',
+								role_id: role_id,
+								role_slug: 'volunteer',
+							},
+							['user_id', 'status', 'role_id', 'role_slug'],
+						);
+					}
 					if (user_id && role === 'volunteer') {
 						// Set the timezone to Indian Standard Time (Asia/Kolkata)
 						const formattedISTTime =
 							this.method.getFormattedISTTime();
 
 						// Format the time as per datetime
-
-						let acknowledgement_create_body = {
-							user_id: user_id,
-							date_time: formattedISTTime,
-							doc_version: 1,
-							doc_id: 1,
-							context: 'volunteer.profile',
-							context_id: user_id,
-							accepted: true,
-						};
-
-						//add acknowledgment details
-						await this.acknowledgementService.createAcknowledgement(
-							acknowledgement_create_body,
-						);
 					}
 
 					return response.status(200).send({

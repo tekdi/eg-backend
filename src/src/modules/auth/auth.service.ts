@@ -6,11 +6,11 @@ import { AadhaarKycService } from 'src/modules/aadhaar_kyc/aadhaar_kyc.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { UserService } from 'src/user/user.service';
-
+import * as moment from 'moment';
 const crypto = require('crypto');
 const axios = require('axios');
 const atob = require('atob');
-
+const jwt = require('jwt-decode');
 @Injectable()
 export class AuthService {
 	public smsKey = this.configService.get<string>('SMS_KEY');
@@ -350,6 +350,7 @@ export class AuthService {
 
 		const token = await this.keycloakService.getUserKeycloakToken(data);
 		if (token) {
+			await this.updateLastLogin(token);
 			return response.status(200).send({
 				success: true,
 				message: 'LOGGEDIN_SUCCESSFULLY',
@@ -952,6 +953,7 @@ export class AuthService {
 				academic_year_id
 				user_id
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
@@ -1071,5 +1073,30 @@ export class AuthService {
 			message: 'Ok.',
 			data: mappedResponse,
 		};
+	}
+
+	public async updateLastLogin(token) {
+		try {
+			const { access_token } = token;
+			// Decode the token to extract user_id
+			const decoded: any = jwt_decode(access_token);
+			const userId = decoded?.sub; // Assuming 'sub' contains the user_id
+			const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+			// Update the last_login timestamp in the database
+
+			const updateLastLoginQuery = {
+				query: `mutation UpdateLastLogin {
+					update_users(where: {keycloak_id: {_eq: "${userId}"}}, _set: {last_login: "${currentDate}"}) {
+						affected_rows
+					}
+				}`,
+			};
+
+			const result = await this.hasuraService.getData(
+				updateLastLoginQuery,
+			);
+		} catch (error) {
+			console.error('Failed to update last_login', error);
+		}
 	}
 }

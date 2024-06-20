@@ -1685,5 +1685,15 @@
 			"title": "EXAM_PDF_UPLOAD_STATUS_UPLOADED",
 			"value": "uploaded"
 		}
+	],
+	"VOLUNTEER_STATUS": [
+		{
+			"title": "VOLUNTEER_STATUS_APPLIED",
+			"value": "applied"
+		},
+		{
+			"title": "VOLUNTEER_STATUS_APPROVED",
+			"value": "approved"
+		}
 	]
 }
