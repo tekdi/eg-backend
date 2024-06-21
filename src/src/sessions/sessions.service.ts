@@ -123,7 +123,7 @@ export class SessionsService {
 		const learning_session_data = res?.data?.learning_sessions_tracker;
 
 		if (learning_session_data.length > 0) {
-			return response.statu(200).json({
+			return response.status(200).json({
 				status: 200,
 				success: true,
 				message: 'Successfully retrieved learning session',
