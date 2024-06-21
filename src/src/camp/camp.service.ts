@@ -4747,6 +4747,50 @@ export class CampService {
 		const pcr_response = await this.hasuraServiceFromServices.getData(data);
 		//check camps type is  PCR or not!
 		const camps = pcr_response?.data?.camps[0]?.type;
+		if (camps != 'pcr') {
+			return response.status(422).json({
+				success: false,
+				message: 'This is not a Neev Camp',
+				data: {},
+			});
+		}
+
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+		// Check if all learners have completed the endline assessment
+
+		let learnerQuery = `query MyQuery {
+			users(where: {
+					group_users: {
+							member_type: {_eq: "member"},
+							group: {camp: {id: {_eq: ${camp_id}}}}
+					},
+					_not: {pcr_scores: {endline_learning_level: {_in: ${JSON.stringify(baseLine)}}}}
+			}) {
+					id
+			}
+			session:learning_lesson_plans_master(where: {_not: {session_tracks: {camp_id: {_eq: ${camp_id}}, status: {_eq: "complete"}}}, type: {_eq: "pcr"}}) {
+				ordering
+			}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: learnerQuery,
+		});
+
+		const incompletePcrUsers = learnerRes?.data?.users;
+		const incompleteSession = learnerRes?.data?.session;
+
+		if (incompleteSession.length > 0 || incompletePcrUsers.length > 0) {
+			return response.status(422).json({
+				success: false,
+				key: 'session',
+				message: 'CAMP_INCOMPLETE_SESSION_OR_ENDLINE_NOT_FILLED',
+				data: { incompleteSession, incompletePcrUsers },
+			});
+		}
+
 		const type = 'main';
 		if (camps === 'pcr') {
 			let update_body = ['type'];
@@ -4904,7 +4948,7 @@ export class CampService {
 				status: 422,
 				success: false,
 				key: 'session',
-				message: 'Not enough sessions have been completed',
+				message: 'CAMP_INCOMPLETE_SESSION_OR_ENDLINE_NOT_FILLED',
 				data: sessionData,
 			});
 		}
@@ -4913,8 +4957,7 @@ export class CampService {
 				status: 422,
 				success: false,
 				key: 'user_id',
-				message:
-					'Not all learners have completed their endline assessment',
+				message: 'CAMP_INCOMPLETE_SESSION_OR_ENDLINE_NOT_FILLED',
 				data: learnersWithoutEndline,
 			});
 		}
