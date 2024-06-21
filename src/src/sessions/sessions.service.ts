@@ -411,4 +411,51 @@ export class SessionsService {
 			});
 		}
 	}
+
+	public async getSessionWegithage(
+		id: any,
+		bodyData: any,
+		request: any,
+		response: any,
+	) {
+		const camp_id = id;
+
+		const data = `SELECT
+camp_id,
+learning_lesson_plan_id,
+MAX(CASE
+		WHEN DATE(created_at) < CURRENT_DATE AND DATE(updated_at) = CURRENT_DATE THEN 0.5
+		WHEN DATE(created_at) = CURRENT_DATE AND DATE(updated_at) = CURRENT_DATE THEN 1
+		WHEN DATE(created_at) = CURRENT_DATE AND DATE(updated_at) > CURRENT_DATE THEN 0.5
+		ELSE 0
+END) AS weightage_completed
+FROM
+learning_sessions_tracker
+WHERE
+camp_id = ${camp_id} and DATE(created_at) = CURRENT_DATE or DATE(updated_at) = CURRENT_DATE
+GROUP BY
+camp_id,
+learning_lesson_plan_id`;
+		const result = (
+			await this.hasuraServiceFromServices.executeRawSql(data)
+		).result;
+		const wegithagerusult =
+			this.hasuraServiceFromServices.getFormattedData(result);
+
+		if (wegithagerusult) {
+			return response.json({
+				status: 200,
+				success: true,
+				message: 'Successfully retrieved data',
+				data: wegithagerusult,
+			});
+		} else {
+			return response.json({
+				status: 500,
+				success: false,
+				message: 'Error retrieving data',
+				data: {},
+			});
+		}
+	}
 }
