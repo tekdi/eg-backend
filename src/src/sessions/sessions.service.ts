@@ -39,8 +39,7 @@ export class SessionsService {
 			campRes?.data?.learning_lesson_plans_master_by_pk.ordering;
 
 		if (!campData || !session_number) {
-			return response.json({
-				status: 404,
+			return response.status(404).json({
 				success: false,
 				message: `${
 					!campData ? 'Camp' : !session_number ? 'Session number' : ''
@@ -63,15 +62,15 @@ export class SessionsService {
 			if (session_number >= 1 && session_number <= 6) {
 				learnerQuery = `baseline_learning_level`;
 				validationMessage =
-					'Not all learners have completed their baseline assessment';
+					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
 			} else if (session_number >= 7 && session_number <= 13) {
 				learnerQuery = `rapid_assessment_first_learning_level`;
 				validationMessage =
-					'Not all learners have completed their first rapid assessment';
+					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
 			} else if (session_number >= 14 && session_number <= 20) {
 				learnerQuery = `rapid_assessment_second_learning_level`;
 				validationMessage =
-					'Not all learners have completed their second rapid assessment';
+					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
 			}
 			let learnerQuerys = `query MyQuery {
 				users(where:{
@@ -99,12 +98,10 @@ export class SessionsService {
 			const learnersWithoutBaseline = learnerRes?.data?.users;
 
 			if (learnersWithoutBaseline.length > 0) {
-				return response.json({
-					status: 400,
+				return response.status(400).json({
 					success: false,
 					key: 'ID',
-					message:
-						'Not all learners have added their baseline assessment',
+					message: validationMessage,
 					data: learnersWithoutBaseline,
 				});
 			}
@@ -126,7 +123,7 @@ export class SessionsService {
 		const learning_session_data = res?.data?.learning_sessions_tracker;
 
 		if (learning_session_data.length > 0) {
-			return response.json({
+			return response.status(200).json({
 				status: 200,
 				success: true,
 				message: 'Successfully retrieved learning session',
@@ -211,8 +208,7 @@ export class SessionsService {
 				?.session_tracks?.[0]?.id;
 
 		if (!sessionData) {
-			return response.json({
-				status: 404,
+			return response.status(404).json({
 				success: false,
 				message: 'Session not found',
 			});
@@ -237,7 +233,7 @@ export class SessionsService {
 		const camp_type = campData?.type;
 
 		if (!campData) {
-			return response.json({
+			return response.status(404).json({
 				status: 404,
 				success: false,
 				message: 'Camp not found',
@@ -255,15 +251,15 @@ export class SessionsService {
 			if (session_number >= 1 && session_number <= 6) {
 				learnerQuery = `baseline_learning_level`;
 				validationMessage =
-					'Not all learners have completed their baseline assessment';
+					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
 			} else if (session_number >= 7 && session_number <= 13) {
 				learnerQuery = `rapid_assessment_first_learning_level`;
 				validationMessage =
-					'Not all learners have completed their first rapid assessment';
+					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
 			} else if (session_number >= 14 && session_number <= 20) {
 				learnerQuery = `rapid_assessment_second_learning_level`;
 				validationMessage =
-					'Not all learners have completed their second rapid assessment';
+					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
 			}
 			const query = `query MyQuery {
 					users(where:{
@@ -291,11 +287,10 @@ export class SessionsService {
 			const learnersWithoutAssessment = learnerRes?.data?.users;
 
 			if (learnersWithoutAssessment.length > 0) {
-				return response.json({
-					status: 400,
+				return response.status(422).json({
 					success: false,
 					key: 'ID',
-					message: 'Not all learners have added their  assessment',
+					message: validationMessage,
 					data: learnersWithoutAssessment,
 				});
 			}
