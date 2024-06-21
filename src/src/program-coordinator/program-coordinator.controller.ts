@@ -151,8 +151,29 @@ export class ProgramCoordinatorController {
 	}
 	@Post('/activities/list')
 	@UseGuards(new AuthGuard())
-	public async activitiesList(@Req() request: any, @Body() body: any, @Res() response: any) {
-		return this.programCoordinatorService.activitiesList(body, request, response);
+	public async activitiesList(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.activitiesList(
+			body,
+			request,
+			response,
+		);
 	}
 
+	@Post('/learners/facilitator/list')
+	@UseGuards(new AuthGuard())
+	public async getFacilitatorsListForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getFacilitatorsListForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
 }
