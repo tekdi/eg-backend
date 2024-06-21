@@ -131,9 +131,14 @@ export class CampService {
 			}
 
 			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
+			const baseLine = this.enumService
+				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+				.data.map((item) => item.value);
 
 			let query = `query MyQuery {
-				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}){
+				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}},pcr_scores: {baseline_learning_level: {_in: ${JSON.stringify(
+				baseLine,
+			)}}}}){
 				  id
 				}
 			  }`;
@@ -4846,6 +4851,74 @@ export class CampService {
 				data: {},
 			});
 		}
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+		// Check if all learners have completed the endline assessment
+		let sessionQ = [];
+
+		if (Array.isArray(camp_id)) {
+			sessionQ = camp_id.map(
+				(item) =>
+					`camp_${item}:learning_lesson_plans_master(where: {_not: {session_tracks: {camp_id: {_eq: ${item}}, status: {_eq: "complete"}}}, type: {_eq: "pcr"}}) {
+					ordering
+			}`,
+			);
+		}
+
+		let learnerQuery = `query MyQuery {
+			users(where: {
+					group_users: {
+							member_type: {_eq: "member"},
+							group: {camp: {id: {_in: [${camp_id}]}}}
+					},
+					_not: {pcr_scores: {endline_learning_level: {_in: ${JSON.stringify(baseLine)}}}}
+			}) {
+					id
+					first_name
+			}
+			${sessionQ.join(' ')}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: learnerQuery,
+		});
+
+		const learnersWithoutEndline = learnerRes?.data?.users;
+		let sessionData = [];
+		if (Array.isArray(camp_id)) {
+			sessionData = camp_id
+				.map((item) => {
+					if (learnerRes?.data?.[`camp_${item}`]?.length > 0) {
+						return {
+							camp_id: item,
+							session: learnerRes?.data?.[`camp_${item}`],
+						};
+					}
+				})
+				.filter((e) => e);
+		}
+
+		if (sessionData.length > 0) {
+			return response.json({
+				status: 422,
+				success: false,
+				key: 'session',
+				message: 'Not enough sessions have been completed',
+				data: sessionData,
+			});
+		}
+		if (learnersWithoutEndline.length > 0) {
+			return response.json({
+				status: 422,
+				success: false,
+				key: 'user_id',
+				message:
+					'Not all learners have completed their endline assessment',
+				data: learnersWithoutEndline,
+			});
+		}
+
 		const type = 'main';
 
 		let updatecamp = {
