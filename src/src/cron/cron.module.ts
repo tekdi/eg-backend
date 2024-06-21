@@ -9,6 +9,7 @@ import { FaAttendanceProcessingCron } from './faAttendanceProcessing.cron';
 import { FaFaceIndexingCron } from './faFaceIndexing.cron';
 import { FaUserIndexingCron } from './faUserIndexing.cron';
 import { PrepareCertificateHtmlCron } from './prepareCertificateHtml.cron';
+import { DistanceCalculation } from './distanceCalculation.cron';
 @Module({
 	imports: [
 		AwsRekognitionModule,
@@ -23,6 +24,7 @@ import { PrepareCertificateHtmlCron } from './prepareCertificateHtml.cron';
 		PrepareCertificateHtmlCron,
 		CampEndCron,
 		Method,
+		DistanceCalculation,
 	],
 })
 export class CronModule {}
