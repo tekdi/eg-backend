@@ -1007,100 +1007,6 @@ export class ProgramCoordinatorService {
 		});
 	}
 
-	// 	public async getLearnerListDetailsForProgramCoordinator(
-	// 		body,
-	// 		request,
-	// 		response,
-	// 	) {
-	// 		let pc_id = request?.mw_userid;
-	// 		let query;
-	// 		let hasura_response;
-	// 		let pc_string = '';
-	// 		const limit = body?.limit || 10;
-	// 		const page = body?.page || 1;
-	// 		const offset = (page - 1) * limit;
-	// 		let learner_data;
-	// 		let learner_info;
-
-	// 		let userFilter = [];
-
-	// 		//filters
-
-	// 		userFilter.push(`pc_id:{_eq:${pc_id}}`);
-
-	// 		let filterQuery = userFilter.join(', ');
-
-	// 		let pc_facilitator_list = body?.facilitator_list
-	// 			? body?.facilitator_list
-	// 			: [];
-
-	// 		if (pc_facilitator_list?.length == 0) {
-	// 			query = `
-	// 		query MyQuery {
-	// 			program_faciltators(where: {${filterQuery}},limit:${limit},offset:${offset}) {
-	// 				user_id
-	// 				academic_year_id
-	// 				academic_year{
-	// 				  name
-	// 				}
-	// 				program_id
-	// 				program {
-	// 				  name
-	// 				}
-	// 				status
-	// 				user {
-	// 				  first_name
-	// 				  middle_name
-	// 				  last_name
-	// 				}
-	// 			}
-	// 			program_faciltators_aggregate(where: {${filterQuery}}) {
-	// 				aggregate {
-	// 				  count
-	// 				}
-	// 			  }
-	// 		  }
-
-	// `;
-
-	// 			hasura_response = await this.hasuraServiceFromServices.getData({
-	// 				query: query,
-	// 			});
-	// 			pc_facilitator_list = hasura_response?.data?.program_faciltators;
-	// 		}
-
-	// 		console.log('pc_facilitator_list-->>', pc_facilitator_list);
-
-	// 		if (pc_facilitator_list && pc_facilitator_list.length > 0) {
-	// 			for (let i = 0; i < pc_facilitator_list.length; i++) {
-	// 				let temp_prerak_list = pc_facilitator_list[i];
-	// 				if (i == 0) {
-	// 					pc_string =
-	// 						pc_string +
-	// 						`'${temp_prerak_list?.user_id} ${temp_prerak_list?.academic_year_id} ${temp_prerak_list?.program_id}'`;
-	// 				} else {
-	// 					pc_string =
-	// 						pc_string +
-	// 						`,'${temp_prerak_list?.user_id} ${temp_prerak_list?.academic_year_id} ${temp_prerak_list?.program_id}'`;
-	// 				}
-	// 			}
-	// 		}
-
-	// 		console.log('pc_String--->>', pc_string);
-
-	// 		if (pc_string != null || pc_string != undefined) {
-	// 			let sql = `select user_id ,facilitator_id,program_id,academic_year_id from program_beneficiaries where concat(facilitator_id,' ',academic_year_id,' ',program_id) in (${pc_string})`;
-
-	// 			learner_data = (
-	// 				await this.hasuraServiceFromServices.executeRawSql(sql)
-	// 			)?.result;
-	// 			learner_info =
-	// 				this.hasuraServiceFromServices.getFormattedData(learner_data);
-	// 		}
-
-	// 		console.log('result-->>', learner_info);
-	// 	}
-
 	public async getLearnerListDetailsForProgramCoordinator(
 		body,
 		request,
@@ -1161,8 +1067,6 @@ export class ProgramCoordinatorService {
 			pc_facilitator_list = hasura_response?.data?.program_faciltators;
 		}
 
-		console.log('pc_facilitator_list-->>', pc_facilitator_list);
-
 		if (pc_facilitator_list && pc_facilitator_list.length > 0) {
 			for (let i = 0; i < pc_facilitator_list.length; i++) {
 				let temp_prerak_list = pc_facilitator_list[i];
@@ -1193,7 +1097,7 @@ export class ProgramCoordinatorService {
 			}
 
 			let sql = `
-        SELECT pb.user_id, pb.facilitator_id, pb.program_id, pb.academic_year_id, pb.status, pb.enrollment_number, u.first_name, u.last_name,f.first_name AS facilitator_first_name, f.last_name AS facilitator_last_name
+        SELECT pb.user_id, pb.facilitator_id, pb.program_id, pb.academic_year_id, pb.status, pb.enrollment_number, u.first_name, u.last_name,f.first_name AS facilitator_first_name, f.last_name AS facilitator_last_name,pf.academic_year_id as facilitator_academic_id,pf.program_id as facilitator_program_id
         FROM program_beneficiaries pb
         INNER JOIN users u ON pb.user_id = u.id
 		INNER JOIN program_faciltators pf ON pb.facilitator_id = pf.user_id
