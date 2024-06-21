@@ -925,6 +925,88 @@ export class ProgramCoordinatorService {
 		});
 	}
 
+	public async getFacilitatorsListForProgramCoordinator(
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let query;
+		let pc_id = request?.mw_userid;
+
+		let hasura_response;
+
+		let userFilter = [];
+
+		//filters
+
+		userFilter.push(`pc_id:{_eq:${pc_id}}`);
+
+		let filterQuery = userFilter.join(', ');
+
+		// Pagination parameters
+		const limit = body?.limit || 10;
+		const page = body?.page || 1;
+		const offset = (page - 1) * limit;
+		//query to get program coordinator details
+
+		query = `
+		query MyQuery {
+			program_faciltators(where: {${filterQuery}},limit:${limit},offset:${offset}) {
+				user_id
+				academic_year_id
+				academic_year{
+				  name
+				}
+				program_id
+				program {
+				  name
+				}
+				status
+				user {
+				  first_name
+				  middle_name
+				  last_name
+				}
+			}
+			program_faciltators_aggregate(where: {${filterQuery}}) {
+				aggregate {
+				  count
+				}
+			  }
+		  }
+		  
+`;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const facilitator_data = hasura_response?.data?.program_faciltators;
+		const total_count =
+			hasura_response?.data?.program_faciltators_aggregate?.aggregate
+				?.count || 0;
+
+		if (facilitator_data?.length === 0) {
+			return response.status(422).json({
+				success: false,
+				message: 'Data not found',
+				data: {},
+			});
+		}
+
+		const totalPages = Math.ceil(total_count / limit);
+
+		return response.status(200).send({
+			success: true,
+			data: {
+				facilitator_data: facilitator_data,
+				total_count: total_count,
+				limit: limit,
+				totalPages: totalPages,
+				currentPage: page,
+			},
+		});
+	}
+
 	//daily activities
 	public async activitiesCreate(request: any, body: any, resp: any) {
 		try {
