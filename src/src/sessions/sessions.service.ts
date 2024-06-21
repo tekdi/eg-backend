@@ -287,8 +287,7 @@ export class SessionsService {
 			const learnersWithoutAssessment = learnerRes?.data?.users;
 
 			if (learnersWithoutAssessment.length > 0) {
-				return response.json({
-					status: 400,
+				return response.status(422).json({
 					success: false,
 					key: 'ID',
 					message: validationMessage,
