@@ -176,4 +176,18 @@ export class ProgramCoordinatorController {
 			response,
 		);
 	}
+
+	@Post('/learners/list')
+	@UseGuards(new AuthGuard())
+	public async getLearnerListDetailsForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getLearnerListDetailsForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
 }

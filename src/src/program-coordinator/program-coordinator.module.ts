@@ -43,6 +43,7 @@ export class ProgramCoordinatorModule implements NestModule {
 				'/program-coordinator/activities/:id',
 				'/program-coordinator/activities/list',
 				'/program-coordinator/learners/facilitator/list',
+				'/program-coordinator/learners/list',
 			)
 			.forRoutes(ProgramCoordinatorController);
 	}
