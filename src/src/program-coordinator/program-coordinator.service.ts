@@ -5,6 +5,7 @@ import { HasuraService } from 'src/services/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
+import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
 
 @Injectable()
 export class ProgramCoordinatorService {
@@ -14,6 +15,7 @@ export class ProgramCoordinatorService {
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
+		private beneficiariesService: BeneficiariesService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {
@@ -1128,6 +1130,68 @@ export class ProgramCoordinatorService {
 			message: 'Data retrieved successfully',
 			data: learner_info,
 		});
+	}
+
+	public async getCohortDataForProgramCoordinator(body, request, response) {
+		let query;
+		let hasura_response;
+		let facilitator_ids = body?.facilitator_ids;
+
+		query = `query MyQuery {
+			program_faciltators(where: {user_id: {_in:[${facilitator_ids}]}}){
+			facilitator_id:user_id	
+			  user{
+				first_name
+				last_name
+			  }
+			  academic_year{
+				id
+				name
+			  }
+			  program{
+				id
+				name
+			  }
+			  status
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		let cohort_data = hasura_response?.data?.program_faciltators;
+
+		if (cohort_data?.length == 0) {
+			return response.status(404).json({
+				message: 'Data not found',
+				data: [],
+			});
+		} else {
+			return response.status(200).json({
+				message: 'Data  found successfully',
+				data: cohort_data,
+			});
+		}
+	}
+
+	public async getBeneficiaryDetailsforProgramCoordinator(
+		id,
+		body,
+		request,
+		response,
+	) {
+		let pc_id = request?.mw_userid;
+		let role = request?.mw_roles;
+
+		if (!pc_id && !role.includes('program_coordinator')) {
+			return response.status().json({
+				message: 'Invalid program coordinator access',
+			});
+		}
+
+		const user_id = id.id;
+		return this.beneficiariesService.findOne(user_id, response);
 	}
 
 	//daily activities

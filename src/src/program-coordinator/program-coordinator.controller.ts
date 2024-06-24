@@ -190,4 +190,35 @@ export class ProgramCoordinatorController {
 			response,
 		);
 	}
+
+	@Post('/facilitators/cohort')
+	@UseGuards(new AuthGuard())
+	public async getCohortDataForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getCohortDataForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/beneficiaries/:id')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	public async getBeneficiaryDetailsforProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param() id: Number,
+	) {
+		return this.programCoordinatorService.getBeneficiaryDetailsforProgramCoordinator(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }
