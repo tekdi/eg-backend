@@ -432,6 +432,9 @@ export class ProgramCoordinatorService {
 				users.push({
 					user_id: user.user_id,
 					address: user.address,
+					first_name: user.first_name,
+					middle_name: user.middle_name,
+					last_name: user.last_name,
 					state: user.state,
 					district: user.district,
 					village: user.village,
