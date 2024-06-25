@@ -242,6 +242,7 @@ export class VolunteerService {
 
 			const usersFields = [
 				'first_name',
+				'middle_name',
 				'last_name',
 				'gender',
 				'mobile',
@@ -305,6 +306,7 @@ export class VolunteerService {
 					[
 						'id',
 						'first_name',
+						'middle_name',
 						'last_name',
 						'gender',
 						'mobile',
