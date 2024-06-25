@@ -1164,6 +1164,10 @@
 		{
 			"title": "PCR_SCORES_RAPID_QUESTION_10",
 			"value": "10"
+		},
+		{
+			"title": "PCR_SCORES_RAPID_QUESTION_ABSENT",
+			"value": "absent"
 		}
 	],
 	"LEARNING_ACTIVITIES": [
