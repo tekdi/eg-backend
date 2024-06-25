@@ -251,4 +251,19 @@ export class ProgramCoordinatorController {
 			response,
 		);
 	}
+
+	@Post('/info/:id')
+	public async getFacilitatorDetails(
+		@Param('id') id: number,
+		@Res() response: Response,
+		@Req() request: any,
+		@Body() body: any,
+	) {
+		return this.programCoordinatorService.getFacilitatorDetails(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }

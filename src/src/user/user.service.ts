@@ -632,10 +632,13 @@ export class UserService {
 		}
 	}
 
-	async userById(id: any, resp?: any, req?: any) {
-		const academic_year_id = req?.mw_academic_year_id;
+	async userById(id: any, resp?: any, req?: any, body?: any) {
+		const academic_year_id =
+			req?.mw_academic_year_id == undefined
+				? body?.academic_year_id
+				: req?.mw_academic_year_id;
 
-		const filterQueryArray = req?.mw_academic_year_id
+		const filterQueryArray = academic_year_id
 			? `(where: {academic_year_id: {_eq: ${academic_year_id}}})`
 			: ``;
 

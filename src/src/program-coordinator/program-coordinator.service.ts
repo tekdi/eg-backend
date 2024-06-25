@@ -7,6 +7,7 @@ import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class ProgramCoordinatorService {
@@ -18,6 +19,7 @@ export class ProgramCoordinatorService {
 		private authService: AuthService,
 		private beneficiariesService: BeneficiariesService,
 		private uploadFileService: UploadFileService,
+		public userService: UserService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {
@@ -945,6 +947,16 @@ export class ProgramCoordinatorService {
 
 		userFilter.push(`pc_id:{_eq:${pc_id}}`);
 
+		if (body?.status) {
+			userFilter.push(`status:{_eq:${body?.status}}`);
+		}
+
+		if (body?.search) {
+			userFilter.push(
+				`user: {_or: [{first_name: {_eq: "${body?.search}"}}, {last_name: {_eq: "${body?.search}"}}]}`,
+			);
+		}
+
 		let filterQuery = userFilter.join(', ');
 
 		// Pagination parameters
@@ -1565,6 +1577,19 @@ export class ProgramCoordinatorService {
 		});
 	}
 
+	public async getFacilitatorDetails(id, body, request, response) {
+		let result = await this.userService.userById(
+			id,
+			request,
+			response,
+			body,
+		);
+
+		response.status(200).json({
+			message: 'Data retrieved successfully',
+			data: result,
+		});
+	}
 	// #############################################################DAILY ACTIVITIES API########################################################################
 
 	public async activitiesCreate(request: any, body: any, resp: any) {
