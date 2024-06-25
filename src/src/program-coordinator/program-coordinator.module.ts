@@ -19,6 +19,8 @@ import { S3Module } from 'src/services/s3/s3.module';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { ProgramCoordinatorController } from './program-coordinator.controller';
 import { ProgramCoordinatorService } from './program-coordinator.service';
+import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
+import { UploadFileModule } from 'src/upload-file/upload-file.module';
 
 @Module({
 	imports: [
@@ -28,7 +30,9 @@ import { ProgramCoordinatorService } from './program-coordinator.service';
 		HelperModule,
 		UserModule,
 		AcknowledgementModule,
+		BeneficiariesModule,
 		S3Module,
+		UploadFileModule,
 	],
 	controllers: [ProgramCoordinatorController],
 	providers: [ProgramCoordinatorService, Method, AuthService],
@@ -44,6 +48,11 @@ export class ProgramCoordinatorModule implements NestModule {
 				'/program-coordinator/activities/list',
 				'/program-coordinator/learners/facilitator/list',
 				'/program-coordinator/learners/list',
+				'/program-coordinator/facilitators/cohort',
+				'/program-coordinator/beneficiaries/:id',
+				'/program-coordinator/camps/list',
+				'/program-coordinator/camps/:id',
+				'/program-coordinator/info/:id',
 			)
 			.forRoutes(ProgramCoordinatorController);
 	}
