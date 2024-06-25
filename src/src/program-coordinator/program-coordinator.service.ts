@@ -374,7 +374,7 @@ export class ProgramCoordinatorService {
 						email_id
 						program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
 								program_facilitators(where: {${filterQuery}}, limit: ${limit}, offset: ${offset})  {
-										facilitator_id: id
+										facilitator_id: user_id
 										status
 										user {
 												first_name
@@ -432,6 +432,9 @@ export class ProgramCoordinatorService {
 				users.push({
 					user_id: user.user_id,
 					address: user.address,
+					first_name: user.first_name,
+					middle_name: user.middle_name,
+					last_name: user.last_name,
 					state: user.state,
 					district: user.district,
 					village: user.village,
