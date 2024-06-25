@@ -17,7 +17,7 @@ export class SessionsService {
 	async createSession(body: any, request: any, response: any) {
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
-
+		const camp_id = body?.camp_id;
 		// Step 1: Retrieve the camp details to check the camp_type
 		let campQuery = `query GetCampType {
 			camps(where: {id: {_eq: ${body?.camp_id}}}) {
@@ -49,61 +49,26 @@ export class SessionsService {
 
 		// Step 2: If camp_type is "PCR", check the baseline assessment for all learners
 		if (camp_type === 'pcr') {
-			let learnerQuery = '';
-			let validationMessage = '';
+			let assessment_name = '';
 
-			const status1 = this.enumService
-				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
-				.data.map((item) => item.value);
-			const status2 = this.enumService
-				.getEnumValue('PCR_SCORES_RAPID_QUESTION')
-				.data.map((item) => item.value);
-			const status = [...(status1 || []), ...(status2 || [])];
 			if (session_number >= 1 && session_number <= 6) {
-				learnerQuery = `baseline_learning_level`;
-				validationMessage =
-					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
+				assessment_name = `baseline_learning_level`;
 			} else if (session_number >= 7 && session_number <= 13) {
-				learnerQuery = `rapid_assessment_first_learning_level`;
-				validationMessage =
-					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
-			} else if (session_number >= 14 && session_number <= 20) {
-				learnerQuery = `rapid_assessment_second_learning_level`;
-				validationMessage =
-					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
+				assessment_name = `rapid_assessment_first_learning_level`;
+			} else if (session_number >= 14 && session_number <= 19) {
+				assessment_name = `rapid_assessment_second_learning_level`;
+			} else if (session_number >= 20) {
+				assessment_name = `endline_learning_level`;
 			}
-			let learnerQuerys = `query MyQuery {
-				users(where:{
-					group_users:{
-						member_type:{_eq:"member"},
-						group:{
-							camp:{id:{_eq:${body?.camp_id}}},
-						}
-					}
-					program_beneficiaries:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}
-					_not:{
-						pcr_scores: {
-							${learnerQuery}: {_in: ${JSON.stringify(status)}}
-					}
-					}
-					}) {
-					id
-				}
-			}`;
 
-			const learnerRes = await this.hasuraServiceFromServices.getData({
-				query: learnerQuerys,
-			});
-
-			const learnersWithoutBaseline = learnerRes?.data?.users;
-
-			if (learnersWithoutBaseline.length > 0) {
-				return response.status(400).json({
-					success: false,
-					key: 'ID',
-					message: validationMessage,
-					data: learnersWithoutBaseline,
-				});
+			const data = await this.checkPcr(
+				academic_year_id,
+				program_id,
+				camp_id,
+				assessment_name,
+			);
+			if (!data.success) {
+				return response.status(data.status).json(data.response);
 			}
 		}
 
@@ -241,58 +206,26 @@ export class SessionsService {
 		}
 
 		if (camp_type === 'pcr') {
-			const status1 = this.enumService
-				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
-				.data.map((item) => item.value);
-			const status2 = this.enumService
-				.getEnumValue('PCR_SCORES_RAPID_QUESTION')
-				.data.map((item) => item.value);
-			const status = [...(status1 || []), ...(status2 || [])];
+			let assessment_name = '';
+
 			if (session_number >= 1 && session_number <= 6) {
-				learnerQuery = `baseline_learning_level`;
-				validationMessage =
-					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
+				assessment_name = `baseline_learning_level`;
 			} else if (session_number >= 7 && session_number <= 13) {
-				learnerQuery = `rapid_assessment_first_learning_level`;
-				validationMessage =
-					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
-			} else if (session_number >= 14 && session_number <= 20) {
-				learnerQuery = `rapid_assessment_second_learning_level`;
-				validationMessage =
-					'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
+				assessment_name = `rapid_assessment_first_learning_level`;
+			} else if (session_number >= 14 && session_number <= 19) {
+				assessment_name = `rapid_assessment_second_learning_level`;
+			} else if (session_number >= 20) {
+				assessment_name = `endline_learning_level`;
 			}
-			const query = `query MyQuery {
-					users(where:{
-							group_users:{
-									member_type:{_eq:"member"},
-									group:{
-											camp:{id:{_eq:${camp_id}}},
-									}
-							}
-							program_beneficiaries:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}
-							_not:{
-									pcr_scores: {
-											${learnerQuery}: {_in: ${JSON.stringify(status)}}
-									}
-							}
-					}) {
-							id
-					}
-			}`;
 
-			const learnerRes = await this.hasuraServiceFromServices.getData({
-				query: query,
-			});
-
-			const learnersWithoutAssessment = learnerRes?.data?.users;
-
-			if (learnersWithoutAssessment.length > 0) {
-				return response.status(422).json({
-					success: false,
-					key: 'ID',
-					message: validationMessage,
-					data: learnersWithoutAssessment,
-				});
+			const data = await this.checkPcr(
+				academic_year_id,
+				program_id,
+				camp_id,
+				assessment_name,
+			);
+			if (!data.success) {
+				return response.status(data.status).json(data.response);
 			}
 		}
 
@@ -624,5 +557,126 @@ export class SessionsService {
 				data: {},
 			});
 		}
+	}
+
+	public async checkPcr(
+		academic_year_id: number,
+		program_id: number,
+		camp_id: number,
+		assessment_name: string,
+	) {
+		let learnerQuery = [];
+		let validationMessage = '';
+		const status1 = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+		const status2 = this.enumService
+			.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+			.data.map((item) => item.value);
+		const status = [...(status1 || []), ...(status2 || [])];
+		if (assessment_name === 'baseline_learning_level') {
+			learnerQuery.push(
+				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
+			);
+			validationMessage =
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
+		} else if (
+			assessment_name === 'rapid_assessment_first_learning_level'
+		) {
+			learnerQuery.push(
+				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
+			);
+			learnerQuery.push(
+				`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
+					status,
+				)}}`,
+			);
+			validationMessage =
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
+		} else if (
+			assessment_name === 'rapid_assessment_second_learning_level'
+		) {
+			learnerQuery.push(
+				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
+			);
+			learnerQuery.push(
+				`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
+					status,
+				)}}`,
+			);
+			learnerQuery.push(
+				`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
+					status,
+				)}}`,
+			);
+
+			validationMessage =
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
+		} else if (assessment_name === 'endline_learning_level') {
+			learnerQuery.push(
+				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
+			);
+			learnerQuery.push(
+				`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
+					status,
+				)}}`,
+			);
+			learnerQuery.push(
+				`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
+					status,
+				)}}`,
+			);
+
+			learnerQuery.push(
+				`endline_learning_level: {_in: ${JSON.stringify(status)}}`,
+			);
+			validationMessage =
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_ENDLINE_ASSESSMENTS_COMPLETED';
+		}
+		const query = `query MyQuery {
+			users(where:{
+					group_users:{
+							member_type:{_eq:"member"},
+							group:{
+									camp:{id:{_eq:${camp_id}}},
+							}
+					}
+					program_beneficiaries:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}
+					_not:{
+							pcr_scores: {
+									_or:{${learnerQuery.join(',')}}
+							}
+					}
+			}) {
+					id
+					pcr_scores {
+						baseline_learning_level
+						rapid_assessment_first_learning_level
+						rapid_assessment_second_learning_level
+						endline_learning_level
+					}
+			}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const learnersWithoutAssessment = learnerRes?.data?.users;
+
+		if (learnersWithoutAssessment.length > 0) {
+			return {
+				success: false,
+				status: 422,
+				response: {
+					success: false,
+					key: 'ID',
+					message: validationMessage,
+					data: learnersWithoutAssessment,
+				},
+			};
+		}
+
+		return { success: true };
 	}
 }
