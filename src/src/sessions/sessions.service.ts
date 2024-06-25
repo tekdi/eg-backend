@@ -637,6 +637,7 @@ export class SessionsService {
 			users(where:{
 					group_users:{
 							member_type:{_eq:"member"},
+							status:{_eq:"active"},
 							group:{
 									camp:{id:{_eq:${camp_id}}},
 							}

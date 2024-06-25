@@ -4895,32 +4895,61 @@ export class CampService {
 				data: {},
 			});
 		}
-		const baseLine = this.enumService
+		const status1 = this.enumService
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
+		const status2 = this.enumService
+			.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+			.data.map((item) => item.value);
+		const status = [...(status1 || []), ...(status2 || [])];
 		// Check if all learners have completed the endline assessment
 		let sessionQ = [];
 
 		if (Array.isArray(camp_id)) {
 			sessionQ = camp_id.map(
 				(item) =>
-					`camp_${item}:learning_lesson_plans_master(where: {_not: {session_tracks: {camp_id: {_eq: ${item}}, status: {_eq: "complete"}}}, type: {_eq: "pcr"}}) {
+					`camp_${item}_user:users(where: {
+						group_users: {
+							member_type: {_eq: "member"},
+							status:{_eq:"active"},
+							group: {camp: {id: {_eq:${item}}}}
+						},
+					_not: {
+						pcr_scores: {
+							_or:{
+								baseline_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+								rapid_assessment_first_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+								rapid_assessment_second_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+								endline_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+							}
+						}
+					}
+					}) {
+						id
+						first_name
+						pcr_scores{
+							baseline_learning_level
+							rapid_assessment_first_learning_level
+							rapid_assessment_second_learning_level        
+							endline_learning_level
+							
+						}
+					}
+					camp_${item}:learning_lesson_plans_master(where: {_not: {session_tracks: {camp_id: {_eq: ${item}}, status: {_eq: "complete"}}}, type: {_eq: "pcr"}}) {
 					ordering
 			}`,
 			);
 		}
 
 		let learnerQuery = `query MyQuery {
-			users(where: {
-					group_users: {
-							member_type: {_eq: "member"},
-							group: {camp: {id: {_in: [${camp_id}]}}}
-					},
-					_not: {pcr_scores: {endline_learning_level: {_in: ${JSON.stringify(baseLine)}}}}
-			}) {
-					id
-					first_name
-			}
 			${sessionQ.join(' ')}
 	}`;
 
@@ -4928,7 +4957,8 @@ export class CampService {
 			query: learnerQuery,
 		});
 
-		const learnersWithoutEndline = learnerRes?.data?.users;
+		// const learnersWithoutEndline = learnerRes?.data?.users;
+
 		let sessionData = [];
 		if (Array.isArray(camp_id)) {
 			sessionData = camp_id
@@ -4937,6 +4967,7 @@ export class CampService {
 						return {
 							camp_id: item,
 							session: learnerRes?.data?.[`camp_${item}`],
+							users: learnerRes?.data?.[`camp_${item}_user`],
 						};
 					}
 				})
@@ -4950,15 +4981,6 @@ export class CampService {
 				key: 'session',
 				message: 'CAMP_INCOMPLETE_SESSION_OR_ENDLINE_NOT_FILLED',
 				data: sessionData,
-			});
-		}
-		if (learnersWithoutEndline.length > 0) {
-			return response.json({
-				status: 422,
-				success: false,
-				key: 'user_id',
-				message: 'CAMP_INCOMPLETE_SESSION_OR_ENDLINE_NOT_FILLED',
-				data: learnersWithoutEndline,
 			});
 		}
 
