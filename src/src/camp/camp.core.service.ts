@@ -93,7 +93,7 @@ export class CampCoreService {
 			let sql = `   
       SELECT
     camp_id
-FROM (e
+FROM (
     SELECT 
         c.id AS camp_id,
         COUNT(DISTINCT lst.learning_lesson_plan_id) AS completed_lesson_count,
