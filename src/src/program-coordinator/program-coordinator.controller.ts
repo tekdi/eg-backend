@@ -221,4 +221,49 @@ export class ProgramCoordinatorController {
 			response,
 		);
 	}
+
+	@Post('/camps/list')
+	@UseGuards(new AuthGuard())
+	public async getCampDetailsForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getCampDetailsForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/camps/:id')
+	@UseGuards(new AuthGuard())
+	public async campByIdForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param() id: any,
+	) {
+		return this.programCoordinatorService.campByIdForProgramCoordinator(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/info/:id')
+	public async getFacilitatorDetails(
+		@Param('id') id: number,
+		@Res() response: Response,
+		@Req() request: any,
+		@Body() body: any,
+	) {
+		return this.programCoordinatorService.getFacilitatorDetails(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }

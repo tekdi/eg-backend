@@ -6,6 +6,8 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
+import { UploadFileService } from 'src/upload-file/upload-file.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class ProgramCoordinatorService {
@@ -16,6 +18,8 @@ export class ProgramCoordinatorService {
 		private readonly userHelperService: UserHelperService,
 		private authService: AuthService,
 		private beneficiariesService: BeneficiariesService,
+		private uploadFileService: UploadFileService,
+		public userService: UserService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {
@@ -943,6 +947,16 @@ export class ProgramCoordinatorService {
 
 		userFilter.push(`pc_id:{_eq:${pc_id}}`);
 
+		if (body?.status) {
+			userFilter.push(`status:{_eq:${body?.status}}`);
+		}
+
+		if (body?.search) {
+			userFilter.push(
+				`user: {_or: [{first_name: {_eq: "${body?.search}"}}, {last_name: {_eq: "${body?.search}"}}]}`,
+			);
+		}
+
 		let filterQuery = userFilter.join(', ');
 
 		// Pagination parameters
@@ -1194,7 +1208,390 @@ export class ProgramCoordinatorService {
 		return this.beneficiariesService.findOne(user_id, response);
 	}
 
-	//daily activities
+	public async getCampDetailsForProgramCoordinator(body, request, response) {
+		let pc_id = request?.mw_userid;
+		let query;
+		let hasura_response;
+		let pc_string = '';
+		const limit = body?.limit || 10;
+		const page = body?.page || 1;
+		const offset = (page - 1) * limit;
+		let camp_data;
+		let camp_info;
+
+		let userFilter = [];
+
+		// filters
+		userFilter.push(`pc_id:{_eq:${pc_id}}`);
+
+		let filterQuery = userFilter.join(', ');
+
+		let pc_facilitator_list = body?.facilitator_list
+			? body?.facilitator_list
+			: [];
+
+		if (pc_facilitator_list?.length == 0) {
+			query = `
+        query MyQuery {
+            program_faciltators(where: {${filterQuery}}, limit:${limit}, offset:${offset}) {
+                user_id
+                academic_year_id
+                academic_year {
+                  name
+                }
+                program_id
+                program {
+                  name
+                }
+                status
+                user {
+                  first_name
+                  middle_name
+                  last_name
+                }
+            }
+            program_faciltators_aggregate(where: {${filterQuery}}) {
+                aggregate {
+                  count
+                }
+              }
+          }
+        `;
+
+			hasura_response = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+			pc_facilitator_list = hasura_response?.data?.program_faciltators;
+		}
+
+		if (pc_facilitator_list && pc_facilitator_list.length > 0) {
+			for (let i = 0; i < pc_facilitator_list.length; i++) {
+				let temp_prerak_list = pc_facilitator_list[i];
+				if (i == 0) {
+					pc_string =
+						pc_string +
+						`'${temp_prerak_list?.user_id} ${temp_prerak_list?.academic_year_id} ${temp_prerak_list?.program_id}'`;
+				} else {
+					pc_string =
+						pc_string +
+						`,'${temp_prerak_list?.user_id} ${temp_prerak_list?.academic_year_id} ${temp_prerak_list?.program_id}'`;
+				}
+			}
+		}
+
+		if (pc_string != null || pc_string != undefined) {
+			let search = body?.search;
+			let status = body?.status;
+			let sort = body?.sort ? body?.sort : 'ASC';
+			let additionalFilters = '';
+
+			if (search) {
+				additionalFilters += `AND (u.first_name LIKE '%${search}%' OR u.last_name LIKE '%${search}%')`;
+			}
+
+			let sql = `
+			SELECT c.id as camp_id,u.first_name,u.last_name,u.id as facilitator_id,g.program_id,g.academic_year_id
+			FROM camps c
+			INNER JOIN group_users gu on c.group_id = gu.group_id
+			INNER JOIN groups g on c.group_id = g.id
+			INNER JOIN users u on gu.user_id = u.id
+			 WHERE
+				concat(gu.user_id, ' ', g.academic_year_id, ' ', g.program_id) IN (${pc_string}) and gu.member_type = 'owner' and gu.status = 'active'  
+            ${additionalFilters}
+        ORDER BY c.id ${sort}
+        LIMIT ${limit} OFFSET ${offset}
+        `;
+
+			camp_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+
+			if (camp_data == undefined) {
+				return response.status(404).json({
+					message: 'Data not found',
+					data: [],
+				});
+			}
+
+			camp_info =
+				this.hasuraServiceFromServices.getFormattedData(camp_data);
+		}
+
+		return response.status(200).json({
+			message: 'Data retrieved successfully',
+			data: camp_info,
+		});
+	}
+
+	public async campByIdForProgramCoordinator(
+		id: any,
+		body: any,
+		req: any,
+		resp,
+	) {
+		const camp_id = id?.id;
+		const facilitator_id = body?.user_id;
+		const program_id = body?.program_id;
+		const academic_year_id = body?.academic_year_id;
+		let member_type = 'owner';
+		let status = 'active';
+
+		let qury = `query MyQuery {
+			camps(where: {id:{_eq:${camp_id}},group_users: {group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}},member_type: {_eq:${member_type}}, status: {_eq:${status}}, user_id: {_eq:${facilitator_id}}}}) {
+			  id
+			  kit_ratings
+			  kit_feedback
+			  kit_received
+			  kit_was_sufficient
+			  preferred_start_time
+			  preferred_end_time
+			  week_off
+				type
+			  group{
+				name
+				description
+				status
+			  }
+			  faciltator: group_users(where: {member_type: {_eq: "owner"}, status: {_eq: "active"}}) {
+				user {
+					id
+					first_name
+					middle_name
+					last_name
+					mobile
+					state
+					district
+					village
+					block
+					profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+				}
+			}
+			  properties{
+				lat
+				long
+				street
+				state
+				district
+				block
+				village
+				grampanchayat
+				property_type
+				property_facilities
+				property_photo_building
+				property_photo_classroom
+				property_photo_other
+				photo_other {
+					id
+					name
+				  }
+				  photo_building {
+					id
+					name
+				  }
+				  photo_classroom {
+					id
+					name
+				  }
+			  }
+
+			  group_users(where: {member_type: {_neq: "owner"}, status: {_eq: "active"}}) {
+				user {
+				  id
+				  state
+				  district
+				  block
+				  village
+				  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+					id
+					name
+					doument_type
+					document_sub_type
+					path
+				  }
+				  program_beneficiaries {
+					user_id
+					status
+					enrollment_first_name
+					enrollment_last_name
+					enrollment_middle_name
+					is_continued
+					syc_subjects
+					exam_fee_date
+					exam_fee_document_id
+				  }
+				}
+			  }
+			}
+		  }
+		  `;
+
+		console.log('query->>', qury);
+		const data = { query: qury };
+		const response = await this.hasuraServiceFromServices.getData(data);
+		const newQdata = response?.data?.camps;
+
+		if (!newQdata || newQdata?.length == 0) {
+			return resp.status(400).json({
+				success: false,
+				message: 'Camp data not found!',
+				data: {},
+			});
+		}
+
+		const userData = await Promise.all(
+			newQdata?.map(async (item) => {
+				item.faciltator = await Promise.all(
+					item?.faciltator?.map(async (item, key) => {
+						const userObj = item.user;
+						let profilePhoto = userObj.profile_photo_1?.[0] || {};
+
+						if (profilePhoto?.id) {
+							const { success, data: fileData } =
+								await this.uploadFileService.getDocumentById(
+									profilePhoto.id,
+								);
+							if (success && fileData?.fileUrl) {
+								userObj.profile_photo_1 = {
+									...profilePhoto,
+									fileUrl: fileData.fileUrl,
+								};
+							}
+						} else {
+							userObj.profile_photo_1 = profilePhoto;
+						}
+						return userObj;
+					}),
+				);
+				const group_users = await Promise.all(
+					item.group_users.map(async (userObj) => {
+						userObj = userObj.user;
+						let profilePhoto = userObj.profile_photo_1;
+						if (profilePhoto?.[0]?.id !== undefined) {
+							const { success, data: fileData } =
+								await this.uploadFileService.getDocumentById(
+									userObj.profile_photo_1[0].id,
+								);
+							if (success && fileData?.fileUrl) {
+								userObj.profile_photo_1 = {
+									id: userObj.profile_photo_1[0]?.id,
+									name: userObj.profile_photo_1[0]?.name,
+									doument_type:
+										userObj.profile_photo_1[0]
+											?.doument_type,
+									document_sub_type:
+										userObj.profile_photo_1[0]
+											?.document_sub_type,
+									path: userObj.profile_photo_1[0]?.path,
+									fileUrl: fileData.fileUrl,
+								};
+							}
+						} else {
+							userObj.profile_photo_1 = {};
+						}
+
+						return userObj;
+					}),
+				);
+				let properties = item?.properties;
+				const { photo_building, photo_classroom, photo_other } =
+					item?.properties || {};
+				if (photo_building?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							photo_building?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						properties = {
+							...properties,
+							photo_building: {
+								...photo_building,
+								fileUrl: fileData?.fileUrl,
+							},
+						};
+					}
+				}
+
+				if (photo_classroom?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							photo_classroom?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						properties = {
+							...properties,
+							photo_classroom: {
+								...photo_classroom,
+								fileUrl: fileData?.fileUrl,
+							},
+						};
+					}
+				}
+
+				if (photo_other?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							photo_other?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						properties = {
+							...properties,
+							photo_other: {
+								...photo_other,
+								fileUrl: fileData?.fileUrl,
+							},
+						};
+					}
+				}
+
+				return { ...item, properties, group_users };
+			}),
+		);
+		const userResult = userData?.[0];
+		if (!userResult?.properties) {
+			userResult.properties = {
+				lat: null,
+				long: null,
+				street: null,
+				state: null,
+				district: null,
+				block: null,
+				village: null,
+				grampanchayat: null,
+				property_type: null,
+				property_facilities: null,
+				property_photo_building: null,
+				property_photo_classroom: null,
+				property_photo_other: null,
+			};
+		}
+		return resp.status(200).json({
+			success: true,
+			message: 'Data found successfully!',
+			data: userResult || {},
+		});
+	}
+
+	public async getFacilitatorDetails(id, body, request, response) {
+		let result = await this.userService.userById(
+			id,
+			request,
+			response,
+			body,
+		);
+
+		response.status(200).json({
+			message: 'Data retrieved successfully',
+			data: result,
+		});
+	}
+	// #############################################################DAILY ACTIVITIES API########################################################################
+
 	public async activitiesCreate(request: any, body: any, resp: any) {
 		try {
 			let user_id = request.mw_userid;
