@@ -6,6 +6,7 @@ import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
+import e from 'express';
 const moment = require('moment');
 @Injectable()
 export class CampCoreService {
@@ -92,7 +93,7 @@ export class CampCoreService {
 			let sql = `   
       SELECT
     camp_id
-FROM (
+FROM (e
     SELECT 
         c.id AS camp_id,
         COUNT(DISTINCT lst.learning_lesson_plan_id) AS completed_lesson_count,
