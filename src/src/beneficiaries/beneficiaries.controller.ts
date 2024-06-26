@@ -528,4 +528,10 @@ export class BeneficiariesController {
 			response,
 		);
 	}
+
+	@Post('/beneficiaries-without-baseline')
+	@UseGuards(new AuthGuard())
+	withOutBaseline(@Req() request: any, @Res() response: any) {
+		return this.beneficiariesService.withOutBaseline(request, response);
+	}
 }
