@@ -342,6 +342,93 @@ export class AuthService {
 		}
 	}
 
+	public async resetPasswordUsingIdVolunteer(req, header, response) {
+		const { mw_roles } = header;
+		const authToken = header.header('authorization');
+		const decoded: any = jwt_decode(authToken);
+		let keycloak_id = decoded.sub;
+
+		let query2 = {
+			query: `query MyQuery {
+				users(where: {keycloak_id: {_eq: "${keycloak_id}" }}) {
+				  id
+				  keycloak_id
+				  program_users {
+					roles {
+					  id
+					  role_type
+					  slag
+					}
+				  }
+				}
+			  }`,
+		};
+
+		const userRole = await this.hasuraService.postData(query2);
+		if (mw_roles.includes('volunteer_admin')) {
+			let query = {
+				query: `query MyQuery {
+					users_by_pk(id: ${req.id}) {
+					  keycloak_id
+					  last_name
+					  id
+					  first_name
+					}
+				  }`,
+			};
+
+			const userRes = await this.hasuraService.postData(query);
+
+			if (userRes) {
+				const token =
+					await this.keycloakService.getAdminKeycloakToken();
+				if (
+					token?.access_token &&
+					userRes.data.users_by_pk.keycloak_id
+				) {
+					const resetPasswordRes =
+						await this.keycloakService.resetPassword(
+							userRes.data.users_by_pk.keycloak_id,
+							token.access_token,
+							req.password,
+						);
+
+					if (resetPasswordRes) {
+						return response.status(200).json({
+							success: true,
+							message: 'Password updated successfully!',
+							data: {},
+						});
+					} else {
+						return response.status(200).json({
+							success: false,
+							message: 'unable to reset password!',
+							data: {},
+						});
+					}
+				} else {
+					return response.status(200).json({
+						success: false,
+						message: 'unable to get token',
+						data: {},
+					});
+				}
+			} else {
+				return response.status(200).json({
+					success: false,
+					message: 'User not found!',
+					data: {},
+				});
+			}
+		} else {
+			return response.status(200).json({
+				success: false,
+				message: "User cann't reset password",
+				data: {},
+			});
+		}
+	}
+
 	public async login(req, response) {
 		const data = {
 			username: req.body.username,
