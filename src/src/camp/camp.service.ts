@@ -4963,7 +4963,10 @@ export class CampService {
 		if (Array.isArray(camp_id)) {
 			sessionData = camp_id
 				.map((item) => {
-					if (learnerRes?.data?.[`camp_${item}`]?.length > 0) {
+					if (
+						learnerRes?.data?.[`camp_${item}`]?.length > 0 ||
+						learnerRes?.data?.[`camp_${item}_user`]?.length > 0
+					) {
 						return {
 							camp_id: item,
 							session: learnerRes?.data?.[`camp_${item}`],
