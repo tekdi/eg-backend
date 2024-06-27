@@ -1375,6 +1375,9 @@ export class BeneficiariesService {
 				id
 				enrollment_status
 				enrolled_for_board
+				bordID{
+					name
+				  }
 				subjects
 				academic_year_id
 				payment_receipt_document_id

@@ -1647,6 +1647,10 @@ export class UserService {
 				(user) => user.program_beneficiaries,
 			);
 
+			const program_users_data = users.flatMap(
+				(user) => user.program_users,
+			);
+
 			let usersFound = false;
 			if (facilitators_data.length > 0 || beneficiaries_data.length > 0) {
 				usersFound = true;
@@ -1657,6 +1661,7 @@ export class UserService {
 				data: {
 					program_faciltators: facilitators_data,
 					program_beneficiaries: beneficiaries_data,
+					program_users: program_users_data,
 				},
 			});
 		} else {
@@ -1683,7 +1688,12 @@ export class UserService {
 						academic_year_id
 						program_id
 					  }
-					  program_beneficiaries{
+					  program_beneficiaries{	
+						user_id
+						academic_year_id
+						program_id
+					}
+					program_users{	
 						user_id
 						academic_year_id
 						program_id
