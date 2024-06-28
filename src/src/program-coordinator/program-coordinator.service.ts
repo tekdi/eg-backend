@@ -980,7 +980,7 @@ export class ProgramCoordinatorService {
 
 		query = `
 		query MyQuery {
-			program_faciltators(where: {${filterQuery}},limit:${limit},offset:${offset}) {
+			program_faciltators(where: {${filterQuery}}) {
 				user_id
 				academic_year_id
 				academic_year{
@@ -995,6 +995,12 @@ export class ProgramCoordinatorService {
 				  first_name
 				  middle_name
 				  last_name
+				  state
+				  district
+				  village
+				  block
+				  grampanchayat
+				  address
 				}
 			}
 			program_faciltators_aggregate(where: {${filterQuery}}) {
@@ -1010,9 +1016,6 @@ export class ProgramCoordinatorService {
 			query: query,
 		});
 		const facilitator_data = hasura_response?.data?.program_faciltators;
-		const total_count =
-			hasura_response?.data?.program_faciltators_aggregate?.aggregate
-				?.count || 0;
 
 		if (facilitator_data?.length === 0) {
 			return response.status(422).json({
@@ -1022,16 +1025,10 @@ export class ProgramCoordinatorService {
 			});
 		}
 
-		const totalPages = Math.ceil(total_count / limit);
-
 		return response.status(200).send({
 			success: true,
 			data: {
 				facilitator_data: facilitator_data,
-				total_count: total_count,
-				limit: limit,
-				totalPages: totalPages,
-				currentPage: page,
 			},
 		});
 	}
