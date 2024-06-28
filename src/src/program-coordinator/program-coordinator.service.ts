@@ -255,6 +255,16 @@ export class ProgramCoordinatorService {
 						);
 					}
 
+					if (role === 'program_coordinator') {
+						const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%85%E0%A4%95%E0%A4%BE%E0%A4%89%E0%A4%82%E0%A4%9F%20%E0%A4%AC%E0%A4%A8%E0%A4%BE%E0%A4%AF%E0%A4%BE%20%E0%A4%97%E0%A4%AF%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A5%8B%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A5%8D%E0%A4%A4%E0%A4%BE%20%E0%A4%A8%E0%A4%BE%E0%A4%AE%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%20%E0%A4%94%E0%A4%B0%20%E0%A4%AA%E0%A4%BE%E0%A4%B8%E0%A4%B5%E0%A4%B0%E0%A5%8D%E0%A4%A1%20%3Carg2%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
+						const args = `arg1:${body.username},arg2:${body.password}`;
+						const otpRes = await this.authService.sendSMS(
+							body.mobile,
+							message,
+							args,
+						);
+					}
+
 					return response.status(200).send({
 						success: true,
 						message: 'User created successfully',
@@ -1035,15 +1045,12 @@ export class ProgramCoordinatorService {
 		let query;
 		let hasura_response;
 		let pc_string = '';
-		const limit = body?.limit || 10;
-		const page = body?.page || 1;
-		const offset = (page - 1) * limit;
+
 		let learner_data;
 		let learner_info;
 
 		let userFilter = [];
 
-		// filters
 		userFilter.push(`pc_id:{_eq:${pc_id}}`);
 
 		let filterQuery = userFilter.join(', ');
@@ -1055,7 +1062,7 @@ export class ProgramCoordinatorService {
 		if (pc_facilitator_list?.length == 0) {
 			query = `
         query MyQuery {
-            program_faciltators(where: {${filterQuery}}, limit:${limit}, offset:${offset}) {
+            program_faciltators(where: {${filterQuery}}) {
                 user_id
                 academic_year_id
                 academic_year {
@@ -1125,7 +1132,7 @@ export class ProgramCoordinatorService {
             concat(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
             ${additionalFilters}
         ORDER BY pb.user_id ${sort}
-        LIMIT ${limit} OFFSET ${offset}
+     
         `;
 
 			learner_data = (
@@ -1593,6 +1600,124 @@ export class ProgramCoordinatorService {
 			data: result,
 		});
 	}
+
+	public async getProgramCoordinatorProfile(request, response) {
+		let query;
+
+		let user_id = request?.mw_userid;
+
+		query = `query MyQuery {
+			users_by_pk(id:${user_id}) {
+			  user_id: id
+			  first_name
+			  middle_name
+			  gender
+			  mobile
+			  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+				id
+				name
+				doument_type
+				document_sub_type
+				path
+				}
+			  email_id
+			  last_name
+			  state
+			  district
+			  block
+			  village
+			  grampanchayat
+			  address
+			}
+		  }
+		  `;
+
+		const result = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const data = result?.data?.users_by_pk;
+
+		if (!data || data == undefined || data == null) {
+			return response.status(404).json({
+				message: 'Data not found',
+				data: null,
+			});
+		} else {
+			let profile_photo_1;
+
+			if (data?.profile_photo_1?.[0]?.id) {
+				const { success, data: fileData } =
+					await this.uploadFileService.getDocumentById(
+						data?.profile_photo_1?.[0]?.id,
+					);
+				if (success && fileData?.fileUrl) {
+					data.profile_photo_1 = {
+						...data?.profile_photo_1?.[0]?.id,
+						fileUrl: fileData.fileUrl,
+					};
+				}
+			} else {
+				data.profile_photo_1 = data?.profile_photo_1?.[0]?.id;
+			}
+
+			return response.status(200).json({
+				message: 'Data found successfully',
+				data: data,
+				profile_photo_1: profile_photo_1,
+			});
+		}
+	}
+
+	public async updateProfile(request: any, body: any, resp: any, id: any) {
+		try {
+			body.updated_by = request.mw_userid;
+
+			const response = await this.hasuraService.q(
+				'users',
+				{
+					...body,
+					id: id,
+				},
+				[
+					'gender',
+					'mobile',
+					'email_id',
+					'dob',
+					'state',
+					'district',
+					'block',
+					'village',
+					'address',
+				],
+				true,
+				[
+					'gender',
+					'mobile',
+					'email_id',
+					'dob',
+					'state',
+					'district',
+					'block',
+					'village',
+					'address',
+				],
+			);
+
+			if (response) {
+				return resp.status(200).json({
+					message: 'Profile Updated Successfully',
+					data: response,
+				});
+			}
+		} catch (error) {
+			return resp.json({
+				status: 500,
+				message: 'Internal server error',
+				data: [],
+			});
+		}
+	}
 	// #############################################################DAILY ACTIVITIES API########################################################################
 
 	public async activitiesCreate(request: any, body: any, resp: any) {
@@ -1760,7 +1885,7 @@ export class ProgramCoordinatorService {
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 			let offset = page > 1 ? limit * (page - 1) : 0;
 
-			const { type, date } = body;
+			const { type, date, user_id } = body;
 			let filterConditions = '';
 
 			if (type) {
@@ -1774,6 +1899,10 @@ export class ProgramCoordinatorService {
 				_gte: "${dateString}",
 				_lt: "${dateString} 24:00:00"
 				}`;
+			}
+
+			if (user_id) {
+				context_id = user_id;
 			}
 
 			let query = `query MyQuery {

@@ -266,4 +266,31 @@ export class ProgramCoordinatorController {
 			response,
 		);
 	}
+
+	@Get('/profile')
+	public async getProgramCoordinatorProfile(
+		@Res() response: Response,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getProgramCoordinatorProfile(
+			request,
+			response,
+		);
+	}
+
+	@Patch('/profile/:id')
+	@UseGuards(new AuthGuard())
+	public async updateProfile(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param('id') id: Number,
+	) {
+		return this.programCoordinatorService.updateProfile(
+			request,
+			body,
+			response,
+			id,
+		);
+	}
 }
