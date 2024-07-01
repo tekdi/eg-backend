@@ -1609,6 +1609,7 @@ export class ProgramCoordinatorService {
 			  first_name
 			  middle_name
 			  gender
+			  dob
 			  mobile
 			  profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
 				id
@@ -1635,6 +1636,8 @@ export class ProgramCoordinatorService {
 
 		const data = result?.data?.users_by_pk;
 
+		let document_id = data?.profile_photo_1?.[0]?.id;
+
 		if (!data || data == undefined || data == null) {
 			return response.status(404).json({
 				message: 'Data not found',
@@ -1658,11 +1661,11 @@ export class ProgramCoordinatorService {
 				data.profile_photo_1 = data?.profile_photo_1?.[0]?.id;
 			}
 
+			data.document_id = document_id;
 			return response.status(200).json({
 				message: 'Data found successfully',
 				data: data,
 				profile_photo_1: profile_photo_1,
-				profile_photo_1_id: data?.profile_photo_1?.[0]?.id,
 			});
 		}
 	}
