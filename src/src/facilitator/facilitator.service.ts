@@ -98,7 +98,7 @@ export class FacilitatorService {
 				break;
 			}
 			case 'main_camp_execution_training': {
-				status = `status: { _in: ["selected_for_onboarding" ]}`;
+				status = `status: { _in: ["selected_for_onboarding","selected_prerak" ]}`;
 				break;
 			}
 			case 'drip_training': {
