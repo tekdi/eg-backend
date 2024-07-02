@@ -69,4 +69,10 @@ export class PcrscoresController {
 	) {
 		return this.pcrscoresService.update(id, body, request, response);
 	}
+
+	@Post('/subjects/list')
+	@UseGuards(new AuthGuard())
+	pcr_subject_list(@Body() body, @Req() request: any, @Res() response: any) {
+		return this.pcrscoresService.pcr_subject_list(body, request, response);
+	}
 }
