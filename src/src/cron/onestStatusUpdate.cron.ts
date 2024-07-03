@@ -15,7 +15,7 @@ export class OnestStatusUpdateCron {
 	) {}
 
 	// Cronjob runs every day at 12am
-	@Cron('0 0 * * *')
+	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
 	async updateOnestUserTrackStatus() {
 		console.log('cron job: Onest User Update Start ');
 		const getOrderIdList = `
