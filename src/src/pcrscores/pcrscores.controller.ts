@@ -75,4 +75,18 @@ export class PcrscoresController {
 	pcr_subject_list(@Body() body, @Req() request: any, @Res() response: any) {
 		return this.pcrscoresService.pcr_subject_list(body, request, response);
 	}
+
+	@Post('/subjects/learners')
+	@UseGuards(new AuthGuard())
+	pcr_camp_learner_list(
+		@Body() body,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.pcrscoresService.pcr_camp_learner_list(
+			body,
+			request,
+			response,
+		);
+	}
 }
