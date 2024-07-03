@@ -446,4 +446,93 @@ export class PcrscoresService {
 			data: [],
 		});
 	}
+
+	async pcr_camp_learner_list(body: any, request: any, response: any) {
+		let program_id = body?.program_id;
+		let subject = body?.subject_name;
+		let camp_id = body?.camp_id;
+		let query;
+		let hasura_response;
+		let subject_list = [];
+		let sql;
+
+		if (!program_id) {
+			return response.status(422).json({
+				message: 'Program id is required',
+			});
+		}
+
+		await this.enumService
+			.getEnumValue('PCR_SUBJECT_LIST')
+			?.data?.map((item) => subject_list.push(item));
+
+		if (!subject_list.includes(subject)) {
+			return response.status(422).json({
+				message: 'Please enter a valid subject',
+				data: [],
+			});
+		}
+
+		query = `query MyQuery2 {
+			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:[${subject}]
+		}}) {
+			  subject_id: id
+			  name
+			  board_id
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const subject_data = hasura_response?.data?.subjects;
+		const subject_ids = subject_data?.map((subject) => subject.subject_id);
+
+		if (subject_ids?.length) {
+			// Create the ILIKE conditions dynamically
+			const ilikeConditions = subject_ids
+				.map((id) => `pb.subjects ILIKE '%${id}%'`)
+				.join(' OR ');
+
+			// Construct the SQL query
+			sql = `
+        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name
+        FROM camps c
+        INNER JOIN group_users gu ON gu.group_id = c.group_id
+        INNER JOIN program_beneficiaries pb ON gu.user_id = pb.user_id
+        INNER JOIN users u ON pb.user_id = u.id
+        WHERE c.id = ${camp_id}
+          AND gu.member_type = 'member' 
+          AND gu.status = 'active' 
+          AND (${ilikeConditions});
+    `;
+		}
+
+		const learner_data = (
+			await this.hasuraServiceFromServices.executeRawSql(sql)
+		)?.result;
+
+		if (!learner_data || learner_data == undefined) {
+			return response.status(404).json({
+				message: 'Data not found',
+				data: [],
+			});
+		}
+		let all_learner_data =
+			this.hasuraServiceFromServices.getFormattedData(learner_data);
+
+		if (all_learner_data?.length > 0) {
+			return response.status(200).json({
+				message: 'Data retrieved successfully',
+				data: all_learner_data,
+			});
+		} else {
+			return response.status(404).json({
+				message: 'Data not found',
+				data: [],
+			});
+		}
+	}
 }
