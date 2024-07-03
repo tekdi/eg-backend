@@ -37,26 +37,39 @@ export class OnestStatusUpdateCron {
 		for (const track of result.data.onest_users_tracking) {
 			try {
 				// Fetch bpp_id and bpp_uri
+				console.log('order_id and id', track.order_id, track.id);
+
 				const response1 = await firstValueFrom(
 					this.httpService.get(
-						`${process.env.ONEST_GET_BPP_ID}/${track.order_id}`,
+						`${process.env.ONEST_BASE_URL}/content/searchOrder/${track.order_id}`,
 					),
 				);
 
 				if (response1) {
 					const { bpp_id, bpp_uri } = response1.data;
-
+					let bap_id,
+						bap_uri = '',
+						domain = '';
+					if (track.context === 'scholarship') {
+						bap_id = process.env.SCHOLARSHIP_BAP_ID;
+						bap_uri = process.env.SCHOLARSHIP_BAP_URI;
+						domain = process.env.SCHOLARSHIP_DOMAIN;
+					} else if (track.context === 'jobs') {
+						bap_id = process.env.JOB_BAP_ID;
+						bap_uri = process.env.JOB_BAP_URI;
+						domain = process.env.JOB_DOMAIN;
+					}
 					// Fetch the status using bpp_id and bpp_uri
 					const response2 = await firstValueFrom(
 						this.httpService.post(
-							`${process.env.ONEST_POST_ORDER_ID}`,
+							`${process.env.ONEST_BASE_URL}/status`,
 							{
 								context: {
-									domain: process.env.DOMAIN,
+									domain: domain,
 									action: process.env.ACTION,
 									version: process.env.VERSION,
-									bap_id: process.env.BAP_ID,
-									bap_uri: process.env.BAP_URI,
+									bap_id: bap_id,
+									bap_uri: bap_uri,
 									bpp_id: bpp_id,
 									bpp_uri: bpp_uri,
 								},
