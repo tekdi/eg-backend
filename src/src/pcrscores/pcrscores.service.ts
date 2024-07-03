@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from 'src/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import { EnumService } from '../enum/enum.service';
 
 @Injectable()
 export class PcrscoresService {
@@ -32,6 +33,7 @@ export class PcrscoresService {
 		private readonly hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private userService: UserService,
+		private enumService: EnumService,
 	) {}
 
 	async create(body: any, request: any, resp: any) {
@@ -258,9 +260,10 @@ export class PcrscoresService {
 		const response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
+
 		const newQdata = response?.data?.pcr_scores;
 
-		if (newQdata.length > 0) {
+		if (newQdata?.length > 0) {
 			return resp.status(200).json({
 				success: true,
 				message: 'Data found successfully!',
@@ -386,5 +389,61 @@ export class PcrscoresService {
 				data: {},
 			});
 		}
+	}
+
+	async pcr_subject_list(body: any, request: any, response: any) {
+		let program_id = body?.program_id;
+
+		if (!program_id) {
+			return response.status(422).json({
+				message: 'Progam id is required',
+				data: [],
+			});
+		}
+
+		let query;
+		let hasura_response;
+		let subject_list = [];
+
+		await this.enumService
+			.getEnumValue('PCR_SUBJECT_LIST')
+			?.data?.map((item) => subject_list.push(item));
+
+		query = `query MyQuery2 {
+			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:${JSON.stringify(
+			subject_list,
+		)}}}) {
+			  subject_id: id
+			  name
+			  board_id
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const subject_data = hasura_response?.data?.subjects;
+
+		const result = subject_data?.reduce((acc, { subject_id, name }) => {
+			let subject = acc?.find((s) => s?.name === name);
+			if (!subject) {
+				subject = { name, ids: [] };
+				acc?.push(subject);
+			}
+			subject?.ids?.push(subject_id);
+			return acc;
+		}, []);
+
+		if (result?.length > 0) {
+			return response.status(200).json({
+				message: 'Data retrieved successfully',
+				data: result,
+			});
+		}
+		return response.status(404).json({
+			message: 'Data not found',
+			data: [],
+		});
 	}
 }
