@@ -394,48 +394,31 @@ export class PcrscoresService {
 	async pcr_subject_list(body: any, request: any, response: any) {
 		let program_id = body?.program_id;
 
+		if (!program_id) {
+			return response.status(422).json({
+				message: 'Progam id is required',
+				data: [],
+			});
+		}
+
 		let query;
 		let hasura_response;
 		let subject_list = [];
-
-		//get board_id by program_id
-
-		query = `query MyQuery2 {
-			boards(where: {program_id: {_eq:${program_id}}}){
-			  id,
-			  name
-			}
-		  }`;
-
-		hasura_response = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-		const board_data = hasura_response?.data?.boards;
-
-		console.log('board_daa-->>', board_data);
-
-		const board_id = board_data.map((board) => board.id);
-
-		console.log('boards->', board_id);
 
 		await this.enumService
 			.getEnumValue('PCR_SUBJECT_LIST')
 			?.data?.map((item) => subject_list.push(item));
 
-		console.log('subj', JSON.stringify(subject_list));
-
-		query = `query MyQuery {
-			subjects(where: {board_id: {_in:[${board_id}]},name:{_in:${JSON.stringify(
+		query = `query MyQuery2 {
+			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:${JSON.stringify(
 			subject_list,
-		)}}}){
-			  subject_id:id,
+		)}}}) {
+			  subject_id: id
 			  name
 			  board_id
 			}
 		  }
 		  `;
-
-		console.log('query-->>', query);
 
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -457,11 +440,10 @@ export class PcrscoresService {
 				message: 'Data retrieved successfully',
 				data: result,
 			});
-		} else {
-			return response.status(404).json({
-				message: 'Data not found',
-				data: [],
-			});
 		}
+		return response.status(404).json({
+			message: 'Data not found',
+			data: [],
+		});
 	}
 }
