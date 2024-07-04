@@ -498,11 +498,12 @@ export class PcrscoresService {
 
 			// Construct the SQL query
 			sql = `
-        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name
+        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name,pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level
         FROM camps c
         INNER JOIN group_users gu ON gu.group_id = c.group_id
         INNER JOIN program_beneficiaries pb ON gu.user_id = pb.user_id
         INNER JOIN users u ON pb.user_id = u.id
+		LEFT JOIN pcr_formative_assesment pfa  ON pfa.user_id = pb.user_id
         WHERE c.id = ${camp_id}
           AND gu.member_type = 'member' 
           AND gu.status = 'active' 
@@ -534,5 +535,124 @@ export class PcrscoresService {
 				data: [],
 			});
 		}
+	}
+
+	async pcr_formative_upsert(body: any, request: any, response: any) {
+		let query;
+		let hasura_response;
+		let subject_list = [];
+		let result;
+		let user_id = request?.mw_userid;
+		let { program_id, subject, ...update_body } = body;
+
+		await this.enumService
+			.getEnumValue('PCR_SUBJECT_LIST')
+			?.data?.map((item) => subject_list.push(item));
+
+		if (!subject_list.includes(body?.subject)) {
+			return response.status(422).json({
+				message: 'Please enter a valid subject',
+				data: [],
+			});
+		}
+
+		query = `query MyQuery2 {
+			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:[${subject}]
+		}}) {
+			  subject_id: id
+			  name
+			  board_id
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const subject_data = hasura_response?.data?.subjects;
+		const subject_ids = subject_data?.map((subject) => subject.subject_id);
+
+		query = `query MyQuery {
+			program_beneficiaries(where: {program_id: {_eq:${program_id}}, user_id: {_eq: ${update_body?.user_id}}}){
+			  subjects
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const beneficiary_subject_data =
+			hasura_response?.data?.program_beneficiaries?.[0]?.subjects;
+
+		const matchingSubjects = subject_ids.filter((subject_id) =>
+			beneficiary_subject_data.includes(subject_id.toString()),
+		);
+
+		query = `query MyQuery {
+			pcr_formative_assesment(where: {user_id: {_eq: ${body?.user_id}}, subject_id: {_in:[${matchingSubjects}]}}){
+			  id
+			  
+			}
+		  }
+		  
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+		const pcr_formative_assesment_data =
+			hasura_response?.data?.pcr_formative_assesment;
+
+		if (!pcr_formative_assesment_data?.length) {
+			update_body.updated_by = user_id;
+			update_body.created_by = user_id;
+			update_body.subject_id = matchingSubjects[0];
+
+			result = await this.hasuraService.q(
+				'pcr_formative_assesment',
+				{
+					...update_body,
+				},
+				[
+					'id',
+					'user_id',
+					'subject_id',
+					'formative_assessment_first_learning_level',
+					'formative_assessment_second_learning_level',
+					'updated_by',
+					'created_by',
+				],
+				false,
+				['id'],
+			);
+		} else {
+			const id = pcr_formative_assesment_data?.[0]?.id;
+			result = await this.hasuraService.q(
+				'pcr_formative_assesment',
+				{
+					...update_body,
+					id,
+				},
+				[
+					'id',
+					'user_id',
+					'subject_id',
+					'formative_assessment_first_learning_level',
+					'formative_assessment_second_learning_level',
+					'updated_by',
+					'created_by',
+				],
+				true,
+				['id'],
+			);
+		}
+
+		return response.status(200).json({
+			message: 'Data updated successfully',
+			data: result,
+		});
 	}
 }
