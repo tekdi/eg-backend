@@ -606,7 +606,7 @@ export class PcrscoresService {
 		const pcr_formative_assesment_data =
 			hasura_response?.data?.pcr_formative_assesment;
 
-		if (pcr_formative_assesment_data?.length == 0) {
+		if (!pcr_formative_assesment_data?.length) {
 			update_body.updated_by = user_id;
 			update_body.created_by = user_id;
 			update_body.subject_id = matchingSubjects[0];

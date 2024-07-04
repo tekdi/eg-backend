@@ -90,7 +90,7 @@ export class PcrscoresController {
 		);
 	}
 
-	@Post('/create/formative-assesment')
+	@Post('/create/formative-assessment')
 	@UseGuards(new AuthGuard())
 	pcr_formative_upsert(
 		@Body() body,
