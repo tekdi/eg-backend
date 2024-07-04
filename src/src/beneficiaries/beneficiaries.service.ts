@@ -3694,9 +3694,13 @@ export class BeneficiariesService {
 		let status = 'enrolled_ip_verified';
 
 		// Get users which are not present in the camps or whose status is inactive
-
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
 		let qury = `query MyQuery {
-			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}}, _not: {group_users: {status: {_eq: "active"}}}}) {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}},pcr_scores: {
+				baseline_learning_level: {_in: ${JSON.stringify(baseLine)}}
+			} _not: {group_users: {status: {_eq: "active"}}}}) {
 			  id
 				state
 				district
@@ -3882,6 +3886,40 @@ export class BeneficiariesService {
 			success: true,
 			message: 'Beneficiaries Scholarship Updated',
 			data: updateResult || {},
+		});
+	}
+
+	public async withOutBaseline(req: any, resp: any) {
+		const facilitator_id = req.mw_userid;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		let status = 'enrolled_ip_verified';
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+
+		const query = `query MyQuery {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}
+			} _not: {group_users: {status: {_eq: "active"}},pcr_scores: {
+				baseline_learning_level: {_in: ${JSON.stringify(baseLine)}}}}}) {
+				aggregate{
+					count
+				}
+			}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const learnersWithoutAssessment =
+			learnerRes?.data?.users_aggregate?.aggregate;
+
+		return resp.status(200).json({
+			success: true,
+			message:
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED',
+			data: learnersWithoutAssessment,
 		});
 	}
 }

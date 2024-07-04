@@ -131,9 +131,14 @@ export class CampService {
 			}
 
 			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
+			const baseLine = this.enumService
+				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+				.data.map((item) => item.value);
 
 			let query = `query MyQuery {
-				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}){
+				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}},pcr_scores: {baseline_learning_level: {_in: ${JSON.stringify(
+				baseLine,
+			)}}}}){
 				  id
 				}
 			  }`;
@@ -4742,6 +4747,50 @@ export class CampService {
 		const pcr_response = await this.hasuraServiceFromServices.getData(data);
 		//check camps type is  PCR or not!
 		const camps = pcr_response?.data?.camps[0]?.type;
+		if (camps != 'pcr') {
+			return response.status(422).json({
+				success: false,
+				message: 'This is not a Neev Camp',
+				data: {},
+			});
+		}
+
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+		// Check if all learners have completed the endline assessment
+
+		let learnerQuery = `query MyQuery {
+			users(where: {
+					group_users: {
+							member_type: {_eq: "member"},
+							group: {camp: {id: {_eq: ${camp_id}}}}
+					},
+					_not: {pcr_scores: {endline_learning_level: {_in: ${JSON.stringify(baseLine)}}}}
+			}) {
+					id
+			}
+			session:learning_lesson_plans_master(where: {_not: {session_tracks: {camp_id: {_eq: ${camp_id}}, status: {_eq: "complete"}}}, type: {_eq: "pcr"}}) {
+				ordering
+			}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: learnerQuery,
+		});
+
+		const incompletePcrUsers = learnerRes?.data?.users;
+		const incompleteSession = learnerRes?.data?.session;
+
+		if (incompleteSession.length > 0 || incompletePcrUsers.length > 0) {
+			return response.status(422).json({
+				success: false,
+				key: 'session',
+				message: 'CAMP_INCOMPLETE_SESSION_OR_ENDLINE_NOT_FILLED',
+				data: { incompleteSession, incompletePcrUsers },
+			});
+		}
+
 		const type = 'main';
 		if (camps === 'pcr') {
 			let update_body = ['type'];
@@ -4846,6 +4895,98 @@ export class CampService {
 				data: {},
 			});
 		}
+		const status1 = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+		const status2 = this.enumService
+			.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+			.data.map((item) => item.value);
+		const status = [...(status1 || []), ...(status2 || [])];
+		// Check if all learners have completed the endline assessment
+		let sessionQ = [];
+
+		if (Array.isArray(camp_id)) {
+			sessionQ = camp_id.map(
+				(item) =>
+					`camp_${item}_user:users(where: {
+						group_users: {
+							member_type: {_eq: "member"},
+							status:{_eq:"active"},
+							group: {camp: {id: {_eq:${item}}}}
+						},
+					_not: {
+						pcr_scores: {
+							_or:{
+								baseline_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+								rapid_assessment_first_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+								rapid_assessment_second_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+								endline_learning_level: {
+								_in: ${JSON.stringify(status)}
+								},
+							}
+						}
+					}
+					}) {
+						id
+						first_name
+						pcr_scores{
+							baseline_learning_level
+							rapid_assessment_first_learning_level
+							rapid_assessment_second_learning_level        
+							endline_learning_level
+							
+						}
+					}
+					camp_${item}:learning_lesson_plans_master(where: {_not: {session_tracks: {camp_id: {_eq: ${item}}, status: {_eq: "complete"}}}, type: {_eq: "pcr"}}) {
+					ordering
+			}`,
+			);
+		}
+
+		let learnerQuery = `query MyQuery {
+			${sessionQ.join(' ')}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: learnerQuery,
+		});
+
+		// const learnersWithoutEndline = learnerRes?.data?.users;
+
+		let sessionData = [];
+		if (Array.isArray(camp_id)) {
+			sessionData = camp_id
+				.map((item) => {
+					if (
+						learnerRes?.data?.[`camp_${item}`]?.length > 0 ||
+						learnerRes?.data?.[`camp_${item}_user`]?.length > 0
+					) {
+						return {
+							camp_id: item,
+							session: learnerRes?.data?.[`camp_${item}`],
+							users: learnerRes?.data?.[`camp_${item}_user`],
+						};
+					}
+				})
+				.filter((e) => e);
+		}
+
+		if (sessionData.length > 0) {
+			return response.json({
+				status: 422,
+				success: false,
+				key: 'session',
+				message: 'CAMP_INCOMPLETE_SESSION_OR_ENDLINE_NOT_FILLED',
+				data: sessionData,
+			});
+		}
+
 		const type = 'main';
 
 		let updatecamp = {

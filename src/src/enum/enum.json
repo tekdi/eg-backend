@@ -1170,6 +1170,12 @@
 			"value": "absent"
 		}
 	],
+	"PCR_SUBJECT_LIST": [
+		"Hindi",
+		"Social Science",
+		"Home Science",
+		"Indian Culture And Heritage"
+	],
 	"LEARNING_ACTIVITIES": [
 		{
 			"title": "LEARNING_ACTIVITIES_SUBJECT_CONTENT_FACILITATION",
