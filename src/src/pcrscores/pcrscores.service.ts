@@ -474,7 +474,7 @@ export class PcrscoresService {
 		}
 
 		query = `query MyQuery2 {
-			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:[${subject}]
+			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:["${subject}"]
 		}}) {
 			  subject_id: id
 			  name
