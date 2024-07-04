@@ -43,7 +43,11 @@ export class OnestusertrackService {
 			});
 		}
 
-		if (context == 'jobs' || context == 'scholarship') {
+		if (
+			context == 'jobs' ||
+			context == 'scholarship' ||
+			context == 'learning'
+		) {
 			let checkcontext = {
 				query: `query MyQuery {
       onest_users_tracking_aggregate(where: {user_id: {_eq: ${user_id}}, context_item_id: {_eq: "${context_item_id}"}, context: {_eq: "${context}"}}){
