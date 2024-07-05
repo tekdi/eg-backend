@@ -5035,4 +5035,45 @@ export class CampService {
 			});
 		}
 	}
+
+	public async lastCampDayActivityTrack(body: any, req: any, resp: any) {
+		let onlyfilter = [
+			'id',
+			'camp_id',
+			'camp_day_happening',
+			'mood',
+			'camp_day_not_happening_reason',
+			'start_date',
+			'end_date',
+			'updated_at',
+			'misc_activities',
+			'end_camp_marked_by',
+			'camp_type',
+			'created_by',
+			'updated_by',
+		];
+		body.filter = {
+			...(body.filter || {}),
+		};
+		try {
+			const result = await this.hasuraServiceFromServices.getAll(
+				'camp_days_activities_tracker',
+				[...onlyfilter],
+				{ ...body, onlyfilter },
+			);
+
+			return resp.status(200).send({
+				...result,
+				success: true,
+				message:
+					'camp days activities tracker data List Found Successfully',
+			});
+		} catch (error) {
+			return resp.status(500).send({
+				success: false,
+				message: 'Failed to retrieve camp days activities tracker data',
+				error: error.message,
+			});
+		}
+	}
 }
