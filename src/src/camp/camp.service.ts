@@ -5055,18 +5055,25 @@ export class CampService {
 		body.filter = {
 			...(body.filter || {}),
 		};
+		try {
+			const result = await this.hasuraServiceFromServices.getAll(
+				'camp_days_activities_tracker',
+				[...onlyfilter],
+				{ ...body, onlyfilter },
+			);
 
-		const result = await this.hasuraServiceFromServices.getAll(
-			'camp_days_activities_tracker',
-			[...onlyfilter],
-			{ ...body, onlyfilter },
-		);
-
-		return resp.status(200).send({
-			...result,
-			success: true,
-			message:
-				'camp days activities tracker data List Found Successfully',
-		});
+			return resp.status(200).send({
+				...result,
+				success: true,
+				message:
+					'camp days activities tracker data List Found Successfully',
+			});
+		} catch (error) {
+			return resp.status(500).send({
+				success: false,
+				message: 'Failed to retrieve camp days activities tracker data',
+				error: error.message,
+			});
+		}
 	}
 }
