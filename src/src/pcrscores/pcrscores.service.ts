@@ -500,13 +500,14 @@ export class PcrscoresService {
 
 			// Construct the SQL query
 			sql = `
-        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name,pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level,pfa.subject_id
+        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name,pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level,pfa.subject_id,bi.name
         FROM camps c
         INNER JOIN group_users gu ON gu.group_id = c.group_id
         INNER JOIN program_beneficiaries pb ON gu.user_id = pb.user_id
         INNER JOIN users u ON pb.user_id = u.id
 		LEFT JOIN pcr_formative_assesment pfa  ON pfa.user_id = pb.user_id AND pfa.subject_id IN (${subjectIdsString})
-        WHERE c.id = ${camp_id}
+		LEFT JOIN boards bi ON pb.enrolled_for_board = bi.id 
+		WHERE c.id = ${camp_id}
           AND gu.member_type = 'member' 
           AND gu.status = 'active' 
           AND (${ilikeConditions});
