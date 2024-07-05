@@ -490,6 +490,8 @@ export class PcrscoresService {
 		const subject_data = hasura_response?.data?.subjects;
 		const subject_ids = subject_data?.map((subject) => subject.subject_id);
 
+		const subjectIdsString = subject_ids.join(',');
+
 		if (subject_ids?.length) {
 			// Create the ILIKE conditions dynamically
 			const ilikeConditions = subject_ids
@@ -498,12 +500,12 @@ export class PcrscoresService {
 
 			// Construct the SQL query
 			sql = `
-        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name,pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level
+        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name,pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level,pfa.subject_id
         FROM camps c
         INNER JOIN group_users gu ON gu.group_id = c.group_id
         INNER JOIN program_beneficiaries pb ON gu.user_id = pb.user_id
         INNER JOIN users u ON pb.user_id = u.id
-		LEFT JOIN pcr_formative_assesment pfa  ON pfa.user_id = pb.user_id
+		LEFT JOIN pcr_formative_assesment pfa  ON pfa.user_id = pb.user_id AND pfa.subject_id IN (${subjectIdsString})
         WHERE c.id = ${camp_id}
           AND gu.member_type = 'member' 
           AND gu.status = 'active' 
