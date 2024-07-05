@@ -53,11 +53,14 @@ export class SessionsService {
 
 			if (session_number >= 1 && session_number <= 6) {
 				assessment_name = `baseline_learning_level`;
-			} else if (session_number >= 7 && session_number <= 13) {
-				assessment_name = `rapid_assessment_first_learning_level`;
-			} else if (session_number >= 14 && session_number <= 19) {
-				assessment_name = `rapid_assessment_second_learning_level`;
-			} else if (session_number >= 20) {
+			}
+			// else if (session_number >= 7 && session_number <= 13) {
+			// 	assessment_name = `rapid_assessment_first_learning_level`;
+			// }
+			// else if (session_number >= 14 && session_number <= 19) {
+			// 	assessment_name = `rapid_assessment_second_learning_level`;
+			// }
+			else if (session_number >= 20) {
 				assessment_name = `endline_learning_level`;
 			}
 
@@ -221,11 +224,14 @@ export class SessionsService {
 
 			if (session_number >= 1 && session_number <= 6) {
 				assessment_name = `baseline_learning_level`;
-			} else if (session_number >= 7 && session_number <= 13) {
-				assessment_name = `rapid_assessment_first_learning_level`;
-			} else if (session_number >= 14 && session_number <= 19) {
-				assessment_name = `rapid_assessment_second_learning_level`;
-			} else if (session_number >= 20) {
+			}
+			// else if (session_number >= 7 && session_number <= 13) {
+			// 	assessment_name = `rapid_assessment_first_learning_level`;
+			// }
+			// else if (session_number >= 14 && session_number <= 19) {
+			// 	assessment_name = `rapid_assessment_second_learning_level`;
+			// }
+			else if (session_number >= 20) {
 				assessment_name = `endline_learning_level`;
 			}
 
@@ -602,52 +608,53 @@ export class SessionsService {
 			);
 			validationMessage =
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
-		} else if (
-			assessment_name === 'rapid_assessment_first_learning_level'
-		) {
-			learnerQuery.push(
-				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
-			);
-			learnerQuery.push(
-				`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
-					status,
-				)}}`,
-			);
-			validationMessage =
-				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
-		} else if (
-			assessment_name === 'rapid_assessment_second_learning_level'
-		) {
-			learnerQuery.push(
-				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
-			);
-			learnerQuery.push(
-				`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
-					status,
-				)}}`,
-			);
-			learnerQuery.push(
-				`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
-					status,
-				)}}`,
-			);
+		}
+		// else if (
+		// 	assessment_name === 'rapid_assessment_first_learning_level'
+		// ) {
+		// 	learnerQuery.push(
+		// 		`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
+		// 	);
+		// 	learnerQuery.push(
+		// 		`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
+		// 			status,
+		// 		)}}`,
+		// 	);
+		// 	validationMessage =
+		// 		'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
+		// }
+		// else if (assessment_name === 'rapid_assessment_second_learning_level') {
+		// 	learnerQuery.push(
+		// 		`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
+		// 	);
+		// 	learnerQuery.push(
+		// 		`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
+		// 			status,
+		// 		)}}`,
+		// 	);
+		// 	learnerQuery.push(
+		// 		`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
+		// 			status,
+		// 		)}}`,
+		// 	);
 
-			validationMessage =
-				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
-		} else if (assessment_name === 'endline_learning_level') {
+		// 	validationMessage =
+		// 		'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
+		// }
+		else if (assessment_name === 'endline_learning_level') {
 			learnerQuery.push(
 				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
 			);
-			learnerQuery.push(
-				`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
-					status,
-				)}}`,
-			);
-			learnerQuery.push(
-				`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
-					status,
-				)}}`,
-			);
+			// learnerQuery.push(
+			// 	`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
+			// 		status,
+			// 	)}}`,
+			// );
+			// learnerQuery.push(
+			// 	`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
+			// 		status,
+			// 	)}}`,
+			// );
 
 			learnerQuery.push(
 				`endline_learning_level: {_in: ${JSON.stringify(status)}}`,
