@@ -595,13 +595,13 @@ export class SessionsService {
 	) {
 		let learnerQuery = [];
 		let validationMessage = '';
-		const status1 = this.enumService
+		const status = this.enumService
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
-		const status2 = this.enumService
-			.getEnumValue('PCR_SCORES_RAPID_QUESTION')
-			.data.map((item) => item.value);
-		const status = [...(status1 || []), ...(status2 || [])];
+		// const status2 = this.enumService
+		// 	.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+		// 	.data.map((item) => item.value);
+		// const status = [...(status1 || []), ...(status2 || [])];
 		if (assessment_name === 'baseline_learning_level') {
 			learnerQuery.push(
 				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
@@ -681,8 +681,6 @@ export class SessionsService {
 					id
 					pcr_scores {
 						baseline_learning_level
-						rapid_assessment_first_learning_level
-						rapid_assessment_second_learning_level
 						endline_learning_level
 					}
 			}

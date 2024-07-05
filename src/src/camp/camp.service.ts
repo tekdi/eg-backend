@@ -4895,13 +4895,13 @@ export class CampService {
 				data: {},
 			});
 		}
-		const status1 = this.enumService
+		const status = this.enumService
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
-		const status2 = this.enumService
-			.getEnumValue('PCR_SCORES_RAPID_QUESTION')
-			.data.map((item) => item.value);
-		const status = [...(status1 || []), ...(status2 || [])];
+		// const status2 = this.enumService
+		// 	.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+		// 	.data.map((item) => item.value);
+		// const status = [...(status1 || []), ...(status2 || [])];
 		// Check if all learners have completed the endline assessment
 		let sessionQ = [];
 
@@ -4920,12 +4920,6 @@ export class CampService {
 								baseline_learning_level: {
 								_in: ${JSON.stringify(status)}
 								},
-								rapid_assessment_first_learning_level: {
-								_in: ${JSON.stringify(status)}
-								},
-								rapid_assessment_second_learning_level: {
-								_in: ${JSON.stringify(status)}
-								},
 								endline_learning_level: {
 								_in: ${JSON.stringify(status)}
 								},
@@ -4936,9 +4930,7 @@ export class CampService {
 						id
 						first_name
 						pcr_scores{
-							baseline_learning_level
-							rapid_assessment_first_learning_level
-							rapid_assessment_second_learning_level        
+							baseline_learning_level        
 							endline_learning_level
 							
 						}
