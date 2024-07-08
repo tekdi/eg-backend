@@ -421,4 +421,14 @@ export class CampController {
 	) {
 		return this.campService.lastCampDayActivityTrack(body, req, response);
 	}
+
+	@Post('camp_learner_list/check_baseline')
+	@UseGuards(new AuthGuard())
+	getLearnersBaseline(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getLearnersBaseline(body, req, response);
+	}
 }
