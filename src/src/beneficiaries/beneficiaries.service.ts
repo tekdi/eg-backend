@@ -3881,4 +3881,30 @@ export class BeneficiariesService {
 			data: updateResult || {},
 		});
 	}
+
+	public async updateRejectDropout(body: any, request: any) {
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			const checkstatus = `query MyQuery {
+			program_beneficiaries(where: {user_id: {_eq: ${body?.user_id}}})
+			{
+				status
+			}
+		}`;
+
+			const result = await this.hasuraServiceFromServices.getData({
+				query: checkstatus,
+			});
+			const statuscheck =
+				result?.data?.program_beneficiaries?.[0]?.status;
+
+			if (statuscheck == 'registered_in_camp') {
+				return {
+					status: 422,
+					success: true,
+					message: 'Can Not Updated Status',
+					data: {},
+				};
+			}
+		}
+	}
 }
