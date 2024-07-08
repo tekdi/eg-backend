@@ -3695,9 +3695,7 @@ export class BeneficiariesService {
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
 		let qury = `query MyQuery {
-			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}},pcr_scores: {
-				baseline_learning_level: {_in: ${JSON.stringify(baseLine)}}
-			} _not: {group_users: {status: {_eq: "active"}}}}) {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}} _not: {group_users: {status: {_eq: "active"}}}}) {
 			  id
 				state
 				district
