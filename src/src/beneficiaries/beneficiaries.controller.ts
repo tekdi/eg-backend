@@ -324,6 +324,18 @@ export class BeneficiariesController {
 		@Res() response: any,
 		@Req() request: any,
 	) {
+		const check = await this.beneficiariesService.updateRejectDropout(
+			body,
+			request,
+		);
+
+		if (check) {
+			return response.status(check.status).json({
+				success: check.success,
+				message: check.message,
+				data: check.data,
+			});
+		}
 		const result = await this.beneficiariesService.statusUpdateByIp(
 			body,
 
