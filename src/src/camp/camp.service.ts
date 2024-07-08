@@ -5076,4 +5076,107 @@ export class CampService {
 			});
 		}
 	}
+
+	public async getLearnersBaseline(body: any, req: any, resp: any) {
+		const camp_id = body?.camp_id;
+		const type = body?.assessment_type;
+		const program_id = req?.mw_program_id;
+
+		const subjects = this.enumService.getEnumValue('PCR_SUBJECT_LIST').data;
+
+		let assesmentQruey = '';
+
+		if (type == 'base-line') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+			}`;
+		} else if (type == 'fa1') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+			}
+			pcr_formative_assesments {
+				subject {
+					name
+				}
+				subject_id
+				user_id
+				formative_assessment_first_learning_level
+			}`;
+		} else if (type == 'fa2') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+			}
+			pcr_formative_assesments {
+				subject {
+					name
+				}
+				subject_id
+				user_id
+				formative_assessment_first_learning_level
+				formative_assessment_second_learning_level
+			}`;
+		} else if (type == 'end-line') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+				endline_learning_level
+			}
+			pcr_formative_assesments {
+				subject {
+					name
+				}
+				subject_id
+				user_id
+				formative_assessment_first_learning_level
+				formative_assessment_second_learning_level
+			}`;
+		}
+
+		let learnerQuery = `query MyQuery {
+			users(where: {
+				group_users: {
+					member_type: {_eq: "member"},
+					status: {_eq: "active"},
+					group: {
+						camp: {id: {_eq: ${camp_id}}}
+					}
+				}
+			}) {
+				id
+				program_beneficiaries{
+					subjects
+					enrollment_first_name
+					enrollment_last_name
+					enrolled_for_board
+				}
+				${assesmentQruey}
+			}
+			subjects(where:{
+				name:{_in:${JSON.stringify(subjects)}}
+				boardById:{program_id:{_eq:${program_id}}}
+			}){
+				id name
+				board_id
+			}
+		}`;
+
+		const updateResponse = await this.hasuraServiceFromServices.getData({
+			query: learnerQuery,
+		});
+
+		const learnerId = updateResponse?.data?.users;
+		const subjects_name = updateResponse?.data?.subjects;
+		// Fetch subjects enum data
+		const subjectsEnum =
+			this.enumService.getEnumValue('PCR_SUBJECT_LIST').data;
+
+		return resp.status(200).send({
+			success: true,
+			message: 'Learners Assessment data Found Successfully',
+			data: {
+				learners: learnerId,
+				subjects_name: subjects_name,
+				subjects: subjectsEnum,
+			},
+		});
+	}
 }
