@@ -83,7 +83,6 @@ export class PcrscoresService {
 					},
 					this.returnFields,
 				);
-
 				// first audit log
 				const { id, user_id, created_at, updated_at, ...newData } =
 					response?.pcr_scores || {};
@@ -108,7 +107,10 @@ export class PcrscoresService {
 					action: 'create',
 				};
 				await this.userService.addAuditLogAction(auditData);
-			} else if (!pcr?.endline_learning_level) {
+			} else if (
+				!pcr?.endline_learning_level ||
+				pcr?.endline_learning_level != body?.endline_learning_level
+			) {
 				let data = body;
 				let auditData = {
 					userId: user_id,
@@ -174,10 +176,11 @@ export class PcrscoresService {
 						'updated_at',
 					],
 				);
+				response = response?.pcr_scores;
 				await this.userService.addAuditLogAction({
 					...auditData,
 					oldData: pcr,
-					newData: response?.pcr_scores || {},
+					newData: response || {},
 				});
 			} else {
 				response = pcr;

@@ -1118,6 +1118,10 @@
 		{
 			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_E",
 			"value": "e"
+		},
+		{
+			"title": "PCR_SCORES_BASELINE_AND_ENDLINE_ABSENT",
+			"value": "absent"
 		}
 	],
 	"PCR_SCORES_RAPID_QUESTION": [

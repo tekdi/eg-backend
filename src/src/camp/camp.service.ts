@@ -5168,8 +5168,7 @@ export class CampService {
 		// Fetch subjects enum data
 		const subjectsEnum =
 			this.enumService.getEnumValue('PCR_SUBJECT_LIST').data;
-
-		return resp.status(200).send({
+		const reData = {
 			success: true,
 			message: 'Learners Assessment data Found Successfully',
 			data: {
@@ -5177,6 +5176,10 @@ export class CampService {
 				subjects_name: subjects_name,
 				subjects: subjectsEnum,
 			},
-		});
+		};
+		if (resp.status) {
+			return resp.status(200).send(reData);
+		}
+		return reData;
 	}
 }
