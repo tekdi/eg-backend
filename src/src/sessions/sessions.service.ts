@@ -221,14 +221,11 @@ export class SessionsService {
 
 			if (session_number >= 1 && session_number <= 6) {
 				assessment_name = `base-line`;
-			}
-			// else if (session_number >= 7 && session_number <= 13) {
-			// 	assessment_name = `rapid_assessment_first_learning_level`;
-			// }
-			// else if (session_number >= 14 && session_number <= 19) {
-			// 	assessment_name = `rapid_assessment_second_learning_level`;
-			// }
-			else if (session_number >= 20) {
+			} else if (session_number >= 7 && session_number <= 13) {
+				assessment_name = `fa1`;
+			} else if (session_number >= 14 && session_number <= 19) {
+				assessment_name = `fa2`;
+			} else if (session_number >= 20) {
 				assessment_name = `end-line`;
 			}
 
