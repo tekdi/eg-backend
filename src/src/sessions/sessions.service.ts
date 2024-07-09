@@ -587,7 +587,6 @@ export class SessionsService {
 	}
 
 	public checkAssessmentData(data, assessmentType) {
-		//	const getIncompleteAssessments = (data, assessmentType) => {
 		if (!data) return {};
 
 		const { learners, subjects_name } = data;
