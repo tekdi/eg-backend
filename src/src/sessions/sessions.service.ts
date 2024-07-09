@@ -3,6 +3,7 @@ import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { EnumService } from '../enum/enum.service';
+import { CampService } from 'src/camp/camp.service';
 const moment = require('moment');
 
 @Injectable()
@@ -12,6 +13,7 @@ export class SessionsService {
 		private hasuraService: HasuraService,
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private enumService: EnumService,
+		private campService: CampService,
 	) {}
 
 	async createSession(body: any, request: any, response: any) {
@@ -52,20 +54,16 @@ export class SessionsService {
 			let assessment_name = '';
 
 			if (session_number >= 1 && session_number <= 6) {
-				assessment_name = `baseline_learning_level`;
-			}
-			// else if (session_number >= 7 && session_number <= 13) {
-			// 	assessment_name = `rapid_assessment_first_learning_level`;
-			// }
-			// else if (session_number >= 14 && session_number <= 19) {
-			// 	assessment_name = `rapid_assessment_second_learning_level`;
-			// }
-			else if (session_number >= 20) {
-				assessment_name = `endline_learning_level`;
+				assessment_name = `base-line`;
+			} else if (session_number >= 7 && session_number <= 13) {
+				assessment_name = `fa1`;
+			} else if (session_number >= 14 && session_number <= 19) {
+				assessment_name = `fa2`;
+			} else if (session_number >= 20) {
+				assessment_name = `end-line`;
 			}
 
 			const data = await this.checkPcr(
-				academic_year_id,
 				program_id,
 				camp_id,
 				assessment_name,
@@ -74,9 +72,8 @@ export class SessionsService {
 				return response.status(data.status).json(data.response);
 			}
 		} else {
-			let assessment_name = `endline_learning_level`;
+			let assessment_name = `end-line`;
 			const data = await this.checkPcr(
-				academic_year_id,
 				program_id,
 				camp_id,
 				assessment_name,
@@ -223,7 +220,7 @@ export class SessionsService {
 			let assessment_name = '';
 
 			if (session_number >= 1 && session_number <= 6) {
-				assessment_name = `baseline_learning_level`;
+				assessment_name = `base-line`;
 			}
 			// else if (session_number >= 7 && session_number <= 13) {
 			// 	assessment_name = `rapid_assessment_first_learning_level`;
@@ -232,11 +229,10 @@ export class SessionsService {
 			// 	assessment_name = `rapid_assessment_second_learning_level`;
 			// }
 			else if (session_number >= 20) {
-				assessment_name = `endline_learning_level`;
+				assessment_name = `end-line`;
 			}
 
 			const data = await this.checkPcr(
-				academic_year_id,
 				program_id,
 				camp_id,
 				assessment_name,
@@ -245,9 +241,8 @@ export class SessionsService {
 				return response.status(data.status).json(data.response);
 			}
 		} else {
-			let assessment_name = `endline_learning_level`;
+			let assessment_name = `end-line`;
 			const data = await this.checkPcr(
-				academic_year_id,
 				program_id,
 				camp_id,
 				assessment_name,
@@ -586,121 +581,183 @@ export class SessionsService {
 			});
 		}
 	}
+	public jsonParse(str, returnObject = {}) {
+		try {
+			return JSON.parse(str);
+		} catch (e) {
+			return returnObject;
+		}
+	}
+
+	public checkAssessmentData(data, assessmentType) {
+		if (!data) return {};
+
+		const { learners, subjects_name } = data;
+		let result = {
+			base_line: [],
+			fa1: [],
+			fa2: [],
+			end_line: [],
+		};
+
+		if (!learners || !subjects_name) return result;
+		const status = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+
+		learners.forEach((learner) => {
+			const subjectIds = this.jsonParse(
+				learner?.program_beneficiaries?.[0]?.subjects,
+				[],
+			);
+
+			if (!subjectIds || subjectIds.length === 0) return;
+
+			const eligibleSubjects = subjects_name.filter((subject) =>
+				subjectIds.includes(`${subject?.id}`),
+			);
+
+			if (eligibleSubjects.length === 0) return;
+
+			const eligibleSubjectIds = eligibleSubjects.map(
+				(subject) => `${subject.id}`,
+			);
+
+			let learnerAssessment = {
+				id: learner.id,
+				assessment_type: [],
+			};
+
+			if (
+				!assessmentType ||
+				['base_line', 'base-line'].includes(assessmentType)
+			) {
+				// Check base_line
+				if (
+					!learner.pcr_scores?.some(
+						(score) => score.baseline_learning_level,
+					)
+				) {
+					result['base_line'].push(learner);
+					learnerAssessment.assessment_type.push('base_line');
+				}
+			}
+
+			if (!assessmentType || assessmentType === 'fa1') {
+				// Check fa1
+				const fa1Assessments = learner.pcr_formative_assesments?.filter(
+					(assessment) =>
+						assessment.formative_assessment_first_learning_level &&
+						eligibleSubjectIds.includes(
+							`${assessment?.subject_id}`,
+						),
+				);
+
+				if (
+					!fa1Assessments ||
+					fa1Assessments?.length < eligibleSubjects.length
+				) {
+					result['fa1'].push(learner);
+					learnerAssessment.assessment_type.push('fa1');
+				}
+			}
+
+			if (!assessmentType || assessmentType === 'fa2') {
+				// Check fa2
+				const fa2Assessments = learner.pcr_formative_assesments?.filter(
+					(assessment) =>
+						assessment.formative_assessment_second_learning_level &&
+						eligibleSubjectIds.includes(
+							`${assessment?.subject_id}`,
+						),
+				);
+				if (
+					!fa2Assessments ||
+					fa2Assessments?.length < eligibleSubjects.length
+				) {
+					result['fa2'].push(learner);
+					learnerAssessment.assessment_type.push('fa2');
+				}
+			}
+
+			if (
+				!assessmentType ||
+				['end_line', 'end-line'].includes(assessmentType)
+			) {
+				// Check end_line
+				if (
+					!learner.pcr_scores?.some(
+						(score) => score.endline_learning_level,
+					)
+				) {
+					result['end_line'].push(learner);
+					learnerAssessment.assessment_type.push('end_line');
+				}
+			}
+
+			if (learnerAssessment.assessment_type.length > 0) {
+				result['learners'] = result['learners'] || [];
+				result['learners'].push(learnerAssessment);
+			}
+		});
+
+		return result;
+	}
 
 	public async checkPcr(
-		academic_year_id: number,
 		program_id: number,
 		camp_id: number,
 		assessment_name: string,
 	) {
-		let learnerQuery = [];
-		let validationMessage = '';
-		const status = this.enumService
-			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
-			.data.map((item) => item.value);
-		// const status2 = this.enumService
-		// 	.getEnumValue('PCR_SCORES_RAPID_QUESTION')
-		// 	.data.map((item) => item.value);
-		// const status = [...(status1 || []), ...(status2 || [])];
-		if (assessment_name === 'baseline_learning_level') {
-			learnerQuery.push(
-				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
-			);
+		let validationMessage;
+
+		// base-line fa1 fa2 end-line
+		const { data } = await this.campService.getLearnersBaseline(
+			{ camp_id, assessment_name },
+			{ mw_program_id: program_id },
+			{},
+		);
+		const learnersWithoutAssessment = this.checkAssessmentData(
+			data,
+			assessment_name,
+		);
+
+		if (
+			assessment_name == 'base-line' &&
+			learnersWithoutAssessment?.['base_line']?.length > 0
+		) {
 			validationMessage =
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
-		}
-		// else if (
-		// 	assessment_name === 'rapid_assessment_first_learning_level'
-		// ) {
-		// 	learnerQuery.push(
-		// 		`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
-		// 	);
-		// 	learnerQuery.push(
-		// 		`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
-		// 			status,
-		// 		)}}`,
-		// 	);
-		// 	validationMessage =
-		// 		'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
-		// }
-		// else if (assessment_name === 'rapid_assessment_second_learning_level') {
-		// 	learnerQuery.push(
-		// 		`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
-		// 	);
-		// 	learnerQuery.push(
-		// 		`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
-		// 			status,
-		// 		)}}`,
-		// 	);
-		// 	learnerQuery.push(
-		// 		`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
-		// 			status,
-		// 		)}}`,
-		// 	);
-
-		// 	validationMessage =
-		// 		'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
-		// }
-		else if (assessment_name === 'endline_learning_level') {
-			learnerQuery.push(
-				`baseline_learning_level: {_in: ${JSON.stringify(status)}}`,
-			);
-			// learnerQuery.push(
-			// 	`rapid_assessment_first_learning_level: {_in: ${JSON.stringify(
-			// 		status,
-			// 	)}}`,
-			// );
-			// learnerQuery.push(
-			// 	`rapid_assessment_second_learning_level: {_in: ${JSON.stringify(
-			// 		status,
-			// 	)}}`,
-			// );
-
-			learnerQuery.push(
-				`endline_learning_level: {_in: ${JSON.stringify(status)}}`,
-			);
+		} else if (
+			assessment_name == 'fa1' &&
+			learnersWithoutAssessment?.['fa1']?.length > 0
+		) {
+			validationMessage =
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
+		} else if (
+			assessment_name == 'fa2' &&
+			learnersWithoutAssessment?.['fa2']?.length > 0
+		) {
+			validationMessage =
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
+		} else if (
+			assessment_name == 'end-line' &&
+			learnersWithoutAssessment?.['end_line']?.length > 0
+		) {
 			validationMessage =
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_ENDLINE_ASSESSMENTS_COMPLETED';
 		}
-		const query = `query MyQuery {
-			users(where:{
-					group_users:{
-							member_type:{_eq:"member"},
-							status:{_eq:"active"},
-							group:{
-									camp:{id:{_eq:${camp_id}}},
-							}
-					}
-					program_beneficiaries:{academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}
-					_not:{
-							pcr_scores: {
-									_or:{${learnerQuery.join(',')}}
-							}
-					}
-			}) {
-					id
-					pcr_scores {
-						baseline_learning_level
-						endline_learning_level
-					}
-			}
-	}`;
 
-		const learnerRes = await this.hasuraServiceFromServices.getData({
-			query: query,
-		});
-
-		const learnersWithoutAssessment = learnerRes?.data?.users;
-
-		if (learnersWithoutAssessment.length > 0) {
+		if (validationMessage) {
 			return {
 				success: false,
 				status: 422,
 				response: {
+					assessment_name,
 					success: false,
 					key: 'ID',
 					message: validationMessage,
-					data: learnersWithoutAssessment,
+					data: learnersWithoutAssessment?.['learners'] || {},
 				},
 			};
 		}
