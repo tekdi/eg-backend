@@ -213,7 +213,7 @@ export default `
 				position: absolute !important;
 			}
 			.bottom-right {
-				right: 36%;
+				right: 42%;
 				bottom: -10px;
 			}
 			.innerBorder {
@@ -279,11 +279,6 @@ export default `
 								<div class="">
 									<b>'प्रगति'</b> के प्रशिक्षण को सफलतापूर्वक
 									पूरा किया है।
-								</div>
-								<div>
-									इस प्रशिक्षण के दौरान आपने शिक्षा से वंचित
-									शिक्षार्थियों की पहचान, उनका मार्गदर्शन,
-									दस्तावेजीकरण और
 								</div>
 								<div>
 									इस प्रशिक्षण के दौरान आपने प्रयास कैम्प के
