@@ -587,20 +587,13 @@ export class SessionsService {
 	}
 
 	public checkAssessmentData(data, assessmentType) {
+		//	const getIncompleteAssessments = (data, assessmentType) => {
 		if (!data) return {};
 
 		const { learners, subjects_name } = data;
-		let result = {
-			base_line: [],
-			fa1: [],
-			fa2: [],
-			end_line: [],
-		};
+		let result = {};
 
 		if (!learners || !subjects_name) return result;
-		const status = this.enumService
-			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
-			.data.map((item) => item.value);
 
 		learners.forEach((learner) => {
 			const subjectIds = this.jsonParse(
@@ -627,7 +620,14 @@ export class SessionsService {
 
 			if (
 				!assessmentType ||
-				['base_line', 'base-line'].includes(assessmentType)
+				[
+					'base_line',
+					'base-line',
+					'fa1',
+					'fa2',
+					'end_line',
+					'end-line',
+				].includes(assessmentType)
 			) {
 				// Check base_line
 				if (
@@ -635,12 +635,16 @@ export class SessionsService {
 						(score) => score.baseline_learning_level,
 					)
 				) {
+					result['base_line'] = result['base_line'] || [];
 					result['base_line'].push(learner);
 					learnerAssessment.assessment_type.push('base_line');
 				}
 			}
 
-			if (!assessmentType || assessmentType === 'fa1') {
+			if (
+				!assessmentType ||
+				['fa1', 'fa2', 'end_line', 'end-line'].includes(assessmentType)
+			) {
 				// Check fa1
 				const fa1Assessments = learner.pcr_formative_assesments?.filter(
 					(assessment) =>
@@ -654,12 +658,16 @@ export class SessionsService {
 					!fa1Assessments ||
 					fa1Assessments?.length < eligibleSubjects.length
 				) {
+					result['fa1'] = result['fa1'] || [];
 					result['fa1'].push(learner);
 					learnerAssessment.assessment_type.push('fa1');
 				}
 			}
 
-			if (!assessmentType || assessmentType === 'fa2') {
+			if (
+				!assessmentType ||
+				['fa2', 'end_line', 'end-line'].includes(assessmentType)
+			) {
 				// Check fa2
 				const fa2Assessments = learner.pcr_formative_assesments?.filter(
 					(assessment) =>
@@ -672,6 +680,7 @@ export class SessionsService {
 					!fa2Assessments ||
 					fa2Assessments?.length < eligibleSubjects.length
 				) {
+					result['fa2'] = result['fa2'] || [];
 					result['fa2'].push(learner);
 					learnerAssessment.assessment_type.push('fa2');
 				}
@@ -687,6 +696,7 @@ export class SessionsService {
 						(score) => score.endline_learning_level,
 					)
 				) {
+					result['end_line'] = result['end_line'] || [];
 					result['end_line'].push(learner);
 					learnerAssessment.assessment_type.push('end_line');
 				}
@@ -710,37 +720,29 @@ export class SessionsService {
 
 		// base-line fa1 fa2 end-line
 		const { data } = await this.campService.getLearnersBaseline(
-			{ camp_id, assessment_name },
+			{ camp_id, assessment_type: assessment_name },
 			{ mw_program_id: program_id },
 			{},
 		);
+
 		const learnersWithoutAssessment = this.checkAssessmentData(
 			data,
 			assessment_name,
 		);
 
-		if (
-			assessment_name == 'base-line' &&
-			learnersWithoutAssessment?.['base_line']?.length > 0
-		) {
+		if (learnersWithoutAssessment?.['base_line']?.length > 0) {
 			validationMessage =
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED';
-		} else if (
-			assessment_name == 'fa1' &&
-			learnersWithoutAssessment?.['fa1']?.length > 0
-		) {
+		}
+		if (learnersWithoutAssessment?.['fa1']?.length > 0) {
 			validationMessage =
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_1_COMPLETED';
-		} else if (
-			assessment_name == 'fa2' &&
-			learnersWithoutAssessment?.['fa2']?.length > 0
-		) {
+		}
+		if (learnersWithoutAssessment?.['fa2']?.length > 0) {
 			validationMessage =
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_RAPID_ASSESSMENTS_2_COMPLETED';
-		} else if (
-			assessment_name == 'end-line' &&
-			learnersWithoutAssessment?.['end_line']?.length > 0
-		) {
+		}
+		if (learnersWithoutAssessment?.['end_line']?.length > 0) {
 			validationMessage =
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_ENDLINE_ASSESSMENTS_COMPLETED';
 		}
