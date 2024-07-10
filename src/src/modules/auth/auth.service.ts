@@ -905,6 +905,7 @@ export class AuthService {
 				'block',
 				'district',
 				'grampanchayat',
+				'alternative_mobile_number',
 				'pincode',
 				'lat',
 				'long',
@@ -924,7 +925,21 @@ export class AuthService {
 			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'identified';
 			req.org_id = req?.role_fields?.org_id;
-			other = [...other, 'org_id'];
+			(req.learning_motivation = JSON.stringify(
+				req?.program_beneficiaries?.learning_motivation,
+			).replace(/"/g, '\\"')),
+				(req.type_of_support_needed = JSON.stringify(
+					req?.program_beneficiaries?.type_of_support_needed,
+				).replace(/"/g, '\\"'));
+			req.learning_level = req?.program_beneficiaries?.learning_level;
+
+			other = [
+				...other,
+				'org_id',
+				'learning_motivation',
+				'type_of_support_needed',
+				'learning_level',
+			];
 		}
 
 		if (req.role === 'facilitator' || req.role === 'facilitators') {
