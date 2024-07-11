@@ -4895,13 +4895,13 @@ export class CampService {
 				data: {},
 			});
 		}
-		const status1 = this.enumService
+		const status = this.enumService
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
-		const status2 = this.enumService
-			.getEnumValue('PCR_SCORES_RAPID_QUESTION')
-			.data.map((item) => item.value);
-		const status = [...(status1 || []), ...(status2 || [])];
+		// const status2 = this.enumService
+		// 	.getEnumValue('PCR_SCORES_RAPID_QUESTION')
+		// 	.data.map((item) => item.value);
+		// const status = [...(status1 || []), ...(status2 || [])];
 		// Check if all learners have completed the endline assessment
 		let sessionQ = [];
 
@@ -4920,12 +4920,6 @@ export class CampService {
 								baseline_learning_level: {
 								_in: ${JSON.stringify(status)}
 								},
-								rapid_assessment_first_learning_level: {
-								_in: ${JSON.stringify(status)}
-								},
-								rapid_assessment_second_learning_level: {
-								_in: ${JSON.stringify(status)}
-								},
 								endline_learning_level: {
 								_in: ${JSON.stringify(status)}
 								},
@@ -4936,9 +4930,7 @@ export class CampService {
 						id
 						first_name
 						pcr_scores{
-							baseline_learning_level
-							rapid_assessment_first_learning_level
-							rapid_assessment_second_learning_level        
+							baseline_learning_level        
 							endline_learning_level
 							
 						}
@@ -5042,5 +5034,152 @@ export class CampService {
 				},
 			});
 		}
+	}
+
+	public async lastCampDayActivityTrack(body: any, req: any, resp: any) {
+		let onlyfilter = [
+			'id',
+			'camp_id',
+			'camp_day_happening',
+			'mood',
+			'camp_day_not_happening_reason',
+			'start_date',
+			'end_date',
+			'updated_at',
+			'misc_activities',
+			'end_camp_marked_by',
+			'camp_type',
+			'created_by',
+			'updated_by',
+		];
+		body.filter = {
+			...(body.filter || {}),
+		};
+		try {
+			const result = await this.hasuraServiceFromServices.getAll(
+				'camp_days_activities_tracker',
+				[...onlyfilter],
+				{ ...body, onlyfilter },
+			);
+
+			return resp.status(200).send({
+				...result,
+				success: true,
+				message:
+					'camp days activities tracker data List Found Successfully',
+			});
+		} catch (error) {
+			return resp.status(500).send({
+				success: false,
+				message: 'Failed to retrieve camp days activities tracker data',
+				error: error.message,
+			});
+		}
+	}
+
+	public async getLearnersBaseline(body: any, req: any, resp: any) {
+		const camp_id = body?.camp_id;
+		const type = body?.assessment_type;
+		const program_id = req?.mw_program_id;
+
+		const subjects = this.enumService.getEnumValue('PCR_SUBJECT_LIST').data;
+
+		let assesmentQruey = '';
+
+		if (type == 'base-line') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+			}`;
+		} else if (type == 'fa1') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+			}
+			pcr_formative_assesments {
+				subject {
+					name
+				}
+				subject_id
+				user_id
+				formative_assessment_first_learning_level
+			}`;
+		} else if (type == 'fa2') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+			}
+			pcr_formative_assesments {
+				subject {
+					name
+				}
+				subject_id
+				user_id
+				formative_assessment_first_learning_level
+				formative_assessment_second_learning_level
+			}`;
+		} else if (type == 'end-line') {
+			assesmentQruey = `pcr_scores {
+				baseline_learning_level
+				endline_learning_level
+			}
+			pcr_formative_assesments {
+				subject {
+					name
+				}
+				subject_id
+				user_id
+				formative_assessment_first_learning_level
+				formative_assessment_second_learning_level
+			}`;
+		}
+
+		let learnerQuery = `query MyQuery {
+			users(where: {
+				group_users: {
+					member_type: {_eq: "member"},
+					status: {_eq: "active"},
+					group: {
+						camp: {id: {_eq: ${camp_id}}}
+					}
+				}
+			}) {
+				id
+				program_beneficiaries{
+					subjects
+					enrollment_first_name
+					enrollment_last_name
+					enrolled_for_board
+				}
+				${assesmentQruey}
+			}
+			subjects(where:{
+				name:{_in:${JSON.stringify(subjects)}}
+				boardById:{program_id:{_eq:${program_id}}}
+			}){
+				id name
+				board_id
+			}
+		}`;
+
+		const updateResponse = await this.hasuraServiceFromServices.getData({
+			query: learnerQuery,
+		});
+
+		const learnerId = updateResponse?.data?.users;
+		const subjects_name = updateResponse?.data?.subjects;
+		// Fetch subjects enum data
+		const subjectsEnum =
+			this.enumService.getEnumValue('PCR_SUBJECT_LIST').data;
+		const reData = {
+			success: true,
+			message: 'Learners Assessment data Found Successfully',
+			data: {
+				learners: learnerId,
+				subjects_name: subjects_name,
+				subjects: subjectsEnum,
+			},
+		};
+		if (resp.status) {
+			return resp.status(200).send(reData);
+		}
+		return reData;
 	}
 }

@@ -3695,9 +3695,7 @@ export class BeneficiariesService {
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
 		let qury = `query MyQuery {
-			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}},pcr_scores: {
-				baseline_learning_level: {_in: ${JSON.stringify(baseLine)}}
-			} _not: {group_users: {status: {_eq: "active"}}}}) {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}} _not: {group_users: {status: {_eq: "active"}}}}) {
 			  id
 				state
 				district
@@ -3918,5 +3916,31 @@ export class BeneficiariesService {
 				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED',
 			data: learnersWithoutAssessment,
 		});
+	}
+
+	public async updateRejectDropout(body: any, request: any) {
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			const checkstatus = `query MyQuery {
+			program_beneficiaries(where: {user_id: {_eq: ${body?.user_id}}})
+			{
+				status
+			}
+		}`;
+
+			const result = await this.hasuraServiceFromServices.getData({
+				query: checkstatus,
+			});
+			const statuscheck =
+				result?.data?.program_beneficiaries?.[0]?.status;
+
+			if (statuscheck == 'registered_in_camp') {
+				return {
+					status: 422,
+					success: true,
+					message: 'Can Not Updated Status',
+					data: {},
+				};
+			}
+		}
 	}
 }

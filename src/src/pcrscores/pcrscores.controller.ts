@@ -89,4 +89,18 @@ export class PcrscoresController {
 			response,
 		);
 	}
+
+	@Post('/create/formative-assessment')
+	@UseGuards(new AuthGuard())
+	pcr_formative_upsert(
+		@Body() body,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.pcrscoresService.pcr_formative_upsert(
+			body,
+			request,
+			response,
+		);
+	}
 }
