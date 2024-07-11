@@ -60,6 +60,10 @@ export class UserauthService {
 					id
 					user_id
 				  }
+				  program_users{
+					id
+					user_id
+				  }
 				}
 			  }
 			  `;
@@ -75,7 +79,14 @@ export class UserauthService {
 					(user) => user.program_faciltators.length > 0,
 				);
 
-				if (facilitator_data.length > 0) {
+				let program_user_data = users.filter(
+					(user) => user.program_users.length > 0,
+				);
+
+				if (
+					facilitator_data.length > 0 ||
+					program_user_data?.length > 0
+				) {
 					return response.status(422).send({
 						success: false,
 						message: 'Mobile Number Already Exist',
@@ -275,6 +286,40 @@ export class UserauthService {
 					);
 				}
 
+				if (role === 'facilitator' && body?.core_faciltators) {
+					let core_faciltators = {
+						...body?.core_faciltators,
+						user_id: user_id,
+					};
+
+					await this.hasuraService.q(
+						'core_faciltators',
+						{
+							...core_faciltators,
+						},
+						[],
+						false,
+						['id'],
+					);
+				}
+
+				if (role === 'facilitator' && body?.extended_users) {
+					let extended_users_body = {
+						...body?.extended_users,
+						user_id: user_id,
+					};
+
+					await this.hasuraService.q(
+						'extended_users',
+						{
+							...extended_users_body,
+						},
+						[],
+						false,
+						['id'],
+					);
+				}
+
 				if (role === 'beneficiary' && body?.core_beneficiaries) {
 					let core_beneficiary_body = {
 						...body?.core_beneficiaries,
@@ -435,6 +480,84 @@ export class UserauthService {
 					return {
 						status: false,
 						message: `Field "program_beneficiaries.${field}" is missing`,
+					};
+				}
+			}
+
+			// Validate fields outside core_beneficiaries
+			for (const field of requiredFields) {
+				if (!fields.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "${field}" is missing`,
+					};
+				}
+			}
+
+			return {
+				status: true,
+			}; // If all fields are valid
+		}
+
+		if (role === 'facilitator') {
+			// Define the required fields for the beneficiary role
+			const requiredFields = [
+				'first_name',
+				'middle_name',
+				'last_name',
+				'mobile',
+				'state',
+				'district',
+				'block',
+				'village',
+				'grampanchayat',
+				'pincode',
+				'dob',
+				'address',
+				'gender',
+			];
+
+			const requiredCoreFacilitatorsFields = [
+				'device_type',
+				'device_ownership',
+			];
+
+			const requiredExtendedUsersFields = [
+				'marital_status',
+				'social_category',
+			];
+
+			// Check for core_beneficiaries
+			if (!fields.hasOwnProperty('core_faciltators')) {
+				//	throw new Error('Field "core_beneficiaries" is missing');
+				return {
+					status: false,
+					message: 'Field core_faciltators is missing',
+				};
+			}
+
+			if (!fields.hasOwnProperty('extended_users')) {
+				return {
+					status: false,
+					message: 'Field extended_users is missing',
+				};
+			}
+
+			// Validate fields inside core_beneficiaries
+			for (const field of requiredCoreFacilitatorsFields) {
+				if (!fields.core_faciltators.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "core_faciltators.${field}" is missing`,
+					};
+				}
+			}
+
+			for (const field of requiredExtendedUsersFields) {
+				if (!fields.extended_users.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "extended_users.${field}" is missing`,
 					};
 				}
 			}
