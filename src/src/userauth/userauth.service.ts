@@ -60,6 +60,10 @@ export class UserauthService {
 					id
 					user_id
 				  }
+				  program_users{
+					id
+					user_id
+				  }
 				}
 			  }
 			  `;
@@ -75,7 +79,14 @@ export class UserauthService {
 					(user) => user.program_faciltators.length > 0,
 				);
 
-				if (facilitator_data.length > 0) {
+				let program_user_data = users.filter(
+					(user) => user.program_users.length > 0,
+				);
+
+				if (
+					facilitator_data.length > 0 ||
+					program_user_data?.length > 0
+				) {
 					return response.status(422).send({
 						success: false,
 						message: 'Mobile Number Already Exist',
