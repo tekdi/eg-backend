@@ -530,6 +530,17 @@ export class PcrscoresService {
 		let all_learner_data =
 			this.hasuraServiceFromServices.getFormattedData(learner_data);
 
+		// Convert 'Null' strings to actual null for last_name
+		all_learner_data = all_learner_data.map((learner) => {
+			if (learner.last_name === 'NULL') {
+				learner.last_name = null;
+			}
+			if (learner.middle_name === 'NULL') {
+				learner.middle_name = null;
+			}
+			return learner;
+		});
+
 		if (all_learner_data?.length > 0) {
 			return response.status(200).json({
 				message: 'Data retrieved successfully',
