@@ -503,10 +503,14 @@ export class PcrscoresService {
 
 			// Construct the SQL query
 			sql = `
-        SELECT c.id, u.id AS user_id,  COALESCE(u.first_name, '') AS first_name, 
+        SELECT c.id, u.id AS user_id,
+				COALESCE(u.first_name, '') AS first_name,
 				COALESCE(u.middle_name, '') AS middle_name, 
-				COALESCE(u.last_name, '') AS last_name, pb.status, COALESCE(pb.enrollment_first_name, '') AS enrollment_first_name,
-				COALESCE(pb.enrollment_last_name, '') AS enrollment_last_name,pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level,pfa.subject_id,bi.name
+				COALESCE(u.last_name, '') AS last_name,
+				pb.status,
+				COALESCE(pb.enrollment_first_name, '') AS enrollment_first_name,
+				COALESCE(pb.enrollment_last_name, '') AS enrollment_last_name,
+				pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level,pfa.subject_id,bi.name
         FROM camps c
         INNER JOIN group_users gu ON gu.group_id = c.group_id
         INNER JOIN program_beneficiaries pb ON gu.user_id = pb.user_id
