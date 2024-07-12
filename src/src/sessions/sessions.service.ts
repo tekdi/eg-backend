@@ -50,7 +50,10 @@ export class SessionsService {
 		}
 
 		// Step 2: If camp_type is "PCR", check the baseline assessment for all learners
-		if (camp_type === 'pcr') {
+		if (
+			camp_type === 'pcr' &&
+			(!body.warning || body.warning != 'accepted')
+		) {
 			let assessment_name = '';
 
 			if (session_number >= 1 && session_number <= 6) {
@@ -71,7 +74,7 @@ export class SessionsService {
 			if (!data.success) {
 				return response.status(data.status).json(data.response);
 			}
-		} else {
+		} else if (!body.warning || body.warning != 'accepted') {
 			let assessment_name = `end-line`;
 			const data = await this.checkPcr(
 				program_id,
@@ -216,7 +219,10 @@ export class SessionsService {
 			});
 		}
 
-		if (camp_type === 'pcr') {
+		if (
+			camp_type === 'pcr' &&
+			(!body.warning || body.warning != 'accepted')
+		) {
 			let assessment_name = '';
 
 			if (session_number >= 1 && session_number <= 6) {
@@ -237,7 +243,7 @@ export class SessionsService {
 			if (!data.success) {
 				return response.status(data.status).json(data.response);
 			}
-		} else {
+		} else if (!body.warning || body.warning != 'accepted') {
 			let assessment_name = `end-line`;
 			const data = await this.checkPcr(
 				program_id,
