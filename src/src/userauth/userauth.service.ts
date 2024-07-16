@@ -269,12 +269,27 @@ export class UserauthService {
 
 				if (role === 'beneficiary' && body?.career_aspiration) {
 					let core_beneficiary_body = {
-						career_aspiration: body?.career_aspiration,
+						career_aspiration:
+							body?.career_aspiration &&
+							body?.career_aspiration == 'undefined'
+								? null
+								: body?.career_aspiration,
 						career_aspiration_details:
-							body?.career_aspiration_details,
+							body?.career_aspiration_details &&
+							body?.career_aspiration_details == 'undefined'
+								? null
+								: body?.career_aspiration_details,
 						user_id: user_id,
-						device_type: body?.device_type,
-						device_ownership: body?.device_ownership,
+						device_type:
+							body?.device_type &&
+							body?.device_type == 'undefined'
+								? null
+								: body?.device_type,
+						device_ownership:
+							body?.device_ownership &&
+							body?.device_ownership == 'undefined'
+								? null
+								: body?.device_ownership,
 					};
 					await this.hasuraService.q(
 						'core_beneficiaries',

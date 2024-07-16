@@ -2546,6 +2546,16 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
+						device_type:
+							req?.device_type && req?.device_type == 'undefined'
+								? null
+								: req?.device_type,
+						device_ownership:
+							req?.device_ownership &&
+							req?.device_ownership == 'undefined'
+								? null
+								: req?.device_ownership,
+
 						id: beneficiaryUser?.core_beneficiaries?.id
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
@@ -2574,6 +2584,16 @@ export class BeneficiariesService {
 					tableName,
 					{
 						...req,
+						device_type:
+							req?.device_type && req?.device_type == 'undefined'
+								? null
+								: req?.device_type,
+						device_ownership:
+							req?.device_ownership &&
+							req?.device_ownership == 'undefined'
+								? null
+								: req?.device_ownership,
+
 						id: beneficiaryUser?.core_beneficiaries?.id
 							? beneficiaryUser?.core_beneficiaries?.id
 							: null,
@@ -2775,7 +2795,10 @@ export class BeneficiariesService {
 					{
 						career_aspiration: req?.career_aspiration || null,
 						career_aspiration_details:
-							req?.career_aspiration_details || null,
+							req?.career_aspiration_details &&
+							req?.career_aspiration_details == 'undefined'
+								? null
+								: req?.career_aspiration_details,
 						parent_support: req?.parent_support || null,
 						id: beneficiaryUser?.core_beneficiaries?.id
 							? beneficiaryUser?.core_beneficiaries?.id
