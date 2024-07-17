@@ -1928,7 +1928,7 @@ export class ExamService {
                             subjects {
                                 id
                                 name
-                                events(order_by: { start_date: desc },,where:{program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}}} limit: 1) {
+                                events(order_by: { start_date: desc },,where:{program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}},status:{_eq:"publish"}} limit: 1) {
 																	start_date
                                 }
                             }
