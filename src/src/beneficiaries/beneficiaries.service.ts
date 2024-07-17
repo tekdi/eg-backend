@@ -948,12 +948,17 @@ export class BeneficiariesService {
 			});
 		}
 		const status = body?.status;
-		const sortType = body?.sortType ? body?.sortType : 'desc';
+		//const sortType = body?.sortType ? body?.sortType : 'desc';
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
 		let offset = page > 1 ? limit * (page - 1) : 0;
-
+		let sort_type = '';
+		if (['asc', 'desc'].includes(body?.sortType)) {
+			sort_type = `{ first_name: ${body?.sortType} }`;
+		} else {
+			sort_type = '{ created_at: desc }';
+		}
 		let filterQueryArray = [];
 		// only facilitator_id learners lits
 		filterQueryArray.push(
@@ -1027,9 +1032,7 @@ export class BeneficiariesService {
 				users(where: ${filterQuery},
 					limit: $limit,
 					offset: $offset,
-					order_by: {
-						created_at: ${sortType}
-					}
+					order_by: ${sort_type}
 				) {
 					aadhaar_verification_mode
 					aadhar_no
