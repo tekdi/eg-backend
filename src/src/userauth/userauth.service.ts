@@ -399,7 +399,6 @@ export class UserauthService {
 				'long',
 				'alternative_mobile_number',
 				'email_id',
-				'address',
 			];
 
 			const requiredCoreBeneficiariesFields = [
@@ -513,7 +512,6 @@ export class UserauthService {
 				'grampanchayat',
 				'pincode',
 				'dob',
-				'address',
 				'gender',
 			];
 
