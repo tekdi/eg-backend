@@ -3946,4 +3946,52 @@ export class BeneficiariesService {
 			}
 		}
 	}
+
+	public async learnerScore(body: any, resp: any) {
+		const id = body?.id;
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SUBJECT_LIST')
+			.data.map((subject) => subject);
+
+		const query = `query MyQuery {
+        users(where: {id: {_eq: ${id}}}){
+            id
+            pcr_scores{
+                baseline_learning_level
+                endline_learning_level
+            }
+            pcr_formative_assesments(where:{subject:{name:{_in:${JSON.stringify(
+				baseLine,
+			)}}}}){
+				formative_assessment_first_learning_level
+				formative_assessment_second_learning_level
+                subject{
+                    id
+                    name
+                }
+            }
+        }   
+    }`;
+
+		try {
+			const learnerRes = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+
+			const learnerScores = learnerRes?.data?.users;
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Data Found Successfully',
+				data: learnerScores,
+			});
+		} catch (error) {
+			console.error('Error fetching learner data:', error);
+			return resp.status(500).json({
+				success: false,
+				message: 'Error fetching learner data',
+				error: error.message,
+			});
+		}
+	}
 }
