@@ -3949,29 +3949,67 @@ export class BeneficiariesService {
 
 	public async learnerScore(body: any, resp: any) {
 		const id = body?.id;
+		// Validate ID
+		if (!id || isNaN(id)) {
+			return resp.status(400).json({
+				success: false,
+				message: 'Invalid ID provided.',
+				data: {},
+			});
+		}
 		const baseLine = this.enumService
 			.getEnumValue('PCR_SUBJECT_LIST')
 			.data.map((subject) => subject);
 
+		const pbquery = `query MyQuery {
+				program_beneficiaries(where: {user_id: {_eq: ${id}}}) {
+					user_id
+					subjects
+				}
+			}`;
+		const pbresp = await this.hasuraServiceFromServices.getData({
+			query: pbquery,
+		});
+		// Check if program beneficiaries data exists
+		if (
+			!pbresp?.data?.program_beneficiaries ||
+			pbresp.data.program_beneficiaries.length === 0
+		) {
+			return resp.status(404).json({
+				success: false,
+				message: 'No beneficiaries found for the provided ID.',
+			});
+		}
+		// Extract subjects from pbresp
+		const subjectsData = pbresp?.data?.program_beneficiaries[0]?.subjects;
+		const subjectsArray = subjectsData ? JSON.parse(subjectsData) : [];
+
 		const query = `query MyQuery {
-        users(where: {id: {_eq: ${id}}}){
-            id
-            pcr_scores{
-                baseline_learning_level
-                endline_learning_level
-            }
-            pcr_formative_assesments(where:{subject:{name:{_in:${JSON.stringify(
-				baseLine,
-			)}}}}){
-				formative_assessment_first_learning_level
-				formative_assessment_second_learning_level
-                subject{
-                    id
-                    name
-                }
-            }
-        }   
-    }`;
+			users(where: {id: {_eq: ${id}}}) {
+					id
+					pcr_scores {
+							baseline_learning_level
+							endline_learning_level
+					}
+					pcr_formative_assesments(where: {subject: {name: {_in: ${JSON.stringify(
+						baseLine,
+					)}}}}) {
+							formative_assessment_first_learning_level
+							formative_assessment_second_learning_level
+							subject {
+									id
+									name
+							}
+					}
+			},
+			subjects(where: {
+					id: {_in: ${JSON.stringify(subjectsArray)}},
+					name: {_in: ${JSON.stringify(baseLine)}}
+			}) {
+					id
+					name
+			}
+	}`;
 
 		try {
 			const learnerRes = await this.hasuraServiceFromServices.getData({
@@ -3979,11 +4017,12 @@ export class BeneficiariesService {
 			});
 
 			const learnerScores = learnerRes?.data?.users;
+			const learnerSubject = learnerRes?.data?.subjects;
 
 			return resp.status(200).json({
 				success: true,
 				message: 'Data Found Successfully',
-				data: learnerScores,
+				data: { learnerScores, learnerSubject },
 			});
 		} catch (error) {
 			console.error('Error fetching learner data:', error);
