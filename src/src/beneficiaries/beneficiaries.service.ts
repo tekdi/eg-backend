@@ -3954,6 +3954,7 @@ export class BeneficiariesService {
 			return resp.status(400).json({
 				success: false,
 				message: 'Invalid ID provided.',
+				data: {},
 			});
 		}
 		const baseLine = this.enumService
