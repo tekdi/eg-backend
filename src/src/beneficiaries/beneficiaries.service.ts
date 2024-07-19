@@ -3949,6 +3949,13 @@ export class BeneficiariesService {
 
 	public async learnerScore(body: any, resp: any) {
 		const id = body?.id;
+		// Validate ID
+		if (!id || isNaN(id)) {
+			return resp.status(400).json({
+				success: false,
+				message: 'Invalid ID provided.',
+			});
+		}
 		const baseLine = this.enumService
 			.getEnumValue('PCR_SUBJECT_LIST')
 			.data.map((subject) => subject);
@@ -3962,7 +3969,16 @@ export class BeneficiariesService {
 		const pbresp = await this.hasuraServiceFromServices.getData({
 			query: pbquery,
 		});
-
+		// Check if program beneficiaries data exists
+		if (
+			!pbresp?.data?.program_beneficiaries ||
+			pbresp.data.program_beneficiaries.length === 0
+		) {
+			return resp.status(404).json({
+				success: false,
+				message: 'No beneficiaries found for the provided ID.',
+			});
+		}
 		// Extract subjects from pbresp
 		const subjectsData = pbresp?.data?.program_beneficiaries[0]?.subjects;
 		const subjectsArray = subjectsData ? JSON.parse(subjectsData) : [];
