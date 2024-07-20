@@ -85,7 +85,6 @@ export class CampCoreService {
 		const academic_year_id = req.mw_academic_year_id;
 		let parent_ip_id = req?.parent_ip_id;
 		let status = body?.status;
-		console.log('seee', academic_year_id, program_id);
 
 		const type = [];
 		filterQueryArray.push(
@@ -118,8 +117,6 @@ FROM (
 ) AS subquery
 WHERE completed_lesson_count = total_lesson_count
   AND total_users = users_with_endline;`;
-
-			console.log('ssss', sql);
 
 			const pcr_data = (
 				await this.hasuraServiceFromServices.executeRawSql(sql)
