@@ -74,16 +74,6 @@ export class SessionsService {
 			if (!data.success) {
 				return response.status(data.status).json(data.response);
 			}
-		} else if (!body.warning || body.warning != 'accepted') {
-			let assessment_name = `end-line`;
-			const data = await this.checkPcr(
-				program_id,
-				camp_id,
-				assessment_name,
-			);
-			if (!data.success) {
-				return response.status(data.status).json(data.response);
-			}
 		}
 
 		//validation to check if the data is already present in the
@@ -235,16 +225,6 @@ export class SessionsService {
 				assessment_name = `end-line`;
 			}
 
-			const data = await this.checkPcr(
-				program_id,
-				camp_id,
-				assessment_name,
-			);
-			if (!data.success) {
-				return response.status(data.status).json(data.response);
-			}
-		} else if (!body.warning || body.warning != 'accepted') {
-			let assessment_name = `end-line`;
 			const data = await this.checkPcr(
 				program_id,
 				camp_id,
