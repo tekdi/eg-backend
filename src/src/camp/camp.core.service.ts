@@ -85,6 +85,8 @@ export class CampCoreService {
 		const academic_year_id = req.mw_academic_year_id;
 		let parent_ip_id = req?.parent_ip_id;
 		let status = body?.status;
+		console.log('seee', academic_year_id, program_id);
+
 		const type = [];
 		filterQueryArray.push(
 			`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
@@ -108,7 +110,7 @@ FROM (
     LEFT JOIN learning_sessions_tracker lst 
         ON c.id = lst.camp_id AND lst.status = 'complete'
     LEFT JOIN group_users gu 
-        ON c.group_id = gu.group_id AND gu.member_type = 'member'
+        ON c.group_id = gu.group_id AND gu.member_type = 'member' AND gu.status='active'
     LEFT JOIN pcr_scores ps 
         ON gu.user_id = ps.user_id AND ps.endline_learning_level IS NOT NULL
     WHERE c.type = 'pcr'
@@ -116,6 +118,8 @@ FROM (
 ) AS subquery
 WHERE completed_lesson_count = total_lesson_count
   AND total_users = users_with_endline;`;
+
+			console.log('ssss', sql);
 
 			const pcr_data = (
 				await this.hasuraServiceFromServices.executeRawSql(sql)
