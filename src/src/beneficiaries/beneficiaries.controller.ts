@@ -291,6 +291,19 @@ export class BeneficiariesController {
 		@Res() response: any,
 		@Req() request: any,
 	) {
+		const check = await this.beneficiariesService.updateRejectDropout(
+			body,
+			request,
+		);
+
+		if (check) {
+			return response.status(check.status).json({
+				success: check.success,
+				message: check.message,
+				data: check.data,
+			});
+		}
+
 		const result = await this.beneficiariesService.statusUpdate(
 			body,
 
@@ -311,6 +324,18 @@ export class BeneficiariesController {
 		@Res() response: any,
 		@Req() request: any,
 	) {
+		const check = await this.beneficiariesService.updateRejectDropout(
+			body,
+			request,
+		);
+
+		if (check) {
+			return response.status(check.status).json({
+				success: check.success,
+				message: check.message,
+				data: check.data,
+			});
+		}
 		const result = await this.beneficiariesService.statusUpdateByIp(
 			body,
 
@@ -527,5 +552,17 @@ export class BeneficiariesController {
 			request,
 			response,
 		);
+	}
+
+	@Post('/beneficiaries-without-baseline')
+	@UseGuards(new AuthGuard())
+	withOutBaseline(@Req() request: any, @Res() response: any) {
+		return this.beneficiariesService.withOutBaseline(request, response);
+	}
+
+	@Post('/beneficiaries-scores')
+	@UseGuards(new AuthGuard())
+	learnerScore(@Body() body: any, @Res() response: any) {
+		return this.beneficiariesService.learnerScore(body, response);
 	}
 }

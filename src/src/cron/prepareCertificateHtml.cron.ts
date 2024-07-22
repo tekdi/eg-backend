@@ -7,7 +7,11 @@ import { LMSCertificateDto } from 'src/lms/dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 import { json } from 'stream/consumers';
-import { pragati_orientation, pcr_training } from 'src/lms/templates';
+import {
+	pragati_orientation,
+	pcr_training,
+	main_camp_training,
+} from 'src/lms/templates';
 
 const moment = require('moment');
 const qr = require('qrcode');
@@ -113,6 +117,8 @@ export class PrepareCertificateHtmlCron {
 					let certificateTemplate = pragati_orientation;
 					if (event_type === 'pcr_training') {
 						certificateTemplate = pcr_training;
+					} else if (event_type === 'main_camp_execution_training') {
+						certificateTemplate = main_camp_training;
 					}
 					let issuance_date = moment().format('YYYY-MM-DD');
 					let issuance_date_tx = moment().format('DD MMM YYYY');

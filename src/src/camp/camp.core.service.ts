@@ -6,6 +6,7 @@ import { EnumService } from '../enum/enum.service';
 import { HasuraService } from '../hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { S3Service } from '../services/s3/s3.service';
+
 const moment = require('moment');
 @Injectable()
 export class CampCoreService {
@@ -84,11 +85,51 @@ export class CampCoreService {
 		const academic_year_id = req.mw_academic_year_id;
 		let parent_ip_id = req?.parent_ip_id;
 		let status = body?.status;
+
 		const type = [];
 		filterQueryArray.push(
 			`{group_users: {member_type: {_eq: "owner"}, group: {program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}},user:{program_faciltators:{parent_ip:{_eq:"${parent_ip_id}"}}}}}`,
 		);
+		if (body?.pcr_type === 'ready_to_close') {
+			let sql = `   
+      SELECT
+    camp_id
+FROM (
+    SELECT 
+        c.id AS camp_id,
+        COUNT(DISTINCT lst.learning_lesson_plan_id) AS completed_lesson_count,
+        (
+            SELECT COUNT(*)
+            FROM learning_lesson_plans_master llpm
+            WHERE llpm.type = 'pcr'
+        ) AS total_lesson_count,
+        COUNT(DISTINCT gu.user_id) AS total_users,
+        COUNT(DISTINCT ps.user_id) AS users_with_endline
+    FROM camps c
+    LEFT JOIN learning_sessions_tracker lst 
+        ON c.id = lst.camp_id AND lst.status = 'complete'
+    LEFT JOIN group_users gu 
+        ON c.group_id = gu.group_id AND gu.member_type = 'member' AND gu.status='active'
+    LEFT JOIN pcr_scores ps 
+        ON gu.user_id = ps.user_id AND ps.endline_learning_level IS NOT NULL
+    WHERE c.type = 'pcr'
+    GROUP BY c.id
+) AS subquery
+WHERE completed_lesson_count = total_lesson_count
+  AND total_users = users_with_endline;`;
 
+			const pcr_data = (
+				await this.hasuraServiceFromServices.executeRawSql(sql)
+			)?.result;
+
+			const data = await this.hasuraServiceFromServices.getFormattedData(
+				pcr_data,
+			);
+
+			const camp_ids1 = data.map((item) => item.camp_id);
+
+			type.push(`id:{_in: ${JSON.stringify(camp_ids1)}}`);
+		}
 		if (body?.type && body?.type.length > 0) {
 			type.push(`type:{_in: ${JSON.stringify(body?.type)}}`);
 		}
