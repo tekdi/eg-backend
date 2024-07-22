@@ -39,6 +39,7 @@ import { IpMiddleware } from 'src/common/middlewares/ip.middleware';
 
 	providers: [CampService, CampCoreService, Method],
 	controllers: [CampController],
+	exports: [CampService],
 })
 export class CampModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

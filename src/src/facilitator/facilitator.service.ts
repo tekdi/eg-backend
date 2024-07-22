@@ -98,7 +98,7 @@ export class FacilitatorService {
 				break;
 			}
 			case 'main_camp_execution_training': {
-				status = `status: { _in: ["selected_for_onboarding" ]}`;
+				status = `status: { _in: ["selected_for_onboarding","selected_prerak" ]}`;
 				break;
 			}
 			case 'drip_training': {
@@ -2197,6 +2197,7 @@ export class FacilitatorService {
 				enrollment_first_name
 				enrollment_last_name
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }

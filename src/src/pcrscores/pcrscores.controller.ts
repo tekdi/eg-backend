@@ -69,4 +69,38 @@ export class PcrscoresController {
 	) {
 		return this.pcrscoresService.update(id, body, request, response);
 	}
+
+	@Post('/subjects/list')
+	@UseGuards(new AuthGuard())
+	pcr_subject_list(@Body() body, @Req() request: any, @Res() response: any) {
+		return this.pcrscoresService.pcr_subject_list(body, request, response);
+	}
+
+	@Post('/subjects/learners')
+	@UseGuards(new AuthGuard())
+	pcr_camp_learner_list(
+		@Body() body,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.pcrscoresService.pcr_camp_learner_list(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/create/formative-assessment')
+	@UseGuards(new AuthGuard())
+	pcr_formative_upsert(
+		@Body() body,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.pcrscoresService.pcr_formative_upsert(
+			body,
+			request,
+			response,
+		);
+	}
 }

@@ -329,6 +329,7 @@ export class BeneficiariesService {
 							enrollment_last_name
 							exam_fee_document_id
 							syc_subjects
+							exam_fee_date
 							is_continued
 							facilitator_user{
 								first_name
@@ -513,6 +514,7 @@ export class BeneficiariesService {
 					status
 					exam_fee_document_id
 					syc_subjects
+					exam_fee_date
 					is_continued
 
 				  	}
@@ -862,6 +864,7 @@ export class BeneficiariesService {
 						enrollment_verification_reason
 						exam_fee_document_id
 						syc_subjects
+						exam_fee_date
 						is_continued
 						facilitator_user {
 							id
@@ -945,12 +948,17 @@ export class BeneficiariesService {
 			});
 		}
 		const status = body?.status;
-		const sortType = body?.sortType ? body?.sortType : 'desc';
+		//const sortType = body?.sortType ? body?.sortType : 'desc';
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 15 : parseInt(body.limit);
 
 		let offset = page > 1 ? limit * (page - 1) : 0;
-
+		let sort_type = '';
+		if (['asc', 'desc'].includes(body?.sortType)) {
+			sort_type = `{ first_name: ${body?.sortType} }`;
+		} else {
+			sort_type = '{ created_at: desc }';
+		}
 		let filterQueryArray = [];
 		// only facilitator_id learners lits
 		filterQueryArray.push(
@@ -1024,9 +1032,7 @@ export class BeneficiariesService {
 				users(where: ${filterQuery},
 					limit: $limit,
 					offset: $offset,
-					order_by: {
-						created_at: ${sortType}
-					}
+					order_by: ${sort_type}
 				) {
 					aadhaar_verification_mode
 					aadhar_no
@@ -1133,6 +1139,7 @@ export class BeneficiariesService {
 						enrollment_verification_reason
 						exam_fee_document_id
 						syc_subjects
+						exam_fee_date
 						is_continued
 						document {
 							context
@@ -1397,6 +1404,7 @@ export class BeneficiariesService {
 				enrollment_verification_reason
 				enrollment_mobile_no
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 				document {
@@ -3686,9 +3694,11 @@ export class BeneficiariesService {
 		let status = 'enrolled_ip_verified';
 
 		// Get users which are not present in the camps or whose status is inactive
-
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
 		let qury = `query MyQuery {
-			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}}, _not: {group_users: {status: {_eq: "active"}}}}) {
+			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}} _not: {group_users: {status: {_eq: "active"}}}}) {
 			  id
 				state
 				district
@@ -3707,6 +3717,7 @@ export class BeneficiariesService {
 				enrollment_middle_name,
 				enrollment_last_name
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
@@ -3874,5 +3885,152 @@ export class BeneficiariesService {
 			message: 'Beneficiaries Scholarship Updated',
 			data: updateResult || {},
 		});
+	}
+
+	public async withOutBaseline(req: any, resp: any) {
+		const facilitator_id = req.mw_userid;
+		const program_id = req.mw_program_id;
+		const academic_year_id = req.mw_academic_year_id;
+		let status = 'enrolled_ip_verified';
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
+			.data.map((item) => item.value);
+
+		const query = `query MyQuery {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}
+			} _not: {group_users: {status: {_eq: "active"}},pcr_scores: {
+				baseline_learning_level: {_in: ${JSON.stringify(baseLine)}}}}}) {
+				aggregate{
+					count
+				}
+			}
+	}`;
+
+		const learnerRes = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const learnersWithoutAssessment =
+			learnerRes?.data?.users_aggregate?.aggregate;
+
+		return resp.status(200).json({
+			success: true,
+			message:
+				'CAMP_SESSION_INCOMPLETE_UNTIL_ALL_BASELINE_ASSESSMENTS_COMPLETED',
+			data: learnersWithoutAssessment,
+		});
+	}
+
+	public async updateRejectDropout(body: any, request: any) {
+		if (body?.status == 'dropout' || body?.status == 'rejected') {
+			const checkstatus = `query MyQuery {
+			program_beneficiaries(where: {user_id: {_eq: ${body?.user_id}}})
+			{
+				status
+			}
+		}`;
+
+			const result = await this.hasuraServiceFromServices.getData({
+				query: checkstatus,
+			});
+			const statuscheck =
+				result?.data?.program_beneficiaries?.[0]?.status;
+
+			if (statuscheck == 'registered_in_camp') {
+				return {
+					status: 422,
+					success: true,
+					message: 'Can Not Updated Status',
+					data: {},
+				};
+			}
+		}
+	}
+
+	public async learnerScore(body: any, resp: any) {
+		const id = body?.id;
+		// Validate ID
+		if (!id || isNaN(id)) {
+			return resp.status(400).json({
+				success: false,
+				message: 'Invalid ID provided.',
+				data: {},
+			});
+		}
+		const baseLine = this.enumService
+			.getEnumValue('PCR_SUBJECT_LIST')
+			.data.map((subject) => subject);
+
+		const pbquery = `query MyQuery {
+				program_beneficiaries(where: {user_id: {_eq: ${id}}}) {
+					user_id
+					subjects
+				}
+			}`;
+		const pbresp = await this.hasuraServiceFromServices.getData({
+			query: pbquery,
+		});
+		// Check if program beneficiaries data exists
+		if (
+			!pbresp?.data?.program_beneficiaries ||
+			pbresp.data.program_beneficiaries.length === 0
+		) {
+			return resp.status(404).json({
+				success: false,
+				message: 'No beneficiaries found for the provided ID.',
+			});
+		}
+		// Extract subjects from pbresp
+		const subjectsData = pbresp?.data?.program_beneficiaries[0]?.subjects;
+		const subjectsArray = subjectsData ? JSON.parse(subjectsData) : [];
+
+		const query = `query MyQuery {
+			users(where: {id: {_eq: ${id}}}) {
+					id
+					pcr_scores {
+							baseline_learning_level
+							endline_learning_level
+					}
+					pcr_formative_assesments(where: {subject: {name: {_in: ${JSON.stringify(
+						baseLine,
+					)}}}}) {
+							formative_assessment_first_learning_level
+							formative_assessment_second_learning_level
+							subject {
+									id
+									name
+							}
+					}
+			},
+			subjects(where: {
+					id: {_in: ${JSON.stringify(subjectsArray)}},
+					name: {_in: ${JSON.stringify(baseLine)}}
+			}) {
+					id
+					name
+			}
+	}`;
+
+		try {
+			const learnerRes = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+
+			const learnerScores = learnerRes?.data?.users;
+			const learnerSubject = learnerRes?.data?.subjects;
+
+			return resp.status(200).json({
+				success: true,
+				message: 'Data Found Successfully',
+				data: { learnerScores, learnerSubject },
+			});
+		} catch (error) {
+			console.error('Error fetching learner data:', error);
+			return resp.status(500).json({
+				success: false,
+				message: 'Error fetching learner data',
+				error: error.message,
+			});
+		}
 	}
 }

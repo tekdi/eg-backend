@@ -3,7 +3,10 @@ import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 //import * as pdfjsLib from 'pdfjs-dist';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
+import { ExamResultPattern } from './exam.result.pattern';
 import * as moment from 'moment';
+
+//pdf data extractor
 const parse = require('pdf-parse');
 
 @Injectable()
@@ -11,6 +14,7 @@ export class ExamService {
 	constructor(
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
+		private examResultPattern: ExamResultPattern,
 	) {}
 
 	async getExamSchedule(id: any, resp: any, request: any) {
@@ -26,6 +30,10 @@ export class ExamService {
                   board_id
                   is_theory
                   is_practical
+				  theory_marks
+				  practical_marks
+				  sessional_marks
+				  total_marks
 				  events(where: {context: {_eq: "subjects"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}){
                     context
                     context_id
@@ -299,6 +307,10 @@ export class ExamService {
 				  board_id
 				  is_theory
 				  is_practical
+				  theory_marks
+				  practical_marks
+				  sessional_marks
+				  total_marks
 				  events(where: {start_date: {_eq: "${date}"},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}) {
 					context
 					context_id
@@ -384,6 +396,11 @@ export class ExamService {
 							status
 						}
 					}
+					events(where: {id: {_eq: ${input?.event_id}}}) {
+						id
+						start_date
+						end_date
+					}
 				  }`,
 			};
 
@@ -393,13 +410,14 @@ export class ExamService {
 				);
 
 			users_data = attendance_result?.data?.data?.users;
-
+			const events_data = attendance_result?.data?.data?.events;
 			resultArray.push({
 				subject_id: input?.subject_id,
 				subject_name: input?.subject_name,
 				event_id: input?.event_id,
 				type: input?.type,
 				data: users_data,
+				events_data,
 			});
 		}
 
@@ -476,6 +494,7 @@ export class ExamService {
 							context_id
 							context
 							status
+							attendance_reason
 							date_time
 							user_id
 							created_by
@@ -534,6 +553,7 @@ export class ExamService {
 				  id
 				  subjects
 				  is_continued
+				  exam_fee_date
 	   			  syc_subjects
 				  exam_fee_document_id
 				}
@@ -719,7 +739,7 @@ export class ExamService {
 				}
 			`;
 
-		//console.log('mutation_query', mutation_query);
+		console.log('mutation_query', mutation_query);
 		data = {
 			query: `${mutation_query}`,
 			variables: {},
@@ -728,7 +748,7 @@ export class ExamService {
 		const query_response =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
 
-		//console.log('query_response', query_response?.data);
+		console.log('query_response', query_response?.data);
 
 		exam_result_id =
 			set_update == 1
@@ -1188,18 +1208,18 @@ export class ExamService {
 		const board_name = request?.body?.board_name;
 		//first check validations for all inputs
 		try {
-			//ocr read
-			const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-			//console.log('data', data);
 			//text read
-			const result = await this.extractResultFromPDF(file, board_name);
+			const result = await this.examResultPattern.extractResultFromPDF(
+				file,
+				board_name,
+			);
+			//console.log('result', result);
 			if (result == null) {
 				return response
 					.status(200)
 					.json({ success: false, message: 'INVALID_PDF' });
 			} else {
 				//upload pdf file and store in exam result
-
 				return response.status(200).json({
 					success: true,
 					extracted_data: {
@@ -1224,11 +1244,11 @@ export class ExamService {
 		const enrollment = request?.body?.enrollment;
 		//first check validations for all inputs
 		try {
-			//ocr read
-			const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-			//console.log('data', data);
 			//text read
-			const result = await this.extractResultFromPDF(file, board_name);
+			const result = await this.examResultPattern.extractResultFromPDF(
+				file,
+				board_name,
+			);
 			if (result == null) {
 				return response
 					.status(200)
@@ -1289,296 +1309,6 @@ export class ExamService {
 				.status(200)
 				.json({ success: false, message: 'FAILED_READ_PDF' });
 		}
-	}
-
-	//extract result from pdf functions
-	async extractResultFromPDF(file: any, board_name: any): Promise<any> {
-		//console.log('file', file);
-		const data = await parse(file.buffer); // Read data from uploaded PDF file buffer
-		//console.log('data', data);
-		//extract data from pdf
-		const pdfText = data.text; // Assuming data is the provided object containing the extracted PDF text
-		//console.log('pdfText', pdfText);
-
-		if (board_name === 'RSOS') {
-			//version 1 rsos pdf file
-			let result = await this.parseResults_RSOS_V1(pdfText);
-			//console.log('result', result);
-			if (result == null) {
-				//version 2 rsos pdf file
-				result = await this.parseResults_RSOS_V2(pdfText);
-				//console.log('result', result);
-			}
-			return result;
-		} else {
-			return null;
-		}
-	}
-
-	//version 1 extract for RSOS Board
-	async parseResults_RSOS_V1(content: string): Promise<any> {
-		//get general data
-		const regex =
-			/Enrollment : (\d+)\s+Name of Candidate : (.+?)\s+Father's Name : (.+?)\s+Mother's Name : (.+?)\s+Date of Birth : (.+?)\s+Class : (\d+th)\s+/;
-		const match = content.match(regex);
-
-		if (match) {
-			const [, enrollment, candidate, father, mother, dob, course_class] =
-				match;
-			//get subject total
-			let subject = [];
-			const subjectRegex =
-				/(\d+)\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
-			let match_subjects;
-
-			while ((match_subjects = subjectRegex.exec(content)) !== null) {
-				const [
-					,
-					no,
-					name,
-					code,
-					maxMarks,
-					theory,
-					practical,
-					sessional,
-					total,
-					result,
-				] = match_subjects;
-				subject.push({
-					subject_name: name.replace(/\n/g, ''),
-					subject_code: code,
-					max_marks: maxMarks,
-					theory: theory,
-					practical: practical,
-					tma_internal_sessional: sessional,
-					total: total,
-					result: result,
-				});
-			}
-			//get result total
-			const regex = /TOTAL(\d+)RESULT(\w+)/;
-			const match_result = content.match(regex);
-			let totalResult: any = {};
-			if (match_result) {
-				const totalMarks = match_result[1];
-				const finalResult = match_result[2];
-				totalResult = { totalMarks, finalResult };
-			}
-			return {
-				enrollment,
-				candidate,
-				father,
-				mother,
-				dob,
-				course_class,
-				exam_year: '-',
-				total_marks: totalResult?.totalMarks,
-				final_result: totalResult?.finalResult,
-				subject,
-			};
-		}
-
-		return null;
-	}
-
-	//version 2 extract for RSOS Board
-	async parseResults_RSOS_V2(content: string): Promise<any> {
-		const personalDetailsRegex =
-			/Enrollment : (\d+)\nName of Candidate : (.+?)\nFather's Name : (.+?)\nMother's Name : (.+?)\nDate of Birth : (.+?)\nClass : (\d+)/;
-
-		//working at drawing subject at end
-		/*const subjectRegex =
-			///(\d+)\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
-			/(\d+)([A-Za-z ]+ \(\d+\))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;*/
-		//working for additional subjects
-		const subjectRegex =
-			//working on new fringe case
-			/*
-		/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([A-Z]*|[\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
-		*/
-			//working below regex with most of file if user has total marks large than 10
-			/*
-			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
-			*/
-
-			//new pattern try
-			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ([A-Z\d-]+) ?(\d+)(\d+)([A-Z]+)/g;
-
-		const totalRegex = /TOTAL(\d+)RESULT(\w+)/;
-
-		const personalMatch = content.match(personalDetailsRegex);
-		const totalMatch = content.match(totalRegex);
-
-		if (personalMatch) {
-			const personalDetails = personalMatch
-				? {
-						enrollment: personalMatch[1],
-						name: personalMatch[2],
-						fatherName: personalMatch[3],
-						motherName: personalMatch[4],
-						dob: personalMatch[5],
-						class: personalMatch[6],
-				  }
-				: {};
-
-			const subject = [];
-
-			let match: any;
-			while (
-				(match = subjectRegex.exec(
-					content.replace(/\n/g, '').replace('TOTAL', '\nTOTAL'),
-				)) !== null
-			) {
-				//console.log('match', match);
-				//get max marks
-				let max_marks = '-';
-				let theory_marks = '-';
-				let practical_marks = '-';
-				let sessional_marks = '-';
-				let total_marks = '-';
-				const regex_max_marks = /100/;
-				if (match[4] && regex_max_marks.test(match[4])) {
-					max_marks = '100';
-					theory_marks = match[4].replace('100', '') + match[5];
-					total_marks = match[7] + match[8];
-					//find practical marks and sessional marks
-					if (match[6] == 'AB' || match[6] == '-') {
-						practical_marks = match[6];
-						sessional_marks = match[7];
-						total_marks = match[8];
-					} else if (match[6]) {
-						let temp_theory_marks =
-							theory_marks == '-' || theory_marks == 'AB'
-								? '0'
-								: theory_marks;
-						const p_s_marks =
-							parseInt(total_marks) - parseInt(temp_theory_marks);
-						const concat_p_s_marks = match[6];
-						const text_concat_p_s_marks =
-							concat_p_s_marks.toString();
-						const char_text_concat_p_s_marks = [
-							...text_concat_p_s_marks,
-						];
-						/*console.log(
-							'text_concat_p_s_marks',
-							char_text_concat_p_s_marks,
-						);*/
-						//exract practical and sessional
-						let is_p_s_done = false;
-						//if practical -
-						if (char_text_concat_p_s_marks[0] == '-') {
-							practical_marks = char_text_concat_p_s_marks[0];
-							sessional_marks = text_concat_p_s_marks.replace(
-								practical_marks,
-								'',
-							);
-							is_p_s_done = true;
-						}
-						//if practical AB
-						if (char_text_concat_p_s_marks[0] == 'A') {
-							practical_marks = 'AB';
-							sessional_marks = text_concat_p_s_marks.replace(
-								practical_marks,
-								'',
-							);
-							is_p_s_done = true;
-						}
-						//if sessional -
-						if (
-							char_text_concat_p_s_marks[
-								char_text_concat_p_s_marks.length - 1
-							] == '-'
-						) {
-							sessional_marks = char_text_concat_p_s_marks[0];
-							practical_marks = text_concat_p_s_marks.replace(
-								sessional_marks,
-								'',
-							);
-							is_p_s_done = true;
-						}
-						//if sessional AB
-						if (
-							char_text_concat_p_s_marks[
-								char_text_concat_p_s_marks.length - 1
-							] == 'B'
-						) {
-							sessional_marks = 'AB';
-							practical_marks = text_concat_p_s_marks.replace(
-								sessional_marks,
-								'',
-							);
-							is_p_s_done = true;
-						}
-						//separate practical and sessional
-						if (!is_p_s_done) {
-							let practical = '';
-							for (
-								let i = 0;
-								i < char_text_concat_p_s_marks.length;
-								i++
-							) {
-								let temp_practical =
-									practical + char_text_concat_p_s_marks[i];
-								let temp_sessional = '';
-								for (
-									let j = i + 1;
-									j < char_text_concat_p_s_marks.length;
-									j++
-								) {
-									temp_sessional =
-										temp_sessional +
-										char_text_concat_p_s_marks[j];
-								}
-								if (
-									parseInt(total_marks) ===
-										parseInt(temp_practical) +
-											parseInt(temp_sessional) +
-											parseInt(temp_theory_marks) &&
-									parseInt(temp_sessional) <= 10
-								) {
-									practical_marks = temp_practical;
-									sessional_marks = temp_sessional;
-									break;
-								} else {
-									practical = temp_practical;
-								}
-							}
-						}
-					}
-				}
-				subject.push({
-					subject_name: match[2].trim().replace(/ \(\d+\)/, ''),
-					subject_code: match[2].match(/\((\d+)\)/)[1],
-					max_marks: max_marks,
-					theory: theory_marks,
-					practical: practical_marks,
-					tma_internal_sessional: sessional_marks,
-					total: total_marks,
-					result: match[9].replace('TOTAL', ''),
-				});
-			}
-			const totalResult = totalMatch
-				? {
-						totalMarks: totalMatch[1],
-						result: totalMatch[2],
-				  }
-				: {};
-
-			return {
-				enrollment: personalDetails?.enrollment,
-				candidate: personalDetails?.name,
-				father: personalDetails?.fatherName,
-				mother: personalDetails?.motherName,
-				dob: personalDetails?.dob,
-				course_class: personalDetails?.class,
-				exam_year: '-',
-				total_marks: totalResult?.totalMarks,
-				final_result: totalResult?.result,
-				subject,
-			};
-		}
-
-		return null;
 	}
 
 	async getExamResultReport(body: any, request: any, response: any) {
@@ -1735,6 +1465,7 @@ export class ExamService {
         enrollment_middle_name
 		enrollment_dob
 		is_continued
+		exam_fee_date
 	    syc_subjects
 	    exam_fee_document_id
     user{
@@ -1772,12 +1503,16 @@ export class ExamService {
 						const subjectQuery = {
 							query: `query SubjectQuery {
               subjects(where: {id: {_in: [${subjects}]}}) {
-                id
+               				id
                             name
                             is_theory
                             is_practical
+							theory_marks
+							practical_marks
+							sessional_marks
+							total_marks
                             board_id
-														code
+							code
                             boardById {
                                 id
                                 name
@@ -2159,11 +1894,13 @@ export class ExamService {
 							enrolled_for_board
 							exam_fee_document_id
 							syc_subjects
+							exam_fee_date
 							is_continued	
 					}
 			}      
               `,
 		};
+
 		let response = await this.hasuraServiceFromServices.queryWithVariable(
 			data,
 		);
@@ -2175,66 +1912,80 @@ export class ExamService {
 				boardIds = boardIds.concat(beneficiary.enrolled_for_board);
 			}
 		}
-
 		// Step 2: Combine the board IDs into a unique array
 		boardIds = [...new Set(boardIds)];
 
 		// Step 3-7: Process each board ID
 		let boardList = [];
-		for (const boardId of boardIds) {
-			// Step 3: Get board details, subjects, and related events
-			const boardQuery = {
-				query: `
+
+		// Step 3: Get board details, subjects, and related events
+		const boardQuery = {
+			query: `
                     query BoardQuery {
-                        boards_by_pk(id: ${boardId}) {
+                        boards(where:{id:{_in:[${boardIds}]}}) {
                             id
                             name
                             subjects {
                                 id
                                 name
-                                events(order_by: { start_date: desc }, limit: 1) {
+                                events(order_by: { start_date: desc },,where:{program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}},status:{_eq:"publish"}} limit: 1) {
 																	start_date
                                 }
                             }
                         }
                     }
                 `,
-			};
+		};
 
-			const boardResponse =
-				await this.hasuraServiceFromServices.queryWithVariable(
-					boardQuery,
-				);
-			const boardData = boardResponse?.data?.data?.boards_by_pk;
-			// Step 4-5: Determine the maximum date among all subject events
+		const boardResponse =
+			await this.hasuraServiceFromServices.queryWithVariable(boardQuery);
+		const boardData = boardResponse?.data?.data?.boards;
+		// Process each board separately
+		for (const board of boardData) {
+			// Determine the maximum date among all subject events for this board
 			let maxDate = null;
-			if (boardData && boardData.subjects) {
-				for (const subject of boardData.subjects) {
-					if (subject?.events?.[0]?.start_date) {
-						const eventDate = new Date(
-							subject.events[0].start_date,
-						);
-						if (!maxDate || eventDate > maxDate) {
-							maxDate = eventDate;
-						}
-					}
+			const subjects = board.subjects;
+
+			// Extract events for this board
+			const events = subjects.flatMap((subject) => subject.events);
+
+			// Extract all start_date values
+			const startDates = events.map(
+				(event) => new Date(event.start_date),
+			);
+
+			// Find the maximum date if there are any dates
+			if (startDates.length > 0) {
+				maxDate = new Date(Math.max(...startDates));
+
+				// Add 2 days to the maximum date
+				maxDate.setDate(maxDate.getDate() + 2);
+
+				// Format the date to a string
+				const maxDateString = maxDate.toISOString().split('T')[0];
+
+				if (maxDateString) {
+					boardList.push({
+						board: {
+							id: board.id,
+							name: board.name,
+							subjects: board.subjects,
+						},
+						addedMaxDate: maxDateString,
+					});
 				}
-			}
-
-			// Step 6-7: Compare current date with the added maximum date
-			//	const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
-			if (maxDate && maxDate >= new Date()) {
-				const addedMaxDate = new Date(maxDate);
-				addedMaxDate.setDate(addedMaxDate.getDate() + 2);
-
+			} else {
+				// No events found for this board
 				boardList.push({
-					id: boardData.id,
-					name: boardData.name,
-					addedMaxDate: addedMaxDate.toISOString(),
+					board: {
+						id: board.id,
+						name: board.name,
+						subjects: board.subjects,
+					},
+					addedMaxDate: null,
 				});
 			}
 		}
-
 		// Step 8: Send the board list in the response
 		if (boardList.length > 0) {
 			return resp.status(200).json({
@@ -2289,7 +2040,7 @@ export class ExamService {
 
 		let query = '';
 		Object.keys(body).forEach((e) => {
-			if (body[e] && body[e] != '') {
+			if (body[e] !== undefined && body[e] !== null && body[e] !== '') {
 				if (e === 'render') {
 					query += `${e}: ${body[e]}, `;
 				} else if (Array.isArray(body[e])) {
@@ -2297,6 +2048,8 @@ export class ExamService {
 						/"/g,
 						'\\"',
 					)}", `;
+				} else if (typeof body[e] === 'boolean') {
+					query += `${e}: ${body[e]}, `;
 				} else {
 					query += `${e}: "${body[e]}", `;
 				}

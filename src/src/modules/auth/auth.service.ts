@@ -6,11 +6,11 @@ import { AadhaarKycService } from 'src/modules/aadhaar_kyc/aadhaar_kyc.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { KeycloakService } from 'src/services/keycloak/keycloak.service';
 import { UserService } from 'src/user/user.service';
-
+import * as moment from 'moment';
 const crypto = require('crypto');
 const axios = require('axios');
 const atob = require('atob');
-
+const jwt = require('jwt-decode');
 @Injectable()
 export class AuthService {
 	public smsKey = this.configService.get<string>('SMS_KEY');
@@ -342,6 +342,93 @@ export class AuthService {
 		}
 	}
 
+	public async resetPasswordUsingIdVolunteer(req, header, response) {
+		const { mw_roles } = header;
+		const authToken = header.header('authorization');
+		const decoded: any = jwt_decode(authToken);
+		let keycloak_id = decoded.sub;
+
+		let query2 = {
+			query: `query MyQuery {
+				users(where: {keycloak_id: {_eq: "${keycloak_id}" }}) {
+				  id
+				  keycloak_id
+				  program_users {
+					roles {
+					  id
+					  role_type
+					  slag
+					}
+				  }
+				}
+			  }`,
+		};
+
+		const userRole = await this.hasuraService.postData(query2);
+		if (mw_roles.includes('volunteer_admin')) {
+			let query = {
+				query: `query MyQuery {
+					users_by_pk(id: ${req.id}) {
+					  keycloak_id
+					  last_name
+					  id
+					  first_name
+					}
+				  }`,
+			};
+
+			const userRes = await this.hasuraService.postData(query);
+
+			if (userRes) {
+				const token =
+					await this.keycloakService.getAdminKeycloakToken();
+				if (
+					token?.access_token &&
+					userRes.data.users_by_pk.keycloak_id
+				) {
+					const resetPasswordRes =
+						await this.keycloakService.resetPassword(
+							userRes.data.users_by_pk.keycloak_id,
+							token.access_token,
+							req.password,
+						);
+
+					if (resetPasswordRes) {
+						return response.status(200).json({
+							success: true,
+							message: 'Password updated successfully!',
+							data: {},
+						});
+					} else {
+						return response.status(200).json({
+							success: false,
+							message: 'unable to reset password!',
+							data: {},
+						});
+					}
+				} else {
+					return response.status(200).json({
+						success: false,
+						message: 'unable to get token',
+						data: {},
+					});
+				}
+			} else {
+				return response.status(200).json({
+					success: false,
+					message: 'User not found!',
+					data: {},
+				});
+			}
+		} else {
+			return response.status(200).json({
+				success: false,
+				message: "User cann't reset password",
+				data: {},
+			});
+		}
+	}
+
 	public async login(req, response) {
 		const data = {
 			username: req.body.username,
@@ -350,6 +437,7 @@ export class AuthService {
 
 		const token = await this.keycloakService.getUserKeycloakToken(data);
 		if (token) {
+			await this.updateLastLogin(token);
 			return response.status(200).send({
 				success: true,
 				message: 'LOGGEDIN_SUCCESSFULLY',
@@ -817,6 +905,7 @@ export class AuthService {
 				'block',
 				'district',
 				'grampanchayat',
+				'alternative_mobile_number',
 				'pincode',
 				'lat',
 				'long',
@@ -836,7 +925,21 @@ export class AuthService {
 			req.academic_year_id = req.role_fields.academic_year_id;
 			req.status = 'identified';
 			req.org_id = req?.role_fields?.org_id;
-			other = [...other, 'org_id'];
+			(req.learning_motivation = JSON.stringify(
+				req?.program_beneficiaries?.learning_motivation,
+			).replace(/"/g, '\\"')),
+				(req.type_of_support_needed = JSON.stringify(
+					req?.program_beneficiaries?.type_of_support_needed,
+				).replace(/"/g, '\\"'));
+			req.learning_level = req?.program_beneficiaries?.learning_level;
+
+			other = [
+				...other,
+				'org_id',
+				'learning_motivation',
+				'type_of_support_needed',
+				'learning_level',
+			];
 		}
 
 		if (req.role === 'facilitator' || req.role === 'facilitators') {
@@ -952,6 +1055,7 @@ export class AuthService {
 				academic_year_id
 				user_id
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
@@ -1071,5 +1175,30 @@ export class AuthService {
 			message: 'Ok.',
 			data: mappedResponse,
 		};
+	}
+
+	public async updateLastLogin(token) {
+		try {
+			const { access_token } = token;
+			// Decode the token to extract user_id
+			const decoded: any = jwt_decode(access_token);
+			const userId = decoded?.sub; // Assuming 'sub' contains the user_id
+			const currentDate = moment().format('YYYY-MM-DD HH:mm:ss');
+			// Update the last_login timestamp in the database
+
+			const updateLastLoginQuery = {
+				query: `mutation UpdateLastLogin {
+					update_users(where: {keycloak_id: {_eq: "${userId}"}}, _set: {last_login: "${currentDate}"}) {
+						affected_rows
+					}
+				}`,
+			};
+
+			const result = await this.hasuraService.getData(
+				updateLastLoginQuery,
+			);
+		} catch (error) {
+			console.error('Failed to update last_login', error);
+		}
 	}
 }

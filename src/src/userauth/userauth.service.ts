@@ -40,6 +40,14 @@ export class UserauthService {
 	) {}
 
 	public async userAuthRegister(body, response, role) {
+		let validate_result = await this.validateFields(role, body);
+
+		if (validate_result?.status == false) {
+			return response.json({
+				validate_result,
+			});
+		}
+
 		let misssingFieldsFlag = false;
 		if (role === 'facilitator') {
 			//validation to check if the mobile exists for another facilitator
@@ -49,6 +57,10 @@ export class UserauthService {
 				  id
 				  mobile
 				  program_faciltators{
+					id
+					user_id
+				  }
+				  program_users{
 					id
 					user_id
 				  }
@@ -67,7 +79,14 @@ export class UserauthService {
 					(user) => user.program_faciltators.length > 0,
 				);
 
-				if (facilitator_data.length > 0) {
+				let program_user_data = users.filter(
+					(user) => user.program_users.length > 0,
+				);
+
+				if (
+					facilitator_data.length > 0 ||
+					program_user_data?.length > 0
+				) {
 					return response.status(422).send({
 						success: false,
 						message: 'Mobile Number Already Exist',
@@ -267,19 +286,67 @@ export class UserauthService {
 					);
 				}
 
-				if (role === 'beneficiary' && body?.career_aspiration) {
-					let core_beneficiary_body = {
-						career_aspiration: body?.career_aspiration,
-						career_aspiration_details:
-							body?.career_aspiration_details,
+				if (role === 'facilitator' && body?.core_faciltators) {
+					let core_faciltators = {
+						...body?.core_faciltators,
 						user_id: user_id,
-						device_type: body?.device_type,
-						device_ownership: body?.device_ownership,
 					};
+
+					await this.hasuraService.q(
+						'core_faciltators',
+						{
+							...core_faciltators,
+						},
+						[],
+						false,
+						['id'],
+					);
+				}
+
+				if (role === 'facilitator' && body?.extended_users) {
+					let extended_users_body = {
+						...body?.extended_users,
+						user_id: user_id,
+					};
+
+					await this.hasuraService.q(
+						'extended_users',
+						{
+							...extended_users_body,
+						},
+						[],
+						false,
+						['id'],
+					);
+				}
+
+				if (role === 'beneficiary' && body?.core_beneficiaries) {
+					let core_beneficiary_body = {
+						...body?.core_beneficiaries,
+						user_id: user_id,
+					};
+
 					await this.hasuraService.q(
 						'core_beneficiaries',
 						{
 							...core_beneficiary_body,
+						},
+						[],
+						false,
+						['id'],
+					);
+				}
+
+				if (role === 'beneficiary' && body?.extended_users) {
+					let extended_users_body = {
+						...body?.extended_users,
+						user_id: user_id,
+					};
+
+					await this.hasuraService.q(
+						'extended_users',
+						{
+							...extended_users_body,
 						},
 						[],
 						false,
@@ -310,6 +377,204 @@ export class UserauthService {
 				message: 'Unable to get keycloak token',
 				data: {},
 			});
+		}
+	}
+
+	public async validateFields(role, fields) {
+		if (role === 'beneficiary') {
+			// Define the required fields for the beneficiary role
+			const requiredFields = [
+				'first_name',
+				'middle_name',
+				'last_name',
+				'mobile',
+				'state',
+				'district',
+				'block',
+				'village',
+				'grampanchayat',
+				'pincode',
+				'dob',
+				'lat',
+				'long',
+				'alternative_mobile_number',
+				'email_id',
+			];
+
+			const requiredCoreBeneficiariesFields = [
+				'device_type',
+				'device_ownership',
+				'previous_school_type',
+				'last_standard_of_education',
+				'reason_of_leaving_education',
+				'last_standard_of_education_year',
+				'type_of_learner',
+				'father_first_name',
+				'father_last_name',
+				'mother_first_name',
+				'mother_last_name',
+				'father_middle_name',
+				'mother_middle_name',
+				'career_aspiration_details',
+				'mark_as_whatsapp_number',
+				'parent_support',
+				'career_aspiration',
+			];
+
+			const requiredExtendedUsersFields = [
+				'marital_status',
+				'social_category',
+			];
+
+			const requiredProgramBeneficiariesFields = [
+				'learning_motivation',
+				'type_of_support_needed',
+				'learning_level',
+			];
+
+			// Check for core_beneficiaries
+			if (!fields.hasOwnProperty('core_beneficiaries')) {
+				//	throw new Error('Field "core_beneficiaries" is missing');
+				return {
+					status: false,
+					message: 'Field core_beneficiaries is missing',
+				};
+			}
+
+			if (!fields.hasOwnProperty('program_beneficiaries')) {
+				return {
+					status: false,
+					message: 'Field program_beneficiaries is missing',
+				};
+			}
+
+			if (!fields.hasOwnProperty('extended_users')) {
+				return {
+					status: false,
+					message: 'Field extended_users is missing',
+				};
+			}
+
+			// Validate fields inside core_beneficiaries
+			for (const field of requiredCoreBeneficiariesFields) {
+				if (!fields.core_beneficiaries.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "core_beneficiaries.${field}" is missing`,
+					};
+				}
+			}
+
+			for (const field of requiredExtendedUsersFields) {
+				if (!fields.extended_users.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "extended_users.${field}" is missing`,
+					};
+				}
+			}
+
+			for (const field of requiredProgramBeneficiariesFields) {
+				if (!fields.program_beneficiaries.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "program_beneficiaries.${field}" is missing`,
+					};
+				}
+			}
+
+			// Validate fields outside core_beneficiaries
+			for (const field of requiredFields) {
+				if (!fields.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "${field}" is missing`,
+					};
+				}
+			}
+
+			return {
+				status: true,
+			}; // If all fields are valid
+		}
+
+		if (role === 'facilitator') {
+			// Define the required fields for the beneficiary role
+			const requiredFields = [
+				'first_name',
+				'middle_name',
+				'last_name',
+				'mobile',
+				'state',
+				'district',
+				'block',
+				'village',
+				'grampanchayat',
+				'pincode',
+				'dob',
+				'gender',
+			];
+
+			const requiredCoreFacilitatorsFields = [
+				'device_type',
+				'device_ownership',
+			];
+
+			const requiredExtendedUsersFields = [
+				'marital_status',
+				'social_category',
+			];
+
+			// Check for core_beneficiaries
+			if (!fields.hasOwnProperty('core_faciltators')) {
+				//	throw new Error('Field "core_beneficiaries" is missing');
+				return {
+					status: false,
+					message: 'Field core_faciltators is missing',
+				};
+			}
+
+			if (!fields.hasOwnProperty('extended_users')) {
+				return {
+					status: false,
+					message: 'Field extended_users is missing',
+				};
+			}
+
+			// Validate fields inside core_beneficiaries
+			for (const field of requiredCoreFacilitatorsFields) {
+				if (!fields.core_faciltators.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "core_faciltators.${field}" is missing`,
+					};
+				}
+			}
+
+			for (const field of requiredExtendedUsersFields) {
+				if (!fields.extended_users.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "extended_users.${field}" is missing`,
+					};
+				}
+			}
+
+			// Validate fields outside core_beneficiaries
+			for (const field of requiredFields) {
+				if (!fields.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "${field}" is missing`,
+					};
+				}
+			}
+
+			return {
+				status: true,
+			}; // If all fields are valid
+		} else {
+			throw new Error(`Role "${role}" is not supported`);
 		}
 	}
 
@@ -1519,6 +1784,7 @@ export class UserauthService {
 				facilitator_id
 				status
 				exam_fee_document_id
+				exam_fee_date
 				syc_subjects
 				is_continued
 			  }
@@ -1771,6 +2037,30 @@ export class UserauthService {
 	//Register volunteer
 	public async volunteerRegister(body, response, role) {
 		let misssingFieldsFlag = false;
+		const requiredFields = [
+			'first_name',
+			'last_name',
+			'gender',
+			'mobile',
+			'email_id',
+			'dob',
+			'state',
+			'pincode',
+			'qualification',
+		];
+
+		// Check for missing required fields
+		const missingFields = requiredFields.filter(
+			(field) =>
+				!body[field] ||
+				(typeof body[field] === 'string' && body[field]?.trim() === ''),
+		);
+		if (missingFields.length > 0) {
+			return response.status(400).json({
+				success: false,
+				message: `Missing required fields: ${missingFields.join(', ')}`,
+			});
+		}
 		if (role === 'volunteer') {
 			//validation to check if the mobile exists for another facilitator
 
@@ -1796,7 +2086,7 @@ export class UserauthService {
 			if (body?.last_name) {
 				username += `${body.last_name.charAt(0)}`;
 			}
-			username += `${body.mobile}`;
+			username += `${body.mobile}_v`;
 			username = username.toLowerCase();
 
 			// Role to group mapping
@@ -1828,7 +2118,6 @@ export class UserauthService {
 					username,
 					token?.access_token,
 				);
-
 				const registerUserRes = await this.keycloakService.registerUser(
 					data_to_create_user,
 					token.access_token,
@@ -1857,13 +2146,22 @@ export class UserauthService {
 					body.keycloak_id = keycloak_id;
 					body.username = data_to_create_user.username;
 					body.password = password;
+					let role_id;
 
-					if (role === 'volunteer' && body.hasOwnProperty('dob')) {
-						delete body.dob;
-					}
 					body.role = role;
 
 					const result = await this.authService.newCreate(body);
+					// Send login details SMS
+					// नमस्कार, प्रगति प्लेटफॉर्म पर आपका अकाउंट बनाया गया है। आपका उपयोगकर्ता नाम <arg1> है और पासवर्ड <arg2> है। FEGG
+					if (body.role === 'volunteer') {
+						const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%85%E0%A4%95%E0%A4%BE%E0%A4%89%E0%A4%82%E0%A4%9F%20%E0%A4%AC%E0%A4%A8%E0%A4%BE%E0%A4%AF%E0%A4%BE%20%E0%A4%97%E0%A4%AF%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A5%8B%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A5%8D%E0%A4%A4%E0%A4%BE%20%E0%A4%A8%E0%A4%BE%E0%A4%AE%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%20%E0%A4%94%E0%A4%B0%20%E0%A4%AA%E0%A4%BE%E0%A4%B8%E0%A4%B5%E0%A4%B0%E0%A5%8D%E0%A4%A1%20%3Carg2%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
+						const args = `arg1:${body.username},arg2:${body.password}`;
+						const otpRes = await this.authService.sendSMS(
+							body.mobile,
+							message,
+							args,
+						);
+					}
 
 					let user_id = result?.data?.id;
 					if (body.qualification) {
@@ -1892,27 +2190,35 @@ export class UserauthService {
 							['user_id', 'qualification_master_id'],
 						);
 					}
+					if (role === 'volunteer') {
+						const data = {
+							query: `query MyQuery {
+								roles(where: { slug: {_eq: "volunteer"}}) {
+									id
+								}
+							}`,
+						};
+						const hasura_response =
+							await this.hasuraServiceFromServices.getData(data);
+						role_id = hasura_response?.data?.roles?.[0]?.id;
+
+						await this.hasuraService.q(
+							`user_roles`,
+							{
+								user_id,
+								status: 'applied',
+								role_id: role_id,
+								role_slug: 'volunteer',
+							},
+							['user_id', 'status', 'role_id', 'role_slug'],
+						);
+					}
 					if (user_id && role === 'volunteer') {
 						// Set the timezone to Indian Standard Time (Asia/Kolkata)
 						const formattedISTTime =
 							this.method.getFormattedISTTime();
 
 						// Format the time as per datetime
-
-						let acknowledgement_create_body = {
-							user_id: user_id,
-							date_time: formattedISTTime,
-							doc_version: 1,
-							doc_id: 1,
-							context: 'volunteer.profile',
-							context_id: user_id,
-							accepted: true,
-						};
-
-						//add acknowledgment details
-						await this.acknowledgementService.createAcknowledgement(
-							acknowledgement_create_body,
-						);
 					}
 
 					return response.status(200).send({

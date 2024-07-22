@@ -2186,6 +2186,10 @@ export class ObservationsService {
                             name
                             is_theory
                             is_practical
+							theory_marks
+							practical_marks
+							sessional_marks
+							total_marks
                             board_id
 							code
                           boardById {

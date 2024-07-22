@@ -5,6 +5,7 @@ import {
 	Get,
 	Param,
 	Post,
+	Patch,
 	Req,
 	Res,
 	UseGuards,
@@ -139,5 +140,56 @@ export class GeolocationController {
 				villages: mappedResponse,
 			},
 		};
+	}
+
+	//Add Address master data API
+	@Post('/')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	add(@Body() body: any, @Req() request: any, @Res() response: Response) {
+		return this.geolocationService.add(body, request, response);
+	}
+
+	@Post('/list')
+	@UsePipes(ValidationPipe)
+	@UseGuards(new AuthGuard())
+	getAddressList(
+		@Body() body: any,
+		@Req() request: any,
+		@Res() response: Response,
+	) {
+		return this.geolocationService.getAddressList(body, request, response);
+	}
+
+	@Post('/:id')
+	@UseGuards(new AuthGuard())
+	getAddressDetails(
+		@Req() req: any,
+		@Res() response: Response,
+		@Param('id') id: number,
+	) {
+		return this.geolocationService.getAddressDetails(req, response, id);
+	}
+
+	@Patch('/update/:id')
+	@UseGuards(new AuthGuard())
+	addressUpdate(
+		@Req() request: any,
+		@Body() body: any,
+		@Param('id') id: number,
+		@Res() response: any,
+	) {
+		return this.geolocationService.addressUpdate(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Get('/state_lists')
+	@UsePipes(ValidationPipe)
+	getStateLists(@Res() response: Response) {
+		return this.geolocationService.getStateLists(response);
 	}
 }

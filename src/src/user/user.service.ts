@@ -726,6 +726,12 @@ export class UserService {
 			status
 			user_id
 		  }
+			user_roles{
+				id
+				user_id
+				status
+				role_slug
+			}
 		  extended_users{
 			id
 			user_id
@@ -2108,5 +2114,64 @@ export class UserService {
 				data: program_users,
 			});
 		}
+	}
+
+	public async checkVolunterUserExistsV2(
+		role: any,
+		body: any,
+		response: any,
+	) {
+		const hasura_response = await this.findUsersByFields1(body);
+
+		if (hasura_response && hasura_response.data.users.length > 0) {
+			const users = hasura_response.data.users;
+
+			const volunteer_roles = users
+				.flatMap((user) => user.user_roles)
+				.filter((userRole) => userRole.role_slug === 'volunteer');
+			let usersFound = false;
+			if (volunteer_roles.length > 0) {
+				usersFound = true;
+			}
+
+			return response.status(200).send({
+				success: usersFound,
+				data: {
+					user_roles: volunteer_roles,
+				},
+			});
+		} else {
+			return response.status(200).send({
+				success: false,
+				message: 'Matching users not found',
+				data: [],
+			});
+		}
+	}
+
+	public async findUsersByFields1(body) {
+		const fields = [];
+		for (const fieldName in body) {
+			const fieldValue = body[fieldName];
+			fields.push(fieldName, fieldValue);
+		}
+
+		const data = {
+			query: `query MyQuery {
+				users(where: {${fields[0]}: {_eq: "${fields[1]}"}}){
+					user_roles {
+						user_id
+						role_slug
+				}
+				}
+			}`,
+		};
+
+		// Fetch data
+		const hasura_response = await this.hasuraServiceFromServices.getData(
+			data,
+		);
+
+		return hasura_response;
 	}
 }

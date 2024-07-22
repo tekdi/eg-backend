@@ -27,6 +27,7 @@ export class AttendancesService {
 		'status',
 		'lat',
 		'long',
+		'camp_to_attendance_location_distance',
 	];
 
 	constructor(
