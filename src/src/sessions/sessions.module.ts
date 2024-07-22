@@ -8,8 +8,15 @@ import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { Method } from 'src/common/method/method';
 import { EnumModule } from 'src/enum/enum.module';
+import { CampModule } from 'src/camp/camp.module';
 @Module({
-	imports: [UserModule, HasuraModuleFromServices, HasuraModule, EnumModule],
+	imports: [
+		UserModule,
+		HasuraModuleFromServices,
+		HasuraModule,
+		EnumModule,
+		CampModule,
+	],
 	controllers: [SessionsController],
 	providers: [SessionsService, Method],
 })

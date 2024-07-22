@@ -83,7 +83,6 @@ export class PcrscoresService {
 					},
 					this.returnFields,
 				);
-
 				// first audit log
 				const { id, user_id, created_at, updated_at, ...newData } =
 					response?.pcr_scores || {};
@@ -108,7 +107,10 @@ export class PcrscoresService {
 					action: 'create',
 				};
 				await this.userService.addAuditLogAction(auditData);
-			} else if (!pcr?.endline_learning_level) {
+			} else if (
+				!pcr?.endline_learning_level ||
+				pcr?.endline_learning_level != body?.endline_learning_level
+			) {
 				let data = body;
 				let auditData = {
 					userId: user_id,
@@ -174,10 +176,11 @@ export class PcrscoresService {
 						'updated_at',
 					],
 				);
+				response = response?.pcr_scores;
 				await this.userService.addAuditLogAction({
 					...auditData,
 					oldData: pcr,
-					newData: response?.pcr_scores || {},
+					newData: response || {},
 				});
 			} else {
 				response = pcr;
@@ -474,7 +477,7 @@ export class PcrscoresService {
 		}
 
 		query = `query MyQuery2 {
-			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:[${subject}]
+			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:["${subject}"]
 		}}) {
 			  subject_id: id
 			  name
@@ -490,6 +493,8 @@ export class PcrscoresService {
 		const subject_data = hasura_response?.data?.subjects;
 		const subject_ids = subject_data?.map((subject) => subject.subject_id);
 
+		const subjectIdsString = subject_ids.join(',');
+
 		if (subject_ids?.length) {
 			// Create the ILIKE conditions dynamically
 			const ilikeConditions = subject_ids
@@ -498,13 +503,21 @@ export class PcrscoresService {
 
 			// Construct the SQL query
 			sql = `
-        SELECT c.id, u.id AS user_id, u.first_name, u.last_name, u.middle_name, pb.status,pb.enrollment_first_name,pb.enrollment_last_name,pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level
+        SELECT c.id, u.id AS user_id,
+				COALESCE(u.first_name, '') AS first_name,
+				COALESCE(u.middle_name, '') AS middle_name, 
+				COALESCE(u.last_name, '') AS last_name,
+				pb.status,
+				COALESCE(pb.enrollment_first_name, '') AS enrollment_first_name,
+				COALESCE(pb.enrollment_last_name, '') AS enrollment_last_name,
+				pfa.formative_assessment_first_learning_level,pfa.formative_assessment_second_learning_level,pfa.subject_id,bi.name
         FROM camps c
         INNER JOIN group_users gu ON gu.group_id = c.group_id
         INNER JOIN program_beneficiaries pb ON gu.user_id = pb.user_id
         INNER JOIN users u ON pb.user_id = u.id
-		LEFT JOIN pcr_formative_assesment pfa  ON pfa.user_id = pb.user_id
-        WHERE c.id = ${camp_id}
+		LEFT JOIN pcr_formative_assesment pfa  ON pfa.user_id = pb.user_id AND pfa.subject_id IN (${subjectIdsString})
+		LEFT JOIN boards bi ON pb.enrolled_for_board = bi.id 
+		WHERE c.id = ${camp_id}
           AND gu.member_type = 'member' 
           AND gu.status = 'active' 
           AND (${ilikeConditions});
@@ -557,7 +570,7 @@ export class PcrscoresService {
 		}
 
 		query = `query MyQuery2 {
-			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:[${subject}]
+			subjects(where: {boardById: {program_id: {_eq: ${program_id}}}, name:  {_in:["${subject}"]
 		}}) {
 			  subject_id: id
 			  name
