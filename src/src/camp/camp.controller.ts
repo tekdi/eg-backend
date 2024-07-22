@@ -411,4 +411,24 @@ export class CampController {
 	) {
 		return this.campService.multiplePcrCampEnd(body, request, response);
 	}
+
+	@Post('camp_day_activity/list')
+	@UseGuards(new AuthGuard())
+	getOnestUserTracking(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.campService.lastCampDayActivityTrack(body, req, response);
+	}
+
+	@Post('camp_learner_list/check_baseline')
+	@UseGuards(new AuthGuard())
+	getLearnersBaseline(
+		@Body() body: Record<string, any>,
+		@Req() req: any,
+		@Res() response: Response,
+	) {
+		return this.campService.getLearnersBaseline(body, req, response);
+	}
 }
