@@ -953,7 +953,6 @@ export class AuthService {
 			).replace(/"/g, '\\"');
 			req.status = 'applied';
 
-			console.log('qualid-->>', req.qualification_ids);
 			other = [...other, 'qualification_ids'];
 		}
 		if (req.role === 'staff') {

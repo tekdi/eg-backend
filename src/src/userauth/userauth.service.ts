@@ -220,9 +220,7 @@ export class UserauthService {
 				if (body.role_fields.org_id) {
 					body.org_id = body.role_fields.org_id;
 				}
-				if (role === 'facilitator' && body.hasOwnProperty('dob')) {
-					delete body.dob;
-				}
+
 				body.role = role;
 
 				const result = await this.authService.newCreate(body);
