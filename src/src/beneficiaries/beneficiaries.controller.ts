@@ -559,4 +559,10 @@ export class BeneficiariesController {
 	withOutBaseline(@Req() request: any, @Res() response: any) {
 		return this.beneficiariesService.withOutBaseline(request, response);
 	}
+
+	@Post('/beneficiaries-scores')
+	@UseGuards(new AuthGuard())
+	learnerScore(@Body() body: any, @Res() response: any) {
+		return this.beneficiariesService.learnerScore(body, response);
+	}
 }
