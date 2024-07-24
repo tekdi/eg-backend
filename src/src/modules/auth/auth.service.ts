@@ -948,7 +948,12 @@ export class AuthService {
 			req.parent_ip = `${req.role_fields.parent_ip}`;
 			req.program_id = req.role_fields.program_id;
 			req.academic_year_id = req.role_fields.academic_year_id;
+			req.qualification_ids = JSON.stringify(
+				req.role_fields.qualification_ids,
+			).replace(/"/g, '\\"');
 			req.status = 'applied';
+
+			other = [...other, 'qualification_ids'];
 		}
 		if (req.role === 'staff') {
 			programRoleTableName = 'program_users';
