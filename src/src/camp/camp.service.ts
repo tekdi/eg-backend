@@ -136,9 +136,7 @@ export class CampService {
 				.data.map((item) => item.value);
 
 			let query = `query MyQuery {
-				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}},pcr_scores: {baseline_learning_level: {_in: ${JSON.stringify(
-				baseLine,
-			)}}}}){
+				users(where:{program_beneficiaries:{user_id: {_in:[${learner_ids}]},status:{_eq:${beneficiary_status}}, facilitator_id: {_eq:${facilitator_id}}}}){
 				  id
 				}
 			  }`;
