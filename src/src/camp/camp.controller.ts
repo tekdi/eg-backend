@@ -25,7 +25,7 @@ export class CampController {
 	@UseGuards(new AuthGuard())
 	registerCamp(
 		@Body() body: Body,
-		@Req() request: any,
+		@Req() request: Request,
 		@Res() response: Response,
 	) {
 		return this.campService.create(body, request, response);
