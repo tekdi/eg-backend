@@ -220,9 +220,7 @@ export class UserauthService {
 				if (body.role_fields.org_id) {
 					body.org_id = body.role_fields.org_id;
 				}
-				if (role === 'facilitator' && body.hasOwnProperty('dob')) {
-					delete body.dob;
-				}
+
 				body.role = role;
 
 				const result = await this.authService.newCreate(body);
@@ -313,6 +311,23 @@ export class UserauthService {
 						'extended_users',
 						{
 							...extended_users_body,
+						},
+						[],
+						false,
+						['id'],
+					);
+				}
+
+				if (role === 'facilitator' && body?.qualification) {
+					let qualification_body = {
+						...body?.qualification,
+						user_id: user_id,
+					};
+
+					await this.hasuraService.q(
+						'qualifications',
+						{
+							...qualification_body,
 						},
 						[],
 						false,
@@ -518,12 +533,21 @@ export class UserauthService {
 			const requiredCoreFacilitatorsFields = [
 				'device_type',
 				'device_ownership',
+				'has_diploma',
+				'diploma_details',
 			];
 
 			const requiredExtendedUsersFields = [
 				'marital_status',
 				'social_category',
 			];
+
+			const requiredQualificationFields = [
+				'qualification_master_id',
+				'qualification_reference_document_id',
+			];
+
+			const requiredProgramFacilitatorsFields = ['qualification_ids'];
 
 			// Check for core_beneficiaries
 			if (!fields.hasOwnProperty('core_faciltators')) {
@@ -538,6 +562,13 @@ export class UserauthService {
 				return {
 					status: false,
 					message: 'Field extended_users is missing',
+				};
+			}
+
+			if (!fields.hasOwnProperty('qualification')) {
+				return {
+					status: false,
+					message: 'Field qualification is missing',
 				};
 			}
 
@@ -556,6 +587,24 @@ export class UserauthService {
 					return {
 						status: false,
 						message: `Field "extended_users.${field}" is missing`,
+					};
+				}
+			}
+
+			for (const field of requiredProgramFacilitatorsFields) {
+				if (!fields.role_fields.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "program_faciltators.${field}" is missing`,
+					};
+				}
+			}
+
+			for (const field of requiredQualificationFields) {
+				if (!fields.qualification.hasOwnProperty(field)) {
+					return {
+						status: false,
+						message: `Field "qualification ${field}" is missing`,
 					};
 				}
 			}
