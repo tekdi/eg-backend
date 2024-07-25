@@ -4120,7 +4120,7 @@ export class BeneficiariesService {
 		result = hasura_response?.data?.users_by_pk;
 
 		if (result?.documents?.length < 3) {
-			emptyFields.push('documents.profile_photo');
+			emptyFields.push('profile_photo');
 		}
 
 		function checkFields(result, prefix = '') {
@@ -4130,7 +4130,7 @@ export class BeneficiariesService {
 					result[key] === undefined ||
 					result[key] === ''
 				) {
-					emptyFields.push(prefix + key);
+					emptyFields.push(key);
 				} else if (
 					typeof result[key] === 'object' &&
 					!Array.isArray(result[key])
