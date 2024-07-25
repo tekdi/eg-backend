@@ -2712,26 +2712,18 @@ export class FacilitatorService {
 					'profile_photo_2',
 					'profile_photo_3',
 				];
-				// const experience = userData.experience || [];
-				// experience.forEach((experience: any, index: number) => {
-				// 	requiredFields.push(`experience[${index}].description`);
-				// 	requiredFields.push(`experience[${index}].organization`);
-				// 	requiredFields.push(`experience[${index}].role_title`);
-				// 	requiredFields.push(
-				// 		`experience[${index}].experience_in_years`,
-				// 	);
-				// });
-				if (
-					!requiredDocumentTypes.every((docType) =>
-						documents.some(
-							(doc: any) => doc.document_sub_type === docType,
-						),
-					)
-				) {
-					requiredFields.push(
-						'Missing required documents of specific types',
-					);
-				}
+				requiredDocumentTypes.forEach((docType) => {
+					if (
+						!documents.some(
+							(doc) => doc.document_sub_type === docType,
+						)
+					) {
+						requiredFields.push(
+							`Missing required document of type "${docType}"`,
+						);
+					}
+				});
+
 				const qualifications = userData.qualifications || [];
 				if (
 					!qualifications.some(
@@ -2755,18 +2747,7 @@ export class FacilitatorService {
 						'Missing qualification of type "teaching"',
 					);
 				}
-				// if (
-				// 	!experience.some((exp: any) => exp.type === 'vo_experience')
-				// ) {
-				// 	requiredFields.push(
-				// 		'Missing experience of type "vo_experience"',
-				// 	);
-				// }
-				// if (!experience.some((exp: any) => exp.type === 'experience')) {
-				// 	requiredFields.push(
-				// 		'Missing experience of type "experience"',
-				// 	);
-				// }
+
 				dataToCheck = userData;
 				break;
 			case 'selected_for_onboarding':
@@ -2776,73 +2757,36 @@ export class FacilitatorService {
 				];
 				dataToCheck = userData;
 				const program_faciltators = userData.program_faciltators || [];
-				program_faciltators.forEach(
-					(program_facilitator: any, index: number) => {
-						requiredFields.push(
-							`program_faciltators[${index}].availability`,
-						);
-					},
-				);
+				if (!program_faciltators.every((pf) => pf.availability)) {
+					requiredFields.push(
+						'Missing program facilitators availability',
+					);
+				}
+
 				const experience = userData.experience || [];
-				experience.forEach((experience: any, index: number) => {
-					requiredFields.push(`experience[${index}].description`);
-					requiredFields.push(`experience[${index}].organization`);
-					requiredFields.push(`experience[${index}].role_title`);
-					requiredFields.push(
-						`experience[${index}].experience_in_years`,
-					);
-					requiredFields.push(
-						`experience[${index}].related_to_teaching`,
-					);
-				});
+				if (!experience.every((exp) => exp.description)) {
+					requiredFields.push('Missing experience description');
+				}
+				if (!experience.every((exp) => exp.organization)) {
+					requiredFields.push('Missing experience organization');
+				}
+				if (!experience.every((exp) => exp.role_title)) {
+					requiredFields.push('Missing experience role title');
+				}
+				if (!experience.every((exp) => exp.experience_in_years)) {
+					requiredFields.push('Missing experience in years');
+				}
+
 				const references = userData.references || [];
-				references.forEach((reference: any, index: number) => {
-					requiredFields.push(`references[${index}].name`);
-					requiredFields.push(`references[${index}].contact_number`);
-					requiredFields.push(`references[${index}].designation`);
-				});
-				// Adding specific checks for document_sub_type and qualification type
-				// const documents = userData.documents || [];
-				// const requiredDocumentTypes = [
-				// 	'qualifications',
-				// 	'profile_photo_1',
-				// 	'profile_photo_2',
-				// 	'profile_photo_3',
-				// ];
-				// if (
-				// 	!requiredDocumentTypes.every((docType) =>
-				// 		documents.some(
-				// 			(doc: any) => doc.document_sub_type === docType,
-				// 		),
-				// 	)
-				// ) {
-				// 	requiredFields.push(
-				// 		'Missing required documents of specific types',
-				// 	);
-				// }
-				// const qualifications = userData.qualifications || [];
-				// if (
-				// 	!qualifications.some(
-				// 		(qualification: any) =>
-				// 			qualification.qualification_master.type ===
-				// 			'qualification',
-				// 	)
-				// ) {
-				// 	requiredFields.push(
-				// 		'Missing qualification of type "qualification"',
-				// 	);
-				// }
-				// if (
-				// 	!qualifications.some(
-				// 		(qualification: any) =>
-				// 			qualification.qualification_master.type ===
-				// 			'teaching',
-				// 	)
-				// ) {
-				// 	requiredFields.push(
-				// 		'Missing qualification of type "teaching"',
-				// 	);
-				// }
+				if (!references.every((ref) => ref.name)) {
+					requiredFields.push('Missing reference name');
+				}
+				if (!references.every((ref) => ref.contact_number)) {
+					requiredFields.push('Missing reference contact number');
+				}
+				if (!references.every((ref) => ref.designation)) {
+					requiredFields.push('Missing reference designation');
+				}
 				if (
 					!experience.some((exp: any) => exp.type === 'vo_experience')
 				) {
@@ -2855,6 +2799,10 @@ export class FacilitatorService {
 						'Missing experience of type "experience"',
 					);
 				}
+				break;
+			case 'selected_prerak':
+				requiredFields = ['aadhar_no'];
+				dataToCheck = userData;
 				break;
 			default:
 				return res.status(400).json({ message: 'Invalid status' });
