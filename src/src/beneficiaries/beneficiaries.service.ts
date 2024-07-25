@@ -2246,6 +2246,25 @@ export class BeneficiariesService {
 			},
 		};
 
+		//validation to check if required details are filled before editing enrollment details
+
+		if (
+			req.edit_page_type == 'edit_enrollement' ||
+			req.edit_page_type == 'edit_enrollement_details'
+		) {
+			let result = await this.validateBeneficiaryDetailsForEnrollment(
+				user_id,
+			);
+
+			if (result?.length > 0) {
+				return response.status(422).json({
+					message: 'Learner not ready to be enrolled',
+					data: result,
+					status: false,
+				});
+			}
+		}
+
 		switch (req.edit_page_type) {
 			case 'edit_basic': {
 				// Update Users table data
