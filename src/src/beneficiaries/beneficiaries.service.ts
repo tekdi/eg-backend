@@ -4033,4 +4033,115 @@ export class BeneficiariesService {
 			});
 		}
 	}
+
+	public async checkEnrollmentValidation(
+		id: number,
+		request: any,
+		response: any,
+	) {
+		let result = await this.validateBeneficiaryDetailsForEnrollment(id);
+
+		if (result?.length > 0) {
+			return response.status(422).json({
+				message: 'Learner not ready to be enrolled',
+				data: result,
+				status: false,
+			});
+		} else {
+			return response.status(200).json({
+				message: 'Learner ready to be enrolled',
+				data: [],
+				status: true,
+			});
+		}
+	}
+
+	async validateBeneficiaryDetailsForEnrollment(user_id) {
+		let query;
+		let result;
+		let hasura_response;
+		let emptyFields = [];
+
+		query = `query MyQuery {
+		users_by_pk(id:${user_id}) {
+		  id
+		  first_name
+		  dob
+		  mobile
+		  lat
+		  long
+		  district
+		  block
+		  village
+		  grampanchayat
+		  core_beneficiaries {
+			career_aspiration
+			parent_support
+			father_first_name
+			mother_first_name
+			mark_as_whatsapp_number
+			device_type
+			device_ownership
+			type_of_learner
+			last_standard_of_education
+			last_standard_of_education_year
+			previous_school_type
+			reason_of_leaving_education
+			education_10th_exam_year
+			
+		  }
+		  program_beneficiaries {
+			learning_level
+			type_of_support_needed
+		  }
+		  extended_users {
+			marital_status
+			social_category
+		  }
+		  documents(where: {doument_type: {_eq: "profile_photo"}}) {
+			id
+			name
+		  }
+		  references(where: {context: {_eq: "users"}}) {
+			id
+			context
+			context_id
+			first_name
+			relation
+			contact_number
+		  }
+		}
+	  }
+	  `;
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.users_by_pk;
+
+		if (result?.documents?.length < 3) {
+			emptyFields.push('documents.profile_photo');
+		}
+
+		function checkFields(result, prefix = '') {
+			for (let key in result) {
+				if (
+					result[key] === null ||
+					result[key] === undefined ||
+					result[key] === ''
+				) {
+					emptyFields.push(prefix + key);
+				} else if (
+					typeof result[key] === 'object' &&
+					!Array.isArray(result[key])
+				) {
+					checkFields(result[key], prefix + key + '.');
+				}
+			}
+		}
+
+		checkFields(result);
+
+		return emptyFields;
+	}
 }
