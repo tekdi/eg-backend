@@ -4085,11 +4085,6 @@ export class BeneficiariesService {
 			device_type
 			device_ownership
 			type_of_learner
-			last_standard_of_education
-			last_standard_of_education_year
-			previous_school_type
-			reason_of_leaving_education
-			education_10th_exam_year
 			
 		  }
 		  program_beneficiaries {
