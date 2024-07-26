@@ -2718,7 +2718,7 @@ export class FacilitatorService {
 							(doc) => doc.document_sub_type === docType,
 						)
 					) {
-						requiredFields.push(`"${docType}"`);
+						requiredFields.push(`${docType}`);
 					}
 				});
 
@@ -2730,7 +2730,7 @@ export class FacilitatorService {
 							'qualification',
 					)
 				) {
-					requiredFields.push('"qualification"');
+					requiredFields.push('qualification');
 				}
 				if (
 					!qualifications.some(
@@ -2739,7 +2739,7 @@ export class FacilitatorService {
 							'teaching',
 					)
 				) {
-					requiredFields.push('"teaching"');
+					requiredFields.push('teaching');
 				}
 
 				dataToCheck = userData;
