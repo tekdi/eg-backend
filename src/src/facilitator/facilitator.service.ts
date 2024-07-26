@@ -2718,9 +2718,7 @@ export class FacilitatorService {
 							(doc) => doc.document_sub_type === docType,
 						)
 					) {
-						requiredFields.push(
-							`Missing required document of type "${docType}"`,
-						);
+						requiredFields.push(`"${docType}"`);
 					}
 				});
 
@@ -2732,9 +2730,7 @@ export class FacilitatorService {
 							'qualification',
 					)
 				) {
-					requiredFields.push(
-						'Missing qualification of type "qualification"',
-					);
+					requiredFields.push('"qualification"');
 				}
 				if (
 					!qualifications.some(
@@ -2743,61 +2739,52 @@ export class FacilitatorService {
 							'teaching',
 					)
 				) {
-					requiredFields.push(
-						'Missing qualification of type "teaching"',
-					);
+					requiredFields.push('"teaching"');
 				}
 
 				dataToCheck = userData;
 				break;
 			case 'selected_for_onboarding':
-				requiredFields = [
-					'core_faciltator.has_volunteer_exp',
-					'core_faciltator.has_job_exp',
-				];
+				requiredFields = ['has_volunteer_exp', 'has_job_exp'];
 				dataToCheck = userData;
 				const program_faciltators = userData.program_faciltators || [];
 				if (!program_faciltators.every((pf) => pf.availability)) {
-					requiredFields.push(
-						'Missing program facilitators availability',
-					);
+					requiredFields.push('availability');
 				}
 
 				const experience = userData.experience || [];
 				if (!experience.every((exp) => exp.description)) {
-					requiredFields.push('Missing experience description');
+					requiredFields.push('description');
 				}
 				if (!experience.every((exp) => exp.organization)) {
-					requiredFields.push('Missing experience organization');
+					requiredFields.push('organization');
 				}
 				if (!experience.every((exp) => exp.role_title)) {
-					requiredFields.push('Missing experience role title');
+					requiredFields.push('role_title');
 				}
 				if (!experience.every((exp) => exp.experience_in_years)) {
-					requiredFields.push('Missing experience in years');
+					requiredFields.push('experience_in_years');
 				}
-
+				if (!experience.every((exp) => exp.related_to_teaching)) {
+					requiredFields.push('related_to_teaching');
+				}
 				const references = userData.references || [];
 				if (!references.every((ref) => ref.name)) {
-					requiredFields.push('Missing reference name');
+					requiredFields.push('name');
 				}
 				if (!references.every((ref) => ref.contact_number)) {
-					requiredFields.push('Missing reference contact number');
+					requiredFields.push('contact_number');
 				}
 				if (!references.every((ref) => ref.designation)) {
-					requiredFields.push('Missing reference designation');
+					requiredFields.push('designation');
 				}
 				if (
 					!experience.some((exp: any) => exp.type === 'vo_experience')
 				) {
-					requiredFields.push(
-						'Missing experience of type "vo_experience"',
-					);
+					requiredFields.push('type_vo_experience');
 				}
 				if (!experience.some((exp: any) => exp.type === 'experience')) {
-					requiredFields.push(
-						'Missing experience of type "experience"',
-					);
+					requiredFields.push('type_experience');
 				}
 				break;
 			case 'selected_prerak':
