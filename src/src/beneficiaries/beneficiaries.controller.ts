@@ -270,7 +270,7 @@ export class BeneficiariesController {
 		@Req() request: any,
 		@Res() response: any,
 	) {
-		return this.beneficiariesService.create(
+		return this.beneficiariesService.createNew(
 			{
 				...req,
 				id: id,
