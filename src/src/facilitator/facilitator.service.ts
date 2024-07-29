@@ -2748,7 +2748,7 @@ export class FacilitatorService {
 						}
 					})
 				) {
-					requiredFields.push('teaching');
+					requiredFields.push('teaching_degree');
 				}
 
 				dataToCheck = userData;
