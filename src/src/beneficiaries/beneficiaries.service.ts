@@ -1927,6 +1927,11 @@ export class BeneficiariesService {
 			body.is_eligible = null;
 		}
 
+		if (body.enrollment_verification_status == 'rejected') {
+			body.status = 'rejected';
+			body.reason_for_status_update = 'below_5th_standard';
+		}
+
 		const res = await this.hasuraService.q(
 			'program_beneficiaries',
 			{
