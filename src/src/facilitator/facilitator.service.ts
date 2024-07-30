@@ -2629,6 +2629,7 @@ export class FacilitatorService {
                 form_step_number
                 created_by
                 updated_by
+								qualification_ids
             }
             qualifications {
                 end_year
@@ -2732,14 +2733,22 @@ export class FacilitatorService {
 				) {
 					requiredFields.push('qualification');
 				}
+				let program_faciltators = userData.program_faciltators || [];
 				if (
-					!qualifications.some(
-						(qualification: any) =>
-							qualification.qualification_master.type ===
-							'teaching',
-					)
+					!program_faciltators.every((pf) => {
+						try {
+							const ids = JSON.parse(pf.qualification_ids);
+							return (
+								Array.isArray(ids) &&
+								ids.length > 0 &&
+								ids.every((id: any) => typeof id === 'string')
+							);
+						} catch (e) {
+							return false;
+						}
+					})
 				) {
-					requiredFields.push('teaching');
+					requiredFields.push('teaching_degree');
 				}
 
 				dataToCheck = userData;
@@ -2747,7 +2756,7 @@ export class FacilitatorService {
 			case 'selected_for_onboarding':
 				requiredFields = ['has_volunteer_exp', 'has_job_exp'];
 				dataToCheck = userData;
-				const program_faciltators = userData.program_faciltators || [];
+				program_faciltators = userData.program_faciltators || [];
 				if (!program_faciltators.every((pf) => pf.availability)) {
 					requiredFields.push('availability');
 				}

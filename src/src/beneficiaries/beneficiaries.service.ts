@@ -2965,18 +2965,35 @@ export class BeneficiariesService {
 					}
 				}
 				if (req.enrollment_status == 'ready_to_enroll') {
-					myRequest['enrollment_status'] = req?.enrollment_status;
-					myRequest['enrollment_number'] = null;
-					myRequest['enrolled_for_board'] = null;
-					myRequest['subjects'] = null;
-					myRequest['payment_receipt_document_id'] = null;
-					myRequest['enrollment_date'] = null;
-					myRequest['enrollment_first_name'] = null;
-					myRequest['enrollment_middle_name'] = null;
-					myRequest['enrollment_last_name'] = null;
-					myRequest['enrollment_dob'] = null;
-					myRequest['enrollment_aadhaar_no'] = null;
-					myRequest['is_eligible'] = null;
+					// myRequest['enrollment_status'] = req?.enrollment_status;
+					// myRequest['enrollment_number'] = null;
+					// myRequest['enrolled_for_board'] = null;
+					// myRequest['subjects'] = null;
+					// myRequest['payment_receipt_document_id'] = null;
+					// myRequest['enrollment_date'] = null;
+					// myRequest['enrollment_first_name'] = null;
+					// myRequest['enrollment_middle_name'] = null;
+					// myRequest['enrollment_last_name'] = null;
+					// myRequest['enrollment_dob'] = null;
+					// myRequest['enrollment_aadhaar_no'] = null;
+					// myRequest['is_eligible'] = null;
+
+					myRequest = {
+						enrollment_status: req?.enrollment_status,
+						enrollment_number: null,
+						enrolled_for_board: null,
+						subjects: null,
+						payment_receipt_document_id: null,
+						type_of_enrollement: null,
+						enrollment_date: null,
+						enrollment_first_name: null,
+						enrollment_middle_name: null,
+						enrollment_last_name: null,
+						enrollment_dob: null,
+						enrollment_aadhaar_no: null,
+						is_eligible: null,
+					};
+
 					const data = {
 						query: `query MyQuery {
 					documents(where: {doument_type: {_eq: "enrollment_receipt"},user_id:{_eq:${req?.id}}}){
@@ -3006,14 +3023,19 @@ export class BeneficiariesService {
 							);
 						}
 					}
-					const status = await this.statusUpdate(
-						{
-							user_id: req.id,
-							status: req.enrollment_status,
-							reason_for_status_update: req.enrollment_status,
-						},
-						request,
-					);
+
+					// const statusUpdateResult = await this.statusUpdate(
+					// 	{
+					// 		...myRequest,
+					// 		user_id: req.id,
+					// 		status: req.enrollment_status,
+					// 		//		enrollment_status: req.enrollment_status,
+					// 		reason_for_status_update: req.enrollment_status,
+					// 		//	...myRequest,
+					// 	},
+					// 	request,
+					// );
+					// console.log('statusUpdate result:', statusUpdateResult);
 				}
 				if (
 					req.enrollment_status == 'enrollment_awaited' ||
@@ -3021,31 +3043,25 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
-					const status = await this.statusUpdate(
-						{
-							user_id: req.id,
-							status: req.enrollment_status,
-							reason_for_status_update: req.enrollment_status,
-						},
-						request,
-					);
 				}
+
+				let variable = {};
+				if (req?.enrollment_status == 'enrolled') {
+					variable = {
+						key: 'payment_receipt_document_id',
+						type: 'jsonb',
+					};
+				}
+
 				const res =
 					await this.hasuraServiceFromServices.updateWithVariable(
 						programDetails?.id,
 						'program_beneficiaries',
-						{
-							...myRequest,
-						},
+						myRequest,
 						userArr,
 						update,
 						{
-							variable: [
-								{
-									key: 'payment_receipt_document_id',
-									type: 'jsonb',
-								},
-							],
+							variable: [variable],
 						},
 					);
 
