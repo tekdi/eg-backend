@@ -185,10 +185,6 @@
 			"value": "enrolled"
 		},
 		{
-			"title": "BENEFICIARY_STATUS_NOT_ENROLLED",
-			"value": "not_enrolled"
-		},
-		{
 			"title": "BENEFICIARY_STATUS_ENROLLMENT_AWAITED",
 			"value": "enrollment_awaited"
 		},

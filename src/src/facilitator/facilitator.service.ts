@@ -1844,7 +1844,6 @@ export class FacilitatorService {
 			variables: variables,
 		};
 
-		console.log('query--->>', data?.query);
 		let response;
 		try {
 			response = await this.hasuraService.getData(data);
