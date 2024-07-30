@@ -333,6 +333,16 @@
 			"value": "rejected"
 		}
 	],
+	"ENROLLEMENT_VERIFICATION_TYPE": [
+		{
+			"title": "Regular",
+			"value": "regular"
+		},
+		{
+			"title": "SYC",
+			"value": "syc"
+		}
+	],
 	"ENROLLED_FOR_BOARD": [
 		{
 			"title": "RSOS",

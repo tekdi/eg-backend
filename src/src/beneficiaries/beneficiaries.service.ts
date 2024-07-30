@@ -2885,6 +2885,18 @@ export class BeneficiariesService {
 				}
 
 				if (req.enrollment_status == 'enrolled') {
+					const allEnrollmentType = this.enumService
+						.getEnumValue('ENROLLEMENT_VERIFICATION_TYPE')
+						.data.map((enumData) => enumData.value);
+
+					if (!allEnrollmentType.includes(req.type_of_enrollement)) {
+						return response.status(400).json({
+							status: 400,
+							success: false,
+							message: `Invalid enrollment type`,
+							data: {},
+						});
+					}
 					let messageArray = [];
 					let status = null;
 					let reason = null;
