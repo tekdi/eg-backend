@@ -1776,7 +1776,7 @@ export class FacilitatorService {
 			user_id
 			type
 		  }
-		  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
+		  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},status:{_in:[${body?.status}]}}) {
 			parent_ip
 			availability
 			id
