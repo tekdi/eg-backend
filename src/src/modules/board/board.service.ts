@@ -45,6 +45,7 @@ export class BoardService {
 				name
 				board_id
 				subject_id: id
+				subject_type
 			}
 		}`;
 
