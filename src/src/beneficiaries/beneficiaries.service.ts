@@ -2204,6 +2204,7 @@ export class BeneficiariesService {
 				program_beneficiaries: [
 					'enrollment_number',
 					'enrollment_status',
+					'status',
 					'enrolled_for_board',
 					'type_of_enrollement',
 					'subjects',
@@ -2980,6 +2981,7 @@ export class BeneficiariesService {
 
 					myRequest = {
 						enrollment_status: req?.enrollment_status,
+						status: req?.enrollment_status,
 						enrollment_number: null,
 						enrolled_for_board: null,
 						subjects: null,
@@ -3041,8 +3043,11 @@ export class BeneficiariesService {
 					req.enrollment_status == 'enrollment_awaited' ||
 					req.enrollment_status == 'enrollment_rejected'
 				) {
-					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
-					myRequest['enrollment_status'] = req?.enrollment_status;
+					myRequest = {
+						enrollment_status: req?.enrollment_status,
+						status: req?.enrollment_status,
+						enrolled_for_board: req?.enrolled_for_board,
+					};
 				}
 
 				let variable = {};
