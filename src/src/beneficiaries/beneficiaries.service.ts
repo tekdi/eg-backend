@@ -2204,6 +2204,7 @@ export class BeneficiariesService {
 				program_beneficiaries: [
 					'enrollment_number',
 					'enrollment_status',
+					'status',
 					'enrolled_for_board',
 					'type_of_enrollement',
 					'subjects',
@@ -2884,7 +2885,21 @@ export class BeneficiariesService {
 				}
 
 				if (req.enrollment_status == 'enrolled') {
+					const allEnrollmentType = this.enumService
+						.getEnumValue('ENROLLEMENT_VERIFICATION_TYPE')
+						.data.map((enumData) => enumData.value);
+
+					if (!allEnrollmentType.includes(req.type_of_enrollement)) {
+						return response.status(400).json({
+							status: 400,
+							success: false,
+							message: `Invalid enrollment type`,
+							data: {},
+						});
+					}
 					let messageArray = [];
+					let status = null;
+					let reason = null;
 					let tempArray = [
 						'enrollment_number',
 						'enrollment_status',
@@ -2894,6 +2909,10 @@ export class BeneficiariesService {
 						'enrollment_date',
 						'payment_receipt_document_id',
 						'enrollment_mobile_no',
+						'enrollment_first_name',
+						'enrollment_dob',
+						'is_eligible',
+						'type_of_enrollement',
 					];
 					for (let info of tempArray) {
 						if (req[info] === undefined || req[info] === '') {
@@ -2908,9 +2927,37 @@ export class BeneficiariesService {
 						});
 					} else {
 						const { edit_page_type, ...copiedRequest } = req;
+						const { data: updatedUser } =
+							await this.beneficiariesCoreService.userById(
+								req.id,
+							);
+
+						if (req?.is_eligible === 'no') {
+							status = 'ineligible_for_pragati_camp';
+							reason =
+								'The age of the learner should not be 14 to 29';
+						} else if (req?.is_eligible === 'yes') {
+							status = 'enrolled';
+							reason = 'enrolled';
+						}
 
 						myRequest = {
 							...copiedRequest,
+							status,
+							reason_for_status_update: reason,
+							enrollment_verification_status:
+								updatedUser.program_beneficiaries
+									?.enrollment_verification_status ===
+								'change_required'
+									? 'reverification_required'
+									: 'pending',
+							...req,
+							...(req?.enrollment_middle_name == '' && {
+								enrollment_middle_name: null,
+							}),
+							...(req?.enrollment_last_name == '' && {
+								enrollment_last_name: null,
+							}),
 							subjects:
 								typeof req.subjects == 'object'
 									? JSON.stringify(req.subjects).replace(
@@ -2946,6 +2993,7 @@ export class BeneficiariesService {
 
 					myRequest = {
 						enrollment_status: req?.enrollment_status,
+						status: req?.enrollment_status,
 						enrollment_number: null,
 						enrolled_for_board: null,
 						subjects: null,
@@ -3007,8 +3055,11 @@ export class BeneficiariesService {
 					req.enrollment_status == 'enrollment_awaited' ||
 					req.enrollment_status == 'enrollment_rejected'
 				) {
-					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
-					myRequest['enrollment_status'] = req?.enrollment_status;
+					myRequest = {
+						enrollment_status: req?.enrollment_status,
+						status: req?.enrollment_status,
+						enrolled_for_board: req?.enrolled_for_board,
+					};
 				}
 
 				let variable = {};
@@ -3043,98 +3094,98 @@ export class BeneficiariesService {
 				break;
 			}
 
-			case 'edit_enrollement_details': {
-				// Update enrollement data in Beneficiaries table
-				const userArr =
-					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
-						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
-				const programDetails = beneficiaryUser.program_beneficiaries;
+			// case 'edit_enrollement_details': {
+			// 	// Update enrollement data in Beneficiaries table
+			// 	const userArr =
+			// 		PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
+			// 			.program_beneficiaries;
+			// 	// const programDetails = beneficiaryUser.program_beneficiaries.find(
+			// 	//   (data) =>
+			// 	//     req.id == data.user_id &&
+			// 	//     req.academic_year_id == 1,
+			// 	// );
+			// 	const programDetails = beneficiaryUser.program_beneficiaries;
 
-				let tableName = 'program_beneficiaries';
-				let myRequest = {};
-				if (programDetails?.enrollment_status !== 'enrolled') {
-					return response.status(400).json({
-						success: false,
-						message:
-							'Make Sure Your Enrollement Status is Enrolled',
-						data: {},
-					});
-				}
+			// 	let tableName = 'program_beneficiaries';
+			// 	let myRequest = {};
+			// 	if (programDetails?.enrollment_status !== 'enrolled') {
+			// 		return response.status(400).json({
+			// 			success: false,
+			// 			message:
+			// 				'Make Sure Your Enrollement Status is Enrolled',
+			// 			data: {},
+			// 		});
+			// 	}
 
-				let messageArray = [];
-				let tempArray = [
-					'enrollment_first_name',
-					'enrollment_dob',
-					'is_eligible',
-				];
-				for (let info of tempArray) {
-					if (req[info] === undefined || req[info] === '') {
-						messageArray.push(`please send ${info} `);
-					}
-				}
-				if (messageArray.length > 0) {
-					return response.status(400).send({
-						success: false,
-						message: messageArray,
-						data: {},
-					});
-				} else {
-					myRequest = {
-						...req,
-						...(req?.enrollment_middle_name == '' && {
-							enrollment_middle_name: null,
-						}),
-						...(req?.enrollment_last_name == '' && {
-							enrollment_last_name: null,
-						}),
-					};
-				}
-				await this.hasuraService.q(
-					tableName,
-					{
-						...myRequest,
-						id: programDetails?.id ? programDetails.id : null,
-					},
-					userArr,
-					update,
-				);
+			// 	let messageArray = [];
+			// 	let tempArray = [
+			// 		'enrollment_first_name',
+			// 		'enrollment_dob',
+			// 		'is_eligible',
+			// 	];
+			// 	for (let info of tempArray) {
+			// 		if (req[info] === undefined || req[info] === '') {
+			// 			messageArray.push(`please send ${info} `);
+			// 		}
+			// 	}
+			// 	if (messageArray.length > 0) {
+			// 		return response.status(400).send({
+			// 			success: false,
+			// 			message: messageArray,
+			// 			data: {},
+			// 		});
+			// 	} else {
+			// 		myRequest = {
+			// 			...req,
+			// 			...(req?.enrollment_middle_name == '' && {
+			// 				enrollment_middle_name: null,
+			// 			}),
+			// 			...(req?.enrollment_last_name == '' && {
+			// 				enrollment_last_name: null,
+			// 			}),
+			// 		};
+			// 	}
+			// 	await this.hasuraService.q(
+			// 		tableName,
+			// 		{
+			// 			...myRequest,
+			// 			id: programDetails?.id ? programDetails.id : null,
+			// 		},
+			// 		userArr,
+			// 		update,
+			// 	);
 
-				const { data: updatedUser } =
-					await this.beneficiariesCoreService.userById(req.id);
-				if (updatedUser.program_beneficiaries.enrollment_number) {
-					let status = null;
-					let reason = null;
-					if (req?.is_eligible === 'no') {
-						status = 'ineligible_for_pragati_camp';
-						reason =
-							'The age of the learner should not be 14 to 29';
-					} else if (req?.is_eligible === 'yes') {
-						status = 'enrolled';
-						reason = 'enrolled';
-					}
-					await this.statusUpdate(
-						{
-							user_id: req.id,
-							status,
-							reason_for_status_update: reason,
-							enrollment_verification_status:
-								updatedUser.program_beneficiaries
-									?.enrollment_verification_status ===
-								'change_required'
-									? 'reverification_required'
-									: 'pending',
-						},
-						request,
-					);
-				}
+			// 	const { data: updatedUser } =
+			// 		await this.beneficiariesCoreService.userById(req.id);
+			// 	if (updatedUser.program_beneficiaries.enrollment_number) {
+			// 		let status = null;
+			// 		let reason = null;
+			// 		if (req?.is_eligible === 'no') {
+			// 			status = 'ineligible_for_pragati_camp';
+			// 			reason =
+			// 				'The age of the learner should not be 14 to 29';
+			// 		} else if (req?.is_eligible === 'yes') {
+			// 			status = 'enrolled';
+			// 			reason = 'enrolled';
+			// 		}
+			// 		await this.statusUpdate(
+			// 			{
+			// 				user_id: req.id,
+			// 				status,
+			// 				reason_for_status_update: reason,
+			// 				enrollment_verification_status:
+			// 					updatedUser.program_beneficiaries
+			// 						?.enrollment_verification_status ===
+			// 					'change_required'
+			// 						? 'reverification_required'
+			// 						: 'pending',
+			// 			},
+			// 			request,
+			// 		);
+			// 	}
 
-				break;
-			}
+			// 	break;
+			// }
 
 			case 'document_status': {
 				// Update Document status data in Beneficiaries table
