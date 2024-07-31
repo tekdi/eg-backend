@@ -1407,6 +1407,7 @@ export class BeneficiariesService {
 				exam_fee_date
 				syc_subjects
 				is_continued
+				sso_id
 				document {
 					context
 					context_id
@@ -2064,6 +2065,7 @@ export class BeneficiariesService {
 		const user = await this.userService.ipUserInfo(request);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
+		const beneficiary_id = req?.id;
 
 		const { data: beneficiaryUser } =
 			await this.beneficiariesCoreService.userById(req.id);
@@ -2219,6 +2221,7 @@ export class BeneficiariesService {
 					//	'enrollment_aadhaar_no',
 					'enrollment_mobile_no',
 					'is_eligible',
+					'sso_id',
 				],
 			},
 			edit_enrollement_details: {
@@ -2897,6 +2900,30 @@ export class BeneficiariesService {
 							data: {},
 						});
 					}
+
+					if (req?.sso_id && request?.mw_program_id == 1) {
+						const result = await this.validateForSSOID(
+							req?.sso_id,
+							request?.mw_program_id,
+							beneficiary_id,
+						);
+
+						if (result?.status == false) {
+							return response.status(422).json({
+								result,
+							});
+						}
+					}
+
+					if (
+						req?.payment_receipt_document_id?.[0]?.id == '' ||
+						!req?.payment_receipt_document_id?.[0]?.id
+					) {
+						return response.status(422).json({
+							message: 'Invalid payment_receipt_document_id ',
+						});
+					}
+
 					let messageArray = [];
 					let status = null;
 					let reason = null;
@@ -2913,6 +2940,7 @@ export class BeneficiariesService {
 						'enrollment_dob',
 						'is_eligible',
 						'type_of_enrollement',
+						'sso_id',
 					];
 					for (let info of tempArray) {
 						if (req[info] === undefined || req[info] === '') {
@@ -3006,6 +3034,7 @@ export class BeneficiariesService {
 						enrollment_dob: null,
 						enrollment_aadhaar_no: null,
 						is_eligible: null,
+						sso_id: null,
 					};
 
 					const data = {
@@ -4231,5 +4260,45 @@ export class BeneficiariesService {
 		checkFields(result);
 
 		return emptyFields;
+	}
+
+	async validateForSSOID(ssoid, program_id, user_id) {
+		let query;
+		let hasura_response;
+		let result;
+		let response;
+
+		query = `query MyQuery {
+			program_beneficiaries(where: {sso_id: {_eq: "${ssoid}"},user_id:{_neq:${user_id}}}){
+			  user_id
+			  sso_id
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.program_beneficiaries;
+
+		if (result?.length > 0) {
+			response = {
+				status: false,
+				message: 'Duplicate sso id ',
+			};
+		} else if (program_id != 1) {
+			response = {
+				status: false,
+				message: 'Invalid program request',
+			};
+		} else {
+			response = {
+				status: true,
+				message: 'Valid sso id ',
+			};
+		}
+
+		return response;
 	}
 }

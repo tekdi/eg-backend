@@ -335,11 +335,11 @@
 	],
 	"ENROLLEMENT_VERIFICATION_TYPE": [
 		{
-			"title": "Regular",
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_REGULAR",
 			"value": "regular"
 		},
 		{
-			"title": "SYC",
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_SYC",
 			"value": "syc"
 		}
 	],
