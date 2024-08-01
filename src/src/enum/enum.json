@@ -295,6 +295,10 @@
 	],
 	"ENROLLEMENT_STATUS": [
 		{
+			"title": "SSO_ID_ENROLLED",
+			"value": "sso_id_enrolled"
+		},
+		{
 			"title": "ENROLLED",
 			"value": "enrolled"
 		},
@@ -327,6 +331,10 @@
 		{
 			"title": "ENROLLEMENT_VERIFICATION_STATUS_VERIFIED",
 			"value": "verified"
+		},
+		{
+			"title": "ENROLLMENT_SSO_ID_VERIFIED",
+			"value": "sso_id_verified"
 		},
 		{
 			"title": "ENROLLEMENT_VERIFICATION_STATUS_REJECTED",
