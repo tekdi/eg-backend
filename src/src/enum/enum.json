@@ -922,20 +922,28 @@
 	],
 	"BENEFICIARY_LEARNING_LEVEL": [
 		{
-			"title": "BENEFICIARY_LEARNING_LEVEL_NO_EDUCATION",
-			"value": "no_education"
+			"title": "BENEFICIARY_LEARNING_LEVEL_A+",
+			"value": "a+"
 		},
 		{
-			"title": "BENEFICIARY_LEARNING_LEVEL_FOUNDATIONAL_FNL",
-			"value": "foundational_fnl"
+			"title": "BENEFICIARY_LEARNING_LEVEL_A",
+			"value": "a"
 		},
 		{
-			"title": "BENEFICIARY_LEARNING_LEVEL_INTERMEDIATORY",
-			"value": "intermediatory"
+			"title": "BENEFICIARY_LEARNING_LEVEL_b",
+			"value": "b"
 		},
 		{
-			"title": "BENEFICIARY_LEARNING_LEVEL_EXPERT",
-			"value": "expert"
+			"title": "BENEFICIARY_LEARNING_LEVEL_C",
+			"value": "c"
+		},
+		{
+			"title": "BENEFICIARY_LEARNING_LEVEL_D",
+			"value": "d"
+		},
+		{
+			"title": "BENEFICIARY_LEARNING_LEVEL_E",
+			"value": "e"
 		}
 	],
 	"CAMP_PROPERTY_TYPE": [
