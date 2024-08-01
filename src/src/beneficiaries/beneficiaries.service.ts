@@ -1930,6 +1930,11 @@ export class BeneficiariesService {
 			body.is_eligible = null;
 		}
 
+		if (body.enrollment_verification_status == 'rejected') {
+			body.status = 'rejected';
+			body.reason_for_status_update = 'below_5th_standard';
+		}
+
 		const res = await this.hasuraService.q(
 			'program_beneficiaries',
 			{
@@ -2156,6 +2161,7 @@ export class BeneficiariesService {
 					'reason_of_leaving_education',
 					'education_10th_date',
 					'education_10th_exam_year',
+					'is_5th_standard',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2169,6 +2175,7 @@ export class BeneficiariesService {
 					'reason_of_leaving_education',
 					'education_10th_date',
 					'education_10th_exam_year',
+					'is_5th_standard',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2246,6 +2253,25 @@ export class BeneficiariesService {
 				],
 			},
 		};
+
+		//validation to check if required details are filled before editing enrollment details
+
+		if (
+			req.edit_page_type == 'edit_enrollement' ||
+			req.edit_page_type == 'edit_enrollement_details'
+		) {
+			let result = await this.validateBeneficiaryDetailsForEnrollment(
+				user_id,
+			);
+
+			if (result?.length > 0) {
+				return response.status(422).json({
+					message: 'Learner not ready to be enrolled',
+					data: result,
+					status: false,
+				});
+			}
+		}
 
 		switch (req.edit_page_type) {
 			case 'edit_basic': {
@@ -2908,18 +2934,35 @@ export class BeneficiariesService {
 					}
 				}
 				if (req.enrollment_status == 'ready_to_enroll') {
-					myRequest['enrollment_status'] = req?.enrollment_status;
-					myRequest['enrollment_number'] = null;
-					myRequest['enrolled_for_board'] = null;
-					myRequest['subjects'] = null;
-					myRequest['payment_receipt_document_id'] = null;
-					myRequest['enrollment_date'] = null;
-					myRequest['enrollment_first_name'] = null;
-					myRequest['enrollment_middle_name'] = null;
-					myRequest['enrollment_last_name'] = null;
-					myRequest['enrollment_dob'] = null;
-					myRequest['enrollment_aadhaar_no'] = null;
-					myRequest['is_eligible'] = null;
+					// myRequest['enrollment_status'] = req?.enrollment_status;
+					// myRequest['enrollment_number'] = null;
+					// myRequest['enrolled_for_board'] = null;
+					// myRequest['subjects'] = null;
+					// myRequest['payment_receipt_document_id'] = null;
+					// myRequest['enrollment_date'] = null;
+					// myRequest['enrollment_first_name'] = null;
+					// myRequest['enrollment_middle_name'] = null;
+					// myRequest['enrollment_last_name'] = null;
+					// myRequest['enrollment_dob'] = null;
+					// myRequest['enrollment_aadhaar_no'] = null;
+					// myRequest['is_eligible'] = null;
+
+					myRequest = {
+						enrollment_status: req?.enrollment_status,
+						enrollment_number: null,
+						enrolled_for_board: null,
+						subjects: null,
+						payment_receipt_document_id: null,
+						type_of_enrollement: null,
+						enrollment_date: null,
+						enrollment_first_name: null,
+						enrollment_middle_name: null,
+						enrollment_last_name: null,
+						enrollment_dob: null,
+						enrollment_aadhaar_no: null,
+						is_eligible: null,
+					};
+
 					const data = {
 						query: `query MyQuery {
 					documents(where: {doument_type: {_eq: "enrollment_receipt"},user_id:{_eq:${req?.id}}}){
@@ -2949,14 +2992,19 @@ export class BeneficiariesService {
 							);
 						}
 					}
-					const status = await this.statusUpdate(
-						{
-							user_id: req.id,
-							status: req.enrollment_status,
-							reason_for_status_update: req.enrollment_status,
-						},
-						request,
-					);
+
+					// const statusUpdateResult = await this.statusUpdate(
+					// 	{
+					// 		...myRequest,
+					// 		user_id: req.id,
+					// 		status: req.enrollment_status,
+					// 		//		enrollment_status: req.enrollment_status,
+					// 		reason_for_status_update: req.enrollment_status,
+					// 		//	...myRequest,
+					// 	},
+					// 	request,
+					// );
+					// console.log('statusUpdate result:', statusUpdateResult);
 				}
 				if (
 					req.enrollment_status == 'enrollment_awaited' ||
@@ -2964,31 +3012,25 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
-					const status = await this.statusUpdate(
-						{
-							user_id: req.id,
-							status: req.enrollment_status,
-							reason_for_status_update: req.enrollment_status,
-						},
-						request,
-					);
 				}
+
+				let variable = {};
+				if (req?.enrollment_status == 'enrolled') {
+					variable = {
+						key: 'payment_receipt_document_id',
+						type: 'jsonb',
+					};
+				}
+
 				const res =
 					await this.hasuraServiceFromServices.updateWithVariable(
 						programDetails?.id,
 						'program_beneficiaries',
-						{
-							...myRequest,
-						},
+						myRequest,
 						userArr,
 						update,
 						{
-							variable: [
-								{
-									key: 'payment_receipt_document_id',
-									type: 'jsonb',
-								},
-							],
+							variable: [variable],
 						},
 					);
 
@@ -4035,5 +4077,111 @@ export class BeneficiariesService {
 				error: error.message,
 			});
 		}
+	}
+
+	public async checkEnrollmentValidation(
+		id: number,
+		request: any,
+		response: any,
+	) {
+		let result = await this.validateBeneficiaryDetailsForEnrollment(id);
+
+		if (result?.length > 0) {
+			return response.status(422).json({
+				message: 'Learner not ready to be enrolled',
+				data: result,
+				status: false,
+			});
+		} else {
+			return response.status(200).json({
+				message: 'Learner ready to be enrolled',
+				data: [],
+				status: true,
+			});
+		}
+	}
+
+	async validateBeneficiaryDetailsForEnrollment(user_id) {
+		let query;
+		let result;
+		let hasura_response;
+		let emptyFields = [];
+
+		query = `query MyQuery {
+		users_by_pk(id:${user_id}) {
+		  id
+		  first_name
+		  dob
+		  mobile
+		  lat
+		  long
+		  district
+		  block
+		  village
+		  grampanchayat
+		  core_beneficiaries {
+			career_aspiration
+			parent_support
+			father_first_name
+			mother_first_name
+			mark_as_whatsapp_number
+			device_type
+			device_ownership
+			type_of_learner
+			
+		  }
+		  program_beneficiaries {
+			learning_level
+			type_of_support_needed
+		  }
+		  extended_users {
+			marital_status
+			social_category
+		  }
+		  documents(where: {doument_type: {_eq: "profile_photo"}}) {
+			id
+			name
+		  }
+		  references(where: {context: {_eq: "users"}}) {
+			id
+			context
+			context_id
+			first_name
+			relation
+			contact_number
+		  }
+		}
+	  }
+	  `;
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.users_by_pk;
+
+		if (result?.documents?.length < 3) {
+			emptyFields.push('profile_photo');
+		}
+
+		function checkFields(result, prefix = '') {
+			for (let key in result) {
+				if (
+					result[key] === null ||
+					result[key] === undefined ||
+					result[key] === ''
+				) {
+					emptyFields.push(key);
+				} else if (
+					typeof result[key] === 'object' &&
+					!Array.isArray(result[key])
+				) {
+					checkFields(result[key], prefix + key + '.');
+				}
+			}
+		}
+
+		checkFields(result);
+
+		return emptyFields;
 	}
 }

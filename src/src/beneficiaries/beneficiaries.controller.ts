@@ -565,4 +565,18 @@ export class BeneficiariesController {
 	learnerScore(@Body() body: any, @Res() response: any) {
 		return this.beneficiariesService.learnerScore(body, response);
 	}
+
+	@Get('/enrollment-validation/:id')
+	@UseGuards(new AuthGuard())
+	enrollmentValidation(
+		@Param('id') id: number,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.checkEnrollmentValidation(
+			id,
+			request,
+			response,
+		);
+	}
 }
