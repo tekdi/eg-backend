@@ -4313,7 +4313,7 @@ export class BeneficiariesService {
 				message: 'Duplicate SSO ID',
 			});
 		} else {
-			return response.status(422).json({
+			return response.status(200).json({
 				is_duplicate: false,
 				message: 'Valid SSO ID',
 			});
