@@ -579,4 +579,18 @@ export class BeneficiariesController {
 			response,
 		);
 	}
+
+	@Post('/ssoid-validation')
+	@UseGuards(new AuthGuard())
+	ssoidValidation(
+		@Req() request: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.beneficiariesService.checkDuplicateSSOID(
+			body,
+			request,
+			response,
+		);
+	}
 }
