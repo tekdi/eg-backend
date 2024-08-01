@@ -4301,4 +4301,22 @@ export class BeneficiariesService {
 
 		return response;
 	}
+
+	async checkDuplicateSSOID(body, request, response) {
+		let { sso_id, user_id } = body;
+		let program_id = request?.mw_program_id;
+		const result = await this.validateForSSOID(sso_id, program_id, user_id);
+
+		if (result?.status == false) {
+			return response.status(422).json({
+				is_duplicate: true,
+				message: 'Duplicate SSO ID',
+			});
+		} else {
+			return response.status(200).json({
+				is_duplicate: false,
+				message: 'Valid SSO ID',
+			});
+		}
+	}
 }
