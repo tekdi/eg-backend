@@ -291,6 +291,10 @@
 	],
 	"ENROLLEMENT_STATUS": [
 		{
+			"title": "SSO_ID_ENROLLED",
+			"value": "sso_id_enrolled"
+		},
+		{
 			"title": "ENROLLED",
 			"value": "enrolled"
 		},
@@ -325,17 +329,21 @@
 			"value": "verified"
 		},
 		{
+			"title": "ENROLLMENT_SSO_ID_VERIFIED",
+			"value": "sso_id_verified"
+		},
+		{
 			"title": "ENROLLEMENT_VERIFICATION_STATUS_REJECTED",
 			"value": "rejected"
 		}
 	],
 	"ENROLLEMENT_VERIFICATION_TYPE": [
 		{
-			"title": "Regular",
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_REGULAR",
 			"value": "regular"
 		},
 		{
-			"title": "SYC",
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_SYC",
 			"value": "syc"
 		}
 	],
