@@ -181,6 +181,10 @@
 			"value": "ready_to_enroll"
 		},
 		{
+			"title": "BENEFICIARY_SSO_ID_ENROLLED",
+			"value": "sso_id_enrolled"
+		},
+		{
 			"title": "BENEFICIARY_STATUS_ENROLLED",
 			"value": "enrolled"
 		},

@@ -2887,6 +2887,136 @@ export class BeneficiariesService {
 					});
 				}
 
+				if (req.enrollment_status == 'sso_id_enrolled') {
+					const allEnrollmentType = this.enumService
+						.getEnumValue('ENROLLEMENT_VERIFICATION_TYPE')
+						.data.map((enumData) => enumData.value);
+
+					if (!allEnrollmentType.includes(req.type_of_enrollement)) {
+						return response.status(400).json({
+							status: 400,
+							success: false,
+							message: `Invalid enrollment type`,
+							data: {},
+						});
+					}
+
+					if (req?.sso_id && request?.mw_program_id == 1) {
+						const result = await this.validateForSSOID(
+							req?.sso_id,
+							request?.mw_program_id,
+							beneficiary_id,
+						);
+
+						if (result?.status == false) {
+							return response.status(422).json({
+								result,
+							});
+						}
+					}
+
+					if (
+						req?.subjects?.length > 7 ||
+						req?.subjects?.length < 1
+					) {
+						return response.status(422).json({
+							message:
+								'Selected subjects should be at least 1 and maximum 7 ',
+						});
+					}
+
+					if (
+						!req?.payment_receipt_document_id ||
+						req.payment_receipt_document_id.some(
+							(doc) => !doc?.id || doc.id === '',
+						)
+					) {
+						return response.status(422).json({
+							message: 'Invalid payment_receipt_document_id',
+						});
+					}
+
+					let messageArray = [];
+					let status = null;
+					let reason = null;
+					let tempArray = [
+						'sso_id',
+						'enrollment_status',
+						//	'enrollment_aadhaar_no',
+						'enrolled_for_board',
+						'subjects',
+						'enrollment_date',
+						'payment_receipt_document_id',
+						'enrollment_mobile_no',
+						'enrollment_first_name',
+						'enrollment_dob',
+						'is_eligible',
+						'type_of_enrollement',
+					];
+					for (let info of tempArray) {
+						if (req[info] === undefined || req[info] === '') {
+							messageArray.push(`please send ${info} `);
+						}
+					}
+					if (messageArray.length > 0) {
+						return response.status(400).send({
+							success: false,
+							message: messageArray,
+							data: {},
+						});
+					} else {
+						const { edit_page_type, ...copiedRequest } = req;
+						const { data: updatedUser } =
+							await this.beneficiariesCoreService.userById(
+								req.id,
+							);
+
+						if (req?.is_eligible === 'no') {
+							status = 'ineligible_for_pragati_camp';
+							reason =
+								'The age of the learner should not be 14 to 29';
+						} else if (req?.is_eligible === 'yes') {
+							status = 'sso_id_enrolled';
+							reason = 'sso_id_enrolled';
+						}
+
+						myRequest = {
+							...copiedRequest,
+							enrollment_number: null,
+							status,
+							reason_for_status_update: 'sso_id_enrolled',
+							enrollment_verification_status:
+								updatedUser.program_beneficiaries
+									?.enrollment_verification_status ===
+								'change_required'
+									? 'reverification_required'
+									: 'pending',
+							...req,
+							...(req?.enrollment_middle_name == '' && {
+								enrollment_middle_name: null,
+							}),
+							...(req?.enrollment_last_name == '' && {
+								enrollment_last_name: null,
+							}),
+							subjects:
+								typeof req.subjects == 'object'
+									? JSON.stringify(req.subjects).replace(
+											/"/g,
+											'\\"',
+									  )
+									: null,
+						};
+
+						await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: 'sso_id_enrolled',
+								reason_for_status_update: 'sso_id_enrolled',
+							},
+							request,
+						);
+					}
+				}
 				if (req.enrollment_status == 'enrolled') {
 					const allEnrollmentType = this.enumService
 						.getEnumValue('ENROLLEMENT_VERIFICATION_TYPE')
@@ -2916,11 +3046,23 @@ export class BeneficiariesService {
 					}
 
 					if (
-						req?.payment_receipt_document_id?.[0]?.id == '' ||
-						!req?.payment_receipt_document_id?.[0]?.id
+						req?.subjects?.length > 7 ||
+						req?.subjects?.length < 1
 					) {
 						return response.status(422).json({
-							message: 'Invalid payment_receipt_document_id ',
+							message:
+								'Selected subjects should be at least 1 and maximum 7 ',
+						});
+					}
+
+					if (
+						!req?.payment_receipt_document_id ||
+						req.payment_receipt_document_id.some(
+							(doc) => !doc?.id || doc.id === '',
+						)
+					) {
+						return response.status(422).json({
+							message: 'Invalid payment_receipt_document_id',
 						});
 					}
 
@@ -3092,7 +3234,11 @@ export class BeneficiariesService {
 				}
 
 				let variable = {};
-				if (req?.enrollment_status == 'enrolled') {
+				if (
+					['enrolled', 'sso_id_enrolled'].includes(
+						req?.enrollment_status,
+					)
+				) {
 					variable = {
 						key: 'payment_receipt_document_id',
 						type: 'jsonb',
