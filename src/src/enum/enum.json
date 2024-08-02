@@ -337,16 +337,7 @@
 			"value": "sso_id_verified"
 		}
 	],
-	"ENROLLEMENT_VERIFICATION_TYPE": [
-		{
-			"title": "ENROLLEMENT_VERIFICATION_TYPE_REGULAR",
-			"value": "regular"
-		},
-		{
-			"title": "ENROLLEMENT_VERIFICATION_TYPE_SYC",
-			"value": "syc"
-		}
-	],
+
 	"ENROLLED_FOR_BOARD": [
 		{
 			"title": "RSOS",
@@ -357,6 +348,18 @@
 			"value": "nios"
 		}
 	],
+
+	"ENROLLEMENT_VERIFICATION_TYPE": [
+		{
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_REGULAR",
+			"value": "regular"
+		},
+		{
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_SYC",
+			"value": "syc"
+		}
+	],
+
 	"BENEFICIARY_SOCIAL_STATUS": [
 		{
 			"title": "BENEFICIARY_SOCIAL_STATUS_SC",
