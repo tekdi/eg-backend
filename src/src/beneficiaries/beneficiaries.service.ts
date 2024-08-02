@@ -3234,7 +3234,8 @@ export class BeneficiariesService {
 					req.enrollment_status == 'enrollment_awaited' ||
 					req.enrollment_status == 'enrollment_rejected'
 				) {
-					//request body
+					// myRequest['enrolled_for_board'] = req?.enrolled_for_board;
+					// myRequest['enrollment_status'] = req?.enrollment_status;
 					myRequest = {
 						enrollment_status: req?.enrollment_status,
 						status: req?.enrollment_status,
