@@ -3002,6 +3002,14 @@ export class BeneficiariesService {
 					// 	request,
 					// );
 					// console.log('statusUpdate result:', statusUpdateResult);
+					await this.statusUpdate(
+						{
+							user_id: req.id,
+							status: 'ready_to_enroll',
+							// reason_for_status_update: 'enrolled',
+						},
+						request,
+					);
 				}
 				if (
 					req.enrollment_status == 'enrollment_awaited' ||
@@ -3009,6 +3017,15 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
+
+					await this.statusUpdate(
+						{
+							user_id: req.id,
+							status: req?.enrollment_status,
+							// reason_for_status_update: 'enrolled',
+						},
+						request,
+					);
 				}
 
 				let variable = {};
