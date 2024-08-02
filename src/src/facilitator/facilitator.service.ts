@@ -1665,6 +1665,12 @@ export class FacilitatorService {
 			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
 		}
 		let sortQuery = `{ created_at: desc }`;
+		let pfarray = [
+			`academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}`,
+		];
+		if (body?.status) {
+			pfarray.push(`status:{_in:[${body?.status}]}`);
+		}
 
 		if (body.hasOwnProperty('sort')) {
 			// Supported sortings: name, qualification, region, eligibility, status, comments
@@ -1776,7 +1782,7 @@ export class FacilitatorService {
 			user_id
 			type
 		  }
-		  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},status:{_in:[${body?.status}]}}) {
+		  program_faciltators(where: {${pfarray}}) {
 			parent_ip
 			availability
 			id
