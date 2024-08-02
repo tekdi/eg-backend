@@ -335,10 +335,6 @@
 		{
 			"title": "ENROLLMENT_SSO_ID_VERIFIED",
 			"value": "sso_id_verified"
-		},
-		{
-			"title": "ENROLLEMENT_VERIFICATION_STATUS_REJECTED",
-			"value": "rejected"
 		}
 	],
 	"ENROLLEMENT_VERIFICATION_TYPE": [
