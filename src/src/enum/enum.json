@@ -323,10 +323,6 @@
 		{
 			"title": "ENROLLEMENT_VERIFICATION_STATUS_VERIFIED",
 			"value": "verified"
-		},
-		{
-			"title": "ENROLLEMENT_VERIFICATION_STATUS_REJECTED",
-			"value": "rejected"
 		}
 	],
 	"ENROLLED_FOR_BOARD": [
