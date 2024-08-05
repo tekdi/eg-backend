@@ -181,8 +181,12 @@
 			"value": "ready_to_enroll"
 		},
 		{
-			"title": "BENEFICIARY_SSO_ID_ENROLLED",
+			"title": "BENEFICIARY_STATUS_SSO_ID_ENROLLED",
 			"value": "sso_id_enrolled"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_SSO_ID_VERIFIED",
+			"value": "sso_id_verified"
 		},
 		{
 			"title": "BENEFICIARY_STATUS_ENROLLED",
@@ -199,6 +203,10 @@
 		{
 			"title": "BENEFICIARY_STATUS_ENROLLED_IP_VERIFIED",
 			"value": "enrolled_ip_verified"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_REGISTERED_IN_NEEV_CAMP",
+			"value": "registered_in_neev_camp"
 		},
 		{
 			"title": "BENEFICIARY_STATUS_REGISTERED_IN_CAMP",
