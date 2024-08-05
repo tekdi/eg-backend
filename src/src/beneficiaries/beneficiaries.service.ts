@@ -1912,6 +1912,10 @@ export class BeneficiariesService {
 			body.status = 'enrolled_ip_verified';
 		}
 
+		if (body.enrollment_verification_status == 'sso_id_verified') {
+			body.status = 'sso_id_verified';
+		}
+
 		if (body.enrollment_verification_status == 'pending') {
 			body.status = 'not_enrolled';
 			body.enrollment_status = 'not_enrolled';
