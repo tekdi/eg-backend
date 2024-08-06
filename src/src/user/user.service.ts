@@ -754,6 +754,8 @@ export class UserService {
 			user_id
 			has_diploma
 			diploma_details
+			has_job_exp
+			has_volunteer_exp
 		  }
 		  experience {
 			id
@@ -1060,6 +1062,8 @@ export class UserService {
 			sourcing_channel
 			updated_by
 			user_id
+			has_job_exp
+			has_volunteer_exp
 		  }
 		  experience {
 			description

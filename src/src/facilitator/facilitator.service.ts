@@ -2819,22 +2819,26 @@ export class FacilitatorService {
 									const filteredArr = arr.filter(
 										(a) => !e[a],
 									);
-									return [
-										...acc,
-										{
-											key: index + 1,
-											data: filteredArr,
-										},
-									];
+									if (filteredArr?.length > 0) {
+										return [
+											...acc,
+											{
+												key: index + 1,
+												data: filteredArr,
+											},
+										];
+									}
 								},
 								[],
 							);
-							return [
-								{
-									key: type,
-									data: result,
-								},
-							];
+							if (result?.length > 0) {
+								return [
+									{
+										key: type,
+										data: result,
+									},
+								];
+							}
 						} else {
 							return [
 								{
@@ -2862,10 +2866,10 @@ export class FacilitatorService {
 				// job experience
 				requiredFields = [
 					...requiredFields,
-					...checkExperience({
+					...(checkExperience({
 						type: 'experience',
 						key: 'has_job_exp',
-					}),
+					}) || []),
 				];
 
 				program_faciltators = userData.program_faciltators || [];
