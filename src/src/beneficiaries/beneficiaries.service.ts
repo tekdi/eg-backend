@@ -1487,6 +1487,14 @@ export class BeneficiariesService {
 				updated_by
 				social_category
 				qualification_id
+				has_disability
+				type_of_disability
+				has_disability_certificate
+				disability_percentage
+				disability_occurence
+				has_govt_advantage
+				govt_advantages
+				support_for_exam
 			  }
 			}
 		  }
@@ -4197,5 +4205,89 @@ export class BeneficiariesService {
 		checkFields(result);
 
 		return emptyFields;
+	}
+
+	public async updateBeneficiaryDisabilityDetails(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let user_id;
+
+		let query;
+		let hasura_response;
+		let result;
+
+		query = `query MyQuery {
+			extended_users(where: {user_id: {_eq:${id}}}){
+			  id
+			  user_id
+			}
+		  }
+		  `;
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.extended_users;
+
+		user_id = result?.[0]?.id;
+
+		let returnFields = [
+			'has_disability',
+			'type_of_disability',
+			'has_disability_certificate',
+			'disability_percentage',
+			'disability_occurence',
+			'has_govt_advantage',
+			'govt_advantages',
+			'support_for_exam',
+		];
+
+		let variable = [];
+		if (body?.type_of_disability) {
+			variable.push({
+				key: 'type_of_disability',
+				type: 'jsonb',
+			});
+		}
+
+		if (body?.govt_advantages) {
+			variable.push({
+				key: 'govt_advantages',
+				type: 'jsonb',
+			});
+		}
+
+		if (body?.support_for_exam) {
+			variable.push({
+				key: 'support_for_exam',
+				type: 'jsonb',
+			});
+		}
+
+		const res = await this.hasuraServiceFromServices.updateWithVariable(
+			user_id,
+			'extended_users',
+			body,
+			returnFields,
+			true,
+			{
+				variable: variable,
+			},
+		);
+
+		if (res?.extended_users) {
+			return response.status(200).json({
+				message: 'Data updated successfully',
+				data: res?.extended_users,
+			});
+		} else {
+			return response.status(500).json({
+				message: 'Error updating details',
+				data: null,
+			});
+		}
 	}
 }
