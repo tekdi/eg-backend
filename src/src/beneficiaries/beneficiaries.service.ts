@@ -3089,6 +3089,9 @@ export class BeneficiariesService {
 						'sso_id',
 					];
 					for (let info of tempArray) {
+						if (info === 'sso_id' && program_id !== 1) {
+							continue;
+						}
 						if (req[info] === undefined || req[info] === '') {
 							messageArray.push(`please send ${info} `);
 						}
