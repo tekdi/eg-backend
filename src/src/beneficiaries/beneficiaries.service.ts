@@ -2070,6 +2070,9 @@ export class BeneficiariesService {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
 		const beneficiary_id = req?.id;
+		let query;
+		let hasura_repsonse;
+		let state_name;
 
 		const { data: beneficiaryUser } =
 			await this.beneficiariesCoreService.userById(req.id);
@@ -2079,6 +2082,21 @@ export class BeneficiariesService {
 				message: 'Invalid user_id!',
 			});
 		}
+
+		query = `query MyQuery {
+			programs_by_pk(id:${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+
+		hasura_repsonse = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		state_name = hasura_repsonse?.data?.programs_by_pk?.state?.state_name;
 		const user_id = req?.id;
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_basic: {
@@ -3089,7 +3107,7 @@ export class BeneficiariesService {
 						'sso_id',
 					];
 					for (let info of tempArray) {
-						if (info === 'sso_id' && program_id !== 1) {
+						if (info === 'sso_id' && state_name !== 'RAJASTHAN') {
 							continue;
 						}
 						if (req[info] === undefined || req[info] === '') {
