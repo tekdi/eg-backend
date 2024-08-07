@@ -4122,7 +4122,6 @@ export class BeneficiariesService {
 			});
 		}
 	}
-
 	async validateBeneficiaryDetailsForEnrollment(user_id) {
 		let query;
 		let result;
@@ -4130,51 +4129,50 @@ export class BeneficiariesService {
 		let emptyFields = [];
 
 		query = `query MyQuery {
-		users_by_pk(id:${user_id}) {
-		  id
-		  first_name
-		  dob
-		  mobile
-		  lat
-		  long
-		  district
-		  block
-		  village
-		  grampanchayat
-		  core_beneficiaries {
-			career_aspiration
-			parent_support
-			father_first_name
-			mother_first_name
-			mark_as_whatsapp_number
-			device_type
-			device_ownership
-			type_of_learner
-			
-		  }
-		  program_beneficiaries {
-			learning_level
-			type_of_support_needed
-		  }
-		  extended_users {
-			marital_status
-			social_category
-		  }
-		  documents(where: {doument_type: {_eq: "profile_photo"}}) {
-			id
-			name
-		  }
-		  references(where: {context: {_eq: "users"}}) {
-			id
-			context
-			context_id
-			first_name
-			relation
-			contact_number
-		  }
-		}
-	  }
-	  `;
+			users_by_pk(id:${user_id}) {
+				id
+				first_name
+				dob
+				mobile
+				lat
+				long
+				district
+				block
+				village
+				grampanchayat
+				core_beneficiaries {
+					career_aspiration
+					parent_support
+					father_first_name
+					mother_first_name
+					mark_as_whatsapp_number
+					device_type
+					device_ownership
+					type_of_learner
+				}
+				program_beneficiaries {
+					learning_level
+					type_of_support_needed
+				}
+				extended_users {
+					marital_status
+					social_category
+				}
+				documents(where: {doument_type: {_eq: "profile_photo"}}) {
+					id
+					name
+				}
+				references(where: {context: {_eq: "users"}}) {
+					id
+					context
+					context_id
+					first_name
+					relation
+					contact_number
+				}
+			}
+		}`;
+
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
@@ -4183,6 +4181,10 @@ export class BeneficiariesService {
 
 		if (result?.documents?.length < 3) {
 			emptyFields.push('profile_photo');
+		}
+
+		if (result?.references?.length == 0) {
+			emptyFields.push('references details');
 		}
 
 		function checkFields(result, prefix = '') {
@@ -4197,14 +4199,46 @@ export class BeneficiariesService {
 					typeof result[key] === 'object' &&
 					!Array.isArray(result[key])
 				) {
-					checkFields(result[key], prefix + key + '.');
+					checkFields(result[key], key + '.');
 				}
 			}
 		}
 
+		function pushAllFieldsIfNull(obj, fields, prefix) {
+			if (obj === null) {
+				fields.forEach((field) => emptyFields.push(field));
+			}
+		}
+
+		const fieldMappings = {
+			core_beneficiaries: [
+				'career_aspiration',
+				'parent_support',
+				'father_first_name',
+				'mother_first_name',
+				'mark_as_whatsapp_number',
+				'device_type',
+				'device_ownership',
+				'type_of_learner',
+			],
+			program_beneficiaries: ['learning_level', 'type_of_support_needed'],
+			extended_users: ['marital_status', 'social_category'],
+		};
+
+		for (const [key, fields] of Object.entries(fieldMappings)) {
+			pushAllFieldsIfNull(result?.[key], fields, `${key}.`);
+		}
+
 		checkFields(result);
 
-		return emptyFields;
+		const filteredFields = emptyFields.filter(
+			(field) =>
+				field !== 'core_beneficiaries' &&
+				field !== 'program_beneficiaries' &&
+				field !== 'extended_users',
+		);
+
+		return filteredFields;
 	}
 
 	public async updateBeneficiaryDisabilityDetails(
