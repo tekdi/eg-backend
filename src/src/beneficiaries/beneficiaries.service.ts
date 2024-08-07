@@ -1488,6 +1488,14 @@ export class BeneficiariesService {
 				updated_by
 				social_category
 				qualification_id
+				has_disability
+				type_of_disability
+				has_disability_certificate
+				disability_percentage
+				disability_occurence
+				has_govt_advantage
+				govt_advantages
+				support_for_exam
 			  }
 			}
 		  }
@@ -4368,7 +4376,6 @@ export class BeneficiariesService {
 			});
 		}
 	}
-
 	async validateBeneficiaryDetailsForEnrollment(user_id) {
 		let query;
 		let result;
@@ -4376,51 +4383,50 @@ export class BeneficiariesService {
 		let emptyFields = [];
 
 		query = `query MyQuery {
-		users_by_pk(id:${user_id}) {
-		  id
-		  first_name
-		  dob
-		  mobile
-		  lat
-		  long
-		  district
-		  block
-		  village
-		  grampanchayat
-		  core_beneficiaries {
-			career_aspiration
-			parent_support
-			father_first_name
-			mother_first_name
-			mark_as_whatsapp_number
-			device_type
-			device_ownership
-			type_of_learner
-			
-		  }
-		  program_beneficiaries {
-			learning_level
-			type_of_support_needed
-		  }
-		  extended_users {
-			marital_status
-			social_category
-		  }
-		  documents(where: {doument_type: {_eq: "profile_photo"}}) {
-			id
-			name
-		  }
-		  references(where: {context: {_eq: "users"}}) {
-			id
-			context
-			context_id
-			first_name
-			relation
-			contact_number
-		  }
-		}
-	  }
-	  `;
+			users_by_pk(id:${user_id}) {
+				id
+				first_name
+				dob
+				mobile
+				lat
+				long
+				district
+				block
+				village
+				grampanchayat
+				core_beneficiaries {
+					career_aspiration
+					parent_support
+					father_first_name
+					mother_first_name
+					mark_as_whatsapp_number
+					device_type
+					device_ownership
+					type_of_learner
+				}
+				program_beneficiaries {
+					learning_level
+					type_of_support_needed
+				}
+				extended_users {
+					marital_status
+					social_category
+				}
+				documents(where: {doument_type: {_eq: "profile_photo"}}) {
+					id
+					name
+				}
+				references(where: {context: {_eq: "users"}}) {
+					id
+					context
+					context_id
+					first_name
+					relation
+					contact_number
+				}
+			}
+		}`;
+
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
@@ -4429,6 +4435,10 @@ export class BeneficiariesService {
 
 		if (result?.documents?.length < 3) {
 			emptyFields.push('profile_photo');
+		}
+
+		if (result?.references?.length == 0) {
+			emptyFields.push('references details');
 		}
 
 		function checkFields(result, prefix = '') {
@@ -4443,14 +4453,130 @@ export class BeneficiariesService {
 					typeof result[key] === 'object' &&
 					!Array.isArray(result[key])
 				) {
-					checkFields(result[key], prefix + key + '.');
+					checkFields(result[key], key + '.');
 				}
 			}
 		}
 
+		function pushAllFieldsIfNull(obj, fields, prefix) {
+			if (obj === null) {
+				fields.forEach((field) => emptyFields.push(field));
+			}
+		}
+
+		const fieldMappings = {
+			core_beneficiaries: [
+				'career_aspiration',
+				'parent_support',
+				'father_first_name',
+				'mother_first_name',
+				'mark_as_whatsapp_number',
+				'device_type',
+				'device_ownership',
+				'type_of_learner',
+			],
+			program_beneficiaries: ['learning_level', 'type_of_support_needed'],
+			extended_users: ['marital_status', 'social_category'],
+		};
+
+		for (const [key, fields] of Object.entries(fieldMappings)) {
+			pushAllFieldsIfNull(result?.[key], fields, `${key}.`);
+		}
+
 		checkFields(result);
 
-		return emptyFields;
+		const filteredFields = emptyFields.filter(
+			(field) =>
+				field !== 'core_beneficiaries' &&
+				field !== 'program_beneficiaries' &&
+				field !== 'extended_users',
+		);
+
+		return filteredFields;
+	}
+
+	public async updateBeneficiaryDisabilityDetails(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let user_id;
+
+		let query;
+		let hasura_response;
+		let result;
+
+		query = `query MyQuery {
+			extended_users(where: {user_id: {_eq:${id}}}){
+			  id
+			  user_id
+			}
+		  }
+		  `;
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.extended_users;
+
+		user_id = result?.[0]?.id;
+
+		let returnFields = [
+			'has_disability',
+			'type_of_disability',
+			'has_disability_certificate',
+			'disability_percentage',
+			'disability_occurence',
+			'has_govt_advantage',
+			'govt_advantages',
+			'support_for_exam',
+		];
+
+		let variable = [];
+		if (body?.type_of_disability) {
+			variable.push({
+				key: 'type_of_disability',
+				type: 'jsonb',
+			});
+		}
+
+		if (body?.govt_advantages) {
+			variable.push({
+				key: 'govt_advantages',
+				type: 'jsonb',
+			});
+		}
+
+		if (body?.support_for_exam) {
+			variable.push({
+				key: 'support_for_exam',
+				type: 'jsonb',
+			});
+		}
+
+		const res = await this.hasuraServiceFromServices.updateWithVariable(
+			user_id,
+			'extended_users',
+			body,
+			returnFields,
+			true,
+			{
+				variable: variable,
+			},
+		);
+
+		if (res?.extended_users) {
+			return response.status(200).json({
+				message: 'Data updated successfully',
+				data: res?.extended_users,
+			});
+		} else {
+			return response.status(500).json({
+				message: 'Error updating details',
+				data: null,
+			});
+		}
 	}
 
 	async validateForSSOID(ssoid, program_id, user_id) {
