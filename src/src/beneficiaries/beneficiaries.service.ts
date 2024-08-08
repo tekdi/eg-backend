@@ -4323,7 +4323,6 @@ export class BeneficiariesService {
 			return response.status(422).json({
 				success: false,
 				message: `Missing fields data `,
-				data: missing_fields,
 				errors: setErrors(errors, 'has_disability', 'Field required'),
 			});
 		}
@@ -4571,7 +4570,7 @@ export class BeneficiariesService {
 			return response.status(422).json({
 				success: false,
 				message: `Missing required fields:`,
-				data: errors,
+				errors: errors,
 			});
 		}
 
