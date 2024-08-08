@@ -4248,11 +4248,14 @@ export class BeneficiariesService {
 		response: any,
 	) {
 		let user_id;
+		let program_id = request?.mw_program_id;
 
 		let query;
 		let hasura_response;
 		let result;
+		let missing_fields = [];
 
+		// get primary key for given user_id
 		query = `query MyQuery {
 			extended_users(where: {user_id: {_eq:${id}}}){
 			  id
@@ -4268,6 +4271,26 @@ export class BeneficiariesService {
 
 		user_id = result?.[0]?.id;
 
+		// get state name via program_id
+
+		query = `query MyQuery {
+			programs_by_pk(id:${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let state_name =
+			hasura_response?.data?.programs_by_pk?.state?.state_name;
+
+		// enum checks based on input fields
+
 		let returnFields = [
 			'has_disability',
 			'type_of_disability',
@@ -4280,25 +4303,250 @@ export class BeneficiariesService {
 		];
 
 		let variable = [];
-		if (body?.type_of_disability) {
+
+		if (!body?.has_disability) {
+			missing_fields.push('has_disability');
+			return response.status(400).json({
+				success: false,
+				message: `Missing fields data `,
+				data: missing_fields,
+			});
+		}
+
+		if (body?.has_disability) {
+			const allHasDisability = this.enumService
+				.getEnumValue('BENEFICIARY_HAVE_DISABILITY')
+				.data.map((enumData) => enumData.value);
+
+			if (!allHasDisability.includes(body.has_disability)) {
+				return response.status(400).json({
+					success: false,
+					message: `Invalid has disability data `,
+					data: {},
+				});
+			}
+		}
+
+		if (body?.has_disability == 'no') {
+			body = {
+				...body,
+				type_of_disability: null,
+				has_disability_certificate: null,
+				disability_percentage: null,
+				disability_occurence: null,
+				has_govt_advantage: null,
+				govt_advantages: null,
+				support_for_exam: null,
+			};
+		}
+
+		if (body?.has_disability === 'yes') {
+			const requiredFields = [
+				'type_of_disability',
+				'has_disability_certificate',
+				'disability_percentage',
+				'disability_occurence',
+				'has_govt_advantage',
+				'support_for_exam',
+			];
+
+			requiredFields.forEach((field) => {
+				if (!body.hasOwnProperty(field)) {
+					missing_fields.push(field);
+				}
+			});
+		}
+
+		if (
+			body?.has_govt_advantage === 'no' &&
+			body?.has_disability == 'yes'
+		) {
+			body = {
+				...body,
+				govt_advantages: null,
+			};
+		}
+
+		if (body?.has_govt_advantage === 'yes') {
+			const requiredFields = ['govt_advantages'];
+
+			requiredFields.forEach((field) => {
+				if (!body.hasOwnProperty(field)) {
+					missing_fields.push(field);
+				}
+			});
+		}
+
+		if (missing_fields.length > 0) {
+			return response.status(400).json({
+				success: false,
+				message: `Missing required fields:`,
+				data: missing_fields,
+			});
+		}
+
+		if (body?.has_disability_certificate && body?.has_disability == 'yes') {
+			const allHasDisabilityCertificate = this.enumService
+				.getEnumValue('BENEFICIARY_DISABILITY_CERTIFICATE')
+				.data.map((enumData) => enumData.value);
+
+			if (
+				!allHasDisabilityCertificate.includes(
+					body.has_disability_certificate,
+				)
+			) {
+				return response.status(400).json({
+					success: false,
+					message: `Invalid has disability certificate data `,
+					data: {},
+				});
+			}
+		}
+
+		if (body?.has_govt_advantage && body?.has_disability == 'yes') {
+			const allHasDisabilityAdvantage = this.enumService
+				.getEnumValue('BENEFICIARY_TAKING_ADVANTAGE_DISABILITY')
+				.data.map((enumData) => enumData.value);
+
+			if (!allHasDisabilityAdvantage.includes(body.has_govt_advantage)) {
+				return response.status(400).json({
+					success: false,
+					message: `Invalid has disability advantage data `,
+					data: {},
+				});
+			}
+		}
+
+		if (body?.type_of_disability && body?.has_disability == 'yes') {
+			const allDisabilityTypes = this.enumService
+				.getEnumValue('BENEFICIARY_ENROLLMENT_DISABILITY_TYPE')
+				.data.map((enumData) => enumData.value);
+
+			const isValidType =
+				Array.isArray(body.type_of_disability) &&
+				body.type_of_disability.every((type) =>
+					allDisabilityTypes.includes(type),
+				);
+
+			if (!isValidType || body?.type_of_disability?.length == 0) {
+				return response.status(400).json({
+					success: false,
+					message: `Invalid disability type`,
+					data: {},
+				});
+			}
+
+			// push variable for updating
 			variable.push({
 				key: 'type_of_disability',
 				type: 'jsonb',
 			});
 		}
 
-		if (body?.govt_advantages) {
+		if (
+			body?.govt_advantages &&
+			body?.has_disability == 'yes' &&
+			body?.has_govt_advantage == 'yes'
+		) {
+			const validateGovtAdvantages = (stateEnum) => {
+				const allDisabilityAdvantages = this.enumService
+					.getEnumValue(stateEnum)
+					.data.map((enumData) => enumData.value);
+
+				return (
+					Array.isArray(body.govt_advantages) &&
+					body.govt_advantages.every((advantage) =>
+						allDisabilityAdvantages.includes(advantage),
+					)
+				);
+			};
+
+			if (state_name === 'RAJASTHAN') {
+				if (
+					!validateGovtAdvantages(
+						'BENEFICIARY_DISABILITY_RAJASTHAN',
+					) ||
+					body?.govt_advantages?.length == 0
+				) {
+					return response.status(400).json({
+						success: false,
+						message: `Invalid govt_advantages `,
+						data: {},
+					});
+				}
+			}
+
+			if (state_name === 'BIHAR') {
+				if (
+					!validateGovtAdvantages('BENEFICIARY_DISABILITY_BIHAR') ||
+					body?.govt_advantages?.length == 0
+				) {
+					return response.status(400).json({
+						success: false,
+						message: `Invalid govt_advantages `,
+						data: {},
+					});
+				}
+			}
+
+			if (state_name === 'MADHYA_PRADESH') {
+				if (
+					!validateGovtAdvantages(
+						'BENEFICIARY_DISABILITY_MADHYA_PRADESH',
+					) ||
+					body?.govt_advantages?.length == 0
+				) {
+					return response.status(400).json({
+						success: false,
+						message: `Invalid govt_advantages `,
+						data: {},
+					});
+				}
+			}
+
 			variable.push({
 				key: 'govt_advantages',
 				type: 'jsonb',
 			});
 		}
 
-		if (body?.support_for_exam) {
+		if (body?.support_for_exam && body?.has_disability == 'yes') {
+			const allSupportForExam = this.enumService
+				.getEnumValue('BENEFICIARY_EXAM_SUPPORT_NEEDED')
+				.data.map((enumData) => enumData.value);
+
+			const isValidSupport =
+				Array.isArray(body.support_for_exam) &&
+				body.support_for_exam.every((support) =>
+					allSupportForExam.includes(support),
+				);
+
+			if (!isValidSupport || body?.support_for_exam?.length == 0) {
+				return response.status(400).json({
+					success: false,
+					message: `Invalid support data`,
+					data: {},
+				});
+			}
+
 			variable.push({
 				key: 'support_for_exam',
 				type: 'jsonb',
 			});
+		}
+
+		if (body?.disability_occurence && body?.has_disability == 'yes') {
+			const allDisabilityOccurence = this.enumService
+				.getEnumValue('BENEFICIARY_DISABILITY_OCCURENCE')
+				.data.map((enumData) => enumData.value);
+
+			if (!allDisabilityOccurence.includes(body.disability_occurence)) {
+				return response.status(400).json({
+					success: false,
+					message: `Invalid disability occurence data `,
+					data: {},
+				});
+			}
 		}
 
 		const res = await this.hasuraServiceFromServices.updateWithVariable(
