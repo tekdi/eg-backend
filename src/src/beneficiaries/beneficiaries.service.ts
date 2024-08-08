@@ -4587,11 +4587,13 @@ export class BeneficiariesService {
 
 		if (res?.extended_users) {
 			return response.status(200).json({
+				success: true,
 				message: 'Data updated successfully',
 				data: res?.extended_users,
 			});
 		} else {
 			return response.status(500).json({
+				success: false,
 				message: 'Error updating details',
 				data: null,
 			});
