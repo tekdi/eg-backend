@@ -283,6 +283,24 @@ export class UserauthService {
 						acknowledgement_create_body,
 					);
 				}
+				let auditData = {
+					userId: result?.data?.id,
+					mw_userid: result?.data?.id,
+					user_type: 'facilitator',
+					context: 'facilitator.created',
+					context_id: result?.data?.id,
+					subject: 'facilitator',
+					subject_id: result?.data?.id,
+					log_transaction_text: `facilitator created with id ${result?.data?.id}`,
+					oldData: { status: '' },
+					newData: {
+						status: result?.data?.program_faciltators?.status,
+					},
+					tempArray: ['create'],
+					action: 'create',
+				};
+				//add audit logs
+				await this.userService.addAuditLogAction(auditData);
 
 				if (role === 'facilitator' && body?.core_faciltators) {
 					let core_faciltators = {
