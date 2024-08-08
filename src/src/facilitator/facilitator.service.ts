@@ -13,6 +13,7 @@ import {
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { Method } from '../common/method/method';
+import { type } from 'os';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -1665,6 +1666,12 @@ export class FacilitatorService {
 			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
 		}
 		let sortQuery = `{ created_at: desc }`;
+		let pfarray = [
+			`academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}`,
+		];
+		if (body?.status) {
+			pfarray.push(`status:{_in:[${body?.status}]}`);
+		}
 
 		if (body.hasOwnProperty('sort')) {
 			// Supported sortings: name, qualification, region, eligibility, status, comments
@@ -1776,7 +1783,7 @@ export class FacilitatorService {
 			user_id
 			type
 		  }
-		  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},status:{_in:[${body?.status}]}}) {
+		  program_faciltators(where: {${pfarray}}) {
 			parent_ip
 			availability
 			id
@@ -2572,6 +2579,7 @@ export class FacilitatorService {
 		let academic_year_id = request?.mw_academic_year_id;
 		let program_id = request?.mw_program_id;
 		let status = body?.status;
+		let program_faciltators = [];
 
 		if (!user_id || !academic_year_id || !program_id || !status) {
 			return res
@@ -2683,8 +2691,31 @@ export class FacilitatorService {
 		}
 
 		const userData = result.data.users[0];
-		let requiredFields: string[] = [];
+		let requiredFields: any[] = [];
 		let dataToCheck: any = {};
+
+		const checkField = (obj: any, path: string): boolean => {
+			const keys = path.split('.');
+			let current = obj;
+			for (const key of keys) {
+				if (key.includes('[')) {
+					const [arrayKey, index] = key.replace(']', '').split('[');
+					if (
+						!Array.isArray(current[arrayKey]) ||
+						!current[arrayKey][index]
+					) {
+						return false;
+					}
+					current = current[arrayKey][index];
+				} else {
+					if (current[key] === undefined || current[key] === null) {
+						return false;
+					}
+					current = current[key];
+				}
+			}
+			return true;
+		};
 
 		switch (status) {
 			case 'pragati_mobilizer':
@@ -2733,7 +2764,8 @@ export class FacilitatorService {
 				) {
 					requiredFields.push('qualification');
 				}
-				let program_faciltators = userData.program_faciltators || [];
+				program_faciltators = userData.program_faciltators || [];
+
 				if (
 					!program_faciltators.every((pf) => {
 						try {
@@ -2750,50 +2782,99 @@ export class FacilitatorService {
 				) {
 					requiredFields.push('teaching_degree');
 				}
-
+				requiredFields = requiredFields.filter(
+					(field) => !checkField(userData, field),
+				);
 				dataToCheck = userData;
 				break;
 			case 'selected_for_onboarding':
-				requiredFields = ['has_volunteer_exp', 'has_job_exp'];
+				//requiredFields = ['has_volunteer_exp', 'has_job_exp'];
 				dataToCheck = userData;
+
+				const checkExperience = ({ type, key }) => {
+					// experience
+					const experience = userData.experience.filter(
+						(e: any) => e.type === type,
+					);
+
+					if (
+						![true, false].includes(
+							userData?.core_faciltator?.[key],
+						)
+					) {
+						return [key];
+					} else if (userData?.core_faciltator?.[key] == true) {
+						let arr = [
+							'organization',
+							'role_title',
+							'experience_in_years',
+							'related_to_teaching',
+						];
+						if (
+							Array.isArray(experience) &&
+							experience?.length > 0
+						) {
+							const result = experience.reduce(
+								(acc, e, index) => {
+									const filteredArr = arr.filter(
+										(a) => !e[a],
+									);
+									if (filteredArr?.length > 0) {
+										return [
+											...acc,
+											{
+												key: index + 1,
+												data: filteredArr,
+											},
+										];
+									}
+								},
+								[],
+							);
+							if (result?.length > 0) {
+								return [
+									{
+										key: type,
+										data: result,
+									},
+								];
+							}
+						} else {
+							return [
+								{
+									key: type,
+									data: [
+										{
+											key: 1,
+											data: arr,
+										},
+									],
+								},
+							];
+						}
+					}
+				};
+
+				// vo_experience
+				requiredFields = [
+					...requiredFields,
+					...(checkExperience({
+						type: 'vo_experience',
+						key: 'has_volunteer_exp',
+					}) || []),
+				];
+				// job experience
+				requiredFields = [
+					...requiredFields,
+					...(checkExperience({
+						type: 'experience',
+						key: 'has_job_exp',
+					}) || []),
+				];
+
 				program_faciltators = userData.program_faciltators || [];
 				if (!program_faciltators.every((pf) => pf.availability)) {
 					requiredFields.push('availability');
-				}
-
-				const experience = userData.experience || [];
-				if (!experience.every((exp) => exp.description)) {
-					requiredFields.push('description');
-				}
-				if (!experience.every((exp) => exp.organization)) {
-					requiredFields.push('organization');
-				}
-				if (!experience.every((exp) => exp.role_title)) {
-					requiredFields.push('role_title');
-				}
-				if (!experience.every((exp) => exp.experience_in_years)) {
-					requiredFields.push('experience_in_years');
-				}
-				if (!experience.every((exp) => exp.related_to_teaching)) {
-					requiredFields.push('related_to_teaching');
-				}
-				const references = userData.references || [];
-				if (!references.every((ref) => ref.name)) {
-					requiredFields.push('name');
-				}
-				if (!references.every((ref) => ref.contact_number)) {
-					requiredFields.push('contact_number');
-				}
-				if (!references.every((ref) => ref.designation)) {
-					requiredFields.push('designation');
-				}
-				if (
-					!experience.some((exp: any) => exp.type === 'vo_experience')
-				) {
-					requiredFields.push('type_vo_experience');
-				}
-				if (!experience.some((exp: any) => exp.type === 'experience')) {
-					requiredFields.push('type_experience');
 				}
 				break;
 			case 'selected_prerak':
@@ -2804,37 +2885,10 @@ export class FacilitatorService {
 				return res.status(400).json({ message: 'Invalid status' });
 		}
 
-		const checkField = (obj: any, path: string): boolean => {
-			const keys = path.split('.');
-			let current = obj;
-			for (const key of keys) {
-				if (key.includes('[')) {
-					const [arrayKey, index] = key.replace(']', '').split('[');
-					if (
-						!Array.isArray(current[arrayKey]) ||
-						!current[arrayKey][index]
-					) {
-						return false;
-					}
-					current = current[arrayKey][index];
-				} else {
-					if (current[key] === undefined || current[key] === null) {
-						return false;
-					}
-					current = current[key];
-				}
-			}
-			return true;
-		};
-
-		const missingFields = requiredFields.filter(
-			(field) => !checkField(userData, field),
-		);
-
-		if (missingFields.length > 0) {
+		if (requiredFields.length > 0) {
 			return res.status(400).json({
 				message: 'The following fields are required:',
-				required: missingFields,
+				required: requiredFields,
 			});
 		}
 
