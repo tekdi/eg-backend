@@ -146,7 +146,7 @@ export class UserService {
 				subject_id: facilitator_user_id,
 				log_transaction_text: `IP ${ip_id} updated prerak status of prerak id ${facilitator_user_id}`,
 				oldData: { status: oldStatus },
-				newData: { status: body.status },
+				newData: { status: body?.status },
 				tempArray: ['status'],
 				action: 'update',
 			};
