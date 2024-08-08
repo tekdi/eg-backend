@@ -4306,6 +4306,8 @@ export class BeneficiariesService {
 
 		let errors = {};
 
+		//custom function to set errors
+
 		const setErrors = (errors, key, message) => {
 			return {
 				...errors,
