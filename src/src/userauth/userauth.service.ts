@@ -286,12 +286,12 @@ export class UserauthService {
 				let auditData = {
 					userId: result?.data?.id,
 					mw_userid: result?.data?.id,
-					user_type: 'Prerak',
-					context: 'prerak.created',
+					user_type: 'facilitator',
+					context: 'facilitator.created',
 					context_id: result?.data?.id,
-					subject: 'prerak',
+					subject: 'facilitator',
 					subject_id: result?.data?.id,
-					log_transaction_text: `prerak created with id ${result?.data?.id}`,
+					log_transaction_text: `facilitator created with id ${result?.data?.id}`,
 					oldData: { status: '' },
 					newData: {
 						status: result?.data?.program_faciltators?.status,
