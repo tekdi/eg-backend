@@ -301,7 +301,7 @@ export class UserauthService {
 				};
 				//add audit logs
 				await this.userService.addAuditLogAction(auditData);
-			}
+
 				if (role === 'facilitator' && body?.core_faciltators) {
 					let core_faciltators = {
 						...body?.core_faciltators,
