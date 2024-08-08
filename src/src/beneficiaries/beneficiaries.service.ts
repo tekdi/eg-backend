@@ -4304,12 +4304,27 @@ export class BeneficiariesService {
 
 		let variable = [];
 
+		let errors = {};
+
+		const setErrors = (errors, key, message) => {
+			return {
+				...errors,
+				[key]: {
+					__errors: [
+						...(errors?.[key]?.__errors || []),
+						`${message}`,
+					],
+				},
+			};
+		};
+
 		if (!body?.has_disability) {
 			missing_fields.push('has_disability');
 			return response.status(400).json({
 				success: false,
 				message: `Missing fields data `,
 				data: missing_fields,
+				errors: setErrors(errors, 'has_disability', 'Field required'),
 			});
 		}
 
@@ -4319,11 +4334,11 @@ export class BeneficiariesService {
 				.data.map((enumData) => enumData.value);
 
 			if (!allHasDisability.includes(body.has_disability)) {
-				return response.status(400).json({
-					success: false,
-					message: `Invalid has disability data `,
-					data: {},
-				});
+				errors = setErrors(
+					errors,
+					'has_disability',
+					'Invalid has disability data',
+				);
 			}
 		}
 
@@ -4352,7 +4367,11 @@ export class BeneficiariesService {
 
 			requiredFields.forEach((field) => {
 				if (!body.hasOwnProperty(field)) {
-					missing_fields.push(field);
+					errors = setErrors(
+						errors,
+						field,
+						`Field ${field} required`,
+					);
 				}
 			});
 		}
@@ -4367,21 +4386,20 @@ export class BeneficiariesService {
 			};
 		}
 
-		if (body?.has_govt_advantage === 'yes') {
+		if (
+			body?.has_govt_advantage === 'yes' &&
+			body?.has_disability == 'yes'
+		) {
 			const requiredFields = ['govt_advantages'];
 
 			requiredFields.forEach((field) => {
 				if (!body.hasOwnProperty(field)) {
-					missing_fields.push(field);
+					errors = setErrors(
+						errors,
+						field,
+						`Field ${field} required`,
+					);
 				}
-			});
-		}
-
-		if (missing_fields.length > 0) {
-			return response.status(400).json({
-				success: false,
-				message: `Missing required fields:`,
-				data: missing_fields,
 			});
 		}
 
@@ -4395,11 +4413,11 @@ export class BeneficiariesService {
 					body.has_disability_certificate,
 				)
 			) {
-				return response.status(400).json({
-					success: false,
-					message: `Invalid has disability certificate data `,
-					data: {},
-				});
+				errors = setErrors(
+					errors,
+					'has_disability_certificate',
+					'Invalid  has_disability_certificate data',
+				);
 			}
 		}
 
@@ -4409,17 +4427,17 @@ export class BeneficiariesService {
 				.data.map((enumData) => enumData.value);
 
 			if (!allHasDisabilityAdvantage.includes(body.has_govt_advantage)) {
-				return response.status(400).json({
-					success: false,
-					message: `Invalid has disability advantage data `,
-					data: {},
-				});
+				errors = setErrors(
+					errors,
+					'has_govt_advantage',
+					'Invalid has_govt_advantage data',
+				);
 			}
 		}
 
 		if (body?.type_of_disability && body?.has_disability == 'yes') {
 			const allDisabilityTypes = this.enumService
-				.getEnumValue('BENEFICIARY_ENROLLMENT_DISABILITY_TYPE')
+				.getEnumValue('BENEFICIARY_DISABILITY_TYPE')
 				.data.map((enumData) => enumData.value);
 
 			const isValidType =
@@ -4429,11 +4447,11 @@ export class BeneficiariesService {
 				);
 
 			if (!isValidType || body?.type_of_disability?.length == 0) {
-				return response.status(400).json({
-					success: false,
-					message: `Invalid disability type`,
-					data: {},
-				});
+				errors = setErrors(
+					errors,
+					'type_of_disability',
+					'Invalid type_of_disability data',
+				);
 			}
 
 			// push variable for updating
@@ -4468,11 +4486,11 @@ export class BeneficiariesService {
 					) ||
 					body?.govt_advantages?.length == 0
 				) {
-					return response.status(400).json({
-						success: false,
-						message: `Invalid govt_advantages `,
-						data: {},
-					});
+					errors = setErrors(
+						errors,
+						'govt_advantages',
+						'Invalid govt_advantages data',
+					);
 				}
 			}
 
@@ -4481,11 +4499,11 @@ export class BeneficiariesService {
 					!validateGovtAdvantages('BENEFICIARY_DISABILITY_BIHAR') ||
 					body?.govt_advantages?.length == 0
 				) {
-					return response.status(400).json({
-						success: false,
-						message: `Invalid govt_advantages `,
-						data: {},
-					});
+					errors = setErrors(
+						errors,
+						'govt_advantages',
+						'Invalid govt_advantages data',
+					);
 				}
 			}
 
@@ -4496,11 +4514,11 @@ export class BeneficiariesService {
 					) ||
 					body?.govt_advantages?.length == 0
 				) {
-					return response.status(400).json({
-						success: false,
-						message: `Invalid govt_advantages `,
-						data: {},
-					});
+					errors = setErrors(
+						errors,
+						'govt_advantages',
+						'Invalid govt_advantages data',
+					);
 				}
 			}
 
@@ -4522,11 +4540,11 @@ export class BeneficiariesService {
 				);
 
 			if (!isValidSupport || body?.support_for_exam?.length == 0) {
-				return response.status(400).json({
-					success: false,
-					message: `Invalid support data`,
-					data: {},
-				});
+				errors = setErrors(
+					errors,
+					'support_for_exam',
+					'Invalid support_for_exam data',
+				);
 			}
 
 			variable.push({
@@ -4541,12 +4559,20 @@ export class BeneficiariesService {
 				.data.map((enumData) => enumData.value);
 
 			if (!allDisabilityOccurence.includes(body.disability_occurence)) {
-				return response.status(400).json({
-					success: false,
-					message: `Invalid disability occurence data `,
-					data: {},
-				});
+				errors = setErrors(
+					errors,
+					'disability_occurence',
+					'Invalid disability_occurence data',
+				);
 			}
+		}
+
+		if (Object.keys(errors).length > 0) {
+			return response.status(400).json({
+				success: false,
+				message: `Missing required fields:`,
+				data: errors,
+			});
 		}
 
 		const res = await this.hasuraServiceFromServices.updateWithVariable(
