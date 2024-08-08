@@ -4320,7 +4320,7 @@ export class BeneficiariesService {
 
 		if (!body?.has_disability) {
 			missing_fields.push('has_disability');
-			return response.status(400).json({
+			return response.status(422).json({
 				success: false,
 				message: `Missing fields data `,
 				data: missing_fields,
@@ -4568,7 +4568,7 @@ export class BeneficiariesService {
 		}
 
 		if (Object.keys(errors).length > 0) {
-			return response.status(400).json({
+			return response.status(422).json({
 				success: false,
 				message: `Missing required fields:`,
 				data: errors,
