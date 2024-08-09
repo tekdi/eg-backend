@@ -4122,6 +4122,7 @@ export class BeneficiariesService {
 			});
 		}
 	}
+
 	async validateBeneficiaryDetailsForEnrollment(user_id) {
 		let query;
 		let result;
@@ -4157,6 +4158,7 @@ export class BeneficiariesService {
 				extended_users {
 					marital_status
 					social_category
+					has_disability
 				}
 				documents(where: {doument_type: {_eq: "profile_photo"}}) {
 					id
@@ -4222,7 +4224,11 @@ export class BeneficiariesService {
 				'type_of_learner',
 			],
 			program_beneficiaries: ['learning_level', 'type_of_support_needed'],
-			extended_users: ['marital_status', 'social_category'],
+			extended_users: [
+				'marital_status',
+				'social_category',
+				'has_disability',
+			],
 		};
 
 		for (const [key, fields] of Object.entries(fieldMappings)) {
