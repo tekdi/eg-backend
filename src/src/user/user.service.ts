@@ -37,7 +37,7 @@ export class UserService {
 		try {
 			const academic_year_id = req?.mw_academic_year_id;
 			const program_id = req?.mw_program_id;
-
+			const ip_id = req?.mw_userid;
 			const user: any = await this.hasuraService.getOne(
 				parseInt(userId),
 				'program_faciltators',
@@ -136,7 +136,22 @@ export class UserService {
 				},
 				data: data,
 			};
-
+			let auditData = {
+				userId: facilitator_user_id,
+				mw_userid: facilitator_user_id,
+				user_type: 'IP',
+				context: 'facilitator.update.status',
+				context_id: facilitator_user_id,
+				subject: 'facilitator',
+				subject_id: facilitator_user_id,
+				log_transaction_text: `IP ${ip_id} updated facilitator status of facilitator id ${facilitator_user_id}`,
+				oldData: { status: oldStatus },
+				newData: { status: body?.status },
+				tempArray: ['status'],
+				action: 'update',
+			};
+			//add audit logs
+			await this.addAuditLogAction(auditData);
 			const response = await axios(config);
 			const result = response.data.data;
 			if (response.data.data) {
