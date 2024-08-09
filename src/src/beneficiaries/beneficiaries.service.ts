@@ -4163,6 +4163,7 @@ export class BeneficiariesService {
 				documents(where: {doument_type: {_eq: "profile_photo"}}) {
 					id
 					name
+					document_sub_type
 				}
 				references(where: {context: {_eq: "users"}}) {
 					id
@@ -4181,8 +4182,22 @@ export class BeneficiariesService {
 
 		result = hasura_response?.data?.users_by_pk;
 
-		if (result?.documents?.length < 3) {
-			emptyFields.push('profile_photo');
+		// Initialize profile photo check
+		const requiredProfilePhotos = [
+			'profile_photo_1',
+			'profile_photo_2',
+			'profile_photo_3',
+		];
+		const presentProfilePhotos =
+			result?.documents?.map((doc) => doc.document_sub_type) || [];
+
+		// Check which profile photos are missing
+		const missingProfilePhotos = requiredProfilePhotos.filter(
+			(photo) => !presentProfilePhotos.includes(photo),
+		);
+
+		if (missingProfilePhotos.length > 0) {
+			emptyFields.push(...missingProfilePhotos);
 		}
 
 		if (result?.references?.length == 0) {
