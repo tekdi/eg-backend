@@ -18,7 +18,6 @@ const path = require('path');
 //url to base64
 import fetch from 'node-fetch';
 import { Buffer } from 'buffer';
-import { log } from 'console';
 
 @Injectable()
 export class UserauthService {
@@ -302,7 +301,6 @@ export class UserauthService {
 				};
 				//add audit logs
 				await this.userService.addAuditLogAction(auditData);
-				console.log('sss', auditData);
 
 				if (role === 'facilitator' && body?.core_faciltators) {
 					let core_faciltators = {
