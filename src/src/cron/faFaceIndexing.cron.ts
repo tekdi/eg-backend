@@ -40,20 +40,16 @@ export class FaFaceIndexingCron {
 					),
 				),
 			);
-			//console.dir(usersToIndexFaces, { depth: 99 });
-			//console.log('usersToINdexfaces-->>', usersToIndexFaces);
 
 			// Step-2: Iterate through them and index faces one by one
 			for (const user of usersToIndexFaces) {
-				//console.log('\nindex-user-->>', user);
 				let userId = String(user.id);
-				//console.log('faPhotos---->>>>', userId);
+
 				// Step-A Perform indexing of all 3 profile photos if not indexed
 				const faPhotos = JSON.parse(user.fa_photos_indexed);
-				//console.log('faPhotos---->>>>', faPhotos);
 
 				const faFaceIds = JSON.parse(user.fa_face_ids);
-				//console.log('faFaceIds---->>>>', faFaceIds);
+
 				let isUpdated = false;
 				//if limit to only 3 then add i<=3
 				//for now we set loop limit as number of documents of user
@@ -74,10 +70,6 @@ export class FaFaceIndexingCron {
 						faPhotos[photokeyName] ||
 						(isProfilePhotoNotAvailable && !isFaceIdAvailable)
 					) {
-						/*console.log(
-							'>>>>>> No photos to be indexed use with ID:\n',
-							userId,
-						);*/
 					}
 					// Step-ii Else perform indexing based on operation
 					else {
@@ -151,10 +143,6 @@ export class FaFaceIndexingCron {
 					}
 				}
 
-				//console.log('faPhotos2');
-				//console.dir(faPhotos);
-				//console.log('faFaceIds2');
-				//console.log(faFaceIds);
 				// Step-C Set user as indexed in database
 				if (isUpdated) {
 					await this.markUserAsIndexed(user.id, {
@@ -193,10 +181,6 @@ export class FaFaceIndexingCron {
 	}
 
 	async fetchAllUsersToIndexFaces(limit: number) {
-		/*console.log(
-			'START - Get batch of users for whom face photos to be indexed',
-		);*/
-
 		// We need to skip processing records wch were processed in past X hours
 		let dt = new Date();
 		let AWS_FACE_INDEX_LAST_PROCESS_HOURS = parseInt(
@@ -296,7 +280,7 @@ export class FaFaceIndexingCron {
 				faceId,
 			)
 		).success;
-		//console.log('photoDisassociated------>>>>>', photoDisassociated);
+
 		let response = { success: false };
 		// Delete face from collection
 		if (photoDisassociated) {
@@ -322,7 +306,7 @@ export class FaFaceIndexingCron {
 				collectionId,
 				imageName,
 			);
-		//console.log('addFaceResponse111------>>>>>', addFaceResponse);
+
 		const response = { success: false, faceId: addFaceResponse.faceId };
 		// Associate face to user
 		if (addFaceResponse.success) {
@@ -342,11 +326,6 @@ export class FaFaceIndexingCron {
 		userId: number,
 		{ fa_photos_last_processed_at },
 	) {
-		/*console.log(
-			'START - Mark fa last processed timestamp for user with: userId, as',
-			userId,
-		);*/
-
 		let updateQuery = `
 			mutation MyMutation {
 				update_users_by_pk(

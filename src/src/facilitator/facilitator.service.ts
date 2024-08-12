@@ -57,17 +57,11 @@ export class FacilitatorService {
 		'created_by',
 	];
 
-	create(req: any) {
-		// return this.hasuraService.create(this.table, req, this.returnFields);
-	}
+	create(req: any) {}
 
-	findAll(request: any) {
-		// return this.hasuraService.getAll(this.table, this.returnFields, request);
-	}
+	findAll(request: any) {}
 
-	findOne(id: number) {
-		// return this.hasuraService.getOne(+id, this.table, this.returnFields);
-	}
+	findOne(id: number) {}
 
 	async getFacilitatorsForOrientation(
 		request: any,
@@ -1079,9 +1073,7 @@ export class FacilitatorService {
 		}
 	}
 
-	remove(id: number) {
-		// return this.hasuraService.delete(this.table, { id: +id });
-	}
+	remove(id: number) {}
 
 	filterFacilitatorsBasedOnExperience(
 		arr,

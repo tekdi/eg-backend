@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-//import * as pdfjsLib from 'pdfjs-dist';
+
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { ExamResultPattern } from './exam.result.pattern';
 import * as moment from 'moment';
@@ -681,11 +681,10 @@ export class ExamService {
 				}
 			}
 		`;
-		//console.log('vquery', vquery);
+
 		vresponse = await this.hasuraServiceFromServices.getData({
 			query: vquery,
 		});
-		//console.log('vresponse', vresponse);
 
 		let exam_result_id = vresponse?.data?.exam_results?.[0]?.id;
 
@@ -910,7 +909,6 @@ export class ExamService {
 
 	//upload pdf file
 	public async base64ToBlob(buffer, userId, res, documentDetails) {
-		//console.log('here-->>');
 		let fileObject;
 		let { document_type, document_sub_type } = documentDetails;
 
@@ -938,10 +936,6 @@ export class ExamService {
 			true,
 		);
 
-		//console.log(
-		//	'response of file upload-->>',
-		//	JSON.stringify(uploadresponse),
-		//	);
 		let document_id: any; // Adjust the type as per your requirement
 
 		if ('data' in uploadresponse && uploadresponse.data) {
@@ -1213,7 +1207,7 @@ export class ExamService {
 				file,
 				board_name,
 			);
-			//console.log('result', result);
+
 			if (result == null) {
 				return response
 					.status(200)

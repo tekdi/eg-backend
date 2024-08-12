@@ -4952,8 +4952,6 @@ export class CampService {
 			query: learnerQuery,
 		});
 
-		// const learnersWithoutEndline = learnerRes?.data?.users;
-
 		let sessionData = [];
 		if (Array.isArray(camp_id)) {
 			sessionData = camp_id

@@ -1561,13 +1561,9 @@ export class BeneficiariesService {
 		}
 	}
 
-	update(id: number, req: any) {
-		// return this.hasuraService.update(+id, this.table, req, this.returnFields);
-	}
+	update(id: number, req: any) {}
 
-	remove(id: number) {
-		// return this.hasuraService.delete(this.table, { id: +id });
-	}
+	remove(id: number) {}
 
 	public async deactivateDuplicateBeneficiaries(
 		AadhaarNo: string,
@@ -2827,25 +2823,9 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement
 						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 				let myRequest = {};
-				// if (
-				// 	!beneficiaryUser.aadhar_no ||
-				// 	beneficiaryUser.aadhar_no == 'null'
-				// ) {
-				// 	return response.status(400).send({
-				// 		success: false,
-				// 		message: 'Aadhaar Number Not Found',
-				// 		data: {},
-				// 	});
-				// }
-
 				if (
 					!beneficiaryUser.mobile ||
 					beneficiaryUser.mobile == 'null'
@@ -2862,7 +2842,6 @@ export class BeneficiariesService {
 					let tempArray = [
 						'enrollment_number',
 						'enrollment_status',
-						//	'enrollment_aadhaar_no',
 						'enrolled_for_board',
 						'subjects',
 						'enrollment_date',
@@ -2931,15 +2910,6 @@ export class BeneficiariesService {
 						await this.hasuraServiceFromServices.getData(data);
 					const documentDetails = response?.data?.documents;
 					if (documentDetails?.length > 0) {
-						//delete document from documnet table
-						// await this.hasuraService.delete('documents', {
-						// 	id: documentDetails?.id,
-						// });
-						// if (documentDetails?.name) {
-						// 	//delete document from s3 bucket
-						// 	await this.s3Service.deletePhoto(documentDetails?.name);
-						// }
-
 						for (const documentDetail of documentDetails) {
 							await this.uploadFileService.DeleteFile(
 								documentDetail,
@@ -2988,16 +2958,6 @@ export class BeneficiariesService {
 							],
 						},
 					);
-
-				// await this.hasuraService.q(
-				// 	tableName,
-				// 	{
-				// 		...myRequest,
-				// 		id: programDetails?.id ? programDetails.id : null,
-				// 	},
-				// 	userArr,
-				// 	update,
-				// );
 				break;
 			}
 
@@ -3006,11 +2966,6 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
 						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
 
 				let tableName = 'program_beneficiaries';
@@ -3099,11 +3054,6 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.document_status
 						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 
