@@ -13,7 +13,7 @@ export class BoardService {
 		let program_id = request?.mw_program_id;
 
 		let query = `query MyQuery {
-            boards(where: {program_id: {_eq:${program_id}}}){
+            boards(where: {program_id: {_eq:${program_id}},status:{_eq:"active"}}){
               id
               name
               program_id
