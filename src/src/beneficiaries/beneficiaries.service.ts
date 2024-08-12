@@ -4417,14 +4417,7 @@ export class BeneficiariesService {
 				documents(where: {doument_type: {_eq: "profile_photo"}}) {
 					id
 					name
-				}
-				references(where: {context: {_eq: "users"}}) {
-					id
-					context
-					context_id
-					first_name
-					relation
-					contact_number
+					document_sub_type
 				}
 			}
 		}`;
@@ -4435,12 +4428,22 @@ export class BeneficiariesService {
 
 		result = hasura_response?.data?.users_by_pk;
 
-		if (result?.documents?.length < 3) {
-			emptyFields.push('profile_photo');
-		}
+		// Initialize profile photo check
+		const requiredProfilePhotos = [
+			'profile_photo_1',
+			'profile_photo_2',
+			'profile_photo_3',
+		];
+		const presentProfilePhotos =
+			result?.documents?.map((doc) => doc.document_sub_type) || [];
 
-		if (result?.references?.length == 0) {
-			emptyFields.push('references details');
+		// Check which profile photos are missing
+		const missingProfilePhotos = requiredProfilePhotos.filter(
+			(photo) => !presentProfilePhotos.includes(photo),
+		);
+
+		if (missingProfilePhotos.length > 0) {
+			emptyFields.push(...missingProfilePhotos);
 		}
 
 		function checkFields(result, prefix = '') {
