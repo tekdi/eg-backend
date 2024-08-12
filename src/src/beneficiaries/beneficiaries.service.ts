@@ -4531,6 +4531,37 @@ export class BeneficiariesService {
 
 		user_id = result?.[0]?.id;
 
+		if (!user_id) {
+			let res = await this.hasuraService.q(
+				'extended_users',
+				{
+					...body,
+					user_id: id,
+				},
+				[
+					'user_id',
+					'social_category',
+					'marital_status',
+					'qualification_id',
+					'designation',
+					'created_by',
+					'updated_by',
+					'has_disability',
+					'type_of_disability',
+					'has_disability_certificate',
+					'disability_percentage',
+					'disability_occurence',
+					'has_govt_advantage',
+					'govt_advantages',
+					'support_for_exam',
+				],
+				false,
+				['id', 'user_id'],
+			);
+
+			user_id = res?.extended_users?.id;
+		}
+
 		// get state name via program_id
 
 		query = `query MyQuery {
