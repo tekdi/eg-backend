@@ -4649,7 +4649,6 @@ export class BeneficiariesService {
 			const requiredFields = [
 				'type_of_disability',
 				'has_disability_certificate',
-				'disability_percentage',
 				'disability_occurence',
 				'has_govt_advantage',
 				'support_for_exam',
@@ -4673,6 +4672,33 @@ export class BeneficiariesService {
 			body = {
 				...body,
 				govt_advantages: null,
+			};
+		}
+
+		if (
+			body?.has_disability_certificate === 'yes' &&
+			body?.has_disability == 'yes'
+		) {
+			const requiredFields = ['disability_percentage'];
+
+			requiredFields.forEach((field) => {
+				if (!body.hasOwnProperty(field)) {
+					errors = setErrors(
+						errors,
+						field,
+						`Field ${field} required`,
+					);
+				}
+			});
+		}
+
+		if (
+			body?.has_disability_certificate != 'yes' &&
+			body?.has_disability == 'yes'
+		) {
+			body = {
+				...body,
+				disability_percentage: null,
 			};
 		}
 
