@@ -4165,14 +4165,6 @@ export class BeneficiariesService {
 					name
 					document_sub_type
 				}
-				references(where: {context: {_eq: "users"}}) {
-					id
-					context
-					context_id
-					first_name
-					relation
-					contact_number
-				}
 			}
 		}`;
 
@@ -4198,10 +4190,6 @@ export class BeneficiariesService {
 
 		if (missingProfilePhotos.length > 0) {
 			emptyFields.push(...missingProfilePhotos);
-		}
-
-		if (result?.references?.length == 0) {
-			emptyFields.push('references details');
 		}
 
 		function checkFields(result, prefix = '') {
