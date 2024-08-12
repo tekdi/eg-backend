@@ -4531,6 +4531,37 @@ export class BeneficiariesService {
 
 		user_id = result?.[0]?.id;
 
+		if (!user_id) {
+			let res = await this.hasuraService.q(
+				'extended_users',
+				{
+					...body,
+					user_id: id,
+				},
+				[
+					'user_id',
+					'social_category',
+					'marital_status',
+					'qualification_id',
+					'designation',
+					'created_by',
+					'updated_by',
+					'has_disability',
+					'type_of_disability',
+					'has_disability_certificate',
+					'disability_percentage',
+					'disability_occurence',
+					'has_govt_advantage',
+					'govt_advantages',
+					'support_for_exam',
+				],
+				false,
+				['id', 'user_id'],
+			);
+
+			user_id = res?.extended_users?.id;
+		}
+
 		// get state name via program_id
 
 		query = `query MyQuery {
@@ -4618,7 +4649,6 @@ export class BeneficiariesService {
 			const requiredFields = [
 				'type_of_disability',
 				'has_disability_certificate',
-				'disability_percentage',
 				'disability_occurence',
 				'has_govt_advantage',
 				'support_for_exam',
@@ -4642,6 +4672,33 @@ export class BeneficiariesService {
 			body = {
 				...body,
 				govt_advantages: null,
+			};
+		}
+
+		if (
+			body?.has_disability_certificate === 'yes' &&
+			body?.has_disability == 'yes'
+		) {
+			const requiredFields = ['disability_percentage'];
+
+			requiredFields.forEach((field) => {
+				if (!body.hasOwnProperty(field)) {
+					errors = setErrors(
+						errors,
+						field,
+						`Field ${field} required`,
+					);
+				}
+			});
+		}
+
+		if (
+			body?.has_disability_certificate != 'yes' &&
+			body?.has_disability == 'yes'
+		) {
+			body = {
+				...body,
+				disability_percentage: null,
 			};
 		}
 
