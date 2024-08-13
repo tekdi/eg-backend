@@ -3129,7 +3129,7 @@ export class BeneficiariesService {
 							data: {},
 						});
 					} else {
-						let { edit_page_type, ...copiedRequest } = req;
+						const { edit_page_type, ...copiedRequest } = req;
 						const { data: updatedUser } =
 							await this.beneficiariesCoreService.userById(
 								req.id,
