@@ -1618,6 +1618,36 @@
 			"value": "exam"
 		}
 	],
+	"NEEV_CAMP_ABSENT_REASONS": [
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_PERSONAL_LEAVE",
+			"value": "personal_leave"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_OTHER_WEEKLY_OFF",
+			"value": "other_weekly_off"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_FESTIVAL_HOLIDAY",
+			"value": "festival_holiday"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_MEETING_WITH_STAKEHOLDER",
+			"value": "meeting_with_stakeholder"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_PRERAK_TRAINING",
+			"value": "prerak_training"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_LEARNER_EXPOSER_VISIT",
+			"value": "learner_exposer_visit"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_CAMP_FACILITY_RELATED_WORK",
+			"value": "camp_facility_related_work"
+		}
+	],
 	"FACILITATOR_MOOD_LIST": [
 		{
 			"title": "FACILITATOR_MOOD_LIST_FULL_OF_COURAGE",
@@ -1646,8 +1676,8 @@
 	],
 	"MISCELLANEOUS_ACTIVITIES": [
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
-			"value": "miscellaneous_activities_communication_skills"
+			"title": "MISCELLANEOUS_ACTIVITIES_LIFE_SKILLS",
+			"value": "miscellaneous_activities_life_skills"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
@@ -1872,8 +1902,8 @@
 	],
 	"PCR_MISCELLANEOUS_ACTIVITIES": [
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
-			"value": "miscellaneous_activities_communication_skills"
+			"title": "MISCELLANEOUS_ACTIVITIES_LIFE_SKILLS",
+			"value": "miscellaneous_activities_life_skills"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
@@ -1912,12 +1942,28 @@
 			"value": "miscellaneous_activities_revision"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
-			"value": "miscellaneous_activities_e_pcp_activities"
-		},
-		{
 			"title": "MISCELLANEOUS_ACTIVITIES_PCR",
 			"value": "miscellaneous_activities_pcr"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_BASELINE",
+			"value": "miscellaneous_activities_baseline"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SHIKSHA_CHOUPAL",
+			"value": "miscellaneous_activities_shiksha_choupal"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ENVIRONMENT_BUILDING",
+			"value": "miscellaneous_activities_environment_building"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_BUFFER_DAY",
+			"value": "miscellaneous_activities_buffer_day"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SCHEME_MELA",
+			"value": "miscellaneous_activities_scheme_mela"
 		}
 	],
 	"EXAM_RESULT_STATUS": [
