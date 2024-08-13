@@ -3129,7 +3129,7 @@ export class BeneficiariesService {
 							data: {},
 						});
 					} else {
-						const { edit_page_type, ...copiedRequest } = req;
+						let { edit_page_type, ...copiedRequest } = req;
 						const { data: updatedUser } =
 							await this.beneficiariesCoreService.userById(
 								req.id,
@@ -3144,6 +3144,9 @@ export class BeneficiariesService {
 							reason = 'enrolled';
 						}
 
+						if (copiedRequest?.sso_id == '')
+							copiedRequest.sso_id = null;
+
 						myRequest = {
 							...copiedRequest,
 							status,
@@ -3154,7 +3157,6 @@ export class BeneficiariesService {
 								'change_required'
 									? 'reverification_required'
 									: 'pending',
-							...req,
 							...(req?.enrollment_middle_name == '' && {
 								enrollment_middle_name: null,
 							}),
