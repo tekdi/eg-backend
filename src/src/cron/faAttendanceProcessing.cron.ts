@@ -20,7 +20,7 @@ export class FaAttendanceProcessingCron {
 
 	//3rd cron runs for each hour's 25th minute eg: 10:25am, 11::25am
 	@Cron('25 * * * *')
-		async markAttendanceCron() {
+	async markAttendanceCron() {
 		try {
 			/*----------------------- Mark attendance of from face index of users in collection -----------------------*/
 			console.log(
@@ -41,7 +41,7 @@ export class FaAttendanceProcessingCron {
 			//console.dir(usersForAttendance, { depth: 99 });
 			// Step-2 Iterate thorugh them
 			for (const user of usersForAttendance) {
-								const userId = String(user.id);
+				const userId = String(user.id);
 				// Iterate through attendance documents and mark attendance
 				for (const attendanceObj of user.attendances) {
 					if (
@@ -70,7 +70,6 @@ export class FaAttendanceProcessingCron {
 							let matchingPercentage = null;
 							const isMatchFound = (matchedUser as any[]).some(
 								(obj) => {
-									//console.log('obj', obj);
 									if (
 										obj?.User?.UserId.replace(
 											this.prefixed,
@@ -86,15 +85,7 @@ export class FaAttendanceProcessingCron {
 							// Set attendance verified as true or false based on results
 							let isAttendanceVerified = false;
 							if (isMatchFound) isAttendanceVerified = true;
-							/*console.log(
-								'-------------------------------------------------------------------------',
-							);
-							console.log(
-								`------------------------------ Verified: ${isMatchFound} ----------------------------`,
-							);
-							console.log(
-								'-------------------------------------------------------------------------',
-							);*/
+
 							// Update in attendance data in database
 							await this.markAttendance(attendanceObj.id, {
 								isAttendanceVerified,

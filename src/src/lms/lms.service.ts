@@ -582,7 +582,7 @@ export class LMSService {
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);
 		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
-		let skip = page > 1 ? limit * (page - 1) : 0;
+
 		const context = body.context || 'events';
 		let filterQuery = [`context: {_eq: ${context}}`];
 		//add filter if context_id present

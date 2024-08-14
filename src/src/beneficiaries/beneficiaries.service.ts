@@ -1573,14 +1573,6 @@ export class BeneficiariesService {
 		}
 	}
 
-	update(id: number, req: any) {
-		// return this.hasuraService.update(+id, this.table, req, this.returnFields);
-	}
-
-	remove(id: number) {
-		// return this.hasuraService.delete(this.table, { id: +id });
-	}
-
 	public async deactivateDuplicateBeneficiaries(
 		AadhaarNo: string,
 		exceptId: number,
@@ -2890,25 +2882,9 @@ export class BeneficiariesService {
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement
 						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 				let myRequest = {};
-				// if (
-				// 	!beneficiaryUser.aadhar_no ||
-				// 	beneficiaryUser.aadhar_no == 'null'
-				// ) {
-				// 	return response.status(400).send({
-				// 		success: false,
-				// 		message: 'Aadhaar Number Not Found',
-				// 		data: {},
-				// 	});
-				// }
-
 				if (
 					!beneficiaryUser.mobile ||
 					beneficiaryUser.mobile == 'null'
@@ -2975,7 +2951,6 @@ export class BeneficiariesService {
 					let tempArray = [
 						'sso_id',
 						'enrollment_status',
-						//	'enrollment_aadhaar_no',
 						'enrolled_for_board',
 						'subjects',
 						'enrollment_date',
@@ -3105,7 +3080,6 @@ export class BeneficiariesService {
 					let tempArray = [
 						'enrollment_number',
 						'enrollment_status',
-						//	'enrollment_aadhaar_no',
 						'enrolled_for_board',
 						'subjects',
 						'enrollment_date',
@@ -3186,19 +3160,6 @@ export class BeneficiariesService {
 					}
 				}
 				if (req.enrollment_status == 'ready_to_enroll') {
-					// myRequest['enrollment_status'] = req?.enrollment_status;
-					// myRequest['enrollment_number'] = null;
-					// myRequest['enrolled_for_board'] = null;
-					// myRequest['subjects'] = null;
-					// myRequest['payment_receipt_document_id'] = null;
-					// myRequest['enrollment_date'] = null;
-					// myRequest['enrollment_first_name'] = null;
-					// myRequest['enrollment_middle_name'] = null;
-					// myRequest['enrollment_last_name'] = null;
-					// myRequest['enrollment_dob'] = null;
-					// myRequest['enrollment_aadhaar_no'] = null;
-					// myRequest['is_eligible'] = null;
-
 					myRequest = {
 						enrollment_status: req?.enrollment_status,
 						status: req?.enrollment_status,
@@ -3231,34 +3192,12 @@ export class BeneficiariesService {
 						await this.hasuraServiceFromServices.getData(data);
 					const documentDetails = response?.data?.documents;
 					if (documentDetails?.length > 0) {
-						//delete document from documnet table
-						// await this.hasuraService.delete('documents', {
-						// 	id: documentDetails?.id,
-						// });
-						// if (documentDetails?.name) {
-						// 	//delete document from s3 bucket
-						// 	await this.s3Service.deletePhoto(documentDetails?.name);
-						// }
-
 						for (const documentDetail of documentDetails) {
 							await this.uploadFileService.DeleteFile(
 								documentDetail,
 							);
 						}
 					}
-
-					// const statusUpdateResult = await this.statusUpdate(
-					// 	{
-					// 		...myRequest,
-					// 		user_id: req.id,
-					// 		status: req.enrollment_status,
-					// 		//		enrollment_status: req.enrollment_status,
-					// 		reason_for_status_update: req.enrollment_status,
-					// 		//	...myRequest,
-					// 	},
-					// 	request,
-					// );
-					// console.log('statusUpdate result:', statusUpdateResult);
 					await this.statusUpdate(
 						{
 							user_id: req.id,
@@ -3272,9 +3211,6 @@ export class BeneficiariesService {
 					req.enrollment_status == 'enrollment_awaited' ||
 					req.enrollment_status == 'enrollment_rejected'
 				) {
-					//request body
-					// myRequest['enrolled_for_board'] = req?.enrolled_for_board;
-					// myRequest['enrollment_status'] = req?.enrollment_status;
 					myRequest = {
 						enrollment_status: req?.enrollment_status,
 						status: req?.enrollment_status,
@@ -3314,122 +3250,13 @@ export class BeneficiariesService {
 							variable: [variable],
 						},
 					);
-
-				// await this.hasuraService.q(
-				// 	tableName,
-				// 	{
-				// 		...myRequest,
-				// 		id: programDetails?.id ? programDetails.id : null,
-				// 	},
-				// 	userArr,
-				// 	update,
-				// );
 				break;
 			}
-
-			// case 'edit_enrollement_details': {
-			// 	// Update enrollement data in Beneficiaries table
-			// 	const userArr =
-			// 		PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
-			// 			.program_beneficiaries;
-			// 	// const programDetails = beneficiaryUser.program_beneficiaries.find(
-			// 	//   (data) =>
-			// 	//     req.id == data.user_id &&
-			// 	//     req.academic_year_id == 1,
-			// 	// );
-			// 	const programDetails = beneficiaryUser.program_beneficiaries;
-
-			// 	let tableName = 'program_beneficiaries';
-			// 	let myRequest = {};
-			// 	if (programDetails?.enrollment_status !== 'enrolled') {
-			// 		return response.status(400).json({
-			// 			success: false,
-			// 			message:
-			// 				'Make Sure Your Enrollement Status is Enrolled',
-			// 			data: {},
-			// 		});
-			// 	}
-
-			// 	let messageArray = [];
-			// 	let tempArray = [
-			// 		'enrollment_first_name',
-			// 		'enrollment_dob',
-			// 		'is_eligible',
-			// 	];
-			// 	for (let info of tempArray) {
-			// 		if (req[info] === undefined || req[info] === '') {
-			// 			messageArray.push(`please send ${info} `);
-			// 		}
-			// 	}
-			// 	if (messageArray.length > 0) {
-			// 		return response.status(400).send({
-			// 			success: false,
-			// 			message: messageArray,
-			// 			data: {},
-			// 		});
-			// 	} else {
-			// 		myRequest = {
-			// 			...req,
-			// 			...(req?.enrollment_middle_name == '' && {
-			// 				enrollment_middle_name: null,
-			// 			}),
-			// 			...(req?.enrollment_last_name == '' && {
-			// 				enrollment_last_name: null,
-			// 			}),
-			// 		};
-			// 	}
-			// 	await this.hasuraService.q(
-			// 		tableName,
-			// 		{
-			// 			...myRequest,
-			// 			id: programDetails?.id ? programDetails.id : null,
-			// 		},
-			// 		userArr,
-			// 		update,
-			// 	);
-
-			// 	const { data: updatedUser } =
-			// 		await this.beneficiariesCoreService.userById(req.id);
-			// 	if (updatedUser.program_beneficiaries.enrollment_number) {
-			// 		let status = null;
-			// 		let reason = null;
-			// 		if (req?.is_eligible === 'no') {
-			// 			status = 'ineligible_for_pragati_camp';
-			// 			reason =
-			// 				'The age of the learner should not be 14 to 29';
-			// 		} else if (req?.is_eligible === 'yes') {
-			// 			status = 'enrolled';
-			// 			reason = 'enrolled';
-			// 		}
-			// 		await this.statusUpdate(
-			// 			{
-			// 				user_id: req.id,
-			// 				status,
-			// 				reason_for_status_update: reason,
-			// 				enrollment_verification_status:
-			// 					updatedUser.program_beneficiaries
-			// 						?.enrollment_verification_status ===
-			// 					'change_required'
-			// 						? 'reverification_required'
-			// 						: 'pending',
-			// 			},
-			// 			request,
-			// 		);
-			// 	}
-
-			// 	break;
-			// }
-
 			case 'document_status': {
 				// Update Document status data in Beneficiaries table
 				const userArr =
 					PAGE_WISE_UPDATE_TABLE_DETAILS.document_status
 						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
 				const programDetails = beneficiaryUser.program_beneficiaries;
 				let tableName = 'program_beneficiaries';
 

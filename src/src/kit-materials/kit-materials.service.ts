@@ -36,7 +36,6 @@ export class KitMaterialsService {
 	public async create(body: any, request: any, resp: any) {
 		let user_id = request.mw_userid;
 		let camp_id = body.camp_id;
-		let date = body.date;
 		let list_of_materials = body.list_of_materials;
 		let response;
 

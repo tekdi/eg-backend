@@ -31,7 +31,7 @@ export class FacilitatorService {
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
 
-	private isValidString(str: String) {
+	private isValidString(str: string) {
 		return typeof str === 'string' && str.trim();
 	}
 
@@ -57,18 +57,6 @@ export class FacilitatorService {
 		'updated_by',
 		'created_by',
 	];
-
-	create(req: any) {
-		// return this.hasuraService.create(this.table, req, this.returnFields);
-	}
-
-	findAll(request: any) {
-		// return this.hasuraService.getAll(this.table, this.returnFields, request);
-	}
-
-	findOne(id: number) {
-		// return this.hasuraService.getOne(+id, this.table, this.returnFields);
-	}
 
 	async getFacilitatorsForOrientation(
 		request: any,
@@ -848,21 +836,6 @@ export class FacilitatorService {
 		);
 	}
 
-	// async updatePhotoDetails(id: number, body: any) {
-	//   // Update Users table data
-	//   const userArr = [
-	//     body.photo_type
-	//   ];
-	//   body[body.photo_type] = body.url;
-	//   delete body.url;
-	//   let keyExist = userArr.filter((e) => Object.keys(body).includes(e));
-	//   if (keyExist.length) {
-	//     const tableName = 'users';
-	//     body.id = id;
-	//     await this.hasuraService.q(tableName, body, userArr, true);
-	//   }
-	// }
-
 	async update(id: number, body: any, response: any, req: any) {
 		const { data: facilitatorUser } = (
 			await this.userById(id, response, req)
@@ -1003,10 +976,6 @@ export class FacilitatorService {
 				}
 				break;
 			}
-			// case 'profile_photos': {
-			//   await this.updatePhotoDetails(id, body);
-			//   break;
-			// }
 		}
 		const { data: updatedUser } = await this.userById(id, response, req);
 		return response.status(200).json({
@@ -1078,10 +1047,6 @@ export class FacilitatorService {
 				message: error.message,
 			});
 		}
-	}
-
-	remove(id: number) {
-		// return this.hasuraService.delete(this.table, { id: +id });
 	}
 
 	filterFacilitatorsBasedOnExperience(

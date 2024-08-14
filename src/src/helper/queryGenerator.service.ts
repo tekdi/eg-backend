@@ -32,10 +32,10 @@ export class QueryGeneratorService {
 	};
 
 	// create
-	create(tName: String, item: any, onlyFields: any = [], fields: any = []) {
+	create(tName: string, item: any, onlyFields: any = [], fields: any = []) {
 		let tableName = `insert_${tName}_one`;
 		const keys = Object.keys(item);
-		const getObjStr = (item: any, type: String = '') => {
+		const getObjStr = (item: any, type: string = '') => {
 			let str = 'object: {';
 			let strArr = [];
 			keys.forEach((e, index) => {
@@ -53,13 +53,7 @@ export class QueryGeneratorService {
 
 		return `mutation MyQuery {
 	  ${tableName}(${getObjStr(item)}) {
-		${this.getParam(
-			fields && fields.length > 0
-				? fields
-				: onlyFields
-				? onlyFields
-				: keys,
-		)}
+		${this.getParam(fields && fields.length > 0 ? fields : onlyFields || keys)}
 	  }
 	}
 	`;
@@ -67,7 +61,7 @@ export class QueryGeneratorService {
 
 	// create
 	createWithVariable(
-		tName: String,
+		tName: string,
 		item: any,
 		onlyFields: any = [],
 		fields: any = [],
@@ -90,7 +84,7 @@ export class QueryGeneratorService {
 		let tableName = `insert_${tName}_one`;
 		const keys = Object.keys(item);
 
-		const getObjStr = (item: any, type: String = '') => {
+		const getObjStr = (item: any, type: string = '') => {
 			let str = 'object: {';
 			let strArr = [];
 			keys.forEach((e, index) => {
@@ -114,13 +108,7 @@ export class QueryGeneratorService {
 		resultObject = {
 			query: `mutation MyQuery${params} {
 	  ${tableName}(${getObjStr(item)}) {
-		${this.getParam(
-			fields && fields.length > 0
-				? fields
-				: onlyFields
-				? onlyFields
-				: keys,
-		)}
+		${this.getParam(fields && fields.length > 0 ? fields : onlyFields || keys)}
 	  }
 	}
 	`,
@@ -133,7 +121,7 @@ export class QueryGeneratorService {
 	// update
 	update(
 		id: number,
-		tName: String,
+		tName: string,
 		item: any,
 		onlyFields: any = [],
 		fields: any = [],
@@ -141,7 +129,7 @@ export class QueryGeneratorService {
 	) {
 		let tableName = `update_${tName}`;
 		const keys = Object.keys(item);
-		const getObjStr = (item: any, type: String = '') => {
+		const getObjStr = (item: any, type: string = '') => {
 			let str = `where: ${
 				props?.where ? props?.where : `{id: {_eq: ${id}}}`
 			}, _set: {`;
@@ -162,13 +150,7 @@ export class QueryGeneratorService {
 		let coreQuery = `${tableName}(${getObjStr(item)}) {
 			affected_rows
 			returning {
-				${this.getParam(
-					fields && fields.length > 0
-						? fields
-						: onlyFields
-						? onlyFields
-						: keys,
-				)}
+				${this.getParam(fields && fields.length > 0 ? fields : onlyFields || keys)}
 			}
 		  }`;
 		if (props?.isCore === true) {
@@ -181,7 +163,7 @@ export class QueryGeneratorService {
 
 	updateWithVariable(
 		id: number,
-		tName: String,
+		tName: string,
 		item: any,
 		onlyFields: any = [],
 		fields: any = [],
@@ -208,7 +190,7 @@ export class QueryGeneratorService {
 			});
 			resultObject = { ...resultObject, variables: vData };
 		}
-		const getObjStr = (item: any, type: String = '') => {
+		const getObjStr = (item: any, type: string = '') => {
 			let str = `where: ${
 				props?.where ? props?.where : `{id: {_eq: ${id}}}`
 			}, _set: {`;
@@ -238,13 +220,7 @@ export class QueryGeneratorService {
 	  ${tableName}(${getObjStr(item)}) {
 		affected_rows
 			returning {
-		${this.getParam(
-			fields && fields.length > 0
-				? fields
-				: onlyFields
-				? onlyFields
-				: keys,
-		)}
+		${this.getParam(fields && fields.length > 0 ? fields : onlyFields || keys)}
 		}
 	  }
 	}
@@ -255,13 +231,7 @@ export class QueryGeneratorService {
 		let coreQuery = `${tableName}(${getObjStr(item)}) {
 			affected_rows
 			returning {
-				${this.getParam(
-					fields && fields.length > 0
-						? fields
-						: onlyFields
-						? onlyFields
-						: keys,
-				)}
+				${this.getParam(fields && fields.length > 0 ? fields : onlyFields || keys)}
 			}
 		  }`;
 		if (props?.isCore === true) {
@@ -280,7 +250,7 @@ export class QueryGeneratorService {
 
 	//mutation
 	mutation(
-		tName: String,
+		tName: string,
 		item: any,
 		onlyFields: any = [],
 		update: boolean = false,
@@ -291,7 +261,7 @@ export class QueryGeneratorService {
 			tableName = `update_${tName}`;
 		}
 		const keys = Object.keys(item);
-		const getObjStr = (item: any, type: String = '') => {
+		const getObjStr = (item: any, type: string = '') => {
 			let str = 'object: {';
 			if (item?.id && update) {
 				str = `where: {id: {_eq: ${item?.id}}}, _set: {`;
@@ -309,7 +279,7 @@ export class QueryGeneratorService {
 							strArr = [...strArr, `${e}:"${item[e]}"`];
 						}
 					} else {
-						strArr = [...strArr, `${e}:String`];
+						strArr = [...strArr, `${e}:string`];
 					}
 				}
 			});
@@ -347,7 +317,7 @@ export class QueryGeneratorService {
 	}
 
 	query(
-		tableName: String,
+		tableName: string,
 		onlyFields: any = [],
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
@@ -438,7 +408,7 @@ export class QueryGeneratorService {
 		return query;
 	}
 
-	findOne(id: number, tName: String, onlyFields: any = []) {
+	findOne(id: number, tName: string, onlyFields: any = []) {
 		return `query MyQuery {
 		${tName}_by_pk(id: ${id}) {
 			${this.getParam(onlyFields)}
@@ -448,14 +418,14 @@ export class QueryGeneratorService {
 	}
 
 	queryMulti(
-		tableName: String,
+		tableName: string,
 		items: any,
 		onlyFields: any,
 		fields: any = [],
 		props: any = {},
 	) {
 		let returnkeys = [];
-		const getObjStr = (item: Object, type: String = '') => {
+		const getObjStr = (item: Object, type: string = '') => {
 			let str = '[';
 			items.forEach((item, pindex) => {
 				const keys = Object.keys(item);
@@ -471,7 +441,7 @@ export class QueryGeneratorService {
 								keys.length > index + 1 ? ',' : ''
 							}`;
 						} else {
-							str += `$${e}:String${
+							str += `$${e}:string${
 								keys.length > index + 1 ? ',' : ''
 							}`;
 						}
@@ -500,7 +470,7 @@ export class QueryGeneratorService {
 	}
 
 	deleteQuery(
-		tName: String,
+		tName: string,
 		item: any,
 		onlyFields: any = [],
 		returnFields: any = null,
@@ -508,7 +478,7 @@ export class QueryGeneratorService {
 		let tableName = `delete_${tName}`;
 		const keys = Object.keys(item);
 
-		const getObjStr = (item: any, type: String = '') => {
+		const getObjStr = (item: any, type: string = '') => {
 			let str = ``;
 			let strArr = [];
 			keys.forEach((e) => {
