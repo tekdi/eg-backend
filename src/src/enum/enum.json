@@ -1910,8 +1910,8 @@
 			"value": "miscellaneous_activities_baseline"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_BUFFER_DAY",
-			"value": "miscellaneous_activities_buffer_day"
+			"title": "MISCELLANEOUS_ACTIVITIES_BUFFER_SESSION",
+			"value": "miscellaneous_activities_buffer_session"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
@@ -1946,8 +1946,8 @@
 			"value": "miscellaneous_activities_revision"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
-			"value": "miscellaneous_activities_role_model_intervention"
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_SUPPORT",
+			"value": "miscellaneous_activities_role_model_support"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
