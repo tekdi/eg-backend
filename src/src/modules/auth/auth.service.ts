@@ -452,6 +452,26 @@ export class AuthService {
 		}
 	}
 
+	public async refereshToken(req: any, response: any) {
+		const token = await this.keycloakService.getUserKeycloakRefereshToken(
+			req.body,
+		);
+		if (token) {
+			await this.updateLastLogin(token);
+			return response.status(200).send({
+				success: true,
+				message: 'LOGGEDIN_SUCCESSFULLY',
+				data: token,
+			});
+		} else {
+			return response.status(401).send({
+				success: false,
+				message: 'INVALID_USERNAME_PASSWORD_MESSAGE',
+				data: null,
+			});
+		}
+	}
+
 	public async isUserExist(body, req, response) {
 		// Set User table name
 		const tableName = 'users';

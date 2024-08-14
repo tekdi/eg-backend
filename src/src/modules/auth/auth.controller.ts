@@ -92,6 +92,12 @@ export class AuthController {
 		return this.authService.login(req, response);
 	}
 
+	@Post('/referesh-token')
+	@UsePipes(ValidationPipe)
+	refereshToken(@Req() req: Request, @Res() response: Response) {
+		return this.authService.refereshToken(req, response);
+	}
+
 	// users/is_user_exist by mobile and adhaar etc filter.
 	@Post('/is_user_exist')
 	public async isUserExist(
