@@ -70,6 +70,7 @@ export class FaFaceIndexingCron {
 						faPhotos[photokeyName] ||
 						(isProfilePhotoNotAvailable && !isFaceIdAvailable)
 					) {
+						//checked
 					}
 					// Step-ii Else perform indexing based on operation
 					else {

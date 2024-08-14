@@ -30,7 +30,7 @@ export class FacilitatorService {
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;
 
-	private isValidString(str: String) {
+	private isValidString(str: string) {
 		return typeof str === 'string' && str.trim();
 	}
 
@@ -56,12 +56,6 @@ export class FacilitatorService {
 		'updated_by',
 		'created_by',
 	];
-
-	create(req: any) {}
-
-	findAll(request: any) {}
-
-	findOne(id: number) {}
 
 	async getFacilitatorsForOrientation(
 		request: any,

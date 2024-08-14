@@ -1561,10 +1561,6 @@ export class BeneficiariesService {
 		}
 	}
 
-	update(id: number, req: any) {}
-
-	remove(id: number) {}
-
 	public async deactivateDuplicateBeneficiaries(
 		AadhaarNo: string,
 		exceptId: number,
@@ -2916,7 +2912,7 @@ export class BeneficiariesService {
 							);
 						}
 					}
-					const status = await this.statusUpdate(
+					await this.statusUpdate(
 						{
 							user_id: req.id,
 							status: req.enrollment_status,
@@ -2931,7 +2927,7 @@ export class BeneficiariesService {
 				) {
 					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
 					myRequest['enrollment_status'] = req?.enrollment_status;
-					const status = await this.statusUpdate(
+					await this.statusUpdate(
 						{
 							user_id: req.id,
 							status: req.enrollment_status,
