@@ -2734,8 +2734,6 @@ export class FacilitatorService {
 					'extended_users.social_category',
 					'core_faciltator.device_ownership',
 					'core_faciltator.device_type',
-					'core_faciltator.has_diploma',
-					'core_faciltator.diploma_details',
 				];
 				const documents = userData.documents || [];
 				const requiredDocumentTypes = [
@@ -2782,6 +2780,18 @@ export class FacilitatorService {
 				) {
 					requiredFields.push('teaching_degree');
 				}
+
+				// Check if 'has_diploma' is true but 'diploma_details' is missing
+				if (userData.core_faciltator) {
+					const { has_diploma, diploma_details } =
+						userData.core_faciltator;
+					if (has_diploma === true && !diploma_details) {
+						requiredFields.push('core_faciltator.diploma_details');
+					} else if (has_diploma === null) {
+						requiredFields.push('core_faciltator.has_diploma');
+					}
+				}
+
 				requiredFields = requiredFields.filter(
 					(field) => !checkField(userData, field),
 				);
