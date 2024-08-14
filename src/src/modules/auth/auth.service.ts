@@ -452,8 +452,8 @@ export class AuthService {
 		}
 	}
 
-	public async refereshToken(req: any, response: any) {
-		const token = await this.keycloakService.getUserKeycloakRefereshToken(
+	public async refreshToken(req: any, response: any) {
+		const token = await this.keycloakService.getUserKeycloakRefreshToken(
 			req.body,
 		);
 		if (token) {

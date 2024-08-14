@@ -274,7 +274,7 @@ export class KeycloakService {
 		return registerUserRes;
 	}
 
-	public async getUserKeycloakRefereshToken(data) {
+	public async getUserKeycloakRefreshToken(data) {
 		const url = `${this.keycloak_url}/realms/${this.realm_name_app}/protocol/openid-connect/token`;
 
 		let payload = {

@@ -92,10 +92,10 @@ export class AuthController {
 		return this.authService.login(req, response);
 	}
 
-	@Post('/referesh-token')
+	@Post('/refresh-token')
 	@UsePipes(ValidationPipe)
-	refereshToken(@Req() req: Request, @Res() response: Response) {
-		return this.authService.refereshToken(req, response);
+	refreshToken(@Req() req: Request, @Res() response: Response) {
+		return this.authService.refreshToken(req, response);
 	}
 
 	// users/is_user_exist by mobile and adhaar etc filter.
