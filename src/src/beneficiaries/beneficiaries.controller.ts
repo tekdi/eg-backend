@@ -565,4 +565,48 @@ export class BeneficiariesController {
 	learnerScore(@Body() body: any, @Res() response: any) {
 		return this.beneficiariesService.learnerScore(body, response);
 	}
+
+	@Get('/enrollment-validation/:id')
+	@UseGuards(new AuthGuard())
+	enrollmentValidation(
+		@Param('id') id: number,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.checkEnrollmentValidation(
+			id,
+			request,
+			response,
+		);
+	}
+
+	@Post('/ssoid-validation')
+	@UseGuards(new AuthGuard())
+	ssoidValidation(
+		@Req() request: any,
+		@Res() response: any,
+		@Body() body: any,
+	) {
+		return this.beneficiariesService.checkDuplicateSSOID(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Patch('/disability/:id')
+	@UseGuards(new AuthGuard())
+	public async updateBeneficiaryDisabilityDetails(
+		@Param('id') id: string,
+		@Body() body: Record<string, any>,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.updateBeneficiaryDisabilityDetails(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
 }

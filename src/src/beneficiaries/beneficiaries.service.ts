@@ -1407,6 +1407,7 @@ export class BeneficiariesService {
 				exam_fee_date
 				syc_subjects
 				is_continued
+				sso_id
 				document {
 					context
 					context_id
@@ -1487,6 +1488,14 @@ export class BeneficiariesService {
 				updated_by
 				social_category
 				qualification_id
+				has_disability
+				type_of_disability
+				has_disability_certificate
+				disability_percentage
+				disability_occurence
+				has_govt_advantage
+				govt_advantages
+				support_for_exam
 			  }
 			}
 		  }
@@ -1911,6 +1920,10 @@ export class BeneficiariesService {
 			body.status = 'enrolled_ip_verified';
 		}
 
+		if (body.enrollment_verification_status == 'sso_id_verified') {
+			body.status = 'sso_id_verified';
+		}
+
 		if (body.enrollment_verification_status == 'pending') {
 			body.status = 'not_enrolled';
 			body.enrollment_status = 'not_enrolled';
@@ -1925,6 +1938,11 @@ export class BeneficiariesService {
 			body.subjects = null;
 			body.payment_receipt_document_id = null;
 			body.is_eligible = null;
+		}
+
+		if (body.enrollment_verification_status == 'rejected') {
+			body.status = 'rejected';
+			body.reason_for_status_update = 'below_5th_standard';
 		}
 
 		const res = await this.hasuraService.q(
@@ -2059,6 +2077,10 @@ export class BeneficiariesService {
 		const user = await this.userService.ipUserInfo(request);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
+		const beneficiary_id = req?.id;
+		let query;
+		let hasura_repsonse;
+		let state_name;
 
 		const { data: beneficiaryUser } =
 			await this.beneficiariesCoreService.userById(req.id);
@@ -2068,6 +2090,21 @@ export class BeneficiariesService {
 				message: 'Invalid user_id!',
 			});
 		}
+
+		query = `query MyQuery {
+			programs_by_pk(id:${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+
+		hasura_repsonse = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		state_name = hasura_repsonse?.data?.programs_by_pk?.state?.state_name;
 		const user_id = req?.id;
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_basic: {
@@ -2153,6 +2190,7 @@ export class BeneficiariesService {
 					'reason_of_leaving_education',
 					'education_10th_date',
 					'education_10th_exam_year',
+					'is_5th_standard',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2166,6 +2204,7 @@ export class BeneficiariesService {
 					'reason_of_leaving_education',
 					'education_10th_date',
 					'education_10th_exam_year',
+					'is_5th_standard',
 				],
 				program_beneficiaries: ['learning_level'],
 			},
@@ -2197,6 +2236,7 @@ export class BeneficiariesService {
 				program_beneficiaries: [
 					'enrollment_number',
 					'enrollment_status',
+					'status',
 					'enrolled_for_board',
 					'type_of_enrollement',
 					'subjects',
@@ -2211,6 +2251,7 @@ export class BeneficiariesService {
 					//	'enrollment_aadhaar_no',
 					'enrollment_mobile_no',
 					'is_eligible',
+					'sso_id',
 				],
 			},
 			edit_enrollement_details: {
@@ -2243,6 +2284,25 @@ export class BeneficiariesService {
 				],
 			},
 		};
+
+		//validation to check if required details are filled before editing enrollment details
+
+		if (
+			req.edit_page_type == 'edit_enrollement' ||
+			req.edit_page_type == 'edit_enrollement_details'
+		) {
+			let result = await this.validateBeneficiaryDetailsForEnrollment(
+				user_id,
+			);
+
+			if (result?.length > 0) {
+				return response.status(422).json({
+					message: 'Learner not ready to be enrolled',
+					data: result,
+					status: false,
+				});
+			}
+		}
 
 		switch (req.edit_page_type) {
 			case 'edit_basic': {
@@ -2857,10 +2917,60 @@ export class BeneficiariesService {
 					});
 				}
 
-				if (req.enrollment_status == 'enrolled') {
+				if (req.enrollment_status == 'sso_id_enrolled') {
+					const allEnrollmentType = this.enumService
+						.getEnumValue('ENROLLEMENT_VERIFICATION_TYPE')
+						.data.map((enumData) => enumData.value);
+
+					if (!allEnrollmentType.includes(req.type_of_enrollement)) {
+						return response.status(400).json({
+							status: 400,
+							success: false,
+							message: `Invalid enrollment type`,
+							data: {},
+						});
+					}
+
+					if (req?.sso_id && request?.mw_program_id == 1) {
+						const result = await this.validateForSSOID(
+							req?.sso_id,
+							request?.mw_program_id,
+							beneficiary_id,
+						);
+
+						if (result?.status == false) {
+							return response.status(422).json({
+								result,
+							});
+						}
+					}
+
+					if (
+						req?.subjects?.length > 7 ||
+						req?.subjects?.length < 1
+					) {
+						return response.status(422).json({
+							message:
+								'Selected subjects should be at least 1 and maximum 7 ',
+						});
+					}
+
+					if (
+						!req?.payment_receipt_document_id ||
+						req.payment_receipt_document_id.some(
+							(doc) => !doc?.id || doc.id === '',
+						)
+					) {
+						return response.status(422).json({
+							message: 'Invalid payment_receipt_document_id',
+						});
+					}
+
 					let messageArray = [];
+					let status = null;
+					let reason = null;
 					let tempArray = [
-						'enrollment_number',
+						'sso_id',
 						'enrollment_status',
 						//	'enrollment_aadhaar_no',
 						'enrolled_for_board',
@@ -2868,6 +2978,10 @@ export class BeneficiariesService {
 						'enrollment_date',
 						'payment_receipt_document_id',
 						'enrollment_mobile_no',
+						'enrollment_first_name',
+						'enrollment_dob',
+						'is_eligible',
+						'type_of_enrollement',
 					];
 					for (let info of tempArray) {
 						if (req[info] === undefined || req[info] === '') {
@@ -2882,9 +2996,173 @@ export class BeneficiariesService {
 						});
 					} else {
 						const { edit_page_type, ...copiedRequest } = req;
+						const { data: updatedUser } =
+							await this.beneficiariesCoreService.userById(
+								req.id,
+							);
+
+						if (req?.is_eligible === 'no') {
+							status = 'ineligible_for_pragati_camp';
+							reason =
+								'The age of the learner should not be 14 to 29';
+						} else if (req?.is_eligible === 'yes') {
+							status = 'sso_id_enrolled';
+							reason = 'sso_id_enrolled';
+						}
 
 						myRequest = {
 							...copiedRequest,
+							enrollment_number: null,
+							status,
+							reason_for_status_update: 'sso_id_enrolled',
+							enrollment_verification_status:
+								updatedUser.program_beneficiaries
+									?.enrollment_verification_status ===
+								'change_required'
+									? 'reverification_required'
+									: 'pending',
+							...req,
+							...(req?.enrollment_middle_name == '' && {
+								enrollment_middle_name: null,
+							}),
+							...(req?.enrollment_last_name == '' && {
+								enrollment_last_name: null,
+							}),
+							subjects:
+								typeof req.subjects == 'object'
+									? JSON.stringify(req.subjects).replace(
+											/"/g,
+											'\\"',
+									  )
+									: null,
+						};
+
+						await this.statusUpdate(
+							{
+								user_id: req.id,
+								status: 'sso_id_enrolled',
+								reason_for_status_update: 'sso_id_enrolled',
+							},
+							request,
+						);
+					}
+				}
+				if (req.enrollment_status == 'enrolled') {
+					const allEnrollmentType = this.enumService
+						.getEnumValue('ENROLLEMENT_VERIFICATION_TYPE')
+						.data.map((enumData) => enumData.value);
+
+					if (!allEnrollmentType.includes(req.type_of_enrollement)) {
+						return response.status(400).json({
+							status: 400,
+							success: false,
+							message: `Invalid enrollment type`,
+							data: {},
+						});
+					}
+
+					if (req?.sso_id && request?.mw_program_id == 1) {
+						const result = await this.validateForSSOID(
+							req?.sso_id,
+							request?.mw_program_id,
+							beneficiary_id,
+						);
+
+						if (result?.status == false) {
+							return response.status(422).json({
+								result,
+							});
+						}
+					}
+
+					if (
+						req?.subjects?.length > 7 ||
+						req?.subjects?.length < 1
+					) {
+						return response.status(422).json({
+							message:
+								'Selected subjects should be at least 1 and maximum 7 ',
+						});
+					}
+
+					if (
+						!req?.payment_receipt_document_id ||
+						req.payment_receipt_document_id.some(
+							(doc) => !doc?.id || doc.id === '',
+						)
+					) {
+						return response.status(422).json({
+							message: 'Invalid payment_receipt_document_id',
+						});
+					}
+
+					let messageArray = [];
+					let status = null;
+					let reason = null;
+					let tempArray = [
+						'enrollment_number',
+						'enrollment_status',
+						//	'enrollment_aadhaar_no',
+						'enrolled_for_board',
+						'subjects',
+						'enrollment_date',
+						'payment_receipt_document_id',
+						'enrollment_mobile_no',
+						'enrollment_first_name',
+						'enrollment_dob',
+						'is_eligible',
+						'type_of_enrollement',
+						'sso_id',
+					];
+					for (let info of tempArray) {
+						if (info === 'sso_id' && state_name !== 'RAJASTHAN') {
+							continue;
+						}
+						if (req[info] === undefined || req[info] === '') {
+							messageArray.push(`please send ${info} `);
+						}
+					}
+					if (messageArray.length > 0) {
+						return response.status(400).send({
+							success: false,
+							message: messageArray,
+							data: {},
+						});
+					} else {
+						const { edit_page_type, ...copiedRequest } = req;
+						const { data: updatedUser } =
+							await this.beneficiariesCoreService.userById(
+								req.id,
+							);
+
+						if (req?.is_eligible === 'no') {
+							status = 'ineligible_for_pragati_camp';
+							reason =
+								'The age of the learner should not be 14 to 29';
+						} else if (req?.is_eligible === 'yes') {
+							status = 'enrolled';
+							reason = 'enrolled';
+						}
+
+						if (copiedRequest?.sso_id == '')
+							copiedRequest.sso_id = null;
+
+						myRequest = {
+							...copiedRequest,
+							status,
+							reason_for_status_update: reason,
+							enrollment_verification_status:
+								updatedUser.program_beneficiaries
+									?.enrollment_verification_status ===
+								'change_required'
+									? 'reverification_required'
+									: 'pending',
+							...(req?.enrollment_middle_name == '' && {
+								enrollment_middle_name: null,
+							}),
+							...(req?.enrollment_last_name == '' && {
+								enrollment_last_name: null,
+							}),
 							subjects:
 								typeof req.subjects == 'object'
 									? JSON.stringify(req.subjects).replace(
@@ -2905,18 +3183,37 @@ export class BeneficiariesService {
 					}
 				}
 				if (req.enrollment_status == 'ready_to_enroll') {
-					myRequest['enrollment_status'] = req?.enrollment_status;
-					myRequest['enrollment_number'] = null;
-					myRequest['enrolled_for_board'] = null;
-					myRequest['subjects'] = null;
-					myRequest['payment_receipt_document_id'] = null;
-					myRequest['enrollment_date'] = null;
-					myRequest['enrollment_first_name'] = null;
-					myRequest['enrollment_middle_name'] = null;
-					myRequest['enrollment_last_name'] = null;
-					myRequest['enrollment_dob'] = null;
-					myRequest['enrollment_aadhaar_no'] = null;
-					myRequest['is_eligible'] = null;
+					// myRequest['enrollment_status'] = req?.enrollment_status;
+					// myRequest['enrollment_number'] = null;
+					// myRequest['enrolled_for_board'] = null;
+					// myRequest['subjects'] = null;
+					// myRequest['payment_receipt_document_id'] = null;
+					// myRequest['enrollment_date'] = null;
+					// myRequest['enrollment_first_name'] = null;
+					// myRequest['enrollment_middle_name'] = null;
+					// myRequest['enrollment_last_name'] = null;
+					// myRequest['enrollment_dob'] = null;
+					// myRequest['enrollment_aadhaar_no'] = null;
+					// myRequest['is_eligible'] = null;
+
+					myRequest = {
+						enrollment_status: req?.enrollment_status,
+						status: req?.enrollment_status,
+						enrollment_number: null,
+						enrolled_for_board: null,
+						subjects: null,
+						payment_receipt_document_id: null,
+						type_of_enrollement: null,
+						enrollment_date: null,
+						enrollment_first_name: null,
+						enrollment_middle_name: null,
+						enrollment_last_name: null,
+						enrollment_dob: null,
+						enrollment_aadhaar_no: null,
+						is_eligible: null,
+						sso_id: null,
+					};
+
 					const data = {
 						query: `query MyQuery {
 					documents(where: {doument_type: {_eq: "enrollment_receipt"},user_id:{_eq:${req?.id}}}){
@@ -2946,11 +3243,24 @@ export class BeneficiariesService {
 							);
 						}
 					}
-					const status = await this.statusUpdate(
+
+					// const statusUpdateResult = await this.statusUpdate(
+					// 	{
+					// 		...myRequest,
+					// 		user_id: req.id,
+					// 		status: req.enrollment_status,
+					// 		//		enrollment_status: req.enrollment_status,
+					// 		reason_for_status_update: req.enrollment_status,
+					// 		//	...myRequest,
+					// 	},
+					// 	request,
+					// );
+					// console.log('statusUpdate result:', statusUpdateResult);
+					await this.statusUpdate(
 						{
 							user_id: req.id,
-							status: req.enrollment_status,
-							reason_for_status_update: req.enrollment_status,
+							status: 'ready_to_enroll',
+							// reason_for_status_update: 'enrolled',
 						},
 						request,
 					);
@@ -2959,33 +3269,46 @@ export class BeneficiariesService {
 					req.enrollment_status == 'enrollment_awaited' ||
 					req.enrollment_status == 'enrollment_rejected'
 				) {
-					myRequest['enrolled_for_board'] = req?.enrolled_for_board;
-					myRequest['enrollment_status'] = req?.enrollment_status;
-					const status = await this.statusUpdate(
+					//request body
+					// myRequest['enrolled_for_board'] = req?.enrolled_for_board;
+					// myRequest['enrollment_status'] = req?.enrollment_status;
+					myRequest = {
+						enrollment_status: req?.enrollment_status,
+						status: req?.enrollment_status,
+						enrolled_for_board: req?.enrolled_for_board,
+					};
+
+					await this.statusUpdate(
 						{
 							user_id: req.id,
-							status: req.enrollment_status,
-							reason_for_status_update: req.enrollment_status,
+							status: req?.enrollment_status,
+							// reason_for_status_update: 'enrolled',
 						},
 						request,
 					);
 				}
+
+				let variable = {};
+				if (
+					['enrolled', 'sso_id_enrolled'].includes(
+						req?.enrollment_status,
+					)
+				) {
+					variable = {
+						key: 'payment_receipt_document_id',
+						type: 'jsonb',
+					};
+				}
+
 				const res =
 					await this.hasuraServiceFromServices.updateWithVariable(
 						programDetails?.id,
 						'program_beneficiaries',
-						{
-							...myRequest,
-						},
+						myRequest,
 						userArr,
 						update,
 						{
-							variable: [
-								{
-									key: 'payment_receipt_document_id',
-									type: 'jsonb',
-								},
-							],
+							variable: [variable],
 						},
 					);
 
@@ -3001,98 +3324,98 @@ export class BeneficiariesService {
 				break;
 			}
 
-			case 'edit_enrollement_details': {
-				// Update enrollement data in Beneficiaries table
-				const userArr =
-					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
-						.program_beneficiaries;
-				// const programDetails = beneficiaryUser.program_beneficiaries.find(
-				//   (data) =>
-				//     req.id == data.user_id &&
-				//     req.academic_year_id == 1,
-				// );
-				const programDetails = beneficiaryUser.program_beneficiaries;
+			// case 'edit_enrollement_details': {
+			// 	// Update enrollement data in Beneficiaries table
+			// 	const userArr =
+			// 		PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement_details
+			// 			.program_beneficiaries;
+			// 	// const programDetails = beneficiaryUser.program_beneficiaries.find(
+			// 	//   (data) =>
+			// 	//     req.id == data.user_id &&
+			// 	//     req.academic_year_id == 1,
+			// 	// );
+			// 	const programDetails = beneficiaryUser.program_beneficiaries;
 
-				let tableName = 'program_beneficiaries';
-				let myRequest = {};
-				if (programDetails?.enrollment_status !== 'enrolled') {
-					return response.status(400).json({
-						success: false,
-						message:
-							'Make Sure Your Enrollement Status is Enrolled',
-						data: {},
-					});
-				}
+			// 	let tableName = 'program_beneficiaries';
+			// 	let myRequest = {};
+			// 	if (programDetails?.enrollment_status !== 'enrolled') {
+			// 		return response.status(400).json({
+			// 			success: false,
+			// 			message:
+			// 				'Make Sure Your Enrollement Status is Enrolled',
+			// 			data: {},
+			// 		});
+			// 	}
 
-				let messageArray = [];
-				let tempArray = [
-					'enrollment_first_name',
-					'enrollment_dob',
-					'is_eligible',
-				];
-				for (let info of tempArray) {
-					if (req[info] === undefined || req[info] === '') {
-						messageArray.push(`please send ${info} `);
-					}
-				}
-				if (messageArray.length > 0) {
-					return response.status(400).send({
-						success: false,
-						message: messageArray,
-						data: {},
-					});
-				} else {
-					myRequest = {
-						...req,
-						...(req?.enrollment_middle_name == '' && {
-							enrollment_middle_name: null,
-						}),
-						...(req?.enrollment_last_name == '' && {
-							enrollment_last_name: null,
-						}),
-					};
-				}
-				await this.hasuraService.q(
-					tableName,
-					{
-						...myRequest,
-						id: programDetails?.id ? programDetails.id : null,
-					},
-					userArr,
-					update,
-				);
+			// 	let messageArray = [];
+			// 	let tempArray = [
+			// 		'enrollment_first_name',
+			// 		'enrollment_dob',
+			// 		'is_eligible',
+			// 	];
+			// 	for (let info of tempArray) {
+			// 		if (req[info] === undefined || req[info] === '') {
+			// 			messageArray.push(`please send ${info} `);
+			// 		}
+			// 	}
+			// 	if (messageArray.length > 0) {
+			// 		return response.status(400).send({
+			// 			success: false,
+			// 			message: messageArray,
+			// 			data: {},
+			// 		});
+			// 	} else {
+			// 		myRequest = {
+			// 			...req,
+			// 			...(req?.enrollment_middle_name == '' && {
+			// 				enrollment_middle_name: null,
+			// 			}),
+			// 			...(req?.enrollment_last_name == '' && {
+			// 				enrollment_last_name: null,
+			// 			}),
+			// 		};
+			// 	}
+			// 	await this.hasuraService.q(
+			// 		tableName,
+			// 		{
+			// 			...myRequest,
+			// 			id: programDetails?.id ? programDetails.id : null,
+			// 		},
+			// 		userArr,
+			// 		update,
+			// 	);
 
-				const { data: updatedUser } =
-					await this.beneficiariesCoreService.userById(req.id);
-				if (updatedUser.program_beneficiaries.enrollment_number) {
-					let status = null;
-					let reason = null;
-					if (req?.is_eligible === 'no') {
-						status = 'ineligible_for_pragati_camp';
-						reason =
-							'The age of the learner should not be 14 to 29';
-					} else if (req?.is_eligible === 'yes') {
-						status = 'enrolled';
-						reason = 'enrolled';
-					}
-					await this.statusUpdate(
-						{
-							user_id: req.id,
-							status,
-							reason_for_status_update: reason,
-							enrollment_verification_status:
-								updatedUser.program_beneficiaries
-									?.enrollment_verification_status ===
-								'change_required'
-									? 'reverification_required'
-									: 'pending',
-						},
-						request,
-					);
-				}
+			// 	const { data: updatedUser } =
+			// 		await this.beneficiariesCoreService.userById(req.id);
+			// 	if (updatedUser.program_beneficiaries.enrollment_number) {
+			// 		let status = null;
+			// 		let reason = null;
+			// 		if (req?.is_eligible === 'no') {
+			// 			status = 'ineligible_for_pragati_camp';
+			// 			reason =
+			// 				'The age of the learner should not be 14 to 29';
+			// 		} else if (req?.is_eligible === 'yes') {
+			// 			status = 'enrolled';
+			// 			reason = 'enrolled';
+			// 		}
+			// 		await this.statusUpdate(
+			// 			{
+			// 				user_id: req.id,
+			// 				status,
+			// 				reason_for_status_update: reason,
+			// 				enrollment_verification_status:
+			// 					updatedUser.program_beneficiaries
+			// 						?.enrollment_verification_status ===
+			// 					'change_required'
+			// 						? 'reverification_required'
+			// 						: 'pending',
+			// 			},
+			// 			request,
+			// 		);
+			// 	}
 
-				break;
-			}
+			// 	break;
+			// }
 
 			case 'document_status': {
 				// Update Document status data in Beneficiaries table
@@ -4030,6 +4353,629 @@ export class BeneficiariesService {
 				success: false,
 				message: 'Error fetching learner data',
 				error: error.message,
+			});
+		}
+	}
+
+	public async checkEnrollmentValidation(
+		id: number,
+		request: any,
+		response: any,
+	) {
+		let result = await this.validateBeneficiaryDetailsForEnrollment(id);
+
+		if (result?.length > 0) {
+			return response.status(422).json({
+				message: 'Learner not ready to be enrolled',
+				data: result,
+				status: false,
+			});
+		} else {
+			return response.status(200).json({
+				message: 'Learner ready to be enrolled',
+				data: [],
+				status: true,
+			});
+		}
+	}
+
+	async validateBeneficiaryDetailsForEnrollment(user_id) {
+		let query;
+		let result;
+		let hasura_response;
+		let emptyFields = [];
+
+		query = `query MyQuery {
+			users_by_pk(id:${user_id}) {
+				id
+				first_name
+				dob
+				mobile
+				lat
+				long
+				district
+				block
+				village
+				grampanchayat
+				core_beneficiaries {
+					career_aspiration
+					parent_support
+					father_first_name
+					mother_first_name
+					mark_as_whatsapp_number
+					device_type
+					device_ownership
+					type_of_learner
+				}
+				program_beneficiaries {
+					learning_level
+					type_of_support_needed
+				}
+				extended_users {
+					marital_status
+					social_category
+					has_disability
+				}
+				documents(where: {doument_type: {_eq: "profile_photo"}}) {
+					id
+					name
+					document_sub_type
+				}
+			}
+		}`;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.users_by_pk;
+
+		// Initialize profile photo check
+		const requiredProfilePhotos = [
+			'profile_photo_1',
+			'profile_photo_2',
+			'profile_photo_3',
+		];
+		const presentProfilePhotos =
+			result?.documents?.map((doc) => doc.document_sub_type) || [];
+
+		// Check which profile photos are missing
+		const missingProfilePhotos = requiredProfilePhotos.filter(
+			(photo) => !presentProfilePhotos.includes(photo),
+		);
+
+		if (missingProfilePhotos.length > 0) {
+			emptyFields.push(...missingProfilePhotos);
+		}
+
+		function checkFields(result, prefix = '') {
+			for (let key in result) {
+				if (
+					result[key] === null ||
+					result[key] === undefined ||
+					result[key] === ''
+				) {
+					emptyFields.push(key);
+				} else if (
+					typeof result[key] === 'object' &&
+					!Array.isArray(result[key])
+				) {
+					checkFields(result[key], key + '.');
+				}
+			}
+		}
+
+		function pushAllFieldsIfNull(obj, fields, prefix) {
+			if (obj === null) {
+				fields.forEach((field) => emptyFields.push(field));
+			}
+		}
+
+		const fieldMappings = {
+			core_beneficiaries: [
+				'career_aspiration',
+				'parent_support',
+				'father_first_name',
+				'mother_first_name',
+				'mark_as_whatsapp_number',
+				'device_type',
+				'device_ownership',
+				'type_of_learner',
+			],
+			program_beneficiaries: ['learning_level', 'type_of_support_needed'],
+			extended_users: [
+				'marital_status',
+				'social_category',
+				'has_disability',
+			],
+		};
+
+		for (const [key, fields] of Object.entries(fieldMappings)) {
+			pushAllFieldsIfNull(result?.[key], fields, `${key}.`);
+		}
+
+		checkFields(result);
+
+		const filteredFields = emptyFields.filter(
+			(field) =>
+				field !== 'core_beneficiaries' &&
+				field !== 'program_beneficiaries' &&
+				field !== 'extended_users',
+		);
+
+		return filteredFields;
+	}
+
+	public async updateBeneficiaryDisabilityDetails(
+		id: any,
+		body: any,
+		request: any,
+		response: any,
+	) {
+		let user_id;
+		let program_id = request?.mw_program_id;
+
+		let query;
+		let hasura_response;
+		let result;
+		let missing_fields = [];
+
+		// get primary key for given user_id
+		query = `query MyQuery {
+			extended_users(where: {user_id: {_eq:${id}}}){
+			  id
+			  user_id
+			}
+		  }
+		  `;
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.extended_users;
+
+		user_id = result?.[0]?.id;
+
+		if (!user_id) {
+			let res = await this.hasuraService.q(
+				'extended_users',
+				{
+					...body,
+					user_id: id,
+				},
+				[
+					'user_id',
+					'social_category',
+					'marital_status',
+					'qualification_id',
+					'designation',
+					'created_by',
+					'updated_by',
+					'has_disability',
+					'type_of_disability',
+					'has_disability_certificate',
+					'disability_percentage',
+					'disability_occurence',
+					'has_govt_advantage',
+					'govt_advantages',
+					'support_for_exam',
+				],
+				false,
+				['id', 'user_id'],
+			);
+
+			user_id = res?.extended_users?.id;
+		}
+
+		// get state name via program_id
+
+		query = `query MyQuery {
+			programs_by_pk(id:${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let state_name =
+			hasura_response?.data?.programs_by_pk?.state?.state_name;
+
+		// enum checks based on input fields
+
+		let returnFields = [
+			'has_disability',
+			'type_of_disability',
+			'has_disability_certificate',
+			'disability_percentage',
+			'disability_occurence',
+			'has_govt_advantage',
+			'govt_advantages',
+			'support_for_exam',
+		];
+
+		let variable = [];
+
+		let errors = {};
+
+		const setErrors = (errors, key, message) => {
+			return {
+				...errors,
+				[key]: {
+					__errors: [
+						...(errors?.[key]?.__errors || []),
+						`${message}`,
+					],
+				},
+			};
+		};
+
+		if (!body?.has_disability) {
+			missing_fields.push('has_disability');
+			return response.status(422).json({
+				success: false,
+				message: `Missing fields data `,
+				errors: setErrors(errors, 'has_disability', 'Field required'),
+			});
+		}
+
+		if (body?.has_disability) {
+			const allHasDisability = this.enumService
+				.getEnumValue('BENEFICIARY_HAVE_DISABILITY')
+				.data.map((enumData) => enumData.value);
+
+			if (!allHasDisability.includes(body.has_disability)) {
+				errors = setErrors(
+					errors,
+					'has_disability',
+					'Invalid has disability data',
+				);
+			}
+		}
+
+		if (body?.has_disability == 'no') {
+			body = {
+				...body,
+				type_of_disability: null,
+				has_disability_certificate: null,
+				disability_percentage: null,
+				disability_occurence: null,
+				has_govt_advantage: null,
+				govt_advantages: null,
+				support_for_exam: null,
+			};
+		}
+
+		if (body?.has_disability === 'yes') {
+			const requiredFields = [
+				'type_of_disability',
+				'has_disability_certificate',
+				'disability_occurence',
+				'has_govt_advantage',
+				'support_for_exam',
+			];
+
+			requiredFields.forEach((field) => {
+				if (!body.hasOwnProperty(field)) {
+					errors = setErrors(
+						errors,
+						field,
+						`Field ${field} required`,
+					);
+				}
+			});
+		}
+
+		if (
+			body?.has_govt_advantage === 'no' &&
+			body?.has_disability == 'yes'
+		) {
+			body = {
+				...body,
+				govt_advantages: null,
+			};
+		}
+
+		if (
+			body?.has_disability_certificate === 'yes' &&
+			body?.has_disability == 'yes'
+		) {
+			const requiredFields = ['disability_percentage'];
+
+			requiredFields.forEach((field) => {
+				if (!body.hasOwnProperty(field)) {
+					errors = setErrors(
+						errors,
+						field,
+						`Field ${field} required`,
+					);
+				}
+			});
+		}
+
+		if (
+			body?.has_disability_certificate != 'yes' &&
+			body?.has_disability == 'yes'
+		) {
+			body = {
+				...body,
+				disability_percentage: null,
+			};
+		}
+
+		if (
+			body?.has_govt_advantage === 'yes' &&
+			body?.has_disability == 'yes'
+		) {
+			const requiredFields = ['govt_advantages'];
+
+			requiredFields.forEach((field) => {
+				if (!body.hasOwnProperty(field)) {
+					errors = setErrors(
+						errors,
+						field,
+						`Field ${field} required`,
+					);
+				}
+			});
+		}
+
+		if (body?.has_disability_certificate && body?.has_disability == 'yes') {
+			const allHasDisabilityCertificate = this.enumService
+				.getEnumValue('BENEFICIARY_DISABILITY_CERTIFICATE')
+				.data.map((enumData) => enumData.value);
+
+			if (
+				!allHasDisabilityCertificate.includes(
+					body.has_disability_certificate,
+				)
+			) {
+				errors = setErrors(
+					errors,
+					'has_disability_certificate',
+					'Invalid  has_disability_certificate data',
+				);
+			}
+		}
+
+		if (body?.has_govt_advantage && body?.has_disability == 'yes') {
+			const allHasDisabilityAdvantage = this.enumService
+				.getEnumValue('BENEFICIARY_TAKING_ADVANTAGE_DISABILITY')
+				.data.map((enumData) => enumData.value);
+
+			if (!allHasDisabilityAdvantage.includes(body.has_govt_advantage)) {
+				errors = setErrors(
+					errors,
+					'has_govt_advantage',
+					'Invalid has_govt_advantage data',
+				);
+			}
+		}
+
+		if (body?.type_of_disability && body?.has_disability == 'yes') {
+			const allDisabilityTypes = this.enumService
+				.getEnumValue('BENEFICIARY_DISABILITY_TYPE')
+				.data.map((enumData) => enumData.value);
+
+			const isValidType =
+				Array.isArray(body.type_of_disability) &&
+				body.type_of_disability.every((type) =>
+					allDisabilityTypes.includes(type),
+				);
+
+			if (!isValidType || body?.type_of_disability?.length == 0) {
+				errors = setErrors(
+					errors,
+					'type_of_disability',
+					'Invalid type_of_disability data',
+				);
+			}
+
+			// push variable for updating
+			variable.push({
+				key: 'type_of_disability',
+				type: 'jsonb',
+			});
+		}
+
+		if (
+			body?.govt_advantages &&
+			body?.has_disability == 'yes' &&
+			body?.has_govt_advantage == 'yes'
+		) {
+			const validateGovtAdvantages = (stateEnum) => {
+				const allDisabilityAdvantages = this.enumService
+					.getEnumValue(stateEnum)
+					.data.map((enumData) => enumData.value);
+
+				return (
+					Array.isArray(body.govt_advantages) &&
+					body.govt_advantages.every((advantage) =>
+						allDisabilityAdvantages.includes(advantage),
+					)
+				);
+			};
+
+			if (state_name === 'RAJASTHAN') {
+				if (
+					!validateGovtAdvantages(
+						'BENEFICIARY_DISABILITY_RAJASTHAN',
+					) ||
+					body?.govt_advantages?.length == 0
+				) {
+					errors = setErrors(
+						errors,
+						'govt_advantages',
+						'Invalid govt_advantages data',
+					);
+				}
+			}
+
+			if (state_name === 'BIHAR') {
+				if (
+					!validateGovtAdvantages('BENEFICIARY_DISABILITY_BIHAR') ||
+					body?.govt_advantages?.length == 0
+				) {
+					errors = setErrors(
+						errors,
+						'govt_advantages',
+						'Invalid govt_advantages data',
+					);
+				}
+			}
+
+			if (state_name === 'MADHYA_PRADESH') {
+				if (
+					!validateGovtAdvantages(
+						'BENEFICIARY_DISABILITY_MADHYA_PRADESH',
+					) ||
+					body?.govt_advantages?.length == 0
+				) {
+					errors = setErrors(
+						errors,
+						'govt_advantages',
+						'Invalid govt_advantages data',
+					);
+				}
+			}
+
+			variable.push({
+				key: 'govt_advantages',
+				type: 'jsonb',
+			});
+		}
+
+		if (body?.support_for_exam && body?.has_disability == 'yes') {
+			const allSupportForExam = this.enumService
+				.getEnumValue('BENEFICIARY_EXAM_SUPPORT_NEEDED')
+				.data.map((enumData) => enumData.value);
+
+			const isValidSupport =
+				Array.isArray(body.support_for_exam) &&
+				body.support_for_exam.every((support) =>
+					allSupportForExam.includes(support),
+				);
+
+			if (!isValidSupport || body?.support_for_exam?.length == 0) {
+				errors = setErrors(
+					errors,
+					'support_for_exam',
+					'Invalid support_for_exam data',
+				);
+			}
+
+			variable.push({
+				key: 'support_for_exam',
+				type: 'jsonb',
+			});
+		}
+
+		if (body?.disability_occurence && body?.has_disability == 'yes') {
+			const allDisabilityOccurence = this.enumService
+				.getEnumValue('BENEFICIARY_DISABILITY_OCCURENCE')
+				.data.map((enumData) => enumData.value);
+
+			if (!allDisabilityOccurence.includes(body.disability_occurence)) {
+				errors = setErrors(
+					errors,
+					'disability_occurence',
+					'Invalid disability_occurence data',
+				);
+			}
+		}
+
+		if (Object.keys(errors).length > 0) {
+			return response.status(422).json({
+				success: false,
+				message: `Missing required fields:`,
+				errors: errors,
+			});
+		}
+
+		const res = await this.hasuraServiceFromServices.updateWithVariable(
+			user_id,
+			'extended_users',
+			body,
+			returnFields,
+			true,
+			{
+				variable: variable,
+			},
+		);
+
+		if (res?.extended_users) {
+			return response.status(200).json({
+				success: true,
+				message: 'Data updated successfully',
+				data: res?.extended_users,
+			});
+		} else {
+			return response.status(500).json({
+				success: false,
+				message: 'Error updating details',
+				data: null,
+			});
+		}
+	}
+
+	async validateForSSOID(ssoid, program_id, user_id) {
+		let query;
+		let hasura_response;
+		let result;
+		let response;
+
+		query = `query MyQuery {
+			program_beneficiaries(where: {sso_id: {_eq: "${ssoid}"},user_id:{_neq:${user_id}}}){
+			  user_id
+			  sso_id
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		result = hasura_response?.data?.program_beneficiaries;
+
+		if (result?.length > 0) {
+			response = {
+				status: false,
+				message: 'Duplicate sso id ',
+			};
+		} else if (program_id != 1) {
+			response = {
+				status: false,
+				message: 'Invalid program request',
+			};
+		} else {
+			response = {
+				status: true,
+				message: 'Valid sso id ',
+			};
+		}
+
+		return response;
+	}
+
+	async checkDuplicateSSOID(body, request, response) {
+		let { sso_id, user_id } = body;
+		let program_id = request?.mw_program_id;
+		const result = await this.validateForSSOID(sso_id, program_id, user_id);
+
+		if (result?.status == false) {
+			return response.status(422).json({
+				is_duplicate: true,
+				message: 'Duplicate SSO ID',
+			});
+		} else {
+			return response.status(200).json({
+				is_duplicate: false,
+				message: 'Valid SSO ID',
 			});
 		}
 	}

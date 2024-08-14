@@ -24,8 +24,8 @@ export class CampController {
 	@UsePipes(ValidationPipe)
 	@UseGuards(new AuthGuard())
 	registerCamp(
-		@Body() body: any,
-		@Req() request: any,
+		@Body() body: Body,
+		@Req() request: Request,
 		@Res() response: Response,
 	) {
 		return this.campService.create(body, request, response);
