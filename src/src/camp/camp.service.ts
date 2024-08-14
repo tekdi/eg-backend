@@ -2297,6 +2297,22 @@ export class CampService {
 				true,
 				[...this.returnFieldsGroups, 'id', 'status'],
 			);
+			let auditData = {
+				userId: facilitator_id,
+				mw_userid: facilitator_id,
+				user_type: 'IP',
+				context: 'camp.update.status',
+				context_id: camp_id,
+				subject: 'camp',
+				subject_id: camp_id,
+				log_transaction_text: `IP ${ip_id} updated camp status of camp ${camp_id}`,
+				oldData: { status: group_status },
+				newData: group_update_body,
+				tempArray: ['status'],
+				action: 'update',
+			};
+			//add audit logs
+			await this.userService.addAuditLogAction(auditData);
 
 			return resp.status(200).json({
 				status: 200,

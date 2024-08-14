@@ -34,6 +34,7 @@ export class ExamService {
 				  practical_marks
 				  sessional_marks
 				  total_marks
+				  subject_type
 				  events(where: {context: {_eq: "subjects"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}){
                     context
                     context_id

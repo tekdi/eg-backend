@@ -13,6 +13,7 @@ import {
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { Method } from '../common/method/method';
+import { type } from 'os';
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -1651,6 +1652,12 @@ export class FacilitatorService {
 			paramsQuery = '(' + paramsQueryArray.join(',') + ')';
 		}
 		let sortQuery = `{ created_at: desc }`;
+		let pfarray = [
+			`academic_year_id: {_eq: ${academic_year_id}},program_id:{_eq:${program_id}}`,
+		];
+		if (body?.status) {
+			pfarray.push(`status:{_in:[${body?.status}]}`);
+		}
 
 		if (body.hasOwnProperty('sort')) {
 			// Supported sortings: name, qualification, region, eligibility, status, comments
@@ -1762,7 +1769,7 @@ export class FacilitatorService {
 			user_id
 			type
 		  }
-		  program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}) {
+		  program_faciltators(where: {${pfarray}}) {
 			parent_ip
 			availability
 			id
@@ -2551,5 +2558,340 @@ export class FacilitatorService {
 				data: {},
 			});
 		}
+	}
+
+	public async statusChangeValidation(request: any, body: any, res: any) {
+		let user_id = body?.id;
+		let academic_year_id = request?.mw_academic_year_id;
+		let program_id = request?.mw_program_id;
+		let status = body?.status;
+		let program_faciltators = [];
+
+		if (!user_id || !academic_year_id || !program_id || !status) {
+			return res
+				.status(400)
+				.json({ message: 'Missing required parameters' });
+		}
+
+		const query = `
+    query MyQuery2 {
+        users(where: {id: {_eq: ${user_id}}}) {
+            id
+            first_name
+            middle_name
+            last_name
+            mobile
+            dob
+            gender
+            state
+            district
+            block
+            village
+            grampanchayat
+            aadhar_no
+            pincode
+            core_faciltator {
+                device_ownership
+                device_type
+                id
+                sourcing_channel
+                user_id
+                has_diploma
+                diploma_details
+                has_volunteer_exp
+                has_job_exp
+            }
+            experience {
+                description
+                experience_in_years
+                institution
+                start_year
+                organization
+                role_title
+                user_id
+                type
+                related_to_teaching
+            }
+            program_faciltators(where: {user_id: {_eq: ${user_id}}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}) {
+                availability
+                id
+                program_id
+                social_background_verified_by_neighbours
+                user_id
+                village_knowledge_test
+                status
+                form_step_number
+                created_by
+                updated_by
+								qualification_ids
+            }
+            qualifications {
+                end_year
+                id
+                institution
+                qualification_master_id
+                start_year
+                updated_by
+                user_id
+                qualification_master {
+                    context
+                    context_id
+                    id
+                    name
+                    type
+                }
+            }
+            extended_users {
+                marital_status
+                social_category
+            }
+            references(where: {context_id: {_eq: ${user_id}}, context: {_eq: "users"}}) {
+                id
+                name
+                contact_number
+                designation
+                type_of_document
+                context
+                context_id
+                document_id
+            }
+            documents(where: {user_id: {_eq: ${user_id}}, document_sub_type: {_in: ["qualifications", "profile_photo_1", "profile_photo_2", "profile_photo_3"]}}) {
+                id
+                user_id
+                name
+                doument_type
+                document_sub_type
+            }
+        }
+    }`;
+
+		const result = await this.hasuraService.getData({ query });
+
+		if (
+			!result ||
+			!result.data ||
+			!result.data.users ||
+			result.data.users.length === 0
+		) {
+			return res.status(400).json({ message: 'User data not found' });
+		}
+
+		const userData = result.data.users[0];
+		let requiredFields: any[] = [];
+		let dataToCheck: any = {};
+
+		const checkField = (obj: any, path: string): boolean => {
+			const keys = path.split('.');
+			let current = obj;
+			for (const key of keys) {
+				if (key.includes('[')) {
+					const [arrayKey, index] = key.replace(']', '').split('[');
+					if (
+						!Array.isArray(current[arrayKey]) ||
+						!current[arrayKey][index]
+					) {
+						return false;
+					}
+					current = current[arrayKey][index];
+				} else {
+					if (current[key] === undefined || current[key] === null) {
+						return false;
+					}
+					current = current[key];
+				}
+			}
+			return true;
+		};
+
+		switch (status) {
+			case 'pragati_mobilizer':
+				requiredFields = [
+					'first_name',
+					'middle_name',
+					'last_name',
+					'mobile',
+					'dob',
+					'gender',
+					'district',
+					'block',
+					'village',
+					'grampanchayat',
+					'extended_users.marital_status',
+					'extended_users.social_category',
+					'core_faciltator.device_ownership',
+					'core_faciltator.device_type',
+				];
+				const documents = userData.documents || [];
+				const requiredDocumentTypes = [
+					'qualifications',
+					'profile_photo_1',
+					'profile_photo_2',
+					'profile_photo_3',
+				];
+				requiredDocumentTypes.forEach((docType) => {
+					if (
+						!documents.some(
+							(doc) => doc.document_sub_type === docType,
+						)
+					) {
+						requiredFields.push(`${docType}`);
+					}
+				});
+
+				const qualifications = userData.qualifications || [];
+				if (
+					!qualifications.some(
+						(qualification: any) =>
+							qualification.qualification_master.type ===
+							'qualification',
+					)
+				) {
+					requiredFields.push('qualification');
+				}
+				program_faciltators = userData.program_faciltators || [];
+
+				if (
+					!program_faciltators.every((pf) => {
+						try {
+							const ids = JSON.parse(pf.qualification_ids);
+							return (
+								Array.isArray(ids) &&
+								ids.length > 0 &&
+								ids.every((id: any) => typeof id === 'string')
+							);
+						} catch (e) {
+							return false;
+						}
+					})
+				) {
+					requiredFields.push('teaching_degree');
+				}
+
+				// Check if 'has_diploma' is true but 'diploma_details' is missing
+				if (userData.core_faciltator) {
+					const { has_diploma, diploma_details } =
+						userData.core_faciltator;
+					if (has_diploma === true && !diploma_details) {
+						requiredFields.push('core_faciltator.diploma_details');
+					} else if (has_diploma === null) {
+						requiredFields.push('core_faciltator.has_diploma');
+					}
+				}
+
+				requiredFields = requiredFields.filter(
+					(field) => !checkField(userData, field),
+				);
+				dataToCheck = userData;
+				break;
+			case 'selected_for_onboarding':
+				//requiredFields = ['has_volunteer_exp', 'has_job_exp'];
+				dataToCheck = userData;
+
+				const checkExperience = ({ type, key }) => {
+					// experience
+					const experience = userData.experience.filter(
+						(e: any) => e.type === type,
+					);
+
+					if (
+						![true, false].includes(
+							userData?.core_faciltator?.[key],
+						)
+					) {
+						return [key];
+					} else if (userData?.core_faciltator?.[key] == true) {
+						let arr = [
+							'organization',
+							'role_title',
+							'experience_in_years',
+							'related_to_teaching',
+						];
+						if (
+							Array.isArray(experience) &&
+							experience?.length > 0
+						) {
+							const result = experience.reduce(
+								(acc, e, index) => {
+									const filteredArr = arr.filter(
+										(a) => !e[a],
+									);
+									if (filteredArr?.length > 0) {
+										return [
+											...acc,
+											{
+												key: index + 1,
+												data: filteredArr,
+											},
+										];
+									}
+								},
+								[],
+							);
+							if (result?.length > 0) {
+								return [
+									{
+										key: type,
+										data: result,
+									},
+								];
+							}
+						} else {
+							return [
+								{
+									key: type,
+									data: [
+										{
+											key: 1,
+											data: arr,
+										},
+									],
+								},
+							];
+						}
+					}
+				};
+
+				// vo_experience
+				requiredFields = [
+					...requiredFields,
+					...(checkExperience({
+						type: 'vo_experience',
+						key: 'has_volunteer_exp',
+					}) || []),
+				];
+				// job experience
+				requiredFields = [
+					...requiredFields,
+					...(checkExperience({
+						type: 'experience',
+						key: 'has_job_exp',
+					}) || []),
+				];
+
+				program_faciltators = userData.program_faciltators || [];
+				if (!program_faciltators.every((pf) => pf.availability)) {
+					requiredFields.push('availability');
+				}
+				break;
+			case 'selected_prerak':
+				requiredFields = ['aadhar_no'];
+				dataToCheck = userData;
+				break;
+			default:
+				return res.status(400).json({ message: 'Invalid status' });
+		}
+
+		if (requiredFields.length > 0) {
+			return res.status(400).json({
+				message: 'The following fields are required:',
+				required: requiredFields,
+			});
+		}
+
+		return res.status(200).json({
+			status: true,
+			message: 'Validation successful',
+			required: [],
+		});
 	}
 }

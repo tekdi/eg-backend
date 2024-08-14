@@ -176,11 +176,12 @@ export class QueryGeneratorService {
 		const { variable } = props;
 
 		if (Array.isArray(variable) && variable?.length > 0) {
-			params = `(${variable
+			const arrQuery = variable
 				.filter((key) => item[key.key])
-				.map((newD) => `$${newD.key}: ${newD?.type}`)
-				.join(', ')})`;
-
+				.map((newD) => `$${newD.key}: ${newD?.type}`);
+			if (arrQuery?.length > 0) {
+				params = `(${arrQuery.join(', ')})`;
+			}
 			let vData = {};
 			variable.forEach((e) => {
 				if (item?.[e.key]) {
@@ -202,6 +203,8 @@ export class QueryGeneratorService {
 					const data = variable.map((e) => e.key).filter((e) => e);
 					if (data.includes(e)) {
 						strArr = [...strArr, `${e}:$${e}`];
+					} else if (item[e] === null) {
+						strArr = [...strArr, `${e}:null`];
 					} else {
 						strArr = [...strArr, `${e}:"${item[e]}"`];
 					}
