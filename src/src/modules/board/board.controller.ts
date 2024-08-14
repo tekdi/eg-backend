@@ -9,7 +9,6 @@ import {
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
-//import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { BoardService } from './board.service';
 import { AuthGuard } from '../auth/auth.guard';
 

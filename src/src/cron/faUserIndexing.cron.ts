@@ -31,9 +31,7 @@ export class FaUserIndexingCron {
 				'AWS_REKOGNITION_COLLECTION_ID',
 			);
 			//delete collection if required
-			/*await this.awsRekognitionService.deleteCollection(
-				collectionId
-			);*/
+
 			//Step-1: Create collection if not exists
 			await this.awsRekognitionService.createCollectionIfNotExists(
 				collectionId,
@@ -42,7 +40,7 @@ export class FaUserIndexingCron {
 			const nonCreatedUsers = await this.fetchAllUsersExceptCreated(
 				this.data_limit,
 			);
-			//console.log('>>>fetchAllUsersExceptCreated', nonCreatedUsers);
+
 			let nonexistusers = nonCreatedUsers.map((userObj) =>
 				String(userObj.id),
 			);
@@ -78,8 +76,6 @@ export class FaUserIndexingCron {
 		try {
 			const users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
-			//console.log('fetchALluser cunt------>>>>>', users.length);
-			//console.log('fetchALluser------>>>>>', users);
 
 			return users;
 		} catch (error) {
@@ -92,7 +88,7 @@ export class FaUserIndexingCron {
 		//delete collection
 		const collectionDeleted =
 			await this.awsRekognitionService.deleteCollection(collectionId);
-		//console.log('collectionDeleted------>>>>>', collectionDeleted);
+
 		let response = { success: false };
 		if (collectionDeleted) {
 			response.success = true;

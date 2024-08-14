@@ -71,9 +71,6 @@ export class AwsRekognitionService {
 				response.data = createCollectionResponse;
 			} else {
 				response.new = false;
-				/*console.log(
-					`Using existing collection with ID: ${collectionId}`,
-				);*/
 			}
 			return response;
 		} catch (error) {
@@ -89,7 +86,7 @@ export class AwsRekognitionService {
 					new ListUsersCommand({ CollectionId: collectionId }),
 				)
 			).Users.map((userObj) => userObj.UserId.replace(this.prefixed, '')); //.promise()
-			//console.log('users:---------->>>>>>>>>', users.sort());
+
 			return users;
 		} catch (error) {
 			console.log('getAllUsersOfCollection:', error, error.stack);
@@ -108,10 +105,7 @@ export class AwsRekognitionService {
 						ClientRequestToken:
 							this.prefixed + new Date().getTime().toString(),
 					};
-					/*console.log(
-					'Trying to create user with details as:',
-					createUserParams,
-				);*/
+
 					await this.rekognition.send(
 						new CreateUserCommand(createUserParams),
 					);
@@ -177,7 +171,7 @@ export class AwsRekognitionService {
 					new ListFacesCommand(getFaceListParams),
 				)
 			).Faces.map((faceObj) => faceObj.FaceId);
-			//console.log('faces:--------->>>>>>>>>>>>>>>>', faces);
+
 			return faces;
 		} catch (error) {
 			console.log('getAllFacesOfUser:', error, error.stack);
@@ -200,8 +194,7 @@ export class AwsRekognitionService {
 			const disassociateFaceResponse = await this.rekognition.send(
 				new DisassociateFacesCommand(disassociateFaceParams),
 			);
-			//.promise();
-			//console.log('disassociateFaceResponse:', disassociateFaceResponse);
+
 			if (disassociateFaceResponse.DisassociatedFaces.length === 1)
 				response.success = true;
 			return response;
@@ -221,11 +214,7 @@ export class AwsRekognitionService {
 			const deleteFacesResponse = await this.rekognition.send(
 				new DeleteFacesCommand(deleteFaceParams),
 			);
-			//.promise();
-			/*console.log(
-				'deleteFacesResponse:--------->>>>>>>',
-				deleteFacesResponse,
-			);*/
+
 			if (deleteFacesResponse.DeletedFaces.length === 1)
 				response.success = true;
 			return response;
@@ -236,11 +225,6 @@ export class AwsRekognitionService {
 	}
 
 	async addFaceInCollection(collectionId: string, imageName: string) {
-		/*console.log(
-			'\nSTART - Add face into a collection with details as: collectionId, imageName',
-			collectionId,
-			imageName,
-		);*/
 		const response = { success: false, faceId: null };
 		const regex = /[^a-zA-Z0-9_.:]+/g;
 		const originalImageName = imageName;
@@ -257,17 +241,11 @@ export class AwsRekognitionService {
 				ExternalImageId: modifiedImageName,
 				MaxFaces: 1,
 			};
-			/*console.log(
-				`\nSTART - Add face into a collection with params:\n`,
-				addFaceParams,
-			);*/
 
 			const addFaceResponse = await this.rekognition.send(
 				new IndexFacesCommand(addFaceParams),
 			);
 
-			//console.log(`\nSTART - Add face into a collection. Success!\n`);
-			//console.dir(addFaceResponse, { depth: 99 });
 			if (addFaceResponse.FaceRecords.length === 1) {
 				response.success = true;
 				response.faceId = addFaceResponse.FaceRecords[0].Face.FaceId;
@@ -299,17 +277,11 @@ export class AwsRekognitionService {
 					this.prefixed + new Date().getTime()
 				).toString(),
 			};
-			/*console.log(
-				'associateFacesParams------->>>>>>>',
-				associateFacesParams,
-			);*/
 
 			const associateFaceResponse = await this.rekognition.send(
 				new AssociateFacesCommand(associateFacesParams),
 			);
-			//.promise();
-			//console.log('associateFaceResponse:');
-			//console.dir(associateFaceResponse);
+
 			if (associateFaceResponse.AssociatedFaces.length === 1)
 				response.success = true;
 			return response;
@@ -336,13 +308,11 @@ export class AwsRekognitionService {
 				UserMatchThreshold: faceMatchingThreshold,
 				MaxUsers: 5,
 			};
-			//console.log('searchParams:------------->>>>', searchParams);
+
 			const compareResponse = await this.rekognition.send(
 				new SearchUsersByImageCommand(searchParams),
 			);
-			//.promise();
-			//console.log('Matching faces:');
-			//console.dir(compareResponse, { depth: 99 });
+
 			return compareResponse.UserMatches;
 		} catch (error) {
 			console.log('code error ', error?.name);
@@ -361,9 +331,7 @@ export class AwsRekognitionService {
 			const deleteCollectionParams = {
 				CollectionId: collectionId,
 			};
-			/*console.log(
-				`Attempting to delete collection named - ${collectionId}`,
-			);*/
+
 			let response = await this.rekognition.send(
 				new DeleteCollectionCommand(deleteCollectionParams),
 			);

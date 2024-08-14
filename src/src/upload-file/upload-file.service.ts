@@ -121,7 +121,6 @@ export class UploadFileService {
 			if (res && isCommonFunction) {
 				return { data: { key: key, fileUrl: fileUrl, data: res.data } };
 			} else if (res) {
-				//console.log('response file upload-->>', JSON.stringify(res));
 				return response.status(200).send({
 					success: true,
 					status: 'Success',
