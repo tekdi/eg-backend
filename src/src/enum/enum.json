@@ -205,10 +205,6 @@
 			"value": "enrolled_ip_verified"
 		},
 		{
-			"title": "BENEFICIARY_STATUS_REGISTERED_IN_NEEV_CAMP",
-			"value": "registered_in_neev_camp"
-		},
-		{
 			"title": "BENEFICIARY_STATUS_REGISTERED_IN_CAMP",
 			"value": "registered_in_camp"
 		},
