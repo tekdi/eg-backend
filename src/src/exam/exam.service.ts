@@ -4,7 +4,6 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { ExamResultPattern } from './exam.result.pattern';
-import * as moment from 'moment';
 
 //pdf data extractor
 const parse = require('pdf-parse');
