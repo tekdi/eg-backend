@@ -209,4 +209,14 @@ export class FacilitatorController {
 	) {
 		return this.facilitatorService.createProgramFacilitator(req, body, res);
 	}
+
+	@Post('/admin/status-change-validation')
+	@UseGuards(new AuthGuard())
+	statusChangeValidation(
+		@Req() req: Request,
+		@Body() body: Body,
+		@Res() res: Response,
+	) {
+		return this.facilitatorService.statusChangeValidation(req, body, res);
+	}
 }

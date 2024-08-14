@@ -181,12 +181,16 @@
 			"value": "ready_to_enroll"
 		},
 		{
-			"title": "BENEFICIARY_STATUS_ENROLLED",
-			"value": "enrolled"
+			"title": "BENEFICIARY_STATUS_SSO_ID_ENROLLED",
+			"value": "sso_id_enrolled"
 		},
 		{
-			"title": "BENEFICIARY_STATUS_NOT_ENROLLED",
-			"value": "not_enrolled"
+			"title": "BENEFICIARY_STATUS_SSO_ID_VERIFIED",
+			"value": "sso_id_verified"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_ENROLLED",
+			"value": "enrolled"
 		},
 		{
 			"title": "BENEFICIARY_STATUS_ENROLLMENT_AWAITED",
@@ -295,6 +299,10 @@
 	],
 	"ENROLLEMENT_STATUS": [
 		{
+			"title": "SSO_ID_ENROLLED",
+			"value": "sso_id_enrolled"
+		},
+		{
 			"title": "ENROLLED",
 			"value": "enrolled"
 		},
@@ -327,8 +335,13 @@
 		{
 			"title": "ENROLLEMENT_VERIFICATION_STATUS_VERIFIED",
 			"value": "verified"
+		},
+		{
+			"title": "ENROLLMENT_SSO_ID_VERIFIED",
+			"value": "sso_id_verified"
 		}
 	],
+
 	"ENROLLED_FOR_BOARD": [
 		{
 			"title": "RSOS",
@@ -339,6 +352,18 @@
 			"value": "nios"
 		}
 	],
+
+	"ENROLLEMENT_VERIFICATION_TYPE": [
+		{
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_REGULAR",
+			"value": "regular"
+		},
+		{
+			"title": "ENROLLEMENT_VERIFICATION_TYPE_SYC",
+			"value": "syc"
+		}
+	],
+
 	"BENEFICIARY_SOCIAL_STATUS": [
 		{
 			"title": "BENEFICIARY_SOCIAL_STATUS_SC",
@@ -397,6 +422,245 @@
 			"value": "single"
 		}
 	],
+
+	"BENEFICIARY_HAVE_DISABILITY": [
+		{
+			"title": "BENEFICIARY_HAVE_DISABILITY_YES",
+			"value": "yes"
+		},
+		{
+			"title": "BENEFICIARY_HAVE_DISABILITY_NO",
+			"value": "no"
+		}
+	],
+	"BENEFICIARY_DISABILITY_CERTIFICATE": [
+		{
+			"title": "BENEFICIARY_DISABILITY_CERTIFICATE_YES",
+			"value": "yes"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_CERTIFICATE_NO",
+			"value": "no"
+		}
+	],
+	"BENEFICIARY_DISABILITY_OCCURENCE": [
+		{
+			"title": "BENEFICIARY_DISABILITY_OCCURENCE_BY_BIRTH",
+			"value": "by_birth"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_OCCURENCE_LATER_STAGE_IN_LIFE",
+			"value": "later_stage_in_life"
+		}
+	],
+	"BENEFICIARY_TAKING_ADVANTAGE_DISABILITY": [
+		{
+			"title": "BENEFICIARY_TAKING_ADVANTAGE_DISABILITY_YES",
+			"value": "yes"
+		},
+		{
+			"title": "BENEFICIARY_TAKING_ADVANTAGE_DISABILITY_NO",
+			"value": "no"
+		}
+	],
+
+	"BENEFICIARY_DISABILITY_RAJASTHAN": [
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_VIKLANG_PENSION_YOJANA",
+			"value": "viklang_pension_yojana"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_CHIEF_MINISTER_SPECIALLY_ABLED_SAMMAN_PENSION",
+			"value": "chief_minister_specially_abled_samman_pension"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_MUKHYAMANTRI_DIVYANG_SCOOTY_YOJANA",
+			"value": "mukhyamantri_divyang_scooty_yojana"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_SUGAMYA_RAJASTHAN_CAMPAIGN",
+			"value": "sugamya_rajasthan_campaign"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_SCHOLARSHIPS_FOR_STUDENTS_WITH_DISABILITIES",
+			"value": "scholarships_for_students_with_disabilities"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_FREE_TRAVEL_FACILITY",
+			"value": "free_travel_facility"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_VISHESH_YOGYA_JAN_SAMMAN_YOJANA",
+			"value": "vishesh_yogya_jan_samman_yojana"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_VISHESH_YOGYA_JAN_SWAROZGAR_YOJANA",
+			"value": "vishesh_yogya_jan_swarozgar_yojana"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_SAMBAL_YOJANA",
+			"value": "sambal_yojana"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_MUKHYA_MANTRI_VISHESH_YOGYAJAN_UDDHAR_YOJANA",
+			"value": "mukhya_mantri_vishesh_yogyajan_uddhar_yojana"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_RAJASTHAN_RAJASTHAN_JAN_SAMARTH_YOJANA",
+			"value": "rajasthan_jan_samarth_yojana"
+		}
+	],
+	"BENEFICIARY_DISABILITY_BIHAR": [
+		{
+			"title": "BENEFICIARY_DISABILITY_BIHAR_INDIRA_GANDHI_DISABILITY_PENSION",
+			"value": "indira_gandhi_disability_pension"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_BIHAR_BIHAR_STATE_DISABILITY_PENSION",
+			"value": "bihar_state_disability_pension"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_BIHAR_BIHAR_VIKLANG_SASHAKTI_KARAN_YOJANA",
+			"value": "bihar_viklang_sashakti_karan_yojana"
+		}
+	],
+	"BENEFICIARY_DISABILITY_MADHYA_PRADESH": [
+		{
+			"title": "BENEFICIARY_DISABILITY_MADHYA_PRADESH_CHIEF_MINISTER_DISABLED_EDUCATION_PROMOTION",
+			"value": "chief_minister_disabled_education_promotion"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_MADHYA_PRADESH_GRANT_IN_AID_FOR_MULTI_DISABLED_AND_MENTALLY_HANDICAPPED_PERSONS_ABOVE_6_YEARS_OF_AGE",
+			"value": "grant_in_aid_for_multi_disabled_and_mentally_handicapped_persons_above_6_years_of_age"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_MADHYA_PRADESH_HIGHER_EDUCATION_BENEFIT_FOR_DISABLED_STUDENTS_FOREIGN_STUDY_SCHOLARSHIP",
+			"value": "higher_education_benefit_for_disabled_students_foreign_study_scholarship"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_MADHYA_PRADESH_DISABLED_STUDENT",
+			"value": "disabled_student"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_MADHYA_PRADESH_FEES_SUBSISTENCE_ALLOWANCE_AND_TRANSPORT_ALLOWANCE_FOR_DISABLED_STUDENTS_IN_HIGHER_EDUCATION_IN_MADHYA_PRADESH",
+			"value": "fees_subsistence_allowance_and_transport_allowance_for_disabled_students_in_higher_education_in_madhya_pradesh"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_MADHYA_PRADESH_CIVIL_SERVICES_INCENTIVE_FOR_DISABLED_PEOPLE",
+			"value": "civil_services_incentive_for_disabled_people"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_MADHYA_PRADESH_DISABLED_STUDENTS_CLASSES_1_12",
+			"value": "disabled_students_classes_1_12"
+		}
+	],
+
+	"BENEFICIARY_EXAM_SUPPORT_NEEDED": [
+		{
+			"title": "BENEFICIARY_EXAM_SUPPORT_NEEDED_SCRIBE",
+			"value": "scribe"
+		},
+		{
+			"title": "BENEFICIARY_EXAM_SUPPORT_NEEDED_TRANSPORTATION",
+			"value": "transportation"
+		},
+		{
+			"title": "BENEFICIARY_EXAM_SUPPORT_NEEDED_INFORMATION_A_WEEK_PRIOR",
+			"value": "information_a_week_prior"
+		},
+		{
+			"title": "BENEFICIARY_EXAM_SUPPORT_NEEDED_NA",
+			"value": "na"
+		}
+	],
+
+	"BENEFICIARY_DISABILITY_TYPE": [
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_BLINDNESS",
+			"value": "blindness"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_LOW_VISION",
+			"value": "low_vision"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_LEPROSY_CURED_PERSON",
+			"value": "leprosy_cured_person"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_HEARING_IMPAIRMENT",
+			"value": "hearing_impairment"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_LOCOMOTOR_DISABILITY",
+			"value": "locomotor_disability"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_DWARFISM",
+			"value": "dwarfism"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_INTELLECTUAL_DISABILITY",
+			"value": "intellectual_disability"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_MENTAL_ILLNESS",
+			"value": "mental_illness"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_AUTISM_SPECTRUM_DISORDER",
+			"value": "autism_spectrum_disorder"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_CEREBRAL_PALSY",
+			"value": "cerebral_palsy"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_MUSCULAR_DYSTROPHY",
+			"value": "muscular_dystrophy"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_CHRONIC_NEUROLOGICAL_CONDITIONS",
+			"value": "chronic_neurological_conditions"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_SPECIFIC_LEARNING_DISABILITIES",
+			"value": "specific_learning_disabilities"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_MULTIPLE_SCHLEROSIS",
+			"value": "multiple_schlerosis"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_SPEECH_AND_LANGUAGE_DISABILITY",
+			"value": "speech_and_language_disability"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_THALASSEMIA",
+			"value": "Thalassemia"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_HEMOPHILIA",
+			"value": "hemophilia"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_SICKLE_CELL_DISEASE",
+			"value": "sickle_cell_disease"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_MULTIPLE_DISABILITIES_INCLUDING_DEAF_BLINDNESS",
+			"value": "multiple_disabilities_including_deaf_blindness"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_ACID_ATTACK_VICTIMS",
+			"value": "acid_attack_victims"
+		},
+		{
+			"title": "BENEFICIARY_DISABILITY_TYPE_PARKINSONS_DISEASE",
+			"value": "parkinsons_disease"
+		}
+	],
+
 	"FACILITATOR_AVAILABILITY": [
 		{
 			"title": "FACILITATOR_PART_TIME",
@@ -1314,40 +1578,70 @@
 	],
 	"CAMP_ABSENT_REASONS": [
 		{
-			"title": "CAMP_ABSENT_REASONS_PERSONAL_LEAVE",
-			"value": "personal_leave"
-		},
-		{
-			"title": "CAMP_ABSENT_REASONS_OTHER_WEEKLY_OFF",
-			"value": "other_weekly_off"
-		},
-		{
-			"title": "CAMP_ABSENT_REASONS_FESTIVAL_HOLIDAY",
-			"value": "festival_holiday"
-		},
-		{
-			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STAKEHOLDER",
-			"value": "meeting_with_stakeholder"
-		},
-		{
-			"title": "CAMP_ABSENT_REASONS_PCP",
-			"value": "pcp"
-		},
-		{
-			"title": "CAMP_ABSENT_REASONS_PRERAK_TRAINING",
-			"value": "prerak_training"
-		},
-		{
-			"title": "CAMP_ABSENT_REASONS_LEARNER_EXPOSER_VISIT",
-			"value": "learner_exposer_visit"
-		},
-		{
 			"title": "CAMP_ABSENT_REASONS_CAMP_FACILITY_RELATED_WORK",
 			"value": "camp_facility_related_work"
 		},
 		{
 			"title": "CAMP_ABSENT_REASONS_EXAM",
 			"value": "exam"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_FESTIVAL_HOLIDAY",
+			"value": "festival_holiday"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_LEARNER_EXPOSER_VISIT",
+			"value": "learner_exposer_visit"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_MEETING_WITH_STAKEHOLDER",
+			"value": "meeting_with_stakeholder"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_OTHER_WEEKLY_OFF",
+			"value": "other_weekly_off"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PCP",
+			"value": "pcp"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PERSONAL_LEAVE",
+			"value": "personal_leave"
+		},
+		{
+			"title": "CAMP_ABSENT_REASONS_PRERAK_TRAINING",
+			"value": "prerak_training"
+		}
+	],
+	"NEEV_CAMP_ABSENT_REASONS": [
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_CAMP_FACILITY_RELATED_WORK",
+			"value": "camp_facility_related_work"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_FESTIVAL_HOLIDAY",
+			"value": "festival_holiday"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_LEARNER_EXPOSER_VISIT",
+			"value": "learner_exposer_visit"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_MEETING_WITH_STAKEHOLDER",
+			"value": "meeting_with_stakeholder"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_OTHER_WEEKLY_OFF",
+			"value": "other_weekly_off"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_PERSONAL_LEAVE",
+			"value": "personal_leave"
+		},
+		{
+			"title": "NEEV_CAMP_ABSENT_REASONS_PRERAK_TRAINING",
+			"value": "prerak_training"
 		}
 	],
 	"FACILITATOR_MOOD_LIST": [
@@ -1378,20 +1672,20 @@
 	],
 	"MISCELLANEOUS_ACTIVITIES": [
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
-			"value": "miscellaneous_activities_communication_skills"
-		},
-		{
-			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
-			"value": "miscellaneous_activities_role_model_intervention"
-		},
-		{
 			"title": "MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
 			"value": "miscellaneous_activities_aspiration_mapping"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
 			"value": "miscellaneous_activities_digital_literacy"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
+			"value": "miscellaneous_activities_e_pcp_activities"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
+			"value": "miscellaneous_activities_family_visit"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
@@ -1402,8 +1696,16 @@
 			"value": "miscellaneous_activities_formative_assessment"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
-			"value": "miscellaneous_activities_family_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_LIFE_SKILLS",
+			"value": "miscellaneous_activities_life_skills"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_REVISION",
+			"value": "miscellaneous_activities_revision"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
+			"value": "miscellaneous_activities_role_model_intervention"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
@@ -1412,14 +1714,6 @@
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_OR_TEACHER_VISIT",
 			"value": "miscellaneous_activities_stakeholder_or_teacher_visit"
-		},
-		{
-			"title": "MISCELLANEOUS_ACTIVITIES_REVISION",
-			"value": "miscellaneous_activities_revision"
-		},
-		{
-			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
-			"value": "miscellaneous_activities_e_pcp_activities"
 		}
 	],
 	"KIT_MATERIALS_CHECKLISTS": [
@@ -1604,52 +1898,64 @@
 	],
 	"PCR_MISCELLANEOUS_ACTIVITIES": [
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_COMMUNICATION_SKILLS",
-			"value": "miscellaneous_activities_communication_skills"
-		},
-		{
-			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_INTERVENTION",
-			"value": "miscellaneous_activities_role_model_intervention"
-		},
-		{
 			"title": "MISCELLANEOUS_ACTIVITIES_ASPIRATION_MAPPING",
 			"value": "miscellaneous_activities_aspiration_mapping"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_BASELINE",
+			"value": "miscellaneous_activities_baseline"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_BUFFER_SESSION",
+			"value": "miscellaneous_activities_buffer_session"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_DIGITAL_LITERACY",
 			"value": "miscellaneous_activities_digital_literacy"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
-			"value": "miscellaneous_activities_financial_literacy"
-		},
-		{
-			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
-			"value": "miscellaneous_activities_linkages"
+			"title": "MISCELLANEOUS_ACTIVITIES_ENVIRONMENT_BUILDING",
+			"value": "miscellaneous_activities_environment_building"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_FAMILY_VISIT",
 			"value": "miscellaneous_activities_family_visit"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
-			"value": "miscellaneous_activities_role_model_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_FINANCIAL_LITERACY",
+			"value": "miscellaneous_activities_financial_literacy"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_OR_TEACHER_VISIT",
-			"value": "miscellaneous_activities_stakeholder_or_teacher_visit"
+			"title": "MISCELLANEOUS_ACTIVITIES_LIFE_SKILLS",
+			"value": "miscellaneous_activities_life_skills"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_LINKAGES",
+			"value": "miscellaneous_activities_linkages"
 		},
 		{
 			"title": "MISCELLANEOUS_ACTIVITIES_REVISION",
 			"value": "miscellaneous_activities_revision"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_E_PCP_ACTIVITIES",
-			"value": "miscellaneous_activities_e_pcp_activities"
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_SUPPORT",
+			"value": "miscellaneous_activities_role_model_support"
 		},
 		{
-			"title": "MISCELLANEOUS_ACTIVITIES_PCR",
-			"value": "miscellaneous_activities_pcr"
+			"title": "MISCELLANEOUS_ACTIVITIES_ROLE_MODEL_VISIT",
+			"value": "miscellaneous_activities_role_model_visit"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SCHEME_MELA",
+			"value": "miscellaneous_activities_scheme_mela"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_SHIKSHA_CHOUPAL",
+			"value": "miscellaneous_activities_shiksha_choupal"
+		},
+		{
+			"title": "MISCELLANEOUS_ACTIVITIES_STAKEHOLDER_OR_TEACHER_VISIT",
+			"value": "miscellaneous_activities_stakeholder_or_teacher_visit"
 		}
 	],
 	"EXAM_RESULT_STATUS": [
