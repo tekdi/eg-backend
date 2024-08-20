@@ -2878,7 +2878,6 @@ export class BeneficiariesService {
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement
 						.program_beneficiaries;
 				const programDetails = beneficiaryUser.program_beneficiaries;
-
 				let myRequest = {};
 				if (
 					!beneficiaryUser.mobile ||
