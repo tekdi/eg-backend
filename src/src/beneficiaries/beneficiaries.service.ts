@@ -2014,7 +2014,7 @@ export class BeneficiariesService {
 	}
 
 	public async registerBeneficiary(body, request) {
-		const user = await this.userService.ipUserInfo(request);
+		await this.userService.ipUserInfo(request);
 		const password = body.mobile;
 		let username = body.first_name;
 		username += `_${body.mobile}`;
@@ -2066,7 +2066,7 @@ export class BeneficiariesService {
 	}
 
 	async create(req: any, request, response, update = false) {
-		const user = await this.userService.ipUserInfo(request);
+		await this.userService.ipUserInfo(request);
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
 		const beneficiary_id = req?.id;
@@ -2402,13 +2402,11 @@ export class BeneficiariesService {
 					});
 
 				if (hashura_response?.data?.users?.length > 0) {
-					{
-						return response.status(422).json({
-							success: false,
-							message:
-								'Cannot update details for IP verified beneficiary !',
-						});
-					}
+					return response.status(422).json({
+						success: false,
+						message:
+							'Cannot update details for IP verified beneficiary !',
+					});
 				}
 				// Update Users table data
 				const userArr =
@@ -2880,7 +2878,7 @@ export class BeneficiariesService {
 					PAGE_WISE_UPDATE_TABLE_DETAILS.edit_enrollement
 						.program_beneficiaries;
 				const programDetails = beneficiaryUser.program_beneficiaries;
-				let tableName = 'program_beneficiaries';
+
 				let myRequest = {};
 				if (
 					!beneficiaryUser.mobile ||
@@ -2913,8 +2911,9 @@ export class BeneficiariesService {
 							request?.mw_program_id,
 							beneficiary_id,
 						);
+						console.log('ss', result?.status);
 
-						if (result?.status == false) {
+						if (result?.status === false) {
 							return response.status(422).json({
 								result,
 							});
@@ -3236,17 +3235,16 @@ export class BeneficiariesService {
 					};
 				}
 
-				const res =
-					await this.hasuraServiceFromServices.updateWithVariable(
-						programDetails?.id,
-						'program_beneficiaries',
-						myRequest,
-						userArr,
-						update,
-						{
-							variable: [variable],
-						},
-					);
+				await this.hasuraServiceFromServices.updateWithVariable(
+					programDetails?.id,
+					'program_beneficiaries',
+					myRequest,
+					userArr,
+					update,
+					{
+						variable: [variable],
+					},
+				);
 				break;
 			}
 			case 'document_status': {
@@ -3342,8 +3340,6 @@ export class BeneficiariesService {
 		res?: any,
 	) {
 		const user = (await this.findOne(id)).data;
-		const academic_year_id = req.mw_academic_year_id;
-		const program_id = req.mw_program_id;
 		const sql = `
 			SELECT
 				bu.aadhar_no AS "aadhar_no",
@@ -3844,7 +3840,7 @@ export class BeneficiariesService {
 		let status = 'enrolled_ip_verified';
 
 		// Get users which are not present in the camps or whose status is inactive
-		const baseLine = this.enumService
+		this.enumService
 			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 			.data.map((item) => item.value);
 		let qury = `query MyQuery {
@@ -4006,7 +4002,7 @@ export class BeneficiariesService {
 		const response_data = await this.hasuraServiceFromServices.getData(
 			check_id,
 		);
-		if (!response_data || !response_data.data?.core_beneficiaries[0]) {
+		if (!response_data?.data?.core_beneficiaries[0]) {
 			return response.status(422).json({
 				success: false,
 				message: 'Beneficiaries ID is not exists!',
@@ -4794,7 +4790,7 @@ export class BeneficiariesService {
 		let program_id = request?.mw_program_id;
 		const result = await this.validateForSSOID(sso_id, program_id, user_id);
 
-		if (result?.status == false) {
+		if (result?.status === false) {
 			return response.status(422).json({
 				is_duplicate: true,
 				message: 'Duplicate SSO ID',

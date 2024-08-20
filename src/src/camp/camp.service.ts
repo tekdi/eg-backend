@@ -131,7 +131,7 @@ export class CampService {
 			}
 
 			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
-			const baseLine = this.enumService
+			this.enumService
 				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 				.data.map((item) => item.value);
 
@@ -1363,7 +1363,7 @@ export class CampService {
 					let updatebody = {
 						status: 'camp_initiated',
 					};
-					let updatStatus = await this.hasuraService.q(
+					await this.hasuraService.q(
 						'groups',
 						{
 							...updatebody,
