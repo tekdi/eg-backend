@@ -128,7 +128,7 @@ export class ProgramCoordinatorService {
 			const token = await this.keycloakService.getAdminKeycloakToken();
 
 			if (token?.access_token) {
-				const findUsername = await this.keycloakService.findUser(
+				await this.keycloakService.findUser(
 					username,
 					token?.access_token,
 				);
@@ -383,6 +383,13 @@ export class ProgramCoordinatorService {
 						mobile
 						email_id
 						username
+						profile_photo_1: documents(where: {document_sub_type: {_eq: "profile_photo_1"}}) {
+							id
+							name
+							doument_type
+							document_sub_type
+							path
+							}
 						program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
 								program_facilitators(where: {${filterQuery}}, limit: ${limit}, offset: ${offset})  {
 										facilitator_id: user_id
@@ -420,10 +427,30 @@ export class ProgramCoordinatorService {
 			hasura_response?.data?.program_faciltators_aggregate?.aggregate
 				?.count;
 
+		let mappedResponse = hasura_response?.data?.users;
+
+		let mappedData;
+		await Promise.all(
+			mappedResponse?.map(async (obj) => {
+				mappedData = {
+					['profile_photo_1']: obj?.['profile_photo_1']?.[0] || {},
+				};
+				if (mappedData?.profile_photo_1?.id) {
+					const { success, data: fileData } =
+						await this.uploadFileService.getDocumentById(
+							mappedData?.profile_photo_1?.id,
+						);
+					if (success && fileData?.fileUrl) {
+						mappedData.profile_photo_1.fileUrl = fileData.fileUrl;
+					}
+				}
+				return mappedData;
+			}),
+		);
+
 		let program_coordinator_data = hasura_response?.data;
 		if (
-			!program_coordinator_data ||
-			!program_coordinator_data.users ||
+			!program_coordinator_data?.users ||
 			program_coordinator_data.users.length === 0
 		) {
 			return response.status(422).json({
@@ -454,6 +481,10 @@ export class ProgramCoordinatorService {
 					mobile: user.mobile,
 					email_id: user.email_id,
 					username: user.username,
+					profile_photo_1: {
+						name: mappedData.profile_photo_1.name,
+						file_url: mappedData.profile_photo_1.fileUrl,
+					},
 				});
 
 				if (user.program_users) {
@@ -977,7 +1008,7 @@ export class ProgramCoordinatorService {
 		// Pagination parameters
 		const limit = body?.limit || 10;
 		const page = body?.page || 1;
-		const offset = (page - 1) * limit;
+
 		//query to get program coordinator details
 
 		query = `
@@ -1106,7 +1137,7 @@ export class ProgramCoordinatorService {
 				}
 			}
 		}
-
+		const limit = body.limit || 15;
 		if (pc_string != null || pc_string != undefined) {
 			let search = body?.search;
 			let status = body?.status;
@@ -1130,13 +1161,15 @@ export class ProgramCoordinatorService {
         WHERE
             concat(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
             ${additionalFilters}
-        ORDER BY pb.user_id ${sort}
-     
+						and concat( pf.user_id,' ',pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
+        ORDER BY pb.user_id ${sort} 
+				LIMIT ${limit};
         `;
 
 			learner_data = (
 				await this.hasuraServiceFromServices.executeRawSql(sql)
 			)?.result;
+			console.log('ssss', learner_data);
 
 			if (learner_data == undefined) {
 				return response.status(404).json({
@@ -1290,7 +1323,6 @@ export class ProgramCoordinatorService {
 
 		if (pc_string != null || pc_string != undefined) {
 			let search = body?.search;
-			let status = body?.status;
 			let sort = body?.sort ? body?.sort : 'ASC';
 			let additionalFilters = '';
 
