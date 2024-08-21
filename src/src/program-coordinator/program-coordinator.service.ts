@@ -1174,7 +1174,6 @@ export class ProgramCoordinatorService {
 			learner_data = (
 				await this.hasuraServiceFromServices.executeRawSql(sql)
 			)?.result;
-			console.log('ssss', learner_data);
 
 			if (learner_data == undefined) {
 				return response.status(404).json({
