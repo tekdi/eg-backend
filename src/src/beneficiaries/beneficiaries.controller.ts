@@ -248,11 +248,6 @@ export class BeneficiariesController {
 		return this.beneficiariesService.findOne(+id, response);
 	}
 
-	@Delete(':id')
-	remove(@Param('id') id: string) {
-		return this.beneficiariesService.remove(+id);
-	}
-
 	@Post('/register')
 	@UsePipes(ValidationPipe)
 	private async registerBeneficiary(
