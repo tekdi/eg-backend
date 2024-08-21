@@ -391,8 +391,9 @@ export class ProgramCoordinatorService {
 							path
 							}
 						program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
-								program_facilitators(where: {${filterQuery}}, limit: ${limit}, offset: ${offset})  {
+								program_facilitators(where: {${filterQuery},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}, limit: ${limit}, offset: ${offset})  {
 										facilitator_id: user_id
+										id:id
 										status
 										user {
 												first_name
@@ -412,7 +413,7 @@ export class ProgramCoordinatorService {
 								count
 						}
 				}
-				program_faciltators_aggregate(where:{pc_id:{_eq:${id}}}){
+				program_faciltators_aggregate(where:{pc_id:{_eq:${id}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
 					aggregate{
 						count
 					}
@@ -888,7 +889,7 @@ export class ProgramCoordinatorService {
 		// validation to check if the Facilitator_ids belong to same IP
 
 		query = `query MyQuery2 {
-			program_faciltators_aggregate(where: {parent_ip: {_eq: "${org_id}"}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, user_id: {_in:[${facilitator_id}]}}) {
+			program_faciltators_aggregate(where: {parent_ip: {_eq: "${org_id}"}, program_id: {_eq:${program_id}}, user_id: {_in:[${facilitator_id}]}}) {
 			  aggregate {
 				count
 			  }
@@ -903,18 +904,18 @@ export class ProgramCoordinatorService {
 			hasura_response?.data?.program_faciltators_aggregate?.aggregate
 				?.count;
 
-		if (facilitator_count != facilitator_id?.length) {
-			return response.status(422).send({
-				success: false,
-				message: 'Please provide valid facilitator data',
-				data: {},
-			});
-		}
+		// if (facilitator_count != facilitator_id?.length) {
+		// 	return response.status(422).send({
+		// 		success: false,
+		// 		message: 'Please provide valid facilitator data',
+		// 		data: {},
+		// 	});
+		// }
 
 		if (edit_action == 'add_facilitator') {
 			facilitator_id?.forEach(async (facilitator) => {
 				let validation_query = `query MyQuery3{
-					program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, user_id: {_eq:${facilitator}}}){
+					program_faciltators(where: {program_id: {_eq:${program_id}}, user_id: {_eq:${facilitator}}}){
 					  id
 					  user_id
 					}
@@ -924,26 +925,28 @@ export class ProgramCoordinatorService {
 					query: validation_query,
 				});
 
-				let id = hasura_response?.data?.program_faciltators?.[0]?.id;
+				let ids = hasura_response?.data?.program_faciltators;
+
+				ids.forEach(async (id) => {
+					await this.hasuraService.q(
+						`program_faciltators`,
+						{
+							pc_id: pc_id,
+							id: id.id,
+						},
+
+						['pc_id'],
+						true,
+						['id', 'pc_id'],
+					);
+				});
 
 				//assign prerak to program coordinator
-
-				await this.hasuraService.q(
-					`program_faciltators`,
-					{
-						pc_id: pc_id,
-						id: id,
-					},
-
-					['pc_id'],
-					true,
-					['id', 'pc_id'],
-				);
 			});
 		} else if (edit_action == 'remove_facilitator') {
 			facilitator_id?.forEach(async (facilitator) => {
 				let validation_query = `query MyQuery3{
-					program_faciltators(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, user_id: {_eq:${facilitator}}}){
+					program_faciltators(where: {program_id: {_eq:${program_id}}, user_id: {_eq:${facilitator}}}){
 					  id
 					  user_id
 					}
@@ -953,21 +956,23 @@ export class ProgramCoordinatorService {
 					query: validation_query,
 				});
 
-				let id = hasura_response?.data?.program_faciltators?.[0]?.id;
+				let ids = hasura_response?.data?.program_faciltators;
 
 				//assign prerak to program coordinator
 
-				await this.hasuraService.q(
-					`program_faciltators`,
-					{
-						pc_id: null,
-						id: id,
-					},
+				ids.forEach(async (id) => {
+					await this.hasuraService.q(
+						`program_faciltators`,
+						{
+							pc_id: null,
+							id: id.id,
+						},
 
-					['pc_id'],
-					true,
-					['id', 'pc_id'],
-				);
+						['pc_id'],
+						true,
+						['id', 'pc_id'],
+					);
+				});
 			});
 		}
 
