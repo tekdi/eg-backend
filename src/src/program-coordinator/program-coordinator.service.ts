@@ -1928,13 +1928,15 @@ export class ProgramCoordinatorService {
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 			let offset = page > 1 ? limit * (page - 1) : 0;
 
-			const { type, date, user_id } = body;
+			const { type, date, user_id, categories } = body;
 			let filterConditions = '';
 
 			if (type) {
 				filterConditions += `, type: {_eq: "${type}"}`;
 			}
-
+			if (categories) {
+				filterConditions += `, categories: {_eq: "${categories}"}`;
+			}
 			if (date) {
 				const dateString = date.split('T')[0]; // Extracting only the date part
 
@@ -2006,7 +2008,7 @@ export class ProgramCoordinatorService {
 					totalPages: `${totalPages}`,
 				});
 			} else {
-				return resp.status(400).json({
+				return resp.status(422).json({
 					success: false,
 					message: 'Data Not Found',
 					data: {},
