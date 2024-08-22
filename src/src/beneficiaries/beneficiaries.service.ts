@@ -2053,7 +2053,7 @@ export class BeneficiariesService {
 			academic_year_id,
 		);
 
-		if (result?.is_enrollment == false) {
+		if (!result?.is_enrollment) {
 			return response.status(422).json({
 				data: result,
 			});
@@ -3182,9 +3182,7 @@ export class BeneficiariesService {
 								academic_year_id,
 							);
 
-						if (
-							enrollment_available_check?.is_enrollment == false
-						) {
+						if (!enrollment_available_check?.is_enrollment) {
 							return response.status(422).json({
 								data: enrollment_available_check,
 							});

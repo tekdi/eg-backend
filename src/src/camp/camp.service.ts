@@ -1627,7 +1627,7 @@ export class CampService {
 						state_response == 'RAJASTHAN'
 							? 'registered_in_neev_camp'
 							: 'registered_in_camp';
-					// let status = 'registered_in_camp';
+
 					request.mw_program_id = program_id;
 					request.mw_academic_year_id = academic_year_id;
 					for (const deactivateId of deactiveLearnerIds) {
