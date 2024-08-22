@@ -1,5 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
@@ -8,7 +7,7 @@ import { AuthService } from 'src/modules/auth/auth.service';
 import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from '../user/user.service';
-
+import { EnumService } from '../enum/enum.service';
 @Injectable()
 export class ProgramCoordinatorService {
 	constructor(
@@ -20,6 +19,7 @@ export class ProgramCoordinatorService {
 		private beneficiariesService: BeneficiariesService,
 		private uploadFileService: UploadFileService,
 		public userService: UserService,
+		private enumService: EnumService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {
@@ -258,7 +258,7 @@ export class ProgramCoordinatorService {
 					if (role === 'program_coordinator') {
 						const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%85%E0%A4%95%E0%A4%BE%E0%A4%89%E0%A4%82%E0%A4%9F%20%E0%A4%AC%E0%A4%A8%E0%A4%BE%E0%A4%AF%E0%A4%BE%20%E0%A4%97%E0%A4%AF%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A5%8B%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A5%8D%E0%A4%A4%E0%A4%BE%20%E0%A4%A8%E0%A4%BE%E0%A4%AE%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%20%E0%A4%94%E0%A4%B0%20%E0%A4%AA%E0%A4%BE%E0%A4%B8%E0%A4%B5%E0%A4%B0%E0%A5%8D%E0%A4%A1%20%3Carg2%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
 						const args = `arg1:${body.username},arg2:${body.password}`;
-						const otpRes = await this.authService.sendSMS(
+						await this.authService.sendSMS(
 							body.mobile,
 							message,
 							args,
@@ -904,14 +904,6 @@ export class ProgramCoordinatorService {
 			hasura_response?.data?.program_faciltators_aggregate?.aggregate
 				?.count;
 
-		// if (facilitator_count != facilitator_id?.length) {
-		// 	return response.status(422).send({
-		// 		success: false,
-		// 		message: 'Please provide valid facilitator data',
-		// 		data: {},
-		// 	});
-		// }
-
 		if (edit_action == 'add_facilitator') {
 			facilitator_id?.forEach(async (facilitator) => {
 				let validation_query = `query MyQuery3{
@@ -1009,10 +1001,6 @@ export class ProgramCoordinatorService {
 		}
 
 		let filterQuery = userFilter.join(', ');
-
-		// Pagination parameters
-		const limit = body?.limit || 10;
-		const page = body?.page || 1;
 
 		//query to get program coordinator details
 
@@ -1476,7 +1464,6 @@ export class ProgramCoordinatorService {
 		  }
 		  `;
 
-		console.log('query->>', qury);
 		const data = { query: qury };
 		const response = await this.hasuraServiceFromServices.getData(data);
 		const newQdata = response?.data?.camps;
@@ -1767,6 +1754,12 @@ export class ProgramCoordinatorService {
 			let created_by = request.mw_userid;
 			let updated_by = request.mw_userid;
 
+			// Validate category and type
+			const validationError = await this.checkCategory(body, resp);
+			if (validationError) {
+				return;
+			}
+
 			const response = await this.hasuraService.create(
 				'activities',
 				{
@@ -1792,9 +1785,10 @@ export class ProgramCoordinatorService {
 					'minutes',
 					'village',
 					'block',
+					'categories',
 				],
 			);
-			console.log('response', response);
+
 			if (response) {
 				return resp.status(200).json({
 					message: 'Activity created Successfully',
@@ -1809,9 +1803,16 @@ export class ProgramCoordinatorService {
 			});
 		}
 	}
+
 	public async activitiesUpdate(request: any, body: any, resp: any, id: any) {
 		try {
 			body.updated_by = request.mw_userid;
+
+			// Validate category and type
+			const validationError = await this.checkCategory(body, resp);
+			if (validationError) {
+				return;
+			}
 
 			const response = await this.hasuraService.q(
 				'activities',
@@ -1828,6 +1829,7 @@ export class ProgramCoordinatorService {
 					'minutes',
 					'village',
 					'block',
+					'categories',
 				],
 				true,
 				[
@@ -1846,6 +1848,7 @@ export class ProgramCoordinatorService {
 					'minutes',
 					'village',
 					'block',
+					'categories',
 				],
 			);
 
@@ -1863,6 +1866,7 @@ export class ProgramCoordinatorService {
 			});
 		}
 	}
+
 	async activitiesDelete(request: any, resp: any, id: any) {
 		let user_id = request?.mw_userid;
 
@@ -1924,13 +1928,15 @@ export class ProgramCoordinatorService {
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 			let offset = page > 1 ? limit * (page - 1) : 0;
 
-			const { type, date, user_id } = body;
+			const { type, date, user_id, categories } = body;
 			let filterConditions = '';
 
 			if (type) {
 				filterConditions += `, type: {_eq: "${type}"}`;
 			}
-
+			if (categories) {
+				filterConditions += `, categories: {_eq: "${categories}"}`;
+			}
 			if (date) {
 				const dateString = date.split('T')[0]; // Extracting only the date part
 
@@ -1977,6 +1983,7 @@ export class ProgramCoordinatorService {
 				minutes
 				village
 				block
+				categories
 			}
 		}`;
 
@@ -2001,19 +2008,86 @@ export class ProgramCoordinatorService {
 					totalPages: `${totalPages}`,
 				});
 			} else {
-				return resp.status(400).json({
+				return resp.status(422).json({
 					success: false,
 					message: 'Data Not Found',
 					data: {},
 				});
 			}
 		} catch (error) {
-			console.log('error', error);
 			return resp.status(500).json({
 				success: false,
 				message: 'Internal server error',
 				data: {},
 			});
 		}
+	}
+
+	public async checkCategory(body: any, resp: any) {
+		// Fetch PC_USER_ACTIVITY_CATEGORIES enum
+		const pcUserActivityCategories = this.enumService.getEnumValue(
+			'PC_USER_ACTIVITY_CATEGORIES',
+		).data;
+
+		// Create a map of categories to their corresponding activity enums
+		const categoryToEnumMap = pcUserActivityCategories.reduce(
+			(map, category) => {
+				map[category.value] = category.foreign_enum_key;
+				return map;
+			},
+			{},
+		);
+
+		// Validate type and categories
+		const { type, categories } = body;
+
+		// Helper function to handle error responses
+		const handleError = (
+			statusCode: number,
+			message: string,
+			errorDetail: string,
+		) => {
+			return resp.status(statusCode).send({
+				success: false,
+				message,
+				errors: {
+					subjects: {
+						__errors: [errorDetail],
+					},
+				},
+			});
+		};
+		// Ensure body.categories is a string (not an array)
+		if (typeof categories !== 'string') {
+			return handleError(
+				422,
+				`Invalid categories format: should be a string`,
+				`Invalid categories format: should be a string`,
+			);
+		}
+
+		// Validate that the provided category exists in PC_USER_ACTIVITY_CATEGORIES
+		const foreignEnumKey = categoryToEnumMap[categories];
+		if (!foreignEnumKey) {
+			return handleError(
+				422,
+				`Invalid category provided`,
+				`Invalid category provided: ${categories}`,
+			);
+		}
+
+		// Validate that the provided type is valid for the category
+		const validTypes = this.enumService
+			.getEnumValue(foreignEnumKey)
+			.data.map((item) => item.value);
+
+		if (!validTypes.includes(type)) {
+			return handleError(
+				422,
+				`Invalid Type provided`,
+				`Type '${type}' is not valid for the category '${categories}'`,
+			);
+		}
+		return null;
 	}
 }

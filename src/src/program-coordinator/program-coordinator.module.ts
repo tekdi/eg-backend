@@ -21,7 +21,7 @@ import { ProgramCoordinatorController } from './program-coordinator.controller';
 import { ProgramCoordinatorService } from './program-coordinator.service';
 import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
-
+import { EnumModule } from '../enum/enum.module';
 @Module({
 	imports: [
 		KeycloakModule,
@@ -33,6 +33,7 @@ import { UploadFileModule } from 'src/upload-file/upload-file.module';
 		BeneficiariesModule,
 		S3Module,
 		UploadFileModule,
+		EnumModule,
 	],
 	controllers: [ProgramCoordinatorController],
 	providers: [ProgramCoordinatorService, Method, AuthService],
