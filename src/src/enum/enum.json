@@ -2120,37 +2120,37 @@
 			"value": "prerak_interaction"
 		}
 	],
-	"TRAINING_AND_METTING_ACTIVITY": [
+	"TRAINING_AND_MEETING_ACTIVITY": [
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_PRAGATI_ORIENTATION_TRAINING",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAGATI_ORIENTATION_TRAINING",
 			"value": "pragati_orientation_training"
 		},
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_NEEV_TRAINING",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_NEEV_TRAINING",
 			"value": "neev_training"
 		},
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_PRAYAS_TRAINING",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAYAS_TRAINING",
 			"value": "prayas_training"
 		},
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_EXAM_PREPARATION_TRAINING",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_EXAM_PREPARATION_TRAINING",
 			"value": "exam_preparation_training"
 		},
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_OTHER_TRAINING",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_OTHER_TRAINING",
 			"value": "other_training"
 		},
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_GOVT_STAKEHOLDER",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_GOVT_STAKEHOLDER",
 			"value": "govt_stakeholder"
 		},
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_STAFF_MEETING",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_STAFF_MEETING",
 			"value": "staff_meeting"
 		},
 		{
-			"title": "TRAINING_AND_METTING_ACTIVITY_PC_AND_PRERAK_MEETING",
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PC_AND_PRERAK_MEETING",
 			"value": "pc_and_prerak_meeting"
 		}
 	]
