@@ -1651,7 +1651,7 @@ export class ProgramCoordinatorService {
 			  village
 			  grampanchayat
 			  address
-				program_users(where:{user_id:{_eq:${user_id}}}){
+				program_users{
 					user_id
 					role_slug
 					academic_year_id
