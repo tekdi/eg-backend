@@ -1651,6 +1651,25 @@ export class ProgramCoordinatorService {
 			  village
 			  grampanchayat
 			  address
+				program_users(where:{user_id:{_eq:${user_id}}}){
+					user_id
+					role_slug
+					academic_year_id
+					academic_years{
+						name
+					}
+					program_id
+					programs{
+						state{
+							state_name
+						}
+					}
+				}
+				user_roles{
+					role_slug
+					user_id
+					status
+				}
 			}
 		  }
 		  `;
@@ -1659,11 +1678,13 @@ export class ProgramCoordinatorService {
 			query: query,
 		});
 
-		const data = result?.data?.users_by_pk;
+		let data = result?.data?.users_by_pk;
+
+		const { program_users, ...rest } = data;
 
 		let document_id = data?.profile_photo_1?.[0]?.id;
 
-		if (!data || data == undefined || data == null) {
+		if (!rest || rest == undefined || rest == null) {
 			return response.status(404).json({
 				message: 'Data not found',
 				data: null,
@@ -1671,25 +1692,26 @@ export class ProgramCoordinatorService {
 		} else {
 			let profile_photo_1;
 
-			if (data?.profile_photo_1?.[0]?.id) {
+			if (rest?.profile_photo_1?.[0]?.id) {
 				const { success, data: fileData } =
 					await this.uploadFileService.getDocumentById(
-						data?.profile_photo_1?.[0]?.id,
+						rest?.profile_photo_1?.[0]?.id,
 					);
 				if (success && fileData?.fileUrl) {
-					data.profile_photo_1 = {
+					rest.profile_photo_1 = {
 						...data?.profile_photo_1?.[0]?.id,
 						fileUrl: fileData.fileUrl,
 					};
 				}
 			} else {
-				data.profile_photo_1 = data?.profile_photo_1?.[0]?.id;
+				rest.profile_photo_1 = rest?.profile_photo_1?.[0]?.id;
 			}
 
-			data.document_id = document_id;
+			rest.document_id = document_id;
+			rest.program_users = program_users?.[0];
 			return response.status(200).json({
 				message: 'Data found successfully',
-				data: data,
+				data: rest,
 				profile_photo_1: profile_photo_1,
 			});
 		}
