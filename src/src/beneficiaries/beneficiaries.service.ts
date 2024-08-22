@@ -2046,7 +2046,6 @@ export class BeneficiariesService {
 
 	public async isEnrollmentAvailiable(id, request, response) {
 		const program_id = request?.mw_program_id;
-		console.log('program_id', program_id);
 		const academic_year_id = request?.mw_academic_year_id;
 		const result = await this.validateEnrollmentAvailiabilty(
 			id,
