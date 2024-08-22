@@ -2039,33 +2039,39 @@ export class ProgramCoordinatorService {
 		// Validate type and categories
 		const { type, categories } = body;
 
-		// Ensure body.categories is a string (not an array)
-		if (typeof categories !== 'string') {
-			return resp.status(422).send({
+		// Helper function to handle error responses
+		const handleError = (
+			statusCode: number,
+			message: string,
+			errorDetail: string,
+		) => {
+			return resp.status(statusCode).send({
 				success: false,
-				message: `Invalid categories format: should be a string`,
+				message,
 				errors: {
 					subjects: {
-						__errors: [
-							`Invalid categories format: should be a string`,
-						],
+						__errors: [errorDetail],
 					},
 				},
 			});
+		};
+		// Ensure body.categories is a string (not an array)
+		if (typeof categories !== 'string') {
+			return handleError(
+				422,
+				`Invalid categories format: should be a string`,
+				`Invalid categories format: should be a string`,
+			);
 		}
 
 		// Validate that the provided category exists in PC_USER_ACTIVITY_CATEGORIES
 		const foreignEnumKey = categoryToEnumMap[categories];
 		if (!foreignEnumKey) {
-			return resp.status(422).send({
-				success: false,
-				message: `Invalid category provided`,
-				errors: {
-					subjects: {
-						__errors: [`Invalid category provided: ${categories}`],
-					},
-				},
-			});
+			return handleError(
+				422,
+				`Invalid category provided`,
+				`Invalid category provided: ${categories}`,
+			);
 		}
 
 		// Validate that the provided type is valid for the category
@@ -2074,17 +2080,11 @@ export class ProgramCoordinatorService {
 			.data.map((item) => item.value);
 
 		if (!validTypes.includes(type)) {
-			return resp.status(422).send({
-				success: false,
-				message: `Invalid Type provided`,
-				errors: {
-					subjects: {
-						__errors: [
-							`Type '${type}' is not valid for the category '${categories}'`,
-						],
-					},
-				},
-			});
+			return handleError(
+				422,
+				`Invalid Type provided`,
+				`Type '${type}' is not valid for the category '${categories}'`,
+			);
 		}
 		return null;
 	}
