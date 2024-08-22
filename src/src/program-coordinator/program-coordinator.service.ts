@@ -1753,50 +1753,11 @@ export class ProgramCoordinatorService {
 			let context_id = request.mw_userid;
 			let created_by = request.mw_userid;
 			let updated_by = request.mw_userid;
-			// Fetch PC_USER_ACTIVITY_CATEGORIES enum
-			const pcUserActivityCategories = this.enumService.getEnumValue(
-				'PC_USER_ACTIVITY_CATEGORIES',
-			).data;
 
-			// Create a map of categories to their corresponding activity enums
-			const categoryToEnumMap = pcUserActivityCategories.reduce(
-				(map, category) => {
-					map[category.value] = category.foreign_enum_key;
-					return map;
-				},
-				{},
-			);
-
-			// Validate type and categories
-			const { type, categories } = body;
-
-			// Ensure body.categories is a string (not an array)
-			if (typeof categories !== 'string') {
-				return resp.status(400).json({
-					message: `Invalid categories format: should be a string`,
-					data: [],
-				});
-			}
-
-			// Validate that the provided category exists in PC_USER_ACTIVITY_CATEGORIES
-			const foreignEnumKey = categoryToEnumMap[categories];
-			if (!foreignEnumKey) {
-				return resp.status(400).json({
-					message: `Invalid category provided: ${categories}`,
-					data: [],
-				});
-			}
-
-			// Validate that the provided type is valid for the category
-			const validTypes = this.enumService
-				.getEnumValue(foreignEnumKey)
-				.data.map((item) => item.value);
-
-			if (!validTypes.includes(type)) {
-				return resp.status(400).json({
-					message: `Type '${type}' is not valid for the category '${categories}'`,
-					data: [],
-				});
+			// Validate category and type
+			const validationError = await this.checkCategory(body, resp);
+			if (validationError) {
+				return;
 			}
 
 			const response = await this.hasuraService.create(
@@ -1846,50 +1807,11 @@ export class ProgramCoordinatorService {
 	public async activitiesUpdate(request: any, body: any, resp: any, id: any) {
 		try {
 			body.updated_by = request.mw_userid;
-			// Fetch PC_USER_ACTIVITY_CATEGORIES enum
-			const pcUserActivityCategories = this.enumService.getEnumValue(
-				'PC_USER_ACTIVITY_CATEGORIES',
-			).data;
 
-			// Create a map of categories to their corresponding activity enums
-			const categoryToEnumMap = pcUserActivityCategories.reduce(
-				(map, category) => {
-					map[category.value] = category.foreign_enum_key;
-					return map;
-				},
-				{},
-			);
-
-			// Validate type and categories
-			const { type, categories } = body;
-
-			// Ensure body.categories is a string (not an array)
-			if (typeof categories !== 'string') {
-				return resp.status(400).json({
-					message: `Invalid categories format: should be a string`,
-					data: [],
-				});
-			}
-
-			// Validate that the provided category exists in PC_USER_ACTIVITY_CATEGORIES
-			const foreignEnumKey = categoryToEnumMap[categories];
-			if (!foreignEnumKey) {
-				return resp.status(400).json({
-					message: `Invalid category provided: ${categories}`,
-					data: [],
-				});
-			}
-
-			// Validate that the provided type is valid for the category
-			const validTypes = this.enumService
-				.getEnumValue(foreignEnumKey)
-				.data.map((item) => item.value);
-
-			if (!validTypes.includes(type)) {
-				return resp.status(400).json({
-					message: `Type '${type}' is not valid for the category '${categories}'`,
-					data: [],
-				});
+			// Validate category and type
+			const validationError = await this.checkCategory(body, resp);
+			if (validationError) {
+				return;
 			}
 
 			const response = await this.hasuraService.q(
@@ -2097,5 +2019,73 @@ export class ProgramCoordinatorService {
 				data: {},
 			});
 		}
+	}
+
+	public async checkCategory(body: any, resp: any) {
+		// Fetch PC_USER_ACTIVITY_CATEGORIES enum
+		const pcUserActivityCategories = this.enumService.getEnumValue(
+			'PC_USER_ACTIVITY_CATEGORIES',
+		).data;
+
+		// Create a map of categories to their corresponding activity enums
+		const categoryToEnumMap = pcUserActivityCategories.reduce(
+			(map, category) => {
+				map[category.value] = category.foreign_enum_key;
+				return map;
+			},
+			{},
+		);
+
+		// Validate type and categories
+		const { type, categories } = body;
+
+		// Ensure body.categories is a string (not an array)
+		if (typeof categories !== 'string') {
+			return resp.status(422).send({
+				success: false,
+				message: `Invalid categories format: should be a string`,
+				errors: {
+					subjects: {
+						__errors: [
+							`Invalid categories format: should be a string`,
+						],
+					},
+				},
+			});
+		}
+
+		// Validate that the provided category exists in PC_USER_ACTIVITY_CATEGORIES
+		const foreignEnumKey = categoryToEnumMap[categories];
+		if (!foreignEnumKey) {
+			return resp.status(422).send({
+				success: false,
+				message: `Invalid category provided`,
+				errors: {
+					subjects: {
+						__errors: [`Invalid category provided: ${categories}`],
+					},
+				},
+			});
+		}
+
+		// Validate that the provided type is valid for the category
+		const validTypes = this.enumService
+			.getEnumValue(foreignEnumKey)
+			.data.map((item) => item.value);
+
+		if (!validTypes.includes(type)) {
+			return resp.status(422).send({
+				success: false,
+				message: `Invalid Type provided`,
+				errors: {
+					subjects: {
+						__errors: [
+							`Type '${type}' is not valid for the category '${categories}'`,
+						],
+					},
+				},
+			});
+		}
+		return null;
 	}
 }
