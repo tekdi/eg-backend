@@ -2108,8 +2108,6 @@ export class BeneficiariesService {
 		  
 		  `;
 
-			console.log('query-->>', query);
-
 			hasura_response = await this.hasuraServiceFromServices.getData({
 				query: query,
 			});
