@@ -1610,7 +1610,7 @@ export class CampService {
 
 					const update_body = {
 						status:
-							state_response == 'Rajasthan'
+							state_response == 'RAJASTHAN'
 								? 'registered_in_neev_camp'
 								: 'registered_in_camp',
 					};
