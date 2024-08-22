@@ -61,6 +61,31 @@ export class CampService {
 			const org_id = body?.org_id;
 			let createcampResponse: any;
 			let creategroupwoner: any;
+			let state_query;
+			let state_result;
+
+			//get state details
+
+			state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+			state_result = await this.hasuraServiceFromServices.getData({
+				query: state_query,
+			});
+			const state_response =
+				state_result?.data?.programs_by_pk?.state?.state_name;
+
+			//set status to sso_id_verified if the program selected is Rajasthan
+			if (state_response == 'RAJASTHAN') {
+				beneficiary_status = 'sso_id_verified';
+			}
+
+			console.log('beneficiary_status-->>', beneficiary_status);
 
 			if (!org_id || org_id == '') {
 				return response.status(422).json({
@@ -130,7 +155,7 @@ export class CampService {
 				});
 			}
 
-			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
+			//check if learners belongs to same prerak and have status 'enrolled_ip_verified' or 'sso_id_verified' if Rajasthan
 			const baseLine = this.enumService
 				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
 				.data.map((item) => item.value);
@@ -776,6 +801,31 @@ export class CampService {
 		let update_body = body;
 		const program_id = request.mw_program_id;
 		const academic_year_id = request.mw_academic_year_id;
+		let program_beneficiary_status = 'enrolled_ip_verified';
+
+		let state_query;
+		let state_result;
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
+
+		//set status to sso_id_verified if the program selected is Rajasthan
+		if (state_response == 'RAJASTHAN') {
+			program_beneficiary_status = 'sso_id_verified';
+		}
 
 		let PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_location: {
@@ -1220,6 +1270,7 @@ export class CampService {
 					}
 				  }
 				  `;
+
 				const qdata = { query: qury };
 
 				const res = await this.hasuraServiceFromServices.getData(qdata);
@@ -1268,6 +1319,21 @@ export class CampService {
 					)
 					.map((item) => item.user_id);
 
+				if (
+					deactivateIds.length > 0 &&
+					(camp_status == 'registered' ||
+						camp_status == 'camp_ip_verified')
+				) {
+					return {
+						status: 422,
+						message:
+							'Cannot remove learners from a registered camp',
+						data: {
+							ids: deactiveLearnerIds,
+						},
+					};
+				}
+
 				// get learners id from program_beneficiaries from deactiveLearnerIds
 				let data = {
 					query: `query MyQuery {
@@ -1296,7 +1362,7 @@ export class CampService {
 						null,
 						'program_beneficiaries',
 						{
-							status: 'enrolled_ip_verified',
+							status: program_beneficiary_status,
 							updated_by: facilitator_id,
 						},
 						[],
@@ -1314,7 +1380,7 @@ export class CampService {
 							subject: 'beneficiary',
 							subject_id: item.user_id,
 							log_transaction_text: JSON.stringify(
-								`Facilitator ${facilitator_id} updated beneficiary ${item.user_id} status from ${item.status} to enrolled_ip_verified`,
+								`Facilitator ${facilitator_id} updated beneficiary ${item.user_id} status from ${item.status} to ${program_beneficiary_status}`,
 							),
 							old_data: JSON.stringify(
 								`{ learner_id: ${item.user_id},status:${item.status} }`,
@@ -1333,21 +1399,6 @@ export class CampService {
 							['id'],
 						);
 					}
-				}
-
-				if (
-					deactivateIds.length > 0 &&
-					(camp_status == 'registered' ||
-						camp_status == 'camp_ip_verified')
-				) {
-					return {
-						status: 422,
-						message:
-							'Cannot remove learners from a registered camp',
-						data: {
-							ids: deactiveLearnerIds,
-						},
-					};
 				}
 
 				if (createData?.length > 0) {
@@ -1544,7 +1595,7 @@ export class CampService {
 						camp_status == 'inactive')
 				) {
 					let update_beneficiaries_array = [];
-					let status = 'enrolled_ip_verified';
+					let status = program_beneficiary_status;
 					request.mw_program_id = program_id;
 					request.mw_academic_year_id = academic_year_id;
 					for (const learnerId of learner_ids) {
@@ -1558,7 +1609,10 @@ export class CampService {
 					}
 
 					const update_body = {
-						status: 'registered_in_camp',
+						status:
+							state_response == 'Rajasthan'
+								? 'registered_in_neev_camp'
+								: 'registered_in_camp',
 					};
 
 					await this.beneficiariesCoreService.updateBeneficiaryDetails(
@@ -1569,7 +1623,11 @@ export class CampService {
 
 				if (deactiveLearnerIds?.length > 0) {
 					let update_beneficiaries_array = [];
-					let status = 'registered_in_camp';
+					let status =
+						state_response == 'RAJASTHAN'
+							? 'registered_in_neev_camp'
+							: 'registered_in_camp';
+					// let status = 'registered_in_camp';
 					request.mw_program_id = program_id;
 					request.mw_academic_year_id = academic_year_id;
 					for (const deactivateId of deactiveLearnerIds) {
@@ -1583,7 +1641,10 @@ export class CampService {
 					}
 
 					const update_body = {
-						status: 'enrolled_ip_verified',
+						status:
+							state_response == 'RAJASTHAN'
+								? 'sso_id_verified'
+								: 'enrolled_ip_verified',
 					};
 
 					await this.beneficiariesCoreService.updateBeneficiaryDetails(
@@ -1722,12 +1783,18 @@ export class CampService {
 							});
 						}
 
+						let update_status =
+							state_response == 'RAJASTHAN'
+								? 'registered_in_neev_camp'
+								: 'registered_in_camp';
+
+						console.log('update_status--->>', update_status);
 						if (allUserIds?.length > 0) {
 							await this.hasuraServiceFromServices.update(
 								null,
 								'program_beneficiaries',
 								{
-									status: 'registered_in_camp',
+									status: update_status,
 									updated_by: facilitator_id,
 								},
 								[],

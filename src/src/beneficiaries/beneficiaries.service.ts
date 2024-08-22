@@ -1897,6 +1897,25 @@ export class BeneficiariesService {
 	}
 
 	public async setEnrollmentStatus(body: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let state_query;
+		let state_result;
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
 		const { data: updatedUser } =
 			await this.beneficiariesCoreService.userById(body.user_id);
 		const allEnrollmentStatuses = this.enumService
@@ -1917,7 +1936,11 @@ export class BeneficiariesService {
 		delete body.status;
 
 		if (body.enrollment_verification_status == 'verified') {
-			body.status = 'enrolled_ip_verified';
+			if (state_response == 'RAJASTHAN') {
+				body.status = 'registered_in_camp';
+			} else {
+				body.status = 'enrolled_ip_verified';
+			}
 		}
 
 		if (body.enrollment_verification_status == 'sso_id_verified') {
@@ -2021,6 +2044,98 @@ export class BeneficiariesService {
 		};
 	}
 
+	public async isEnrollmentAvailiable(id, request, response) {
+		const program_id = request?.mw_program_id;
+		console.log('program_id', program_id);
+		const academic_year_id = request?.mw_academic_year_id;
+		const result = await this.validateEnrollmentAvailiabilty(
+			id,
+			program_id,
+			academic_year_id,
+		);
+
+		if (result?.is_enrollment == false) {
+			return response.status(422).json({
+				data: result,
+			});
+		} else {
+			return response.status(200).json({
+				data: result,
+			});
+		}
+	}
+
+	public async validateEnrollmentAvailiabilty(
+		user_id,
+		program_id,
+		academic_year_id,
+	) {
+		let query;
+		let hasura_response;
+		let program_beneficiaries;
+		let state_query;
+		let state_result;
+		let valid_enrollment_status = [
+			'registered_in_neev_camp',
+			'enrollment_awaited',
+			'enrollment_rejected',
+		];
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
+
+		if (state_response == 'RAJASTHAN') {
+			query = `query MyQuery {
+				program_beneficiaries(where: {user_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in:[${valid_enrollment_status}]}, group_users: {status: {_eq: "active"}, member_type: {_eq: "member"}, group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, camps: {type: {_eq: "main"}}}}) {
+				  id
+				  user_id
+				  status
+				}
+			  }
+			  
+		  
+		  `;
+
+			console.log('query-->>', query);
+
+			hasura_response = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+
+			program_beneficiaries =
+				hasura_response?.data?.program_beneficiaries;
+
+			if (program_beneficiaries?.length > 0) {
+				return {
+					is_enrollment: true,
+					message: 'Enrollment availiable',
+				};
+			} else {
+				return {
+					is_enrollment: false,
+					message: 'Enrollment not availiable',
+				};
+			}
+		}
+		return {
+			is_enrollment: true,
+			message: 'Enrollment availiable',
+		};
+	}
+
 	public async registerBeneficiary(body, request) {
 		const user = await this.userService.ipUserInfo(request);
 		const password = body.mobile;
@@ -2075,8 +2190,8 @@ export class BeneficiariesService {
 
 	async create(req: any, request, response, update = false) {
 		const user = await this.userService.ipUserInfo(request);
-		const program_id = req.mw_program_id;
-		const academic_year_id = req.mw_academic_year_id;
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 		const beneficiary_id = req?.id;
 		let query;
 		let hasura_repsonse;
@@ -2105,6 +2220,7 @@ export class BeneficiariesService {
 		});
 
 		state_name = hasura_repsonse?.data?.programs_by_pk?.state?.state_name;
+
 		const user_id = req?.id;
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_basic: {
@@ -3061,6 +3177,23 @@ export class BeneficiariesService {
 						});
 					}
 
+					if (req?.enrollment_number && state_name == 'RAJASTHAN') {
+						let enrollment_available_check =
+							await this.validateEnrollmentAvailiabilty(
+								user_id,
+								program_id,
+								academic_year_id,
+							);
+
+						if (
+							enrollment_available_check?.is_enrollment == false
+						) {
+							return response.status(422).json({
+								data: enrollment_available_check,
+							});
+						}
+					}
+
 					if (req?.sso_id && request?.mw_program_id == 1) {
 						const result = await this.validateForSSOID(
 							req?.sso_id,
@@ -3112,7 +3245,6 @@ export class BeneficiariesService {
 						'enrollment_dob',
 						'is_eligible',
 						'type_of_enrollement',
-						'sso_id',
 					];
 					for (let info of tempArray) {
 						if (info === 'sso_id' && state_name !== 'RAJASTHAN') {
@@ -3122,6 +3254,7 @@ export class BeneficiariesService {
 							messageArray.push(`please send ${info} `);
 						}
 					}
+
 					if (messageArray.length > 0) {
 						return response.status(400).send({
 							success: false,
@@ -4015,6 +4148,29 @@ export class BeneficiariesService {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
 		let status = 'enrolled_ip_verified';
+		let state_query;
+		let state_result;
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
+
+		//set status to sso_id_verified if the program selected is Rajasthan
+		if (state_response == 'RAJASTHAN') {
+			status = 'sso_id_verified';
+		}
 
 		// Get users which are not present in the camps or whose status is inactive
 		const baseLine = this.enumService
