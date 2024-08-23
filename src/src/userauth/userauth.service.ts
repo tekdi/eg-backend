@@ -42,7 +42,7 @@ export class UserauthService {
 	public async userAuthRegister(body, response, role) {
 		let validate_result = await this.validateFields(role, body);
 
-		if (validate_result?.status == false) {
+		if (validate_result?.status === false) {
 			return response.json({
 				validate_result,
 			});
@@ -167,11 +167,10 @@ export class UserauthService {
 			);
 
 			if (findUsername.length > 0 && group === 'beneficiaries') {
-				let lastUsername =
-					findUsername[findUsername.length - 1].username;
-				//	//console.log('lastUsername', lastUsername);
+				findUsername[findUsername.length - 1].username;
+
 				let count = findUsername.length;
-				//console.log('count', count);
+
 				data_to_create_user.username =
 					data_to_create_user.username + '_' + count;
 			}
@@ -251,11 +250,7 @@ export class UserauthService {
 				if (body.role === 'facilitator') {
 					const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%85%E0%A4%95%E0%A4%BE%E0%A4%89%E0%A4%82%E0%A4%9F%20%E0%A4%AC%E0%A4%A8%E0%A4%BE%E0%A4%AF%E0%A4%BE%20%E0%A4%97%E0%A4%AF%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A5%8B%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A5%8D%E0%A4%A4%E0%A4%BE%20%E0%A4%A8%E0%A4%BE%E0%A4%AE%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%20%E0%A4%94%E0%A4%B0%20%E0%A4%AA%E0%A4%BE%E0%A4%B8%E0%A4%B5%E0%A4%B0%E0%A5%8D%E0%A4%A1%20%3Carg2%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
 					const args = `arg1:${body.username},arg2:${body.password}`;
-					const otpRes = await this.authService.sendSMS(
-						body.mobile,
-						message,
-						args,
-					);
+					await this.authService.sendSMS(body.mobile, message, args);
 				}
 
 				let user_id = result?.data?.id;
@@ -467,7 +462,6 @@ export class UserauthService {
 
 			// Check for core_beneficiaries
 			if (!fields.hasOwnProperty('core_beneficiaries')) {
-				//	throw new Error('Field "core_beneficiaries" is missing');
 				return {
 					status: false,
 					message: 'Field core_beneficiaries is missing',
@@ -569,7 +563,6 @@ export class UserauthService {
 
 			// Check for core_beneficiaries
 			if (!fields.hasOwnProperty('core_faciltators')) {
-				//	throw new Error('Field "core_beneficiaries" is missing');
 				return {
 					status: false,
 					message: 'Field core_faciltators is missing',
@@ -717,7 +710,6 @@ export class UserauthService {
 			const base64String = `data:${fileType};base64,${base64Data}`; // Include the content type in the Base64 string
 			return base64String;
 		} catch (error) {
-			//console.error('Error converting image to Base64:', error);
 			return null;
 		}
 	}
@@ -726,9 +718,6 @@ export class UserauthService {
 		let user_id = request.mw_userid; //get user id from token
 		let program_id = request?.mw_program_id; // get program_id from token
 		let academic_year_id = request?.mw_academic_year_id; // get academic_year_id from token
-
-		//query to get user details information
-		////console.log('user_id', user_id);
 
 		let query = `query MyQuery {
 			users_by_pk(id:${user_id}) {
@@ -889,8 +878,6 @@ export class UserauthService {
 
 		let user_data = hasura_response?.data;
 
-		////console.log('user_data', JSON.stringify(user_data));
-
 		// get profile photo document details
 		let profilePhoto1Documents =
 			user_data?.users_by_pk?.profile_photo_1_documents;
@@ -900,8 +887,6 @@ export class UserauthService {
 
 		let profilePhoto3Documents =
 			user_data?.users_by_pk?.profile_photo_3_documents;
-
-		//  modifiy individual profile photo document details as required
 
 		// get file url and convert to base64
 		let data_base64_profile_1 = null;
@@ -1090,14 +1075,14 @@ export class UserauthService {
 
 		user_data.users_by_pk.program_faciltators =
 			user_data?.users_by_pk?.program_faciltators?.reduce((acc, pf) => {
-				pf ? pf : {};
+				pf = pf || {};
 
 				return { ...acc, ...pf };
 			}, {});
 
 		user_data.users_by_pk.references =
 			user_data?.users_by_pk?.references?.reduce((acc, rf) => {
-				rf ? rf : {};
+				rf = rf || {};
 
 				return { ...acc, ...rf };
 			}, {});
@@ -1190,13 +1175,10 @@ export class UserauthService {
 	public async userOnboarding(body: any, response: any, request: any) {
 		//first check validations for all inputs
 		let jsonContent;
-		//console.log('body-->', body);
 
 		try {
 			// Convert buffer to JSON object
 			jsonContent = JSON.parse(body.buffer.toString('utf8'));
-
-			// Process JSON content
 
 			// Return success message
 		} catch (error) {
@@ -1215,7 +1197,6 @@ export class UserauthService {
 			response,
 		);
 
-		//console.log('result-->>', result);
 		if (result) {
 			return response.status(200).json({
 				result: result,
@@ -1254,7 +1235,6 @@ export class UserauthService {
 		for (const key in json) {
 			const value = json[key];
 			if (!(Object.keys(value).length === 0)) {
-				//console.log('value-->>', value);
 				if (typeof value === 'object') {
 					tableName = key;
 					tableFields = Object.keys(value);
@@ -1322,8 +1302,6 @@ export class UserauthService {
 				}
 
 				if (tableName == 'program_faciltators') {
-					//console.log('vlaues-->>', value);
-
 					value.program_id = program_id;
 					value.academic_year_id = academic_year_id;
 					try {
@@ -1334,7 +1312,6 @@ export class UserauthService {
 
 					tableFields.push('program_id');
 					tableFields.push('academic_year_id');
-					//console.log('vlaues123-->>', value);
 				}
 
 				if (tableName == 'references') {
@@ -1349,11 +1326,9 @@ export class UserauthService {
 				}
 
 				if (tableName == 'qualifications') {
-					//console.log('qualvalue-->', value);
 					if (value?.documents) {
 						let base64 = value?.documents?.base64;
 
-						//console.log('base64-->>', base64);
 						let document_details = {
 							document_type: 'qualifications',
 							document_sub_type: 'qualifications',
@@ -1370,15 +1345,12 @@ export class UserauthService {
 						}
 					}
 
-					//console.log('base64result-->.', base64result);
-
 					value['qualification_reference_document_id'] =
 						base64result?.document_id;
 					tableFields = tableFields?.filter(
 						(field) => field !== 'documents',
 					);
 					delete value?.documents;
-					//console.log('qualvalue123-->', value);
 				}
 
 				let response = await this.findExisitingReccord(
@@ -1417,8 +1389,6 @@ export class UserauthService {
 						});
 					}
 				}
-
-				//console.log('upsert_records_result-->>', upsert_records_result);
 			}
 		}
 
@@ -1449,7 +1419,6 @@ export class UserauthService {
 			set_update = obj?.id ? 1 : 0;
 			update_id = obj?.id;
 
-			//console.log('set->.', set_update);
 			if (set_update == 1) {
 				tableFields.push('id');
 			}
@@ -1481,7 +1450,6 @@ export class UserauthService {
 				if ('documents' in obj.references) {
 					let base64 = obj.references?.documents?.base64;
 
-					//console.log('base64-->>', base64);
 					let document_details = {
 						document_type: 'reference',
 						document_sub_type: 'reference',
@@ -1512,8 +1480,6 @@ export class UserauthService {
 				delete obj?.references;
 			}
 
-			//console.log('referenceData-->>', referenceData);
-
 			result = await this.upsertRecords(
 				set_update,
 				tableName,
@@ -1537,8 +1503,6 @@ export class UserauthService {
 					user_id,
 					update_id,
 				);
-
-				//console.log('references result--->>', result1);
 			}
 
 			if (result?.[tableName]?.extensions) {
@@ -1699,7 +1663,7 @@ export class UserauthService {
 		id?,
 	) {
 		let result;
-		//console.log('value-->>', value);
+
 		if (set_update == 1 && id) {
 			result = await this.hasuraService.q(
 				tableName,
@@ -1728,7 +1692,7 @@ export class UserauthService {
 
 	public async upsertProfileDocuments(profileDocumentArray) {
 		for (const profileDocument of profileDocumentArray) {
-			let result = await this.hasuraService.q(
+			await this.hasuraService.q(
 				'documents',
 				{
 					...profileDocument,
@@ -1738,8 +1702,6 @@ export class UserauthService {
 				true,
 				['name', 'document_sub_type', 'doument_type', 'id'],
 			);
-
-			//console.log('resuklt-->>', result);
 		}
 	}
 
@@ -2048,7 +2010,6 @@ export class UserauthService {
 	}
 
 	public async base64ToBlob(base64, userId, res, documentDetails) {
-		//console.log('here-->>');
 		let fileObject;
 		const arr = base64.split(',');
 		const mime = arr[0].match(/:(.*?);/)[1];
@@ -2079,10 +2040,6 @@ export class UserauthService {
 			true,
 		);
 
-		//console.log(
-		//	'response of file upload-->>',
-		//	JSON.stringify(uploadresponse),
-		//	);
 		let document_id: any; // Adjust the type as per your requirement
 
 		if ('data' in uploadresponse && uploadresponse.data) {
@@ -2181,7 +2138,7 @@ export class UserauthService {
 			const token = await this.keycloakService.getAdminKeycloakToken();
 
 			if (token?.access_token) {
-				const findUsername = await this.keycloakService.findUser(
+				await this.keycloakService.findUser(
 					username,
 					token?.access_token,
 				);
@@ -2223,7 +2180,7 @@ export class UserauthService {
 					if (body.role === 'volunteer') {
 						const message = `%E0%A4%A8%E0%A4%AE%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A4%BE%E0%A4%B0,%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%97%E0%A4%A4%E0%A4%BF%20%E0%A4%AA%E0%A5%8D%E0%A4%B2%E0%A5%87%E0%A4%9F%E0%A4%AB%E0%A5%89%E0%A4%B0%E0%A5%8D%E0%A4%AE%20%E0%A4%AA%E0%A4%B0%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%85%E0%A4%95%E0%A4%BE%E0%A4%89%E0%A4%82%E0%A4%9F%20%E0%A4%AC%E0%A4%A8%E0%A4%BE%E0%A4%AF%E0%A4%BE%20%E0%A4%97%E0%A4%AF%E0%A4%BE%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20%E0%A4%86%E0%A4%AA%E0%A4%95%E0%A4%BE%20%E0%A4%89%E0%A4%AA%E0%A4%AF%E0%A5%8B%E0%A4%97%E0%A4%95%E0%A4%B0%E0%A5%8D%E0%A4%A4%E0%A4%BE%20%E0%A4%A8%E0%A4%BE%E0%A4%AE%20%3Carg1%3E%20%E0%A4%B9%E0%A5%88%20%E0%A4%94%E0%A4%B0%20%E0%A4%AA%E0%A4%BE%E0%A4%B8%E0%A4%B5%E0%A4%B0%E0%A5%8D%E0%A4%A1%20%3Carg2%3E%20%E0%A4%B9%E0%A5%88%E0%A5%A4%20FEGG`;
 						const args = `arg1:${body.username},arg2:${body.password}`;
-						const otpRes = await this.authService.sendSMS(
+						await this.authService.sendSMS(
 							body.mobile,
 							message,
 							args,
@@ -2282,8 +2239,8 @@ export class UserauthService {
 					}
 					if (user_id && role === 'volunteer') {
 						// Set the timezone to Indian Standard Time (Asia/Kolkata)
-						const formattedISTTime =
-							this.method.getFormattedISTTime();
+
+						this.method.getFormattedISTTime();
 
 						// Format the time as per datetime
 					}
