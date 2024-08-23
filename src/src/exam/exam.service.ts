@@ -1054,6 +1054,10 @@ export class ExamService {
 				program_beneficiaries(where: ${filter}, ${limit != -1 ? 'limit: $limit,' : ''}
 					offset: $offset) {
 				  facilitator_id
+					user_id
+					enrollment_first_name
+					enrollment_middle_name
+					enrollment_last_name
 					bordID{
 						id
 						name
