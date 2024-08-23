@@ -2156,6 +2156,11 @@
 	],
 	"PC_USER_ACTIVITY_CATEGORIES": [
 		{
+			"title": "PC_USER_ACTIVITY_CATEGORIES_MOBILIZATION",
+			"value": "mobilization",
+			"foreign_enum_key": "MOBILIZATION_ACTIVITY"
+		},
+		{
 			"title": "PC_USER_ACTIVITY_CATEGORIES_CAMP",
 			"value": "camp",
 			"foreign_enum_key": "CAMP_ACTIVITY"
@@ -2164,11 +2169,6 @@
 			"title": "PC_USER_ACTIVITY_CATEGORIES_EXAM",
 			"value": "exam",
 			"foreign_enum_key": "EXAM_ACTIVITY"
-		},
-		{
-			"title": "PC_USER_ACTIVITY_CATEGORIES_MOBILIZATION",
-			"value": "mobilization",
-			"foreign_enum_key": "MOBILIZATION_ACTIVITY"
 		},
 		{
 			"title": "PC_USER_ACTIVITY_CATEGORIES_MONITORING_VISIT",
