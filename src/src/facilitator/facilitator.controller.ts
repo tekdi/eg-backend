@@ -26,26 +26,6 @@ export class FacilitatorController {
 	public url = process.env.HASURA_BASE_URL;
 	constructor(public facilitatorService: FacilitatorService) {}
 
-	// @Post('/create')
-	// create(@Body() createFacilitatorDto: CreateFacilitatorDto) {
-	//   return this.facilitatorService.create(createFacilitatorDto);
-	// }
-
-	// @Post()
-	// findAll(@Body() request: Record<string, any>) {
-	//   return this.facilitatorService.findAll(request);
-	// }
-
-	// @Get(':id')
-	// findOne(@Param('id') id: string) {
-	//   return this.facilitatorService.findOne(+id);
-	// }
-
-	// @Patch(':id')
-	// update(@Param('id') id: string, @Body() request: Record<string, any>) {
-	//   return this.facilitatorService.update(+id, request);
-	// }
-
 	@Get('/getStatuswiseCount')
 	@UseGuards(new AuthGuard())
 	getStatuswiseCount(@Req() request: any, @Res() response: Response) {
