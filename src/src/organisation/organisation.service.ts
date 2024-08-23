@@ -137,7 +137,7 @@ export class OrganisationService {
 			let offset = page > 1 ? limit * (page - 1) : 0;
 			let order_by = '';
 			if (body?.order_by) {
-				let { name, id } = body?.order_by;
+				let { name, id } = body?.order_by || {};
 				let errorData = {};
 				if (name && !['asc', 'desc'].includes(name)) {
 					errorData = {

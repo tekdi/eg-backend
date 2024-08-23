@@ -6,7 +6,6 @@ import {
 	Body,
 	Req,
 	Res,
-	Delete,
 	UseGuards,
 	Response,
 	UsePipes,
