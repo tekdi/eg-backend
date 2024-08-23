@@ -1,5 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { UserHelperService } from 'src/helper/userHelper.service';
 import { HasuraService } from 'src/services/hasura/hasura.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
@@ -122,7 +121,7 @@ export class ProgramCoordinatorService {
 			const token = await this.keycloakService.getAdminKeycloakToken();
 
 			if (token?.access_token) {
-				const findUsername = await this.keycloakService.findUser(
+				await this.keycloakService.findUser(
 					username,
 					token?.access_token,
 				);
@@ -405,8 +404,7 @@ export class ProgramCoordinatorService {
 
 		let program_coordinator_data = hasura_response?.data;
 		if (
-			!program_coordinator_data ||
-			!program_coordinator_data.users ||
+			!program_coordinator_data?.users ||
 			program_coordinator_data.users.length === 0
 		) {
 			return response.status(422).json({

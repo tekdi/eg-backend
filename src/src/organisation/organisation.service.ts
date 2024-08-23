@@ -75,7 +75,7 @@ export class OrganisationService {
 			['name', 'mobile', 'contact_person', 'address', 'email_id'],
 		);
 
-		if (!newOrganisation || !newOrganisation?.organisations.id) {
+		if (!newOrganisation?.organisations.id) {
 			throw new Error('Failed to create organisation.');
 		}
 		const organisation = newOrganisation?.organisations;
