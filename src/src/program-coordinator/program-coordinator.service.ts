@@ -1950,7 +1950,7 @@ export class ProgramCoordinatorService {
 			const limit = isNaN(body?.limit) ? 15 : parseInt(body?.limit);
 			let offset = page > 1 ? limit * (page - 1) : 0;
 
-			const { type, date, user_id, categories } = body;
+			const { type, date, user_id, categories, village } = body;
 			let filterConditions = '';
 
 			if (type) {
@@ -1958,6 +1958,9 @@ export class ProgramCoordinatorService {
 			}
 			if (categories) {
 				filterConditions += `, categories: {_eq: "${categories}"}`;
+			}
+			if (village) {
+				filterConditions += `, village: {_eq: "${village}"}`;
 			}
 			if (date) {
 				const dateString = date.split('T')[0]; // Extracting only the date part
