@@ -4995,7 +4995,7 @@ export class BeneficiariesService {
 		const birthDate = moment(req.enrollment_dob, 'YYYY-MM-DD');
 		const enrollment = moment(req.enrollment_date, 'YYYY-MM-DD');
 		const age14 = birthDate.clone().add(14, 'years');
-		const age29 = birthDate.clone().add(29, 'years');
+		const age29 = birthDate.clone().add(29, 'years').add(364, 'days');
 		const isAgeValid = enrollment.isBetween(age14, age29, undefined, '[]');
 		let response: any = {
 			validationError: false,
