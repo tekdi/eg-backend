@@ -988,7 +988,12 @@ export class ProgramCoordinatorService {
 
 		//filters
 
-		userFilter.push(`pc_id:{_eq:${pc_id}}`);
+		userFilter.push(`pc_id:{_eq:${pc_id}},user:{
+      group_users: {
+      status: {_eq: "active"},
+      member_type: {_eq: "owner"}
+    }
+    }`);
 
 		if (body?.status) {
 			userFilter.push(`status:{_eq:${body?.status}}`);
@@ -1323,7 +1328,7 @@ export class ProgramCoordinatorService {
 			}
 
 			let sql = `
-			SELECT c.id as camp_id,u.first_name,u.last_name,u.id as facilitator_id,g.program_id,g.academic_year_id
+			SELECT c.id as camp_id,c.type as camp_type,u.first_name,u.last_name,u.id as facilitator_id,g.program_id,g.academic_year_id
 			FROM camps c
 			INNER JOIN group_users gu on c.group_id = gu.group_id
 			INNER JOIN groups g on c.group_id = g.id
