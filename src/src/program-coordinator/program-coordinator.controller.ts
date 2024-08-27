@@ -11,8 +11,6 @@ import {
 	ValidationPipe,
 	Response,
 	Request,
-	UploadedFile,
-	UseInterceptors,
 	Patch,
 	Delete,
 } from '@nestjs/common';
@@ -48,7 +46,7 @@ export class ProgramCoordinatorController {
 		@Body() body: Body,
 		@Res() response: Response,
 		@Req() request: Request,
-		@Param('id') id: Number,
+		@Param('id') id: number,
 	) {
 		return this.programCoordinatorService.getProgramCoordinatorDetails(
 			id,
@@ -80,7 +78,7 @@ export class ProgramCoordinatorController {
 		@Body() body: Body,
 		@Res() response: Response,
 		@Req() request: Request,
-		@Param('id') id: Number,
+		@Param('id') id: number,
 	) {
 		return this.programCoordinatorService.getAvailableFacilitatorList(
 			id,
@@ -97,7 +95,7 @@ export class ProgramCoordinatorController {
 		@Body() body: Body,
 		@Res() response: Response,
 		@Req() request: Request,
-		@Param('id') id: Number,
+		@Param('id') id: number,
 	) {
 		return this.programCoordinatorService.updateProgramCoordinatorToFacilitator(
 			id,
@@ -127,7 +125,7 @@ export class ProgramCoordinatorController {
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
-		@Param('id') id: Number,
+		@Param('id') id: number,
 	) {
 		return this.programCoordinatorService.activitiesUpdate(
 			request,
@@ -141,7 +139,7 @@ export class ProgramCoordinatorController {
 	public async activitiesDelete(
 		@Req() request: any,
 		@Res() response: any,
-		@Param('id') id: Number,
+		@Param('id') id: number,
 	) {
 		return this.programCoordinatorService.activitiesDelete(
 			request,
@@ -284,13 +282,27 @@ export class ProgramCoordinatorController {
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
-		@Param('id') id: Number,
+		@Param('id') id: number,
 	) {
 		return this.programCoordinatorService.updateProfile(
 			request,
 			body,
 			response,
 			id,
+		);
+	}
+
+	@Get('/board/:id')
+	@UseGuards(new AuthGuard())
+	public async getBoardNameById(
+		@Param('id') id: number,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getBoardNameById(
+			id,
+			response,
+			request,
 		);
 	}
 }

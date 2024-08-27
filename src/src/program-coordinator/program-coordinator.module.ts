@@ -22,6 +22,7 @@ import { ProgramCoordinatorService } from './program-coordinator.service';
 import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
 import { UploadFileModule } from 'src/upload-file/upload-file.module';
 import { EnumModule } from '../enum/enum.module';
+import { BoardModule } from 'src/modules/board/board.module';
 @Module({
 	imports: [
 		KeycloakModule,
@@ -34,6 +35,7 @@ import { EnumModule } from '../enum/enum.module';
 		S3Module,
 		UploadFileModule,
 		EnumModule,
+		BoardModule,
 	],
 	controllers: [ProgramCoordinatorController],
 	providers: [ProgramCoordinatorService, Method, AuthService],
@@ -56,6 +58,7 @@ export class ProgramCoordinatorModule implements NestModule {
 				'/program-coordinator/info/:id',
 				'/program-coordinator/profile',
 				'/program-coordinator/profile/:id',
+				'/program-coordinator/board/:id',
 			)
 			.forRoutes(ProgramCoordinatorController);
 	}
