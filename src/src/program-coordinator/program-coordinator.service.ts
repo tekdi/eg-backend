@@ -1815,6 +1815,8 @@ export class ProgramCoordinatorService {
 					'village',
 					'block',
 					'categories',
+					'lat',
+					'long',
 				],
 			);
 
@@ -1859,6 +1861,8 @@ export class ProgramCoordinatorService {
 					'village',
 					'block',
 					'categories',
+					'lat',
+					'long',
 				],
 				true,
 				[
@@ -1878,6 +1882,8 @@ export class ProgramCoordinatorService {
 					'village',
 					'block',
 					'categories',
+					'lat',
+					'long',
 				],
 			);
 
