@@ -2022,8 +2022,8 @@
 			"value": "learner_documentation_support"
 		},
 		{
-			"title": "MOBILIZATION_ACTIVITY_LEARNER_OS_ENR_SUPPORT",
-			"value": "learner_os_enr_support"
+			"title": "MOBILIZATION_ACTIVITY_LEARNER_OPEN_SCHOOL_ENROLLMENT_SUPPORT",
+			"value": "learner_open_school_enrollment_support"
 		},
 		{
 			"title": "MOBILIZATION_ACTIVITY_PRI_CONTACT_AND_MEETING",
@@ -2044,27 +2044,23 @@
 	],
 	"CAMP_ACTIVITY": [
 		{
-			"title": "CAMP_ACTIVITY_BL_FA_EL_MT_SUPPORT",
-			"value": "bl_fa_el_mt_support"
-		},
-		{
 			"title": "CAMP_ACTIVITY_CAMP_SETUP_SUPPORT",
 			"value": "camp_setup_support"
 		},
 		{
-			"title": "CAMP_ACTIVITY_CASE_STORY_PREPARATION",
-			"value": "case_story_preparation"
-		},
-		{
 			"title": "CAMP_ACTIVITY_SESSION_SUPPORT",
 			"value": "session_support"
+		},
+		{
+			"title": "CAMP_ACTIVITY_LEARNER_ASSESSMENT_SUPPORT",
+			"value": "learner_assessment_support"
+		},
+		{
+			"title": "CAMP_ACTIVITY_SUCCESS_CASE_STORY_PREPARATION",
+			"value": "success_case_story_preparation"
 		}
 	],
 	"EXAM_ACTIVITY": [
-		{
-			"title": "EXAM_ACTIVITY_EXAM_ATTENDANCE_ENSURE",
-			"value": "exam_attendance_ensure"
-		},
 		{
 			"title": "EXAM_ACTIVITY_E_PCP_SUPPORT",
 			"value": "e_pcp_support"
@@ -2074,84 +2070,88 @@
 			"value": "exam_readiness_support"
 		},
 		{
-			"title": "EXAM_ACTIVITY_RESULT_DOWNLOAD_AND_UPLOAD",
-			"value": "result_download_and_upload"
+			"title": "EXAM_ACTIVITY_EXAM_ATTENDANCE_ENSURE",
+			"value": "exam_attendance_ensure"
+		},
+		{
+			"title": "EXAM_ACTIVITY_RESULT_DOWNLOAD_AND_UPLOAD_SUPPORT",
+			"value": "result_download_and_upload_support"
 		}
 	],
 	"MONITORING_VISIT_ACTIVITY": [
-		{
-			"title": "MONITORING_VISIT_ACTIVITY_BASELINE",
-			"value": "baseline"
-		},
 		{
 			"title": "MONITORING_VISIT_ACTIVITY_COMMUNITY_MOBILIZATION",
 			"value": "community_mobilization"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_ENDLINE",
-			"value": "endline"
+			"title": "MONITORING_VISIT_ACTIVITY_VIABLE_CAMP_SETUP_SC",
+			"value": "viable_camp_setup_sc"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_LEARNER_INTERACTION",
-			"value": "learner_interaction"
+			"title": "MONITORING_VISIT_ACTIVITY_BASELINE_SC",
+			"value": "baseline_sc"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_MOCK_TEST_1_AND_2",
-			"value": "mock_test_1_and_2"
+			"title": "MONITORING_VISIT_ACTIVITY_NEEV_CAMP_SESSION_CRO",
+			"value": "neenv_camp_session_cro"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_PRERAK_INTERACTION",
-			"value": "prerak_interaction"
+			"title": "MONITORING_VISIT_ACTIVITY_FORMATIVE_ASSESSMENT_SC",
+			"value": "formative_assessment_sc"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_RACHNATMAK_AKLAN_1_AND_2",
-			"value": "rachnatmak_aklan_1_and_2"
+			"title": "MONITORING_VISIT_ACTIVITY_ENDLINE_SC",
+			"value": "endline_sc"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_SESSION_DELIVERY_NEEV",
-			"value": "session_delivery_neev"
+			"title": "MONITORING_VISIT_ACTIVITY_PRAYAS_CAMP_SESSION_CRO",
+			"value": "prayas_camp_session_cro"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_SESSION_DELIVERY_PRAYAS",
-			"value": "session_delivery_prayas"
+			"title": "MONITORING_VISIT_ACTIVITY_MOCK_TEST_SC",
+			"value": "mock_test_sc"
 		},
 		{
-			"title": "MONITORING_VISIT_ACTIVITY_VIABLE_CAMP_SETUP",
-			"value": "viable_camp_setup"
+			"title": "MONITORING_VISIT_ACTIVITY_LEARNER_INTERVIEW",
+			"value": "learner_interview"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_PRERAK_INTERVIEW",
+			"value": "prerak_interview"
 		}
 	],
 	"TRAINING_AND_MEETING_ACTIVITY": [
 		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAGATI_ORIENTATION_TRAINING",
+			"value": "pragati_orientation_training"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_NEEV_CAMP_TRAINING",
+			"value": "neev_camp_training"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAYAS_CAMP_TRAINING",
+			"value": "prayas_camp_training"
+		},
+		{
 			"title": "TRAINING_AND_MEETING_ACTIVITY_EXAM_PREPARATION_TRAINING",
 			"value": "exam_preparation_training"
-		},
-		{
-			"title": "TRAINING_AND_MEETING_ACTIVITY_GOVT_STAKEHOLDER",
-			"value": "govt_stakeholder"
-		},
-		{
-			"title": "TRAINING_AND_MEETING_ACTIVITY_NEEV_TRAINING",
-			"value": "neev_training"
 		},
 		{
 			"title": "TRAINING_AND_MEETING_ACTIVITY_OTHER_TRAINING",
 			"value": "other_training"
 		},
 		{
-			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAGATI_ORIENTATION_TRAINING",
-			"value": "pragati_orientation_training"
-		},
-		{
-			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAYAS_TRAINING",
-			"value": "prayas_training"
-		},
-		{
-			"title": "TRAINING_AND_MEETING_ACTIVITY_PC_AND_PRERAK_MEETING",
-			"value": "pc_and_prerak_meeting"
+			"title": "TRAINING_AND_MEETING_ACTIVITY_GOVT_STAKEHOLDER",
+			"value": "govt_stakeholder"
 		},
 		{
 			"title": "TRAINING_AND_MEETING_ACTIVITY_STAFF_MEETING",
 			"value": "staff_meeting"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PC_AND_PRERAK_MEETING",
+			"value": "pc_and_prerak_meeting"
 		}
 	],
 	"PC_USER_ACTIVITY_CATEGORIES": [
