@@ -2132,4 +2132,8 @@ export class ProgramCoordinatorService {
 	public async getBoardNameById(id: any, response: any, request: any) {
 		await this.boardService.getBoardNameById(id, response, request);
 	}
+
+	public async getSubjectsByBoard(id: any, response: any, request: any) {
+		await this.boardService.getSubjectsByBoard(id, response, request);
+	}
 }
