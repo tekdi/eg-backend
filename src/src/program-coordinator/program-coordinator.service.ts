@@ -1882,7 +1882,6 @@ export class ProgramCoordinatorService {
 					'categories',
 					'lat',
 					'long',
-					'updated_at',
 				],
 			);
 
