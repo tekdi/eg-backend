@@ -305,4 +305,18 @@ export class ProgramCoordinatorController {
 			request,
 		);
 	}
+
+	@Get('/subject/list/:id')
+	@UseGuards(new AuthGuard())
+	public async getSubjectsByBoard(
+		@Param('id') id: number,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getSubjectsByBoard(
+			id,
+			response,
+			request,
+		);
+	}
 }
