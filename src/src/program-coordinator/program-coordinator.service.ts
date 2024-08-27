@@ -8,6 +8,7 @@ import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from '../user/user.service';
 import { EnumService } from '../enum/enum.service';
+import { BoardService } from 'src/modules/board/board.service';
 @Injectable()
 export class ProgramCoordinatorService {
 	constructor(
@@ -20,6 +21,7 @@ export class ProgramCoordinatorService {
 		private uploadFileService: UploadFileService,
 		public userService: UserService,
 		private enumService: EnumService,
+		private boardService: BoardService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {
@@ -2119,5 +2121,9 @@ export class ProgramCoordinatorService {
 			);
 		}
 		return null;
+	}
+
+	public async getBoardNameById(id: any, response: any, request: any) {
+		await this.boardService.getBoardNameById(id, response, request);
 	}
 }
