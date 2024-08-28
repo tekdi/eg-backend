@@ -13,7 +13,7 @@ import {
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { Method } from '../common/method/method';
-import { type } from 'os';
+
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -2646,12 +2646,7 @@ export class FacilitatorService {
 
 		const result = await this.hasuraService.getData({ query });
 
-		if (
-			!result ||
-			!result.data ||
-			!result.data.users ||
-			result.data.users.length === 0
-		) {
+		if (!result?.data?.users?.length) {
 			return res.status(400).json({ message: 'User data not found' });
 		}
 
@@ -2683,11 +2678,9 @@ export class FacilitatorService {
 		};
 
 		switch (status) {
-			case 'pragati_mobilizer':
+			case 'pragati_mobilizer': {
 				requiredFields = [
 					'first_name',
-					'middle_name',
-					'last_name',
 					'mobile',
 					'dob',
 					'gender',
@@ -2700,7 +2693,7 @@ export class FacilitatorService {
 					'core_faciltator.device_ownership',
 					'core_faciltator.device_type',
 				];
-				const documents = userData.documents || [];
+				const documents = userData?.documents || [];
 				const requiredDocumentTypes = [
 					'qualifications',
 					'profile_photo_1',
@@ -2760,12 +2753,10 @@ export class FacilitatorService {
 				requiredFields = requiredFields.filter(
 					(field) => !checkField(userData, field),
 				);
-				dataToCheck = userData;
-				break;
-			case 'selected_for_onboarding':
-				//requiredFields = ['has_volunteer_exp', 'has_job_exp'];
-				dataToCheck = userData;
 
+				break;
+			}
+			case 'selected_for_onboarding': {
 				const checkExperience = ({ type, key }) => {
 					// experience
 					const experience = userData.experience.filter(
@@ -2778,7 +2769,7 @@ export class FacilitatorService {
 						)
 					) {
 						return [key];
-					} else if (userData?.core_faciltator?.[key] == true) {
+					} else if (userData?.core_faciltator?.[key] === true) {
 						let arr = [
 							'organization',
 							'role_title',
@@ -2852,9 +2843,9 @@ export class FacilitatorService {
 					requiredFields.push('availability');
 				}
 				break;
+			}
 			case 'selected_prerak':
 				requiredFields = ['aadhar_no'];
-				dataToCheck = userData;
 				break;
 			default:
 				return res.status(400).json({ message: 'Invalid status' });

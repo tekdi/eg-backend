@@ -16,6 +16,8 @@ import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
+import * as moment from 'moment';
+
 @Injectable()
 export class BeneficiariesService {
 	public url = process.env.HASURA_BASE_URL;
@@ -1354,6 +1356,14 @@ export class BeneficiariesService {
 					document_sub_type
 					path
 					}
+					exam_result_document: documents(where: {document_sub_type: {_eq: "exam_result_fail"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+
 				profile_url
 				state
 				state_id
@@ -1526,6 +1536,8 @@ export class BeneficiariesService {
 				['profile_photo_1']: result?.['profile_photo_1']?.[0] || {},
 				['profile_photo_2']: result?.['profile_photo_2']?.[0] || {},
 				['profile_photo_3']: result?.['profile_photo_3']?.[0] || {},
+				['exam_result_document']:
+					result?.['exam_result_document']?.[0] || {},
 				['aadhaar_front']: result?.['aadhaar_front']?.[0] || {},
 				['aadhaar_back']: result?.['aadhaar_back']?.[0] || {},
 				['program_users']: result?.['program_users']?.[0] || {},
@@ -1558,6 +1570,7 @@ export class BeneficiariesService {
 					mappedData.profile_photo_3.fileUrl = fileData.fileUrl;
 				}
 			}
+
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
@@ -2979,10 +2992,24 @@ export class BeneficiariesService {
 								req.id,
 							);
 
+						//check age
+						const { validationError, message } =
+							await this.checkPragatiCampEligibility({ ...req });
+						if (validationError) {
+							return response.status(422).send({
+								success: false,
+								message: `Missing fields data`,
+								errors: {
+									subjects: {
+										__errors: [message],
+									},
+								},
+							});
+						}
 						if (req?.is_eligible === 'no') {
 							status = 'ineligible_for_pragati_camp';
 							reason =
-								'The age of the learner should not be 14 to 29';
+								'The age of the learner should be 14 to 29';
 						} else if (req?.is_eligible === 'yes') {
 							status = 'sso_id_enrolled';
 							reason = 'sso_id_enrolled';
@@ -2991,8 +3018,6 @@ export class BeneficiariesService {
 						myRequest = {
 							...copiedRequest,
 							enrollment_number: null,
-							status,
-							reason_for_status_update: 'sso_id_enrolled',
 							enrollment_verification_status:
 								updatedUser.program_beneficiaries
 									?.enrollment_verification_status ===
@@ -3018,8 +3043,8 @@ export class BeneficiariesService {
 						await this.statusUpdate(
 							{
 								user_id: req.id,
-								status: 'sso_id_enrolled',
-								reason_for_status_update: 'sso_id_enrolled',
+								status: status,
+								reason_for_status_update: reason,
 							},
 							request,
 						);
@@ -3111,11 +3136,24 @@ export class BeneficiariesService {
 							await this.beneficiariesCoreService.userById(
 								req.id,
 							);
-
+						//check age
+						const { validationError, message } =
+							await this.checkPragatiCampEligibility({ ...req });
+						if (validationError) {
+							return response.status(422).send({
+								success: false,
+								message: `Missing fields data`,
+								errors: {
+									subjects: {
+										__errors: [message],
+									},
+								},
+							});
+						}
 						if (req?.is_eligible === 'no') {
 							status = 'ineligible_for_pragati_camp';
 							reason =
-								'The age of the learner should not be 14 to 29';
+								'The age of the learner should be 14 to 29';
 						} else if (req?.is_eligible === 'yes') {
 							status = 'enrolled';
 							reason = 'enrolled';
@@ -3126,8 +3164,6 @@ export class BeneficiariesService {
 
 						myRequest = {
 							...copiedRequest,
-							status,
-							reason_for_status_update: reason,
 							enrollment_verification_status:
 								updatedUser.program_beneficiaries
 									?.enrollment_verification_status ===
@@ -3152,8 +3188,8 @@ export class BeneficiariesService {
 						await this.statusUpdate(
 							{
 								user_id: req.id,
-								status: 'enrolled',
-								reason_for_status_update: 'enrolled',
+								status: status,
+								reason_for_status_update: reason,
 							},
 							request,
 						);
@@ -4808,5 +4844,35 @@ export class BeneficiariesService {
 				message: 'Valid SSO ID',
 			});
 		}
+	}
+
+	async checkPragatiCampEligibility(req: any) {
+		// Calculate eligibility based on age
+		const birthDate = moment(req.enrollment_dob, 'YYYY-MM-DD');
+		const enrollment = moment(req.enrollment_date, 'YYYY-MM-DD');
+		const age14 = birthDate.clone().add(14, 'years');
+		const age29 = birthDate.clone().add(29, 'years').add(364, 'days');
+		const isAgeValid = enrollment.isBetween(age14, age29, undefined, '[]');
+		let response: any = {
+			validationError: false,
+			message: undefined,
+		};
+
+		// Check if the provided is_eligible matches the calculated eligibility
+		if (
+			(req?.is_eligible == 'no' && isAgeValid) ||
+			(req?.is_eligible == 'yes' && !isAgeValid)
+		) {
+			response = {
+				validationError: true,
+				message: `Provided is_eligible (${
+					req.is_eligible
+				}) does not match the calculated eligibility (${
+					isAgeValid ? 'yes' : 'no'
+				}). Please correct it.`,
+			};
+		}
+
+		return response;
 	}
 }
