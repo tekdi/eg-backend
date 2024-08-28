@@ -1788,7 +1788,13 @@ export class ProgramCoordinatorService {
 			if (validationError) {
 				return;
 			}
-
+			// Validate lat and long
+			if (!body.lat || !body.long) {
+				return resp.status(422).json({
+					status: false,
+					message: 'Lat and Long are required fields.',
+				});
+			}
 			const response = await this.hasuraService.create(
 				'activities',
 				{
