@@ -1356,6 +1356,14 @@ export class BeneficiariesService {
 					document_sub_type
 					path
 					}
+					exam_result_document: documents(where: {document_sub_type: {_eq: "exam_result_fail"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+
 				profile_url
 				state
 				state_id
@@ -1528,6 +1536,8 @@ export class BeneficiariesService {
 				['profile_photo_1']: result?.['profile_photo_1']?.[0] || {},
 				['profile_photo_2']: result?.['profile_photo_2']?.[0] || {},
 				['profile_photo_3']: result?.['profile_photo_3']?.[0] || {},
+				['exam_result_document']:
+					result?.['exam_result_document']?.[0] || {},
 				['aadhaar_front']: result?.['aadhaar_front']?.[0] || {},
 				['aadhaar_back']: result?.['aadhaar_back']?.[0] || {},
 				['program_users']: result?.['program_users']?.[0] || {},
@@ -1560,6 +1570,7 @@ export class BeneficiariesService {
 					mappedData.profile_photo_3.fileUrl = fileData.fileUrl;
 				}
 			}
+
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
