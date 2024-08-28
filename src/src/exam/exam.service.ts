@@ -1077,6 +1077,13 @@ export class ExamService {
 					first_name
 					middle_name
 					last_name
+					exam_result_document: documents(where: {document_sub_type: {_eq: "exam_result_fail"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+					
+					}
 					exam_results(where: {program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}},${filterStatus}}) {
 					  id
 					  board_id
