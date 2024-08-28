@@ -1345,7 +1345,7 @@ export class ExamService {
 			file,
 			user_id,
 			'exam_result',
-			'',
+			'exam_result_fail',
 			response,
 		);
 
