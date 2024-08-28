@@ -1568,15 +1568,7 @@ export class BeneficiariesService {
 					mappedData.profile_photo_3.fileUrl = fileData.fileUrl;
 				}
 			}
-			if (mappedData?.exam_result_document?.id) {
-				const { success, data: fileData } =
-					await this.uploadFileService.getDocumentById(
-						mappedData?.exam_result_document?.id,
-					);
-				if (success && fileData?.fileUrl) {
-					mappedData.exam_result_document.fileUrl = fileData.fileUrl;
-				}
-			}
+
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
