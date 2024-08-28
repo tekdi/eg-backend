@@ -319,4 +319,17 @@ export class ProgramCoordinatorController {
 			request,
 		);
 	}
+
+	@Post('/get/academic-year-details')
+	public async getAcademicyearDetailsByProgram(
+		@Body() body: any,
+		@Res() response: Response,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getAcademicyearDetailsByProgram(
+			body,
+			request,
+			response,
+		);
+	}
 }

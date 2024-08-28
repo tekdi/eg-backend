@@ -60,6 +60,7 @@ export class ProgramCoordinatorModule implements NestModule {
 				'/program-coordinator/profile/:id',
 				'/program-coordinator/board/:id',
 				'/program-coordinator/subject/list/:id',
+				'/program-coordinator/get/academic-year-details',
 			)
 			.forRoutes(ProgramCoordinatorController);
 	}
