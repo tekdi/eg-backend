@@ -1414,6 +1414,9 @@ export class ProgramCoordinatorService {
 						document_sub_type
 						path
 					}
+					program_faciltators(where:{academic_year_id:{_eq:${academic_year_id}}, program_id: {_eq: ${program_id}}}){
+						status
+					}
 				}
 			}
 			  properties{

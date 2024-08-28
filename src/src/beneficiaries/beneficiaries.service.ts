@@ -4403,34 +4403,50 @@ export class BeneficiariesService {
 		user_id = result?.[0]?.id;
 
 		if (!user_id) {
-			let res = await this.hasuraService.q(
-				'extended_users',
-				{
-					...body,
-					user_id: id,
-				},
-				[
-					'user_id',
-					'social_category',
-					'marital_status',
-					'qualification_id',
-					'designation',
-					'created_by',
-					'updated_by',
-					'has_disability',
-					'type_of_disability',
-					'has_disability_certificate',
-					'disability_percentage',
-					'disability_occurence',
-					'has_govt_advantage',
-					'govt_advantages',
-					'support_for_exam',
-				],
-				false,
-				['id', 'user_id'],
-			);
+			let variable = [];
+			if (body?.type_of_disability) {
+				variable.push({
+					key: 'type_of_disability',
+					type: 'jsonb',
+				});
+			}
+			if (body?.support_for_exam) {
+				variable.push({
+					key: 'support_for_exam',
+					type: 'jsonb',
+				});
+			}
 
-			user_id = res?.extended_users?.id;
+			let result =
+				await this.hasuraServiceFromServices.createWithVariable(
+					'extended_users',
+					{
+						...body,
+						user_id: id,
+					},
+					[
+						'id',
+						'user_id',
+						'social_category',
+						'marital_status',
+						'qualification_id',
+						'designation',
+						'created_by',
+						'updated_by',
+						'has_disability',
+						'type_of_disability',
+						'has_disability_certificate',
+						'disability_percentage',
+						'disability_occurence',
+						'has_govt_advantage',
+						'govt_advantages',
+						'support_for_exam',
+					],
+					[],
+					variable,
+				);
+
+			user_id = result?.extended_users?.id;
 		}
 
 		// get state name via program_id
