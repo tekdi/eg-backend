@@ -1001,6 +1001,10 @@ export class ProgramCoordinatorService {
 			userFilter.push(`status:{_eq:${body?.status}}`);
 		}
 
+		if (body?.academic_year_id) {
+			userFilter.push(`academic_year_id:{_eq:${body?.academic_year_id}}`);
+		}
+
 		if (body?.search) {
 			userFilter.push(
 				`user: {_or: [{first_name: {_eq: "${body?.search}"}}, {last_name: {_eq: "${body?.search}"}}]}`,
@@ -1042,8 +1046,8 @@ export class ProgramCoordinatorService {
 				}
 			  }
 		  }
-		  
-`;
+
+	`;
 
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
@@ -2141,5 +2145,39 @@ export class ProgramCoordinatorService {
 
 	public async getSubjectsByBoard(id: any, response: any, request: any) {
 		await this.boardService.getSubjectsByBoard(id, response, request);
+	}
+
+	public async getAcademicyearDetailsByProgram(body, request, response) {
+		let query;
+
+		let program_id = body?.program_id;
+		let user_id = request?.mw_userid;
+
+		query = `select ay.name,ay.id as academic_year_id from program_users pu left join program_organisation po on pu.program_id = po.program_id left join academic_years ay on po.academic_year_id = ay.id where po.program_id = ${program_id} and po.status = 'active'and pu.user_id = ${user_id} and pu.role_slug = 'program_coordinator' and po.organisation_id = pu.organisation_id group by po.program_id,po.academic_year_id,ay.name,ay.id`;
+
+		const sql_result = (
+			await this.hasuraServiceFromServices.executeRawSql(query)
+		)?.result;
+
+		if (!sql_result || sql_result == undefined) {
+			return response.status(422).json({
+				message: 'Data not found',
+				data: [],
+			});
+		}
+		let academic_year_data =
+			this.hasuraServiceFromServices.getFormattedData(sql_result);
+
+		if (academic_year_data?.length > 0) {
+			return response.status(200).json({
+				message: 'Data retrieved successfully',
+				data: academic_year_data,
+			});
+		} else {
+			return response.status(422).json({
+				message: 'Data not found',
+				data: [],
+			});
+		}
 	}
 }
