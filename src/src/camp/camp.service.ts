@@ -1788,7 +1788,6 @@ export class CampService {
 								? 'registered_in_neev_camp'
 								: 'registered_in_camp';
 
-						console.log('update_status--->>', update_status);
 						if (allUserIds?.length > 0) {
 							await this.hasuraServiceFromServices.update(
 								null,
