@@ -41,40 +41,6 @@ import { IpMiddleware } from 'src/common/middlewares/ip.middleware';
 export class BeneficiariesModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(AuthMiddleware).forRoutes('*');
-
-		/*
-		consumer
-			.apply(CohortMiddleware)
-			
-			.exclude(
-				'/beneficiaries/admin/list/duplicates-by-aadhaar',
-				'/beneficiaries/admin/list/deactivate-duplicates',
-				'/beneficiaries/:id/is_enrollment_exists',
-				{ path: '/beneficiaries/:id', method: RequestMethod.GET },
-				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
-				'/beneficiaries/register',
-				'/beneficiaries/statusUpdate',
-				'/beneficiaries/admin/verify-enrollment',
-			)
-			.forRoutes(
-				
-				//'/beneficiaries',
-				'/beneficiaries/getStatusWiseCount/',
-				'/beneficiaries/admin/list/deactivate-duplicates/',
-				'/beneficiaries/admin/list/',
-				'/beneficiaries/admin/list/duplicates-count-by-aadhaar/',
-				'/beneficiaries/update-Beneficiaries-aadhar/:id/',
-				{ path: '/beneficiaries/:id/', method: RequestMethod.PATCH },
-				'/beneficiaries/admin/statusUpdate/',
-				'/beneficiaries/admin/export-csv/',
-				'/beneficiaries/admin/export-subjects-csv/',
-				'/beneficiaries/admin/reassign/',
-				'/beneficiaries/beneficiaries-for-camp/',
-				{ path: '/beneficiaries', method: RequestMethod.POST },
-				
-
-			);
-		*/
 		consumer
 			.apply(IpMiddleware)
 			.forRoutes('/beneficiaries/admin/list', '/beneficiaries/:id');

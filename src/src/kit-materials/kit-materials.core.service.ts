@@ -11,7 +11,6 @@ export class KitMaterialsCoreService {
 	) {}
 
 	public async list(body: any, camp_id: any) {
-		const currentDate = moment().format('YYYY-MM-DD');
 		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
 		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
 

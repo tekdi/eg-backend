@@ -135,7 +135,7 @@ export class HasuraService {
 		return result;
 	}
 
-	public async findAll(tableName: String, filters: Object = {}) {
+	public async findAll(tableName: string, filters: Object = {}) {
 		let query = '';
 		if (filters) {
 			Object.keys(filters).forEach((e) => {
@@ -180,7 +180,7 @@ export class HasuraService {
 	}
 
 	public async getAll(
-		tableName: String,
+		tableName: string,
 		onlyFields: any = [],
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
@@ -235,7 +235,7 @@ export class HasuraService {
 		};
 	}
 
-	public async getOne(id: number, tableName: String, onlyFields: any = []) {
+	public async getOne(id: number, tableName: string, onlyFields: any = []) {
 		return this.getResponce(
 			await lastValueFrom(
 				this.httpService
@@ -263,7 +263,7 @@ export class HasuraService {
 	}
 
 	public async create(
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		fields: any = [],
@@ -296,7 +296,7 @@ export class HasuraService {
 	}
 
 	public async createWithVariable(
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		fields: any = [],
@@ -330,7 +330,7 @@ export class HasuraService {
 
 	public async update(
 		id: number,
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		fields: any = [],
@@ -367,7 +367,7 @@ export class HasuraService {
 
 	public async updateWithVariable(
 		id: number,
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		fields: any = [],
@@ -436,7 +436,7 @@ export class HasuraService {
 	}
 
 	public async q(
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		update: boolean = false,
@@ -473,7 +473,7 @@ export class HasuraService {
 	}
 
 	public async qM(
-		tableName: String,
+		tableName: string,
 		item: any,
 		fields: any,
 		onlyFields: any = [],

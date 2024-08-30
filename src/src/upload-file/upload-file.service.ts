@@ -121,7 +121,6 @@ export class UploadFileService {
 			if (res && isCommonFunction) {
 				return { data: { key: key, fileUrl: fileUrl, data: res.data } };
 			} else if (res) {
-				//console.log('response file upload-->>', JSON.stringify(res));
 				return response.status(200).send({
 					success: true,
 					status: 'Success',
@@ -143,6 +142,110 @@ export class UploadFileService {
 				message: 'Unable to upload file',
 				data: null,
 			});
+		}
+	}
+
+	async uploadFileDetails(
+		file: Express.Multer.File,
+		id: number,
+		document_type: string,
+		document_sub_type: string,
+		response: Response,
+	) {
+		let query;
+		let hasura_response;
+		let document_data;
+
+		if (!file?.originalname) {
+			return response.status(400).send({
+				success: false,
+				status: 'Not Found',
+				message: 'Document Not Passed',
+				data: {},
+			});
+		}
+
+		if (!id) {
+			return response.status(400).send({
+				success: false,
+				status: 'Not Found',
+				message: 'User id not passed',
+				data: {},
+			});
+		}
+		const originalName = file?.originalname
+			.split(' ')
+			.join('')
+			.toLowerCase();
+		const [name, fileType] = originalName.split('.');
+		let key = `${name}${Date.now()}.${fileType}`;
+
+		//get exisiting data for the user document details
+
+		query = `query MyQuery {
+			documents(where: {user_id: {_eq: ${id}}, doument_type: {_eq: ${document_type}}}) {
+			  id
+			  user_id
+			  doument_type
+			  document_sub_type
+			  name
+			}
+		  }`;
+
+		hasura_response = await this.hasuraService.getData({ query: query });
+
+		document_data = hasura_response?.data?.documents;
+
+		if (document_data?.length > 0) {
+			query = `mutation MyMutation {
+				delete_documents(where: {user_id: {_eq: ${id}}, doument_type: {_eq:${document_type}}}){
+				  returning{
+					id
+					user_id
+					name
+				  }
+				}
+			  }`;
+
+			hasura_response = await this.hasuraService.getData({
+				query: query,
+			});
+
+			document_data?.forEach(async (doc) => await this.DeleteFile(doc));
+		}
+
+		const fileUrl = await this.s3Service.uploadFile(file, key);
+
+		if (fileUrl) {
+			let query = {
+				query: `mutation MyMutation {
+				  insert_documents(objects: {name: "${key}", path: "/user/docs", provider: "s3", updated_by: "${id}", user_id: "${id}", doument_type: "${document_type}", document_sub_type: "${
+					document_sub_type ?? document_type
+				}", created_by: "${id}"}) {
+					affected_rows
+					returning {
+					  id
+					  doument_type
+					  document_sub_type
+					  path
+					  name
+					  user_id
+					  updated_by
+					  provider
+					  created_by
+					  context_id
+					  context
+					}
+				  }
+				}`,
+			};
+			const res = await this.hasuraService.postData(query);
+
+			if (res) {
+				return { data: { key: key, fileUrl: fileUrl, data: res.data } };
+			} else {
+				return { data: { key: key, fileUrl: {}, data: {} } };
+			}
 		}
 	}
 
@@ -270,6 +373,7 @@ export class UploadFileService {
 	}
 
 	async DeleteFile(documentDetails: any) {
+		console.log('documentDetails-->>', documentDetails);
 		await this.hasuraService.delete('documents', {
 			id: documentDetails?.id,
 		});

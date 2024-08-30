@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
-//import * as pdfjsLib from 'pdfjs-dist';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import * as moment from 'moment';
 const parse = require('pdf-parse');
@@ -29,7 +28,6 @@ export class ExamResultPattern {
 		file: any,
 		board_name: any,
 	): Promise<any> {
-		//console.log('file', file);
 		const python_service_url =
 			this.configService.get<string>('PYTHON_SERVICE_URL');
 		//console.log('python_service_url', python_service_url);
@@ -56,30 +54,24 @@ export class ExamResultPattern {
 				if (response?.data?.success === true) {
 					const pdfText = response?.data?.data;
 					if (board_name === 'RSOS') {
-						//fix
-						//console.log('file', file);
 						const data2 = await parse(file.buffer); // Read data from uploaded PDF file buffer
 						//console.log('data', data);
 						//extract data from pdf
 						const pdfText2 = data2.text; // Assuming data is the provided object containing the extracted PDF text
 						//version 1 rsos pdf file
 						result = await this.parseResults_RSOS_V1(pdfText2);
-						//console.log('result', result);
+
 						if (result == null) {
 							//version 2 rsos pdf file
 							result = await this.parseResults_RSOS_V2(pdfText2);
-							//console.log('result', result);
 						}
 					} else if (board_name === 'NIOS') {
 						//version 1 nios pdf file
 						result = await this.parseResults_NIOS_V1(pdfText);
-						//console.log('result', result);
 					}
 				}
 			})
-			.catch((error) => {
-				//console.log(error);
-			});
+			.catch((error) => {});
 
 		return result;
 	}
@@ -157,19 +149,10 @@ export class ExamResultPattern {
 			/Enrollment : (\d+)\nName of Candidate : (.+?)\nFather's Name : (.+?)\nMother's Name : (.+?)\nDate of Birth : (.+?)\nClass : (\d+)/;
 
 		//working at drawing subject at end
-		/*const subjectRegex =
-			///(\d+)\s+([\w\s]+?)\((\d+)\)\s+(\d+)\s+([\dAB]+)\s+([\dAB-]+)\s+([\dAB]+)\s+([\dAB]+)\s+([PSYCRWHX]+)/g;
-			/(\d+)([A-Za-z ]+ \(\d+\))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;*/
+
 		//working for additional subjects
 		const subjectRegex =
 			//working on new fringe case
-			/*
-		/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([A-Z]*|[\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
-		*/
-			//working below regex with most of file if user has total marks large than 10
-			/*
-			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ?([\d-]*) ?(\d+)(\d+)([A-Z]+)/g;
-			*/
 
 			//new pattern try
 			/(\d+)([A-Za-z ]+(\(\d+\)+|\(\d+\)+\(Additional\)+|\(\d+\)+ \(Additional\)))(\d+)([A-Z]+|[\d-]+) ([A-Z\d-]+) ?(\d+)(\d+)([A-Z]+)/g;
@@ -199,7 +182,6 @@ export class ExamResultPattern {
 					content.replace(/\n/g, '').replace('TOTAL', '\nTOTAL'),
 				)) !== null
 			) {
-				//console.log('match', match);
 				//get max marks
 				let max_marks = '-';
 				let theory_marks = '-';
@@ -229,10 +211,7 @@ export class ExamResultPattern {
 						const char_text_concat_p_s_marks = [
 							...text_concat_p_s_marks,
 						];
-						/*console.log(
-							'text_concat_p_s_marks',
-							char_text_concat_p_s_marks,
-						);*/
+
 						//exract practical and sessional
 						let is_p_s_done = false;
 						//if practical -
@@ -411,24 +390,6 @@ export class ExamResultPattern {
 			.trim();
 		console.log('text', text);
 		// Extract table data
-		/*const tableData = [];
-		const tablePattern = /(\d+\s\|[^\n]+)/g;
-		const tableMatches = text.match(tablePattern);
-		const subjects =
-			tableMatches?.map((row) => {
-				const columns = row.split(/\s*\|\s*|\s+/).filter(Boolean);
-				return {
-					srNo: columns[0],
-					subjectName: columns[1] + ' ' + columns[2],
-					maxMarks: columns[3],
-					marksTheory: columns[4],
-					marksPractical: columns[5],
-					marksSessional: columns[6],
-					totalMarks: columns[7],
-					result: columns[8],
-				};
-			}) || [];
-		console.log('subjects', subjects);*/
 		// Extract table rows using regex, handling multi-line subject names
 		// Extract table rows using regex, handling multi-line subject names
 		// Extract the table rows using regex
@@ -452,8 +413,7 @@ export class ExamResultPattern {
 			result: match[9],
 		}));
 		console.log('matches', matches);
-		//console.log('subjects', subjects);
-		//console.log('data', data);
+
 		return data;
 	}
 

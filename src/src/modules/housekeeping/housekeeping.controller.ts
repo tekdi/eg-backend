@@ -1,6 +1,4 @@
 import { HouseKeepingService } from './housekeeping.service';
-//import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-//import { AuthGuard } from '../auth/auth.guard';
 
 //@Controller('hk')
 export class HouseKeepingController {

@@ -11,7 +11,7 @@ export class HasuraService {
 		public qgService: QueryGeneratorService,
 	) {}
 
-	public async findAll(tableName: String, filters: Object = {}) {
+	public async findAll(tableName: string, filters: Object = {}) {
 		let query = '';
 		if (filters) {
 			Object.keys(filters).forEach((e) => {
@@ -21,7 +21,7 @@ export class HasuraService {
 			});
 		}
 
-		var data = {
+		let data = {
 			query: `query SearchUser {
 		${tableName}_aggregate(where:{${query}}) {
 		  aggregate {
@@ -48,7 +48,7 @@ export class HasuraService {
 	}
 
 	public async getAll(
-		tableName: String,
+		tableName: string,
 		onlyFields: any = [],
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
@@ -102,7 +102,7 @@ export class HasuraService {
 		};
 	}
 
-	async getOne(id: number, tableName: String, onlyFields: any = []) {
+	async getOne(id: number, tableName: string, onlyFields: any = []) {
 		return this.getResponce(
 			await lastValueFrom(
 				this.httpService
@@ -130,7 +130,7 @@ export class HasuraService {
 	}
 
 	async create(
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		fields: any = [],
@@ -164,7 +164,7 @@ export class HasuraService {
 
 	async update(
 		id: number,
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		fields: any = [],
@@ -199,7 +199,7 @@ export class HasuraService {
 		);
 	}
 
-	async delete(tableName: String, item: Object, onlyFields: any = []) {
+	async delete(tableName: string, item: Object, onlyFields: any = []) {
 		return this.getResponce(
 			await lastValueFrom(
 				this.httpService
@@ -227,7 +227,7 @@ export class HasuraService {
 	}
 
 	async q(
-		tableName: String,
+		tableName: string,
 		item: Object,
 		onlyFields: any = [],
 		update: boolean = false,
@@ -261,7 +261,7 @@ export class HasuraService {
 		);
 	}
 
-	async qM(tableName: String, item: any, fields: any, onlyFields: any = []) {
+	async qM(tableName: string, item: any, fields: any, onlyFields: any = []) {
 		return this.getResponce(
 			await lastValueFrom(
 				this.httpService

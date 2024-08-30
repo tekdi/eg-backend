@@ -836,21 +836,6 @@ export class FacilitatorService {
 		);
 	}
 
-	// async updatePhotoDetails(id: number, body: any) {
-	//   // Update Users table data
-	//   const userArr = [
-	//     body.photo_type
-	//   ];
-	//   body[body.photo_type] = body.url;
-	//   delete body.url;
-	//   let keyExist = userArr.filter((e) => Object.keys(body).includes(e));
-	//   if (keyExist.length) {
-	//     const tableName = 'users';
-	//     body.id = id;
-	//     await this.hasuraService.q(tableName, body, userArr, true);
-	//   }
-	// }
-
 	async update(id: number, body: any, response: any, req: any) {
 		const { data: facilitatorUser } = (
 			await this.userById(id, response, req)
