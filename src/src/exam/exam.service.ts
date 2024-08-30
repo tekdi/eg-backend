@@ -2249,7 +2249,6 @@ export class ExamService {
 		const academic_year_id = request?.mw_academic_year_id;
 		const program_id = request?.mw_program_id;
 
-		//	body.updated_by = user_id;
 		if (!user_id) {
 			return response.status(422).json({
 				message: 'Invalid User Entity',
@@ -2298,12 +2297,13 @@ export class ExamService {
 				)
 				.map((enumData) => enumData.value);
 
-			(filteredBody.status = status[0]),
+			(filteredBody.status = status[0])(
 				(filteredBody.syc_reason = [
 					'syc_subjects',
 					'exam_fee_date',
 					'exam_fee_document_id',
-				]);
+				]),
+			);
 		}
 
 		// Build Hasura query to check authorization
