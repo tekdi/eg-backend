@@ -231,6 +231,10 @@
 		{
 			"title": "BENEFICIARY_STATUS_PRAGATI_SYC",
 			"value": "pragati_syc"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_PRAGATI_SYC_REATTEMPT",
+			"value": "pragati_syc_reattempt"
 		}
 	],
 	"TYPE_OF_LEARNER": [

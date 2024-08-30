@@ -2086,6 +2086,7 @@ export class BeneficiariesService {
 			'registered_in_neev_camp',
 			'enrollment_awaited',
 			'enrollment_rejected',
+			'enrolled',
 		];
 
 		//get state details
