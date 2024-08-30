@@ -2297,13 +2297,7 @@ export class ExamService {
 				)
 				.map((enumData) => enumData.value);
 
-			(filteredBody.status = status[0])(
-				(filteredBody.syc_reason = [
-					'syc_subjects',
-					'exam_fee_date',
-					'exam_fee_document_id',
-				]),
-			);
+			filteredBody.status = status[0];
 		}
 
 		// Build Hasura query to check authorization
