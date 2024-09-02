@@ -2259,9 +2259,7 @@ export class ExamService {
 
 		// List of required and allowed fields
 
-		if (body?.is_continued == false) {
-			requiredFields = ['is_continued', 'user_id'];
-		} else {
+		if (body?.is_continued) {
 			requiredFields = [
 				'exam_fee_date',
 				'exam_fee_document_id',
@@ -2269,6 +2267,8 @@ export class ExamService {
 				'is_continued',
 				'user_id',
 			];
+		} else {
+			requiredFields = ['is_continued', 'user_id'];
 		}
 
 		// Check if required fields are present
