@@ -2248,6 +2248,7 @@ export class ExamService {
 		const user_id = request?.mw_userid;
 		const academic_year_id = request?.mw_academic_year_id;
 		const program_id = request?.mw_program_id;
+		let requiredFields: string[];
 
 		if (!user_id) {
 			return response.status(422).json({
@@ -2258,13 +2259,17 @@ export class ExamService {
 
 		// List of required and allowed fields
 
-		const requiredFields = new Set([
-			'exam_fee_date',
-			'exam_fee_document_id',
-			'syc_subjects',
-			'is_continued',
-			'user_id',
-		]);
+		if (body?.is_continued) {
+			requiredFields = [
+				'exam_fee_date',
+				'exam_fee_document_id',
+				'syc_subjects',
+				'is_continued',
+				'user_id',
+			];
+		} else {
+			requiredFields = ['is_continued', 'user_id'];
+		}
 
 		// Check if required fields are present
 		const missingFields = Array.from(requiredFields).filter(
@@ -2279,9 +2284,19 @@ export class ExamService {
 			});
 		}
 
+		// check if array fields are not empty
+
+		if (body?.syc_subjects?.length == 0) {
+			return response.status(422).json({
+				success: false,
+				message: 'Please select syc subjects',
+				data: {},
+			});
+		}
+
 		// Filter body to include only allowed fields
 		const filteredBody = Object.keys(body)
-			.filter((key) => requiredFields.has(key))
+			.filter((key) => requiredFields.includes(key))
 			.reduce((obj, key) => {
 				obj[key] = body[key];
 				return obj;
@@ -2298,6 +2313,11 @@ export class ExamService {
 				.map((enumData) => enumData.value);
 
 			filteredBody.status = status[0];
+			filteredBody.syc_reason = [
+				'exam_fee_date',
+				'exam_fee_document_id',
+				'syc_subjects',
+			];
 		}
 
 		// Build Hasura query to check authorization
@@ -2334,10 +2354,14 @@ export class ExamService {
 				if (e === 'render') {
 					query += `${e}: ${filteredBody[e]}, `;
 				} else if (Array.isArray(filteredBody[e])) {
-					query += `${e}: "${JSON.stringify(filteredBody[e]).replace(
-						/"/g,
-						'\\"',
-					)}", `;
+					// Check if the array is syc_reason, handle it differently
+					if (e === 'syc_reason') {
+						query += `${e}: [${filteredBody[e].join(', ')}], `;
+					} else {
+						query += `${e}: "${JSON.stringify(
+							filteredBody[e],
+						).replace(/"/g, '\\"')}", `;
+					}
 				} else if (typeof filteredBody[e] === 'boolean') {
 					query += `${e}: ${filteredBody[e]}, `;
 				} else {
