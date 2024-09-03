@@ -17,6 +17,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import * as moment from 'moment';
+import { CSVHelperService } from 'src/helper/csvHelper.service';
 
 @Injectable()
 export class BeneficiariesService {
@@ -34,6 +35,7 @@ export class BeneficiariesService {
 		private enumService: EnumService,
 		private uploadFileService: UploadFileService,
 		private beneficiariesCoreService: BeneficiariesCoreService,
+		public csvhelperService: CSVHelperService,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('BENEFICIARY_STATUS').data;
@@ -351,39 +353,7 @@ export class BeneficiariesService {
 
 			//create CSV stringifier Object
 
-			let csv_header = [
-				// Column 1: Name
-				{ id: 'name', title: 'Name' },
-				// Column 2: Learner ID
-				{ id: 'user_id', title: 'LearnerId' },
-				// Column 3: District
-				{ id: 'district', title: 'District' },
-				// Column 4: Block
-				{ id: 'block', title: 'Block' },
-				// Column 5: Village
-				{ id: 'village', title: 'Village' },
-				// Column 6: Date of Birth
-				{ id: 'dob', title: 'DOB' },
-				// Column 7: Prerak
-				{ id: 'prerak', title: 'Prerak' },
-				// Column 8: Facilitator ID
-				{ id: 'facilitator_id', title: 'FacilitatorId' },
-				// Column 9: Mobile Number
-				{ id: 'mobile', title: 'Mobile Number' },
-				// Column 10: Status
-				{ id: 'status', title: 'Status' },
-				// Column 11: Enrollment Number
-				{ id: 'enrollment_number', title: 'Enrollment Number' },
-				// Column 12: Aadhaar Number
-				{ id: 'aadhar_no', title: 'Aadhaar Number' },
-				// Column 13: Aadhaar Number Verified
-				{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
-				// Column 14: Aadhaar Verification Mode
-				{
-					id: 'aadhaar_verification_mode',
-					title: 'Aadhaar Verification Mode',
-				},
-			];
+			let csv_header = this.csvhelperService.getCSVObject();
 
 			// Create a CSV stringifier with a custom header
 			const csvStringifier = createObjectCsvStringifier({
