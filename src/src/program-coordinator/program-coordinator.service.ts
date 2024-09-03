@@ -983,6 +983,9 @@ export class ProgramCoordinatorService {
 	) {
 		let query;
 		let pc_id = request?.mw_userid;
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 10 : parseInt(body?.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
 
 		let hasura_response;
 
@@ -1017,7 +1020,7 @@ export class ProgramCoordinatorService {
 
 		query = `
 		query MyQuery {
-			program_faciltators(where: {${filterQuery}}) {
+			program_faciltators(where: {${filterQuery}},limit:${limit},offset:${offset}) {
 				user_id
 				academic_year_id
 				academic_year{
@@ -1052,7 +1055,12 @@ export class ProgramCoordinatorService {
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
 		});
+
 		const facilitator_data = hasura_response?.data?.program_faciltators;
+		const count =
+			hasura_response?.data?.program_faciltators_aggregate?.aggregate
+				?.count;
+		const totalPages = Math.ceil(count / limit);
 
 		if (facilitator_data?.length === 0) {
 			return response.status(422).json({
@@ -1066,6 +1074,10 @@ export class ProgramCoordinatorService {
 			success: true,
 			data: {
 				facilitator_data: facilitator_data,
+				totalCount: count,
+				limit,
+				currentPage: page,
+				totalPages: `${totalPages}`,
 			},
 		});
 	}
