@@ -275,16 +275,16 @@ export class BeneficiariesService {
 				}
 			}
 
-			if (body.hasOwnProperty('state') && body.state.length) {
-				paramsQueryArray.push('$state: [String!]');
-				filterQueryArray.push('{state: { _in: $state }}');
-				variables.state = body.state;
-			}
-
 			if (body.hasOwnProperty('district') && body.district.length) {
 				paramsQueryArray.push('$district: [String!]');
 				filterQueryArray.push('{district: { _in: $district }}');
 				variables.district = body.district;
+			}
+
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{state: { _in: $state }}');
+				variables.state = body.state;
 			}
 
 			if (body.hasOwnProperty('block') && body.block.length) {
@@ -348,6 +348,9 @@ export class BeneficiariesService {
 				data,
 			);
 			const allBeneficiaries = hasuraResponse?.data?.users;
+
+			//create CSV stringifier Object
+
 			const csvStringifier = createObjectCsvStringifier({
 				header: [
 					{ id: 'name', title: 'Name' },
@@ -412,6 +415,9 @@ export class BeneficiariesService {
 					data?.aadhaar_verification_mode;
 				records.push(dataObject);
 			}
+
+			// set file name
+
 			let fileName = `${
 				user?.data?.first_name + '_' + user?.data?.last_name
 			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
@@ -448,15 +454,15 @@ export class BeneficiariesService {
 				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
 
-			if (body?.state && body?.state.length > 0) {
-				filterQueryArray.push(
-					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
-				);
-			}
-
 			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
 					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+				);
+			}
+
+			if (body?.state && body?.state.length > 0) {
+				filterQueryArray.push(
+					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
 				);
 			}
 
