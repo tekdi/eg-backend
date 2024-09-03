@@ -1088,6 +1088,10 @@ export class ProgramCoordinatorService {
 		response,
 	) {
 		let pc_id = request?.mw_userid;
+		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
+		const limit = isNaN(body?.limit) ? 10 : parseInt(body?.limit);
+		let offset = page > 1 ? limit * (page - 1) : 0;
+
 		let query;
 		let hasura_response;
 		let pc_string = '';
@@ -1153,7 +1157,7 @@ export class ProgramCoordinatorService {
 				}
 			}
 		}
-		const limit = body.limit || 15;
+
 		if (pc_string != null || pc_string != undefined) {
 			let search = body?.search;
 			let status = body?.status;
@@ -1169,18 +1173,53 @@ export class ProgramCoordinatorService {
 			}
 
 			let sql = `
-        SELECT pb.user_id, pb.facilitator_id, pb.program_id, pb.academic_year_id, pb.status, pb.enrollment_number, u.first_name, u.last_name,f.first_name AS facilitator_first_name, f.last_name AS facilitator_last_name,pf.academic_year_id as facilitator_academic_id,pf.program_id as facilitator_program_id
-        FROM program_beneficiaries pb
-        INNER JOIN users u ON pb.user_id = u.id
-		INNER JOIN program_faciltators pf ON pb.facilitator_id = pf.user_id
-		INNER JOIN users f ON pf.user_id = f.id
-        WHERE
-            concat(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
-            ${additionalFilters}
-						and concat( pf.user_id,' ',pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
-        ORDER BY pb.user_id ${sort} 
-				LIMIT ${limit};
-        `;
+			WITH TotalRecords AS (
+				SELECT 
+					COUNT(*) AS total_count
+				FROM 
+					program_beneficiaries pb
+				INNER JOIN 
+					users u ON pb.user_id = u.id
+				INNER JOIN 
+					program_faciltators pf ON pb.facilitator_id = pf.user_id
+				INNER JOIN 
+					users f ON pf.user_id = f.id
+				WHERE
+					CONCAT(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
+					AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
+			)
+			SELECT 
+				pb.user_id, 
+				pb.facilitator_id, 
+				pb.program_id, 
+				pb.academic_year_id, 
+				pb.status, 
+				pb.enrollment_number, 
+				u.first_name, 
+				u.last_name,
+				f.first_name AS facilitator_first_name, 
+				f.last_name AS facilitator_last_name,
+				pf.academic_year_id AS facilitator_academic_id,
+				pf.program_id AS facilitator_program_id,
+				tr.total_count
+			FROM 
+				program_beneficiaries pb
+			INNER JOIN 
+				users u ON pb.user_id = u.id
+			INNER JOIN 
+				program_faciltators pf ON pb.facilitator_id = pf.user_id
+			INNER JOIN 
+				users f ON pf.user_id = f.id
+			CROSS JOIN 
+				TotalRecords tr
+			WHERE
+				CONCAT(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
+				AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
+			ORDER BY 
+				pb.user_id ASC 
+			LIMIT ${limit}
+			OFFSET ${offset}
+			`;
 
 			learner_data = (
 				await this.hasuraServiceFromServices.executeRawSql(sql)
@@ -1197,9 +1236,19 @@ export class ProgramCoordinatorService {
 				this.hasuraServiceFromServices.getFormattedData(learner_data);
 		}
 
+		const count = learner_info?.[0]?.total_count
+			? learner_info?.[0]?.total_count
+			: 0;
+
+		const totalPages = Math.ceil(count / limit);
+
 		return response.status(200).json({
 			message: 'Data retrieved successfully',
 			data: learner_info,
+			totalCount: count,
+			limit,
+			currentPage: page,
+			totalPages: `${totalPages}`,
 		});
 	}
 
