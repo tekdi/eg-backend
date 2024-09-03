@@ -2052,6 +2052,163 @@ export class BeneficiariesService {
 		};
 	}
 
+	public async setPsycStatus(body: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let state_query;
+		let state_result;
+		let validation_result;
+		let set_update_body;
+		let variable;
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
+		const { data: updatedUser } =
+			await this.beneficiariesCoreService.userById(body?.user_id);
+		const allEnrollmentStatuses = this.enumService
+			.getEnumValue('ENROLLEMENT_VERIFICATION_STATUS')
+			.data.map((enumData) => enumData.value);
+
+		if (
+			!allEnrollmentStatuses.includes(
+				body?.enrollment_verification_status,
+			)
+		) {
+			return {
+				status: 400,
+				success: false,
+				message: `Invalid status`,
+				data: {},
+			};
+		}
+
+		delete body.status;
+
+		if (body.enrollment_verification_status == 'psyc_verified') {
+			validation_result = await this.validateSycReason(body);
+			if (validation_result?.status == 422) {
+				return validation_result;
+			}
+
+			set_update_body = {
+				status: 'pragati_syc_reattempt_ip_verified',
+				syc_reason: [],
+			};
+
+			variable = {
+				key: 'syc_reason',
+				type: 'jsonb',
+			};
+		}
+
+		if (body?.enrollment_verification_status == 'change_required') {
+			validation_result = await this.validateSycReason(body);
+			if (validation_result?.status == 422) {
+				return validation_result;
+			}
+
+			set_update_body = {
+				syc_reason: body?.syc_reason,
+			};
+
+			variable = {
+				key: 'syc_reason',
+				type: 'jsonb',
+			};
+		}
+
+		const res = await this.hasuraServiceFromServices.updateWithVariable(
+			updatedUser?.program_beneficiaries?.id,
+			'program_beneficiaries',
+			set_update_body,
+			['id', 'status', 'syc_reason'],
+			true,
+			{
+				variable: [variable],
+			},
+		);
+
+		const newdata = (
+			await this.beneficiariesCoreService.userById(
+				res?.program_beneficiaries?.user_id,
+			)
+		).data;
+
+		await this.userService.addAuditLog(
+			body?.user_id,
+			request.mw_userid,
+			'program_beneficiaries.status',
+			updatedUser?.program_beneficiaries?.id,
+			{
+				status: updatedUser?.program_beneficiaries?.status,
+				reason_for_status_update:
+					updatedUser?.program_beneficiaries
+						?.reason_for_status_update,
+			},
+			{
+				status: newdata?.program_beneficiaries?.status,
+				reason_for_status_update:
+					newdata?.program_beneficiaries?.reason_for_status_update,
+			},
+			['status', 'reason_for_status_update'],
+		);
+		return {
+			status: 200,
+			success: true,
+			message: 'Status Updated successfully!',
+			data: (
+				await this.beneficiariesCoreService.userById(
+					res?.program_beneficiaries?.user_id,
+				)
+			).data,
+		};
+	}
+
+	public async validateSycReason(body) {
+		const valid_syc_reasons = [
+			'exam_fee_date',
+			'exam_fee_document_id',
+			'syc_subjects',
+		];
+
+		// Check if syc_reason is an array and not empty
+		if (!Array.isArray(body?.syc_reason) || body.syc_reason.length === 0) {
+			return {
+				status: 422,
+				success: false,
+			};
+		}
+
+		// Check if every item in syc_reason is included in valid_syc_reasons
+		const allValid = body.syc_reason.every((reason) =>
+			valid_syc_reasons.includes(reason),
+		);
+
+		if (!allValid) {
+			return {
+				status: 422,
+				success: false,
+			};
+		} else {
+			return {
+				status: 200,
+				success: true,
+			};
+		}
+	}
+
 	public async isEnrollmentAvailiable(id, request, response) {
 		const program_id = request?.mw_program_id;
 		const academic_year_id = request?.mw_academic_year_id;

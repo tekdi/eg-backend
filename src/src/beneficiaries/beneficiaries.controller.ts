@@ -398,6 +398,32 @@ export class BeneficiariesController {
 		});
 	}
 
+	@Post('admin/verify-psyc')
+	@UseGuards(new AuthGuard())
+	async verifyPSYC(
+		@Body() body: any,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		let result;
+
+		const payload = {
+			user_id: body.user_id,
+			enrollment_verification_status: body.enrollment_verification_status,
+			syc_reason: body.syc_reason,
+		};
+		result = await this.beneficiariesService.setPsycStatus(
+			payload,
+			request,
+		);
+
+		return response.status(result.status).json({
+			success: result.success,
+			message: result.message,
+			data: result.data,
+		});
+	}
+
 	@Post('admin/reassign')
 	@UseGuards(new AuthGuard())
 	async reassignBeneficiary(
