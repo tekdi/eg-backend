@@ -432,18 +432,18 @@ export class BeneficiariesService {
 				records.push(dataObject);
 			}
 
-			// Define the file name by concatenating the user's first name, last name, and current date
-			let fileName = `${
-				user?.data?.first_name + '_' + user?.data?.last_name
-			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+			// Set the response header to indicate that the response body contains CSV data
+			resp.header('Content-Type', 'text/csv');
 
 			// Generate the CSV file data by concatenating the header string and stringified records
 			const fileData =
 				csvStringifier.getHeaderString() + // Get the CSV header string
 				csvStringifier.stringifyRecords(records); // Stringify the records into CSV format
 
-			// Set the response header to indicate that the response body contains CSV data
-			resp.header('Content-Type', 'text/csv');
+			// Define the file name by concatenating the user's first name, last name, and current date
+			let fileName = `${
+				user?.data?.first_name + '_' + user?.data?.last_name
+			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
 
 			// Send the CSV file as an attachment with the specified file name
 			return resp.attachment(fileName).send(fileData);
@@ -487,24 +487,6 @@ export class BeneficiariesService {
 				);
 			}
 
-			// Check if the body object has a 'block' property and its length is greater than 0
-			if (body?.block && body?.block.length > 0) {
-				// Add a filter query to the array, searching for blocks that are in the provided array
-				filterQueryArray.push(
-					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
-				);
-			}
-
-			// Check if the body object has a 'facilitator' property and its length is greater than 0
-			if (body.facilitator && body.facilitator.length > 0) {
-				// Add a filter query to the array, searching for program beneficiaries with facilitator IDs in the provided array
-				filterQueryArray.push(
-					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
-						body.facilitator,
-					)}}}}`,
-				);
-			}
-
 			// Check if the status variable is truthy and not an empty string
 			if (status && status !== '') {
 				// If the status is 'identified', add a filter query with an OR condition
@@ -522,6 +504,24 @@ export class BeneficiariesService {
 						`{program_beneficiaries:{status:{_eq:${status}}}}`,
 					);
 				}
+			}
+
+			// Check if the body object has a 'facilitator' property and its length is greater than 0
+			if (body.facilitator && body.facilitator.length > 0) {
+				// Add a filter query to the array, searching for program beneficiaries with facilitator IDs in the provided array
+				filterQueryArray.push(
+					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}`,
+				);
+			}
+
+			// Check if the body object has a 'block' property and its length is greater than 0
+			if (body?.block && body?.block.length > 0) {
+				// Add a filter query to the array, searching for blocks that are in the provided array
+				filterQueryArray.push(
+					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+				);
 			}
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
