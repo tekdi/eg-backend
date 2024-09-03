@@ -700,6 +700,8 @@ export class BeneficiariesService {
 	public async getList(body: any, req: any, resp: any) {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
+
+		//check role data
 		if (req.mw_roles?.includes('program_owner')) {
 			req.parent_ip_id = req.mw_ip_user_id;
 		} else {
@@ -714,8 +716,8 @@ export class BeneficiariesService {
 		if (!req.parent_ip_id) {
 			return resp.status(404).send({
 				success: false,
-				message: 'Invalid Ip',
 				data: {},
+				message: 'Invalid Ip',
 			});
 		}
 		const sortType = body?.sortType ? body?.sortType : 'desc';
@@ -787,15 +789,15 @@ export class BeneficiariesService {
 			filterQueryArray.push(`{is_duplicate:{_eq:${body?.is_duplicate}}}`);
 		}
 
-		if (body?.state && body?.state.length > 0) {
-			filterQueryArray.push(
-				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
-			);
-		}
-
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+			);
+		}
+
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
 			);
 		}
 
@@ -904,8 +906,8 @@ export class BeneficiariesService {
 			return resp.status(200).send({
 				success: false,
 				status: 'Not Found',
-				message: 'Beneficiaries Not Found',
 				data: {},
+				message: 'Beneficiaries Not Found',
 			});
 		} else {
 			mappedResponse = await Promise.all(
@@ -1227,8 +1229,8 @@ export class BeneficiariesService {
 			return resp.status(200).send({
 				success: false,
 				status: 'Not Found',
-				message: 'Beneficiaries Not Found',
 				data: {},
+				message: 'Beneficiaries Not Found',
 			});
 		} else {
 			mappedResponse = await Promise.all(
@@ -2049,8 +2051,8 @@ export class BeneficiariesService {
 		);
 		return {
 			status: 200,
-			success: true,
 			message: 'Status Updated successfully!',
+			success: true,
 			data: (
 				await this.beneficiariesCoreService.userById(
 					res?.program_beneficiaries?.user_id,
@@ -2173,8 +2175,8 @@ export class BeneficiariesService {
 		);
 		return {
 			status: 200,
-			success: true,
 			message: 'Status Updated successfully!',
+			success: true,
 			data: (
 				await this.beneficiariesCoreService.userById(
 					res?.program_beneficiaries?.user_id,
