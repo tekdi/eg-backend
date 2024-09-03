@@ -351,7 +351,7 @@ export class BeneficiariesService {
 			);
 			const allBeneficiaries = hasuraResponse?.data?.users;
 
-			//create CSV stringifier Object
+			//create CSV stringifier Object called
 
 			let csv_header = this.csvhelperService.getCSVObject();
 
