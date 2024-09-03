@@ -706,11 +706,11 @@ export class BeneficiariesService {
 			req.parent_ip_id = req.mw_ip_user_id;
 		} else {
 			const user = await this.userService.ipUserInfo(req);
-			if (req.mw_roles?.includes('staff')) {
+			if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			} else if (req.mw_roles?.includes('staff')) {
 				req.parent_ip_id =
 					user?.data?.program_users?.[0]?.organisation_id;
-			} else if (req.mw_roles?.includes('facilitator')) {
-				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
 			}
 		}
 		if (!req.parent_ip_id) {
@@ -1220,17 +1220,16 @@ export class BeneficiariesService {
 
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
-
-		let mappedResponse = result;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
+		let mappedResponse = result;
 
 		if (!mappedResponse || mappedResponse.length < 1) {
 			return resp.status(200).send({
-				success: false,
-				status: 'Not Found',
 				data: {},
+				success: false,
 				message: 'Beneficiaries Not Found',
+				status: 'Not Found',
 			});
 		} else {
 			mappedResponse = await Promise.all(
@@ -2161,27 +2160,27 @@ export class BeneficiariesService {
 			'program_beneficiaries.status',
 			updatedUser?.program_beneficiaries?.id,
 			{
-				status: updatedUser?.program_beneficiaries?.status,
 				reason_for_status_update:
 					updatedUser?.program_beneficiaries
 						?.reason_for_status_update,
+				status: updatedUser?.program_beneficiaries?.status,
 			},
 			{
-				status: newdata?.program_beneficiaries?.status,
 				reason_for_status_update:
 					newdata?.program_beneficiaries?.reason_for_status_update,
+				status: newdata?.program_beneficiaries?.status,
 			},
 			['status', 'reason_for_status_update'],
 		);
 		return {
-			status: 200,
-			message: 'Status Updated successfully!',
 			success: true,
 			data: (
 				await this.beneficiariesCoreService.userById(
 					res?.program_beneficiaries?.user_id,
 				)
 			).data,
+			message: 'Status updated successfully!',
+			status: 200,
 		};
 	}
 
@@ -3203,6 +3202,27 @@ export class BeneficiariesService {
 						});
 					}
 
+					if (
+						!req?.payment_receipt_document_id ||
+						req.payment_receipt_document_id.some(
+							(doc) => !doc?.id || doc.id === '',
+						)
+					) {
+						return response.status(422).json({
+							message: 'Invalid payment_receipt_document_id',
+						});
+					}
+
+					if (
+						req?.subjects?.length > 7 ||
+						req?.subjects?.length < 1
+					) {
+						return response.status(422).json({
+							message:
+								'Selected subjects should be at least 1 and maximum 7 ',
+						});
+					}
+
 					if (req?.sso_id && request?.mw_program_id == 1) {
 						const result = await this.validateForSSOID(
 							req?.sso_id,
@@ -3217,42 +3237,21 @@ export class BeneficiariesService {
 						}
 					}
 
-					if (
-						req?.subjects?.length > 7 ||
-						req?.subjects?.length < 1
-					) {
-						return response.status(422).json({
-							message:
-								'Selected subjects should be at least 1 and maximum 7 ',
-						});
-					}
-
-					if (
-						!req?.payment_receipt_document_id ||
-						req.payment_receipt_document_id.some(
-							(doc) => !doc?.id || doc.id === '',
-						)
-					) {
-						return response.status(422).json({
-							message: 'Invalid payment_receipt_document_id',
-						});
-					}
-
 					let messageArray = [];
 					let status = null;
 					let reason = null;
 					let tempArray = [
-						'sso_id',
-						'enrollment_status',
 						'enrolled_for_board',
 						'subjects',
 						'enrollment_date',
-						'payment_receipt_document_id',
 						'enrollment_mobile_no',
 						'enrollment_first_name',
+						'payment_receipt_document_id',
+						'enrollment_status',
+						'type_of_enrollement',
+						'sso_id',
 						'enrollment_dob',
 						'is_eligible',
-						'type_of_enrollement',
 					];
 					for (let info of tempArray) {
 						if (req[info] === undefined || req[info] === '') {
@@ -3262,8 +3261,8 @@ export class BeneficiariesService {
 					if (messageArray.length > 0) {
 						return response.status(400).send({
 							success: false,
-							message: messageArray,
 							data: {},
+							message: messageArray,
 						});
 					} else {
 						const { edit_page_type, ...copiedRequest } = req;
@@ -3277,19 +3276,19 @@ export class BeneficiariesService {
 							await this.checkPragatiCampEligibility({ ...req });
 						if (validationError) {
 							return response.status(422).send({
-								success: false,
-								message: `Missing fields data`,
 								errors: {
 									subjects: {
 										__errors: [message],
 									},
 								},
+								message: `Missing fields data`,
+								success: false,
 							});
 						}
 						if (req?.is_eligible === 'no') {
-							status = 'ineligible_for_pragati_camp';
 							reason =
 								'The age of the learner should be 14 to 29';
+							status = 'ineligible_for_pragati_camp';
 						} else if (req?.is_eligible === 'yes') {
 							status = 'sso_id_enrolled';
 							reason = 'sso_id_enrolled';
@@ -3359,6 +3358,16 @@ export class BeneficiariesService {
 						}
 					}
 
+					if (
+						req?.subjects?.length > 7 ||
+						req?.subjects?.length < 1
+					) {
+						return response.status(422).json({
+							message:
+								'Selected subjects should be at least 1 and maximum 7 ',
+						});
+					}
+
 					if (req?.sso_id && request?.mw_program_id == 1) {
 						const result = await this.validateForSSOID(
 							req?.sso_id,
@@ -3371,16 +3380,6 @@ export class BeneficiariesService {
 								result,
 							});
 						}
-					}
-
-					if (
-						req?.subjects?.length > 7 ||
-						req?.subjects?.length < 1
-					) {
-						return response.status(422).json({
-							message:
-								'Selected subjects should be at least 1 and maximum 7 ',
-						});
 					}
 
 					if (
@@ -3399,9 +3398,9 @@ export class BeneficiariesService {
 					let reason = null;
 					let tempArray = [
 						'enrollment_number',
-						'enrollment_status',
 						'enrolled_for_board',
 						'subjects',
+						'enrollment_status',
 						'enrollment_date',
 						'payment_receipt_document_id',
 						'enrollment_mobile_no',
@@ -3730,16 +3729,16 @@ export class BeneficiariesService {
 		`;
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
-		).result;
+		)?.result;
 
 		if (duplicateListArr != undefined) {
 			const count = duplicateListArr?.[1]?.[2].length;
 			const totalPages = Math.ceil(count / limit);
 			return {
-				success: true,
+				totalPages: totalPages,
 				limit,
 				currentPage: skip / limit + 1,
-				totalPages: totalPages,
+				success: true,
 				count,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					duplicateListArr,
@@ -3748,12 +3747,12 @@ export class BeneficiariesService {
 			};
 		} else {
 			return {
+				currentPage: skip / limit + 1,
 				success: true,
 				limit,
-				currentPage: skip / limit + 1,
+				data: [],
 				totalPages: 0,
 				count: 0,
-				data: [],
 			};
 		}
 	}
