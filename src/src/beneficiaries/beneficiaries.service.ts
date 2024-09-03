@@ -283,10 +283,11 @@ export class BeneficiariesService {
 				variables.district = body.district;
 			}
 
+			// state added to filter
 			if (body.hasOwnProperty('state') && body.state.length) {
 				paramsQueryArray.push('$state: [String!]');
 				filterQueryArray.push('{state: { _in: $state }}');
-				variables.state = body.state;
+				variables.state = body.state; // state variable added
 			}
 
 			if (body.hasOwnProperty('block') && body.block.length) {
