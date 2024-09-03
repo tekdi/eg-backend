@@ -351,21 +351,37 @@ export class BeneficiariesService {
 
 			//create CSV stringifier Object
 
+			// Create a CSV stringifier with a custom header
 			const csvStringifier = createObjectCsvStringifier({
+				// Define the header columns
 				header: [
+					// Column 1: Name
 					{ id: 'name', title: 'Name' },
+					// Column 2: Learner ID
 					{ id: 'user_id', title: 'LearnerId' },
+					// Column 3: District
 					{ id: 'district', title: 'District' },
+					// Column 4: Block
 					{ id: 'block', title: 'Block' },
+					// Column 5: Village
 					{ id: 'village', title: 'Village' },
+					// Column 6: Date of Birth
 					{ id: 'dob', title: 'DOB' },
+					// Column 7: Prerak
 					{ id: 'prerak', title: 'Prerak' },
+					// Column 8: Facilitator ID
 					{ id: 'facilitator_id', title: 'FacilitatorId' },
+					// Column 9: Mobile Number
 					{ id: 'mobile', title: 'Mobile Number' },
+					// Column 10: Status
 					{ id: 'status', title: 'Status' },
+					// Column 11: Enrollment Number
 					{ id: 'enrollment_number', title: 'Enrollment Number' },
+					// Column 12: Aadhaar Number
 					{ id: 'aadhar_no', title: 'Aadhaar Number' },
+					// Column 13: Aadhaar Number Verified
 					{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
+					// Column 14: Aadhaar Verification Mode
 					{
 						id: 'aadhaar_verification_mode',
 						title: 'Aadhaar Verification Mode',
@@ -416,15 +432,20 @@ export class BeneficiariesService {
 				records.push(dataObject);
 			}
 
-			// set file name
-
+			// Define the file name by concatenating the user's first name, last name, and current date
 			let fileName = `${
 				user?.data?.first_name + '_' + user?.data?.last_name
 			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+
+			// Generate the CSV file data by concatenating the header string and stringified records
 			const fileData =
-				csvStringifier.getHeaderString() +
-				csvStringifier.stringifyRecords(records);
+				csvStringifier.getHeaderString() + // Get the CSV header string
+				csvStringifier.stringifyRecords(records); // Stringify the records into CSV format
+
+			// Set the response header to indicate that the response body contains CSV data
 			resp.header('Content-Type', 'text/csv');
+
+			// Send the CSV file as an attachment with the specified file name
 			return resp.attachment(fileName).send(fileData);
 		} catch (error) {
 			return resp.status(500).json({
@@ -466,13 +487,17 @@ export class BeneficiariesService {
 				);
 			}
 
+			// Check if the body object has a 'block' property and its length is greater than 0
 			if (body?.block && body?.block.length > 0) {
+				// Add a filter query to the array, searching for blocks that are in the provided array
 				filterQueryArray.push(
 					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
 				);
 			}
 
+			// Check if the body object has a 'facilitator' property and its length is greater than 0
 			if (body.facilitator && body.facilitator.length > 0) {
+				// Add a filter query to the array, searching for program beneficiaries with facilitator IDs in the provided array
 				filterQueryArray.push(
 					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
 						body.facilitator,
@@ -480,7 +505,9 @@ export class BeneficiariesService {
 				);
 			}
 
+			// Check if the status variable is truthy and not an empty string
 			if (status && status !== '') {
+				// If the status is 'identified', add a filter query with an OR condition
 				if (status === 'identified') {
 					filterQueryArray.push(`{
 					_or: [
@@ -490,6 +517,7 @@ export class BeneficiariesService {
 					]
 				}`);
 				} else {
+					// Otherwise, add a filter query with an exact match for the status
 					filterQueryArray.push(
 						`{program_beneficiaries:{status:{_eq:${status}}}}`,
 					);
