@@ -2105,7 +2105,6 @@ export class BeneficiariesService {
 		delete body.status;
 
 		if (body.enrollment_verification_status == 'psyc_verified') {
-			validation_result = await this.validateSycReason(body);
 			if (validation_result?.status == 422) {
 				return validation_result;
 			}
