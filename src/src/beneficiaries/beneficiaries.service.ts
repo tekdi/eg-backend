@@ -2061,26 +2061,9 @@ export class BeneficiariesService {
 	}
 
 	public async setPsycStatus(body: any, request: any) {
-		let program_id = request?.mw_program_id;
-		let state_query;
-		let state_result;
 		let validation_result;
 		let set_update_body;
 		let variable;
-
-		//get state details
-
-		state_query = `query MyQuery {
-			programs_by_pk(id: ${program_id}){
-			  state{
-				state_name
-			  }
-			}
-		  }
-		  `;
-		state_result = await this.hasuraServiceFromServices.getData({
-			query: state_query,
-		});
 
 		const { data: updatedUser } =
 			await this.beneficiariesCoreService.userById(body?.user_id);
