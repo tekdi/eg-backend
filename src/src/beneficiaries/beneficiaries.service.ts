@@ -2081,8 +2081,7 @@ export class BeneficiariesService {
 		state_result = await this.hasuraServiceFromServices.getData({
 			query: state_query,
 		});
-		const state_response =
-			state_result?.data?.programs_by_pk?.state?.state_name;
+
 		const { data: updatedUser } =
 			await this.beneficiariesCoreService.userById(body?.user_id);
 		const allEnrollmentStatuses = this.enumService
