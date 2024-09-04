@@ -409,7 +409,7 @@ export class BeneficiariesController {
 
 		const payload = {
 			user_id: body.user_id,
-			enrollment_verification_status: body.enrollment_verification_status,
+			psyc_status: body.psyc_status,
 			syc_reason: body.syc_reason,
 		};
 		result = await this.beneficiariesService.setPsycStatus(

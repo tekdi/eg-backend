@@ -2068,14 +2068,10 @@ export class BeneficiariesService {
 		const { data: updatedUser } =
 			await this.beneficiariesCoreService.userById(body?.user_id);
 		const allEnrollmentStatuses = this.enumService
-			.getEnumValue('ENROLLEMENT_VERIFICATION_STATUS')
+			.getEnumValue('PSYC_VERIFICATION_STATUS')
 			.data.map((enumData) => enumData.value);
 
-		if (
-			!allEnrollmentStatuses.includes(
-				body?.enrollment_verification_status,
-			)
-		) {
+		if (!allEnrollmentStatuses.includes(body?.psyc_status)) {
 			return {
 				status: 400,
 				success: false,
@@ -2086,11 +2082,7 @@ export class BeneficiariesService {
 
 		delete body.status;
 
-		if (body.enrollment_verification_status == 'psyc_verified') {
-			if (validation_result?.status == 422) {
-				return validation_result;
-			}
-
+		if (body?.psyc_status == 'psyc_verified') {
 			set_update_body = {
 				status: 'pragati_syc_reattempt_ip_verified',
 				syc_reason: [],
@@ -2102,7 +2094,7 @@ export class BeneficiariesService {
 			};
 		}
 
-		if (body?.enrollment_verification_status == 'change_required') {
+		if (body?.psyc_status == 'change_required') {
 			validation_result = await this.validateSycReason(body);
 			if (validation_result?.status == 422) {
 				return validation_result;

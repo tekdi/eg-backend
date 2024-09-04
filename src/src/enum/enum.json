@@ -235,6 +235,10 @@
 		{
 			"title": "BENEFICIARY_STATUS_PRAGATI_SYC_REATTEMPT",
 			"value": "pragati_syc_reattempt"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_PRAGATI_SYC_REATTEMPT_IP_VERIFIED",
+			"value": "pragati_syc_reattempt_ip_verified"
 		}
 	],
 	"TYPE_OF_LEARNER": [
@@ -343,10 +347,17 @@
 		{
 			"title": "ENROLLMENT_SSO_ID_VERIFIED",
 			"value": "sso_id_verified"
+		}
+	],
+
+	"PSYC_VERIFICATION_STATUS": [
+		{
+			"title": "PSYC_VERIFICATION_STATUS_VERIFIED",
+			"value": "psyc_verified"
 		},
 		{
-			"title": "ENROLLMENT_PSYC_VERIFIED",
-			"value": "psyc_verified"
+			"title": "PSYC_VERIFICATION_STATUS_VERIFIED_CHANGE_REQUIRED",
+			"value": "change_required"
 		}
 	],
 
