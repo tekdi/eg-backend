@@ -12,6 +12,7 @@ import {
 	Request,
 	Patch,
 	Delete,
+	Get,
 } from '@nestjs/common';
 
 import { AuthGuard } from 'src/modules/auth/auth.guard';
@@ -154,6 +155,178 @@ export class ProgramCoordinatorController {
 		@Res() response: any,
 	) {
 		return this.programCoordinatorService.activitiesList(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/learners/facilitator/list')
+	@UseGuards(new AuthGuard())
+	public async getFacilitatorsListForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getFacilitatorsListForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/learners/list')
+	@UseGuards(new AuthGuard())
+	public async getLearnerListDetailsForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getLearnerListDetailsForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/facilitators/cohort')
+	@UseGuards(new AuthGuard())
+	public async getCohortDataForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getCohortDataForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/beneficiaries/:id')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	public async getBeneficiaryDetailsforProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param() id: number,
+	) {
+		return this.programCoordinatorService.getBeneficiaryDetailsforProgramCoordinator(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/camps/list')
+	@UseGuards(new AuthGuard())
+	public async getCampDetailsForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+	) {
+		return this.programCoordinatorService.getCampDetailsForProgramCoordinator(
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/camps/:id')
+	@UseGuards(new AuthGuard())
+	public async campByIdForProgramCoordinator(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param() id: any,
+	) {
+		return this.programCoordinatorService.campByIdForProgramCoordinator(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Post('/info/:id')
+	public async getFacilitatorDetails(
+		@Param('id') id: number,
+		@Res() response: Response,
+		@Req() request: any,
+		@Body() body: any,
+	) {
+		return this.programCoordinatorService.getFacilitatorDetails(
+			id,
+			body,
+			request,
+			response,
+		);
+	}
+
+	@Get('/profile')
+	public async getProgramCoordinatorProfile(
+		@Res() response: Response,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getProgramCoordinatorProfile(
+			request,
+			response,
+		);
+	}
+
+	@Patch('/profile/:id')
+	@UseGuards(new AuthGuard())
+	public async updateProfile(
+		@Req() request: any,
+		@Body() body: any,
+		@Res() response: any,
+		@Param('id') id: number,
+	) {
+		return this.programCoordinatorService.updateProfile(
+			request,
+			body,
+			response,
+			id,
+		);
+	}
+
+	@Get('/board/:id')
+	@UseGuards(new AuthGuard())
+	public async getBoardNameById(
+		@Param('id') id: number,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getBoardNameById(
+			id,
+			response,
+			request,
+		);
+	}
+
+	@Get('/subject/list/:id')
+	@UseGuards(new AuthGuard())
+	public async getSubjectsByBoard(
+		@Param('id') id: number,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getSubjectsByBoard(
+			id,
+			response,
+			request,
+		);
+	}
+
+	@Post('/get/academic-year-details')
+	public async getAcademicyearDetailsByProgram(
+		@Body() body: any,
+		@Res() response: Response,
+		@Req() request: any,
+	) {
+		return this.programCoordinatorService.getAcademicyearDetailsByProgram(
 			body,
 			request,
 			response,

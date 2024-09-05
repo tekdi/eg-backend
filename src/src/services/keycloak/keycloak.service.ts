@@ -273,4 +273,30 @@ export class KeycloakService {
 		}
 		return registerUserRes;
 	}
+
+	public async getUserKeycloakRefreshToken(data) {
+		const url = `${this.keycloak_url}/realms/${this.realm_name_app}/protocol/openid-connect/token`;
+
+		let payload = {
+			client_id: this.client_name_app,
+			grant_type: 'refresh_token',
+			refresh_token: data.refresh_token,
+		};
+
+		const config: AxiosRequestConfig = {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+		};
+
+		try {
+			const observable = this.httpService.post(url, payload, config);
+			const promise = observable.toPromise();
+			const response = await promise;
+
+			return response.data;
+		} catch (e) {
+			console.log('getUserKeycloakToken', e.message);
+		}
+	}
 }

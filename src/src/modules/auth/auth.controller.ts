@@ -92,6 +92,12 @@ export class AuthController {
 		return this.authService.login(req, response);
 	}
 
+	@Post('/refresh-token')
+	@UsePipes(ValidationPipe)
+	refreshToken(@Req() req: Request, @Res() response: Response) {
+		return this.authService.refreshToken(req, response);
+	}
+
 	// users/is_user_exist by mobile and adhaar etc filter.
 	@Post('/is_user_exist')
 	public async isUserExist(

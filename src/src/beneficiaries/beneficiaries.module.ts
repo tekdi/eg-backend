@@ -53,7 +53,7 @@ export class BeneficiariesModule implements NestModule {
 				{ path: '/beneficiaries/:id', method: RequestMethod.DELETE },
 				'/beneficiaries/register',
 				'/beneficiaries/statusUpdate',
-				'/beneficiaries/admin/verify-enrollment',
+				//'/beneficiaries/admin/verify-enrollment',
 			)
 			.forRoutes(BeneficiariesController);
 

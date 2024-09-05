@@ -1914,6 +1914,10 @@ export class FacilitatorService {
 	public async getLearnerStatusDistribution(req: any, body: any, resp: any) {
 		let program_id = req?.mw_program_id;
 		let academic_year_id = req?.mw_academic_year_id;
+		let state_query;
+		let state_result;
+		let status;
+
 		const user = await this.userService.ipUserInfo(req);
 		if (!user?.data?.id) {
 			return resp.status(401).json({
@@ -1921,6 +1925,21 @@ export class FacilitatorService {
 				message: 'Unauthenticated User!',
 			});
 		}
+
+		//get state details
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
 
 		const sortType = body?.sortType ? body?.sortType : 'desc';
 
@@ -1967,12 +1986,22 @@ export class FacilitatorService {
 			);
 		}
 
-		const status = [
-			'identified',
-			'ready_to_enroll',
-			'enrolled',
-			'enrolled_ip_verified',
-		];
+		if (state_response == 'RAJASTHAN') {
+			status = [
+				'identified',
+				'ready_to_enroll',
+				'enrolled',
+				'sso_id_enrolled',
+				'sso_id_verified',
+			];
+		} else {
+			status = [
+				'identified',
+				'ready_to_enroll',
+				'enrolled',
+				'enrolled_ip_verified',
+			];
+		}
 
 		let filterQuery =
 			'{ _and: [' +
@@ -2680,8 +2709,6 @@ export class FacilitatorService {
 			case 'pragati_mobilizer': {
 				requiredFields = [
 					'first_name',
-					'middle_name',
-					'last_name',
 					'mobile',
 					'dob',
 					'gender',
@@ -2755,12 +2782,10 @@ export class FacilitatorService {
 				requiredFields = requiredFields.filter(
 					(field) => !checkField(userData, field),
 				);
-				dataToCheck = userData;
+
 				break;
 			}
 			case 'selected_for_onboarding': {
-				dataToCheck = userData;
-
 				const checkExperience = ({ type, key }) => {
 					// experience
 					const experience = userData.experience.filter(
@@ -2850,7 +2875,6 @@ export class FacilitatorService {
 			}
 			case 'selected_prerak':
 				requiredFields = ['aadhar_no'];
-				dataToCheck = userData;
 				break;
 			default:
 				return res.status(400).json({ message: 'Invalid status' });
