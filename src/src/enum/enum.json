@@ -343,6 +343,10 @@
 		{
 			"title": "ENROLLMENT_SSO_ID_VERIFIED",
 			"value": "sso_id_verified"
+		},
+		{
+			"title": "ENROLLMENT_PC_VERIFIED",
+			"value": "pc_verified"
 		}
 	],
 
