@@ -13,7 +13,6 @@ import {
 import { S3Service } from '../services/s3/s3.service';
 import { FacilitatorCoreService } from './facilitator.core.service';
 import { Method } from '../common/method/method';
-
 @Injectable()
 export class FacilitatorService {
 	constructor(
@@ -2729,6 +2728,7 @@ export class FacilitatorService {
 					'profile_photo_2',
 					'profile_photo_3',
 				];
+
 				requiredDocumentTypes.forEach((docType) => {
 					if (
 						!documents.some(
@@ -2739,7 +2739,7 @@ export class FacilitatorService {
 					}
 				});
 
-				const qualifications = userData.qualifications || [];
+				const qualifications = userData?.qualifications || [];
 				if (
 					!qualifications.some(
 						(qualification: any) =>

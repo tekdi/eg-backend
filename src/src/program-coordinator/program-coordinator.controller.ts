@@ -1,7 +1,6 @@
 import {
 	Body,
 	Controller,
-	Get,
 	Param,
 	Post,
 	Req,
@@ -13,6 +12,7 @@ import {
 	Request,
 	Patch,
 	Delete,
+	Get,
 } from '@nestjs/common';
 
 import { AuthGuard } from 'src/modules/auth/auth.guard';
@@ -210,7 +210,7 @@ export class ProgramCoordinatorController {
 		@Req() request: any,
 		@Body() body: any,
 		@Res() response: any,
-		@Param() id: Number,
+		@Param() id: number,
 	) {
 		return this.programCoordinatorService.getBeneficiaryDetailsforProgramCoordinator(
 			id,

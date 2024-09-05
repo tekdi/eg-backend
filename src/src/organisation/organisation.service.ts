@@ -75,7 +75,7 @@ export class OrganisationService {
 			['name', 'mobile', 'contact_person', 'address', 'email_id'],
 		);
 
-		if (!newOrganisation || !newOrganisation?.organisations.id) {
+		if (!newOrganisation?.organisations.id) {
 			throw new Error('Failed to create organisation.');
 		}
 		const organisation = newOrganisation?.organisations;
@@ -137,7 +137,7 @@ export class OrganisationService {
 			let offset = page > 1 ? limit * (page - 1) : 0;
 			let order_by = '';
 			if (body?.order_by) {
-				let { name, id } = body?.order_by;
+				let { name, id } = body?.order_by || {};
 				let errorData = {};
 				if (name && !['asc', 'desc'].includes(name)) {
 					errorData = {
