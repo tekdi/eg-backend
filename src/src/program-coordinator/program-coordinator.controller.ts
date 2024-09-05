@@ -332,4 +332,24 @@ export class ProgramCoordinatorController {
 			response,
 		);
 	}
+
+	@Post('/verify/enrollment')
+	@UseGuards(new AuthGuard())
+	async verifyEnrollment(
+		@Body() body: any,
+		@Res() response: any,
+		@Req() request: any,
+	) {
+		let result;
+
+		const payload = {
+			user_id: body.user_id,
+			enrollment_verification_status: body.enrollment_verification_status,
+		};
+		return await this.programCoordinatorService.programCoordinatorLearnerVerification(
+			payload,
+			request,
+			response,
+		);
+	}
 }
