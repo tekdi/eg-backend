@@ -3040,7 +3040,6 @@ export class BeneficiariesService {
 							request?.mw_program_id,
 							beneficiary_id,
 						);
-						console.log('ss', result?.status);
 
 						if (result?.status === false) {
 							return response.status(422).json({
