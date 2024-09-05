@@ -604,4 +604,18 @@ export class BeneficiariesController {
 			response,
 		);
 	}
+
+	@Get('/is_enrollment_available/:id')
+	@UseGuards(new AuthGuard())
+	public async isEnrollmentAvailiable(
+		@Param('id') id: string,
+		@Req() request: any,
+		@Res() response: any,
+	) {
+		return this.beneficiariesService.isEnrollmentAvailiable(
+			id,
+			request,
+			response,
+		);
+	}
 }

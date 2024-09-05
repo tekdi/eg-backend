@@ -4,6 +4,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { ExamResultPattern } from './exam.result.pattern';
+import { EnumService } from '../enum/enum.service';
 
 //pdf data extractor
 const parse = require('pdf-parse');
@@ -14,6 +15,7 @@ export class ExamService {
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 		private examResultPattern: ExamResultPattern,
+		private enumService: EnumService,
 	) {}
 
 	async getExamSchedule(id: any, resp: any, request: any) {
@@ -2243,11 +2245,11 @@ export class ExamService {
 	}
 
 	async updateExamStatus(body: any, request: any, response: any) {
-		let user_id = request?.mw_userid;
-		let academic_year_id = request?.mw_academic_year_id;
-		let program_id = request?.mw_program_id;
+		const user_id = request?.mw_userid;
+		const academic_year_id = request?.mw_academic_year_id;
+		const program_id = request?.mw_program_id;
+		let requiredFields: string[];
 
-		body.updated_by = user_id;
 		if (!user_id) {
 			return response.status(422).json({
 				message: 'Invalid User Entity',
@@ -2255,71 +2257,137 @@ export class ExamService {
 			});
 		}
 
-		let vquery = `query MyQuery {
-			program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, user_id: {_eq:${body?.user_id}}, facilitator_id: {_eq:${user_id}}}){
-			  id
-			  user_id
-			  facilitator_id
-			}
+		// List of required and allowed fields
+
+		if (body?.is_continued) {
+			requiredFields = [
+				'exam_fee_date',
+				'exam_fee_document_id',
+				'syc_subjects',
+				'is_continued',
+				'user_id',
+			];
+		} else {
+			requiredFields = ['is_continued', 'user_id'];
+		}
+
+		// Check if required fields are present
+		const missingFields = Array.from(requiredFields).filter(
+			(field) => !(field in body),
+		);
+
+		if (missingFields.length > 0) {
+			return response.status(422).json({
+				success: false,
+				message: `Missing required fields: ${missingFields.join(', ')}`,
+				data: {},
+			});
+		}
+
+		// check if array fields are not empty
+
+		if (body?.syc_subjects?.length == 0) {
+			return response.status(422).json({
+				success: false,
+				message: 'Please select syc subjects',
+				data: {},
+			});
+		}
+
+		// Filter body to include only allowed fields
+		const filteredBody = Object.keys(body)
+			.filter((key) => requiredFields.includes(key))
+			.reduce((obj, key) => {
+				obj[key] = body[key];
+				return obj;
+			}, {} as any);
+
+		if (filteredBody.is_continued == true) {
+			const status = this.enumService
+				.getEnumValue('BENEFICIARY_STATUS')
+				.data.filter(
+					(item) =>
+						item.title ==
+						'BENEFICIARY_STATUS_PRAGATI_SYC_REATTEMPT',
+				)
+				.map((enumData) => enumData.value);
+
+			filteredBody.status = status[0];
+			filteredBody.syc_reason = [
+				'exam_fee_date',
+				'exam_fee_document_id',
+				'syc_subjects',
+			];
+		}
+
+		// Build Hasura query to check authorization
+		const vquery = `query MyQuery {
+		  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, user_id: {_eq:${filteredBody?.user_id}}, facilitator_id: {_eq:${user_id}}}){
+			id
+			user_id
+			facilitator_id
 		  }
-		  `;
+		}`;
 
 		const vresponse = await this.hasuraServiceFromServices.getData({
 			query: vquery,
 		});
 
-		let id = vresponse?.data?.program_beneficiaries?.[0]?.id;
+		const id = vresponse?.data?.program_beneficiaries?.[0]?.id;
 
 		if (!id) {
 			return response.status(422).json({
 				success: false,
-				message: 'Unauthorised access !',
+				message: 'Unauthorised access!',
 				data: {},
 			});
 		}
 
+		// Construct the mutation query with validated fields
 		let query = '';
-		Object.keys(body).forEach((e) => {
-			if (body[e] !== undefined && body[e] !== null && body[e] !== '') {
+		Object.keys(filteredBody).forEach((e) => {
+			if (
+				filteredBody[e] !== undefined &&
+				filteredBody[e] !== null &&
+				filteredBody[e] !== ''
+			) {
 				if (e === 'render') {
-					query += `${e}: ${body[e]}, `;
-				} else if (Array.isArray(body[e])) {
-					query += `${e}: "${JSON.stringify(body[e]).replace(
-						/"/g,
-						'\\"',
-					)}", `;
-				} else if (typeof body[e] === 'boolean') {
-					query += `${e}: ${body[e]}, `;
+					query += `${e}: ${filteredBody[e]}, `;
+				} else if (Array.isArray(filteredBody[e])) {
+					// Check if the array is syc_reason, handle it differently
+					if (e === 'syc_reason') {
+						query += `${e}: [${filteredBody[e].join(', ')}], `;
+					} else {
+						query += `${e}: "${JSON.stringify(
+							filteredBody[e],
+						).replace(/"/g, '\\"')}", `;
+					}
+				} else if (typeof filteredBody[e] === 'boolean') {
+					query += `${e}: ${filteredBody[e]}, `;
 				} else {
-					query += `${e}: "${body[e]}", `;
+					query += `${e}: "${filteredBody[e]}", `;
 				}
 			}
 		});
 
-		let data = {
+		const data = {
 			query: `
-      mutation UpdateProgramBeneficiaries($id:Int!) {
-        update_program_beneficiaries_by_pk(
-            pk_columns: {
-              id: $id
-            },
-            _set: {
-                ${query}
-            }
-        ) {
-          id
-        }
-    }
-    `,
-			variables: {
-				id: id,
-			},
+			mutation UpdateProgramBeneficiaries($id: Int!) {
+			  update_program_beneficiaries_by_pk(
+				pk_columns: { id: $id },
+				_set: { ${query} }
+			  ) {
+				id
+			  }
+			}
+		  `,
+			variables: { id },
 		};
 
-		let validation_result =
+		const validation_result =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
 
-		let result =
+		const result =
 			validation_result?.data?.data?.update_program_beneficiaries_by_pk;
 
 		if (result) {
@@ -2331,7 +2399,7 @@ export class ExamService {
 		} else {
 			return response.status(500).json({
 				success: false,
-				message: 'Unable to update status !',
+				message: 'Unable to update status!',
 				data: {},
 			});
 		}
