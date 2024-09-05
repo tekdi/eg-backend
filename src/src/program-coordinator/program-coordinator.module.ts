@@ -19,7 +19,10 @@ import { S3Module } from 'src/services/s3/s3.module';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { ProgramCoordinatorController } from './program-coordinator.controller';
 import { ProgramCoordinatorService } from './program-coordinator.service';
-
+import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';
+import { UploadFileModule } from 'src/upload-file/upload-file.module';
+import { EnumModule } from '../enum/enum.module';
+import { BoardModule } from 'src/modules/board/board.module';
 @Module({
 	imports: [
 		KeycloakModule,
@@ -28,7 +31,11 @@ import { ProgramCoordinatorService } from './program-coordinator.service';
 		HelperModule,
 		UserModule,
 		AcknowledgementModule,
+		BeneficiariesModule,
 		S3Module,
+		UploadFileModule,
+		EnumModule,
+		BoardModule,
 	],
 	controllers: [ProgramCoordinatorController],
 	providers: [ProgramCoordinatorService, Method, AuthService],
@@ -42,6 +49,18 @@ export class ProgramCoordinatorModule implements NestModule {
 				'/program-coordinator/activities/create',
 				'/program-coordinator/activities/:id',
 				'/program-coordinator/activities/list',
+				'/program-coordinator/learners/facilitator/list',
+				'/program-coordinator/learners/list',
+				'/program-coordinator/facilitators/cohort',
+				'/program-coordinator/beneficiaries/:id',
+				'/program-coordinator/camps/list',
+				'/program-coordinator/camps/:id',
+				'/program-coordinator/info/:id',
+				'/program-coordinator/profile',
+				'/program-coordinator/profile/:id',
+				'/program-coordinator/board/:id',
+				'/program-coordinator/subject/list/:id',
+				'/program-coordinator/get/academic-year-details',
 			)
 			.forRoutes(ProgramCoordinatorController);
 	}

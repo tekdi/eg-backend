@@ -4,6 +4,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 
 import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { ExamResultPattern } from './exam.result.pattern';
+import { EnumService } from '../enum/enum.service';
 
 //pdf data extractor
 const parse = require('pdf-parse');
@@ -14,6 +15,7 @@ export class ExamService {
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private uploadFileService: UploadFileService,
 		private examResultPattern: ExamResultPattern,
+		private enumService: EnumService,
 	) {}
 
 	async getExamSchedule(id: any, resp: any, request: any) {
@@ -1054,6 +1056,10 @@ export class ExamService {
 				program_beneficiaries(where: ${filter}, ${limit != -1 ? 'limit: $limit,' : ''}
 					offset: $offset) {
 				  facilitator_id
+					user_id
+					enrollment_first_name
+					enrollment_middle_name
+					enrollment_last_name
 					bordID{
 						id
 						name
@@ -1073,6 +1079,13 @@ export class ExamService {
 					first_name
 					middle_name
 					last_name
+					exam_result_document: documents(where: {document_sub_type: {_eq: "exam_result_fail"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+					
+					}
 					exam_results(where: {program_id: {_eq: ${program_id}}, academic_year_id: {_eq: ${academic_year_id}},${filterStatus}}) {
 					  id
 					  board_id
@@ -1236,14 +1249,24 @@ export class ExamService {
 		const user_id = request?.body?.user_id;
 		const board_id = request?.body?.board_id;
 		const enrollment = request?.body?.enrollment;
-		//first check validations for all inputs
+		let validation_result;
+		let result_upload_status;
+		let update_status_body = {};
+
 		try {
-			//text read
 			const result = await this.examResultPattern.extractResultFromPDF(
 				file,
 				board_name,
 			);
+
 			if (result == null) {
+				await this.handleUploadAttemptStatus(
+					file,
+					user_id,
+					request,
+					response,
+				);
+
 				return response
 					.status(200)
 					.json({ success: false, message: 'INVALID_PDF' });
@@ -1291,6 +1314,12 @@ export class ExamService {
 						});
 					}
 				} else {
+					await this.handleUploadAttemptStatus(
+						file,
+						user_id,
+						request,
+						response,
+					);
 					return response.status(200).json({
 						success: false,
 						message: 'ENROLLMENT_NOT_MATCH',
@@ -1302,6 +1331,225 @@ export class ExamService {
 			return response
 				.status(200)
 				.json({ success: false, message: 'FAILED_READ_PDF' });
+		}
+	}
+
+	private async handleUploadAttemptStatus(
+		file,
+		user_id: any,
+		request: any,
+		response: any,
+	): Promise<string> {
+		let validation_result_status = await this.uploadAttemptValidationCheck(
+			user_id,
+		);
+
+		let update_status_body = {
+			learner_id: user_id,
+			status: validation_result_status,
+		};
+		await this.updateReportStatus(update_status_body, request);
+
+		await this.uploadFileService.uploadFileDetails(
+			file,
+			user_id,
+			'exam_result',
+			'exam_result_fail',
+			response,
+		);
+
+		return validation_result_status;
+	}
+
+	async uploadAttemptValidationCheck(user_id) {
+		let query;
+		let validation_response;
+		let validation_result;
+		let result_upload_status;
+		//first check validations for all inputs
+
+		//get result upload status to determine next result attempt status
+
+		query = `query MyQuery {
+			program_beneficiaries(where: {user_id: {_eq: ${user_id}}}){
+			  user_id
+			  result_upload_status
+			}
+		  }
+		  `;
+		validation_response =
+			await this.hasuraServiceFromServices.queryWithVariable({
+				query: query,
+			});
+
+		validation_result =
+			validation_response?.data?.data?.program_beneficiaries?.[0]
+				?.result_upload_status;
+
+		let attempt_status = [
+			'first_time_upload_failed',
+			'second_time_upload_failed',
+			'assign_to_ip',
+		];
+
+		if (validation_result == null || validation_result === '') {
+			// If no status is present, start with the first attempt status
+			return (result_upload_status = attempt_status[0]);
+		} else {
+			const currentIndex = attempt_status.indexOf(validation_result);
+			if (
+				currentIndex !== -1 &&
+				currentIndex < attempt_status.length - 1
+			) {
+				// Move to the next status in the list
+				return (result_upload_status =
+					attempt_status[currentIndex + 1]);
+			} else {
+				// If we're at the end of the list or status is not found, fallback to the first status
+				return (result_upload_status = attempt_status[0]);
+			}
+		}
+	}
+
+	async updateReportStatus(body: any, request: any) {
+		try {
+			let program_id = request?.mw_program_id;
+			let academic_year_id = request?.mw_academic_year_id;
+			let user_id = request?.mw_userid;
+			let learner_id = body.learner_id;
+			let status = body?.status;
+
+			if (!learner_id || !status) {
+				return {
+					success: false,
+					message: 'Required Learner_id And Status',
+				};
+			}
+
+			// Check user role
+			let role = request?.mw_roles;
+
+			if (role.includes('staff')) {
+				// If the user is staff, check if learner_id is under this staff
+				const data = {
+					query: `query MyQuery6 {
+						users(where: {id: {_eq: ${user_id}}}){
+							program_users(where: {academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}, user_id: {_eq: ${user_id}}}) {
+								organisation_id
+								academic_year_id
+								program_id
+								user_id
+							} 
+						}
+					}`,
+				};
+				const validation_response =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						data,
+					);
+
+				const organisation_id =
+					validation_response?.data?.data?.users?.[0]
+						?.program_users?.[0].organisation_id || '';
+
+				const staffValidationQuery = {
+					query: `
+						query StaffValidationQuery {
+							program_beneficiaries(where: { user_id: { _eq: ${learner_id} },facilitator_user: {program_faciltators: {parent_ip: {_eq: "${organisation_id}"}, academic_year_id: {_eq: ${academic_year_id}}, program_id: {_eq: ${program_id}}}}}){
+								user_id
+							}
+						}
+					`,
+				};
+
+				const staffValidationResponse =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						staffValidationQuery,
+					);
+
+				if (
+					!staffValidationResponse?.data?.data
+						?.program_beneficiaries[0]?.user_id
+				) {
+					return {
+						success: false,
+						message:
+							'Forbidden: The learner_id does not belong to the staff user!',
+					};
+				}
+			} else if (role.includes('facilitator')) {
+				// If the user is facilitator, check if learner_id is under this facilitator
+				const facilitatorValidationQuery = {
+					query: `
+						query facilitatorValidationQuery {
+							program_beneficiaries(where:{user_id: { _eq: ${learner_id} },facilitator_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}}) {
+								user_id
+							}
+						}
+					`,
+				};
+
+				const facilitatorValidationResponse =
+					await this.hasuraServiceFromServices.queryWithVariable(
+						facilitatorValidationQuery,
+					);
+
+				if (
+					!facilitatorValidationResponse?.data?.data
+						?.program_beneficiaries[0]?.user_id
+				) {
+					return {
+						success: false,
+						message:
+							'Forbidden: The learner_id does not belong to the Facilitator user!',
+					};
+				}
+			} else {
+				// If the user is neither staff nor facilitator, return forbidden error
+				return {
+					success: false,
+					message:
+						'Forbidden: You do not have permission to perform this action!',
+				};
+			}
+
+			// Update the status in program_beneficiaries table
+			const updateQuery = {
+				query: `
+					mutation UpdateprogrambeneficiariesStatus {
+						update_program_beneficiaries(where: { user_id: { _eq: ${learner_id} }, academic_year_id: { _eq: ${academic_year_id} }, program_id: { _eq: ${program_id} } }, _set: { result_upload_status: "${status}" }) {
+							affected_rows
+						}
+					}
+				`,
+			};
+
+			const updateResponse =
+				await this.hasuraServiceFromServices.queryWithVariable(
+					updateQuery,
+				);
+			const result =
+				updateResponse?.data?.data?.update_program_beneficiaries
+					?.affected_rows;
+
+			if (result > 0) {
+				return {
+					success: true,
+					message: 'Status updated successfully!',
+				};
+			} else {
+				return {
+					success: false,
+					message:
+						'No beneficiary found with the provided learner_id!',
+				};
+			}
+		} catch (error) {
+			console.error('Error updating status:', error);
+			return {
+				success: false,
+				message: 'Internal Server Error',
+			};
 		}
 	}
 
@@ -1997,11 +2245,11 @@ export class ExamService {
 	}
 
 	async updateExamStatus(body: any, request: any, response: any) {
-		let user_id = request?.mw_userid;
-		let academic_year_id = request?.mw_academic_year_id;
-		let program_id = request?.mw_program_id;
+		const user_id = request?.mw_userid;
+		const academic_year_id = request?.mw_academic_year_id;
+		const program_id = request?.mw_program_id;
+		let requiredFields: string[];
 
-		body.updated_by = user_id;
 		if (!user_id) {
 			return response.status(422).json({
 				message: 'Invalid User Entity',
@@ -2009,71 +2257,137 @@ export class ExamService {
 			});
 		}
 
-		let vquery = `query MyQuery {
-			program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, user_id: {_eq:${body?.user_id}}, facilitator_id: {_eq:${user_id}}}){
-			  id
-			  user_id
-			  facilitator_id
-			}
+		// List of required and allowed fields
+
+		if (body?.is_continued) {
+			requiredFields = [
+				'exam_fee_date',
+				'exam_fee_document_id',
+				'syc_subjects',
+				'is_continued',
+				'user_id',
+			];
+		} else {
+			requiredFields = ['is_continued', 'user_id'];
+		}
+
+		// Check if required fields are present
+		const missingFields = Array.from(requiredFields).filter(
+			(field) => !(field in body),
+		);
+
+		if (missingFields.length > 0) {
+			return response.status(422).json({
+				success: false,
+				message: `Missing required fields: ${missingFields.join(', ')}`,
+				data: {},
+			});
+		}
+
+		// check if array fields are not empty
+
+		if (body?.syc_subjects?.length == 0) {
+			return response.status(422).json({
+				success: false,
+				message: 'Please select syc subjects',
+				data: {},
+			});
+		}
+
+		// Filter body to include only allowed fields
+		const filteredBody = Object.keys(body)
+			.filter((key) => requiredFields.includes(key))
+			.reduce((obj, key) => {
+				obj[key] = body[key];
+				return obj;
+			}, {} as any);
+
+		if (filteredBody.is_continued == true) {
+			const status = this.enumService
+				.getEnumValue('BENEFICIARY_STATUS')
+				.data.filter(
+					(item) =>
+						item.title ==
+						'BENEFICIARY_STATUS_PRAGATI_SYC_REATTEMPT',
+				)
+				.map((enumData) => enumData.value);
+
+			filteredBody.status = status[0];
+			filteredBody.syc_reason = [
+				'exam_fee_date',
+				'exam_fee_document_id',
+				'syc_subjects',
+			];
+		}
+
+		// Build Hasura query to check authorization
+		const vquery = `query MyQuery {
+		  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}, user_id: {_eq:${filteredBody?.user_id}}, facilitator_id: {_eq:${user_id}}}){
+			id
+			user_id
+			facilitator_id
 		  }
-		  `;
+		}`;
 
 		const vresponse = await this.hasuraServiceFromServices.getData({
 			query: vquery,
 		});
 
-		let id = vresponse?.data?.program_beneficiaries?.[0]?.id;
+		const id = vresponse?.data?.program_beneficiaries?.[0]?.id;
 
 		if (!id) {
 			return response.status(422).json({
 				success: false,
-				message: 'Unauthorised access !',
+				message: 'Unauthorised access!',
 				data: {},
 			});
 		}
 
+		// Construct the mutation query with validated fields
 		let query = '';
-		Object.keys(body).forEach((e) => {
-			if (body[e] !== undefined && body[e] !== null && body[e] !== '') {
+		Object.keys(filteredBody).forEach((e) => {
+			if (
+				filteredBody[e] !== undefined &&
+				filteredBody[e] !== null &&
+				filteredBody[e] !== ''
+			) {
 				if (e === 'render') {
-					query += `${e}: ${body[e]}, `;
-				} else if (Array.isArray(body[e])) {
-					query += `${e}: "${JSON.stringify(body[e]).replace(
-						/"/g,
-						'\\"',
-					)}", `;
-				} else if (typeof body[e] === 'boolean') {
-					query += `${e}: ${body[e]}, `;
+					query += `${e}: ${filteredBody[e]}, `;
+				} else if (Array.isArray(filteredBody[e])) {
+					// Check if the array is syc_reason, handle it differently
+					if (e === 'syc_reason') {
+						query += `${e}: [${filteredBody[e].join(', ')}], `;
+					} else {
+						query += `${e}: "${JSON.stringify(
+							filteredBody[e],
+						).replace(/"/g, '\\"')}", `;
+					}
+				} else if (typeof filteredBody[e] === 'boolean') {
+					query += `${e}: ${filteredBody[e]}, `;
 				} else {
-					query += `${e}: "${body[e]}", `;
+					query += `${e}: "${filteredBody[e]}", `;
 				}
 			}
 		});
 
-		let data = {
+		const data = {
 			query: `
-      mutation UpdateProgramBeneficiaries($id:Int!) {
-        update_program_beneficiaries_by_pk(
-            pk_columns: {
-              id: $id
-            },
-            _set: {
-                ${query}
-            }
-        ) {
-          id
-        }
-    }
-    `,
-			variables: {
-				id: id,
-			},
+			mutation UpdateProgramBeneficiaries($id: Int!) {
+			  update_program_beneficiaries_by_pk(
+				pk_columns: { id: $id },
+				_set: { ${query} }
+			  ) {
+				id
+			  }
+			}
+		  `,
+			variables: { id },
 		};
 
-		let validation_result =
+		const validation_result =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
 
-		let result =
+		const result =
 			validation_result?.data?.data?.update_program_beneficiaries_by_pk;
 
 		if (result) {
@@ -2085,7 +2399,7 @@ export class ExamService {
 		} else {
 			return response.status(500).json({
 				success: false,
-				message: 'Unable to update status !',
+				message: 'Unable to update status!',
 				data: {},
 			});
 		}

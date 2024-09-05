@@ -231,6 +231,10 @@
 		{
 			"title": "BENEFICIARY_STATUS_PRAGATI_SYC",
 			"value": "pragati_syc"
+		},
+		{
+			"title": "BENEFICIARY_STATUS_PRAGATI_SYC_REATTEMPT",
+			"value": "pragati_syc_reattempt"
 		}
 	],
 	"TYPE_OF_LEARNER": [
@@ -2010,6 +2014,175 @@
 		{
 			"title": "VOLUNTEER_STATUS_APPROVED",
 			"value": "approved"
+		}
+	],
+	"MOBILIZATION_ACTIVITY": [
+		{
+			"title": "MOBILIZATION_ACTIVITY_LEARNER_IDENTIFICATION_SUPPORT",
+			"value": "learner_identification_support"
+		},
+		{
+			"title": "MOBILIZATION_ACTIVITY_LEARNER_DOCUMENTATION_SUPPORT",
+			"value": "learner_documentation_support"
+		},
+		{
+			"title": "MOBILIZATION_ACTIVITY_LEARNER_OPEN_SCHOOL_ENROLLMENT_SUPPORT",
+			"value": "learner_open_school_enrollment_support"
+		},
+		{
+			"title": "MOBILIZATION_ACTIVITY_PRI_CONTACT_AND_MEETING",
+			"value": "pri_contact_and_meeting"
+		},
+		{
+			"title": "MOBILIZATION_ACTIVITY_PARENTS_COUNSELLING",
+			"value": "parents_counselling"
+		},
+		{
+			"title": "MOBILIZATION_ACTIVITY_PRAGATI_SABHA_LEAD",
+			"value": "pragati_sabha_lead"
+		},
+		{
+			"title": "MOBILIZATION_ACTIVITY_PRAGATI_KARYASHALA_SUPPORT",
+			"value": "pragati_karyashala_support"
+		}
+	],
+	"CAMP_ACTIVITY": [
+		{
+			"title": "CAMP_ACTIVITY_CAMP_SETUP_SUPPORT",
+			"value": "camp_setup_support"
+		},
+		{
+			"title": "CAMP_ACTIVITY_SESSION_SUPPORT",
+			"value": "session_support"
+		},
+		{
+			"title": "CAMP_ACTIVITY_LEARNER_ASSESSMENT_SUPPORT",
+			"value": "learner_assessment_support"
+		},
+		{
+			"title": "CAMP_ACTIVITY_SUCCESS_CASE_STORY_PREPARATION",
+			"value": "success_case_story_preparation"
+		}
+	],
+	"EXAM_ACTIVITY": [
+		{
+			"title": "EXAM_ACTIVITY_E_PCP_SUPPORT",
+			"value": "e_pcp_support"
+		},
+		{
+			"title": "EXAM_ACTIVITY_EXAM_READINESS_SUPPORT",
+			"value": "exam_readiness_support"
+		},
+		{
+			"title": "EXAM_ACTIVITY_EXAM_ATTENDANCE_ENSURE",
+			"value": "exam_attendance_ensure"
+		},
+		{
+			"title": "EXAM_ACTIVITY_RESULT_DOWNLOAD_AND_UPLOAD_SUPPORT",
+			"value": "result_download_and_upload_support"
+		}
+	],
+	"MONITORING_VISIT_ACTIVITY": [
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_COMMUNITY_MOBILIZATION",
+			"value": "community_mobilization"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_VIABLE_CAMP_SETUP_SC",
+			"value": "viable_camp_setup_sc"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_BASELINE_SC",
+			"value": "baseline_sc"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_NEEV_CAMP_SESSION_CRO",
+			"value": "neenv_camp_session_cro"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_FORMATIVE_ASSESSMENT_SC",
+			"value": "formative_assessment_sc"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_ENDLINE_SC",
+			"value": "endline_sc"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_PRAYAS_CAMP_SESSION_CRO",
+			"value": "prayas_camp_session_cro"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_MOCK_TEST_SC",
+			"value": "mock_test_sc"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_LEARNER_INTERVIEW",
+			"value": "learner_interview"
+		},
+		{
+			"title": "MONITORING_VISIT_ACTIVITY_PRERAK_INTERVIEW",
+			"value": "prerak_interview"
+		}
+	],
+	"TRAINING_AND_MEETING_ACTIVITY": [
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAGATI_ORIENTATION_TRAINING",
+			"value": "pragati_orientation_training"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_NEEV_CAMP_TRAINING",
+			"value": "neev_camp_training"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PRAYAS_CAMP_TRAINING",
+			"value": "prayas_camp_training"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_EXAM_PREPARATION_TRAINING",
+			"value": "exam_preparation_training"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_OTHER_TRAINING",
+			"value": "other_training"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_GOVT_STAKEHOLDER",
+			"value": "govt_stakeholder"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_STAFF_MEETING",
+			"value": "staff_meeting"
+		},
+		{
+			"title": "TRAINING_AND_MEETING_ACTIVITY_PC_AND_PRERAK_MEETING",
+			"value": "pc_and_prerak_meeting"
+		}
+	],
+	"PC_USER_ACTIVITY_CATEGORIES": [
+		{
+			"title": "PC_USER_ACTIVITY_CATEGORIES_MOBILIZATION",
+			"value": "mobilization",
+			"foreign_enum_key": "MOBILIZATION_ACTIVITY"
+		},
+		{
+			"title": "PC_USER_ACTIVITY_CATEGORIES_CAMP",
+			"value": "camp",
+			"foreign_enum_key": "CAMP_ACTIVITY"
+		},
+		{
+			"title": "PC_USER_ACTIVITY_CATEGORIES_EXAM",
+			"value": "exam",
+			"foreign_enum_key": "EXAM_ACTIVITY"
+		},
+		{
+			"title": "PC_USER_ACTIVITY_CATEGORIES_MONITORING_VISIT",
+			"value": "monitoring_visit",
+			"foreign_enum_key": "MONITORING_VISIT_ACTIVITY"
+		},
+		{
+			"title": "PC_USER_ACTIVITY_CATEGORIES_TRAINING_AND_MEETING",
+			"value": "training_and_meeting",
+			"foreign_enum_key": "TRAINING_AND_MEETING_ACTIVITY"
 		}
 	]
 }

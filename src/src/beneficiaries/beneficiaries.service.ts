@@ -16,6 +16,8 @@ import { UserHelperService } from '../helper/userHelper.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
+import * as moment from 'moment';
+
 @Injectable()
 export class BeneficiariesService {
 	public url = process.env.HASURA_BASE_URL;
@@ -1354,6 +1356,14 @@ export class BeneficiariesService {
 					document_sub_type
 					path
 					}
+					exam_result_document: documents(where: {document_sub_type: {_eq: "exam_result_fail"}}) {
+						id
+						name
+						doument_type
+						document_sub_type
+						path
+					}
+
 				profile_url
 				state
 				state_id
@@ -1378,6 +1388,9 @@ export class BeneficiariesService {
 				id
 				enrollment_status
 				enrolled_for_board
+				bordID{
+					name
+				  }
 				subjects
 				academic_year_id
 				payment_receipt_document_id
@@ -1523,6 +1536,8 @@ export class BeneficiariesService {
 				['profile_photo_1']: result?.['profile_photo_1']?.[0] || {},
 				['profile_photo_2']: result?.['profile_photo_2']?.[0] || {},
 				['profile_photo_3']: result?.['profile_photo_3']?.[0] || {},
+				['exam_result_document']:
+					result?.['exam_result_document']?.[0] || {},
 				['aadhaar_front']: result?.['aadhaar_front']?.[0] || {},
 				['aadhaar_back']: result?.['aadhaar_back']?.[0] || {},
 				['program_users']: result?.['program_users']?.[0] || {},
@@ -1555,6 +1570,7 @@ export class BeneficiariesService {
 					mappedData.profile_photo_3.fileUrl = fileData.fileUrl;
 				}
 			}
+
 			if (resp) {
 				return resp.status(200).json({
 					success: true,
@@ -1889,6 +1905,25 @@ export class BeneficiariesService {
 	}
 
 	public async setEnrollmentStatus(body: any, request: any) {
+		let program_id = request?.mw_program_id;
+		let state_query;
+		let state_result;
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
 		const { data: updatedUser } =
 			await this.beneficiariesCoreService.userById(body.user_id);
 		const allEnrollmentStatuses = this.enumService
@@ -1909,7 +1944,11 @@ export class BeneficiariesService {
 		delete body.status;
 
 		if (body.enrollment_verification_status == 'verified') {
-			body.status = 'enrolled_ip_verified';
+			if (state_response == 'RAJASTHAN') {
+				body.status = 'registered_in_camp';
+			} else {
+				body.status = 'enrolled_ip_verified';
+			}
 		}
 
 		if (body.enrollment_verification_status == 'sso_id_verified') {
@@ -2013,6 +2052,96 @@ export class BeneficiariesService {
 		};
 	}
 
+	public async isEnrollmentAvailiable(id, request, response) {
+		const program_id = request?.mw_program_id;
+		const academic_year_id = request?.mw_academic_year_id;
+		const result = await this.validateEnrollmentAvailiabilty(
+			id,
+			program_id,
+			academic_year_id,
+		);
+
+		if (!result?.is_enrollment) {
+			return response.status(422).json({
+				data: result,
+			});
+		} else {
+			return response.status(200).json({
+				data: result,
+			});
+		}
+	}
+
+	public async validateEnrollmentAvailiabilty(
+		user_id,
+		program_id,
+		academic_year_id,
+	) {
+		let query;
+		let hasura_response;
+		let program_beneficiaries;
+		let state_query;
+		let state_result;
+		let valid_enrollment_status = [
+			'registered_in_neev_camp',
+			'enrollment_awaited',
+			'enrollment_rejected',
+			'enrolled',
+		];
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
+
+		if (state_response == 'RAJASTHAN') {
+			query = `query MyQuery {
+				program_beneficiaries(where: {user_id: {_eq: ${user_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_in:[${valid_enrollment_status}]}, group_users: {status: {_eq: "active"}, member_type: {_eq: "member"}, group: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}, camps: {type: {_eq: "main"}}}}) {
+				  id
+				  user_id
+				  status
+				}
+			  }
+			  
+		  
+		  `;
+
+			hasura_response = await this.hasuraServiceFromServices.getData({
+				query: query,
+			});
+
+			program_beneficiaries =
+				hasura_response?.data?.program_beneficiaries;
+
+			if (program_beneficiaries?.length > 0) {
+				return {
+					is_enrollment: true,
+					message: 'Enrollment availiable',
+				};
+			} else {
+				return {
+					is_enrollment: false,
+					message: 'Enrollment not availiable',
+				};
+			}
+		}
+		return {
+			is_enrollment: true,
+			message: 'Enrollment availiable',
+		};
+	}
+
 	public async registerBeneficiary(body, request) {
 		const user = await this.userService.ipUserInfo(request);
 		const password = body.mobile;
@@ -2067,8 +2196,8 @@ export class BeneficiariesService {
 
 	async create(req: any, request, response, update = false) {
 		const user = await this.userService.ipUserInfo(request);
-		const program_id = req.mw_program_id;
-		const academic_year_id = req.mw_academic_year_id;
+		const program_id = request.mw_program_id;
+		const academic_year_id = request.mw_academic_year_id;
 		const beneficiary_id = req?.id;
 		let query;
 		let hasura_repsonse;
@@ -2097,6 +2226,7 @@ export class BeneficiariesService {
 		});
 
 		state_name = hasura_repsonse?.data?.programs_by_pk?.state?.state_name;
+
 		const user_id = req?.id;
 		const PAGE_WISE_UPDATE_TABLE_DETAILS = {
 			edit_basic: {
@@ -2976,10 +3106,24 @@ export class BeneficiariesService {
 								req.id,
 							);
 
+						//check age
+						const { validationError, message } =
+							await this.checkPragatiCampEligibility({ ...req });
+						if (validationError) {
+							return response.status(422).send({
+								success: false,
+								message: `Missing fields data`,
+								errors: {
+									subjects: {
+										__errors: [message],
+									},
+								},
+							});
+						}
 						if (req?.is_eligible === 'no') {
 							status = 'ineligible_for_pragati_camp';
 							reason =
-								'The age of the learner should not be 14 to 29';
+								'The age of the learner should be 14 to 29';
 						} else if (req?.is_eligible === 'yes') {
 							status = 'sso_id_enrolled';
 							reason = 'sso_id_enrolled';
@@ -2988,8 +3132,6 @@ export class BeneficiariesService {
 						myRequest = {
 							...copiedRequest,
 							enrollment_number: null,
-							status,
-							reason_for_status_update: 'sso_id_enrolled',
 							enrollment_verification_status:
 								updatedUser.program_beneficiaries
 									?.enrollment_verification_status ===
@@ -3015,8 +3157,8 @@ export class BeneficiariesService {
 						await this.statusUpdate(
 							{
 								user_id: req.id,
-								status: 'sso_id_enrolled',
-								reason_for_status_update: 'sso_id_enrolled',
+								status: status,
+								reason_for_status_update: reason,
 							},
 							request,
 						);
@@ -3034,6 +3176,21 @@ export class BeneficiariesService {
 							message: `Invalid enrollment type`,
 							data: {},
 						});
+					}
+
+					if (req?.enrollment_number && state_name == 'RAJASTHAN') {
+						let enrollment_available_check =
+							await this.validateEnrollmentAvailiabilty(
+								user_id,
+								program_id,
+								academic_year_id,
+							);
+
+						if (!enrollment_available_check?.is_enrollment) {
+							return response.status(422).json({
+								data: enrollment_available_check,
+							});
+						}
 					}
 
 					if (req?.sso_id && request?.mw_program_id == 1) {
@@ -3086,7 +3243,6 @@ export class BeneficiariesService {
 						'enrollment_dob',
 						'is_eligible',
 						'type_of_enrollement',
-						'sso_id',
 					];
 					for (let info of tempArray) {
 						if (info === 'sso_id' && state_name !== 'RAJASTHAN') {
@@ -3096,6 +3252,7 @@ export class BeneficiariesService {
 							messageArray.push(`please send ${info} `);
 						}
 					}
+
 					if (messageArray.length > 0) {
 						return response.status(400).send({
 							success: false,
@@ -3108,11 +3265,24 @@ export class BeneficiariesService {
 							await this.beneficiariesCoreService.userById(
 								req.id,
 							);
-
+						//check age
+						const { validationError, message } =
+							await this.checkPragatiCampEligibility({ ...req });
+						if (validationError) {
+							return response.status(422).send({
+								success: false,
+								message: `Missing fields data`,
+								errors: {
+									subjects: {
+										__errors: [message],
+									},
+								},
+							});
+						}
 						if (req?.is_eligible === 'no') {
 							status = 'ineligible_for_pragati_camp';
 							reason =
-								'The age of the learner should not be 14 to 29';
+								'The age of the learner should be 14 to 29';
 						} else if (req?.is_eligible === 'yes') {
 							status = 'enrolled';
 							reason = 'enrolled';
@@ -3123,8 +3293,6 @@ export class BeneficiariesService {
 
 						myRequest = {
 							...copiedRequest,
-							status,
-							reason_for_status_update: reason,
 							enrollment_verification_status:
 								updatedUser.program_beneficiaries
 									?.enrollment_verification_status ===
@@ -3149,8 +3317,8 @@ export class BeneficiariesService {
 						await this.statusUpdate(
 							{
 								user_id: req.id,
-								status: 'enrolled',
-								reason_for_status_update: 'enrolled',
+								status: status,
+								reason_for_status_update: reason,
 							},
 							request,
 						);
@@ -3842,6 +4010,29 @@ export class BeneficiariesService {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
 		let status = 'enrolled_ip_verified';
+		let state_query;
+		let state_result;
+
+		//get state details
+
+		state_query = `query MyQuery {
+			programs_by_pk(id: ${program_id}){
+			  state{
+				state_name
+			  }
+			}
+		  }
+		  `;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
+
+		//set status to sso_id_verified if the program selected is Rajasthan
+		if (state_response == 'RAJASTHAN') {
+			status = 'sso_id_verified';
+		}
 
 		// Get users which are not present in the camps or whose status is inactive
 		const baseLine = this.enumService
@@ -4364,34 +4555,50 @@ export class BeneficiariesService {
 		user_id = result?.[0]?.id;
 
 		if (!user_id) {
-			let res = await this.hasuraService.q(
-				'extended_users',
-				{
-					...body,
-					user_id: id,
-				},
-				[
-					'user_id',
-					'social_category',
-					'marital_status',
-					'qualification_id',
-					'designation',
-					'created_by',
-					'updated_by',
-					'has_disability',
-					'type_of_disability',
-					'has_disability_certificate',
-					'disability_percentage',
-					'disability_occurence',
-					'has_govt_advantage',
-					'govt_advantages',
-					'support_for_exam',
-				],
-				false,
-				['id', 'user_id'],
-			);
+			let variable = [];
+			if (body?.type_of_disability) {
+				variable.push({
+					key: 'type_of_disability',
+					type: 'jsonb',
+				});
+			}
+			if (body?.support_for_exam) {
+				variable.push({
+					key: 'support_for_exam',
+					type: 'jsonb',
+				});
+			}
 
-			user_id = res?.extended_users?.id;
+			let result =
+				await this.hasuraServiceFromServices.createWithVariable(
+					'extended_users',
+					{
+						...body,
+						user_id: id,
+					},
+					[
+						'id',
+						'user_id',
+						'social_category',
+						'marital_status',
+						'qualification_id',
+						'designation',
+						'created_by',
+						'updated_by',
+						'has_disability',
+						'type_of_disability',
+						'has_disability_certificate',
+						'disability_percentage',
+						'disability_occurence',
+						'has_govt_advantage',
+						'govt_advantages',
+						'support_for_exam',
+					],
+					[],
+					variable,
+				);
+
+			user_id = result?.extended_users?.id;
 		}
 
 		// get state name via program_id
@@ -4805,5 +5012,35 @@ export class BeneficiariesService {
 				message: 'Valid SSO ID',
 			});
 		}
+	}
+
+	async checkPragatiCampEligibility(req: any) {
+		// Calculate eligibility based on age
+		const birthDate = moment(req.enrollment_dob, 'YYYY-MM-DD');
+		const enrollment = moment(req.enrollment_date, 'YYYY-MM-DD');
+		const age14 = birthDate.clone().add(14, 'years');
+		const age29 = birthDate.clone().add(29, 'years').add(364, 'days');
+		const isAgeValid = enrollment.isBetween(age14, age29, undefined, '[]');
+		let response: any = {
+			validationError: false,
+			message: undefined,
+		};
+
+		// Check if the provided is_eligible matches the calculated eligibility
+		if (
+			(req?.is_eligible == 'no' && isAgeValid) ||
+			(req?.is_eligible == 'yes' && !isAgeValid)
+		) {
+			response = {
+				validationError: true,
+				message: `Provided is_eligible (${
+					req.is_eligible
+				}) does not match the calculated eligibility (${
+					isAgeValid ? 'yes' : 'no'
+				}). Please correct it.`,
+			};
+		}
+
+		return response;
 	}
 }
