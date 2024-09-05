@@ -343,8 +343,11 @@ export class ProgramCoordinatorController {
 		let result;
 
 		const payload = {
-			user_id: body.user_id,
-			enrollment_verification_status: body.enrollment_verification_status,
+			user_id: body?.user_id,
+			enrollment_verification_status:
+				body?.enrollment_verification_status,
+			academic_year_id: body?.academic_year_id,
+			program_id: body?.program_id,
 		};
 		return await this.programCoordinatorService.programCoordinatorLearnerVerification(
 			payload,

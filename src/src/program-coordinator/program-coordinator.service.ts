@@ -2252,7 +2252,12 @@ export class ProgramCoordinatorService {
 		let hasura_response;
 		let validation_result;
 		let pc_user_id = request?.mw_userid;
-		let { user_id, enrollment_verification_status } = body;
+		let {
+			user_id,
+			enrollment_verification_status,
+			program_id,
+			academic_year_id,
+		} = body;
 		let set_update_body;
 
 		if (!user_id) {
@@ -2264,7 +2269,7 @@ export class ProgramCoordinatorService {
 		}
 
 		query = `query MyQuery {
-			program_beneficiaries(where: {user_id: {_eq: ${user_id}},facilitator_user: {program_faciltators: {pc_id: {_eq: ${pc_user_id}}}}}) {
+			program_beneficiaries(where: {user_id: {_eq: ${user_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}},facilitator_user: {program_faciltators: {pc_id: {_eq: ${pc_user_id}}}}}) {
 			  user_id
 			  id
 			}
