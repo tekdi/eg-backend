@@ -1195,6 +1195,8 @@ export class ProgramCoordinatorService {
 				pb.academic_year_id, 
 				pb.status, 
 				pb.enrollment_number, 
+				pb.enrollment_first_name,
+				pb.enrollment_last_name,
 				u.first_name, 
 				u.last_name,
 				f.first_name AS facilitator_first_name, 
