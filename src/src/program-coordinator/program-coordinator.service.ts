@@ -9,6 +9,7 @@ import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from '../user/user.service';
 import { EnumService } from '../enum/enum.service';
 import { BoardService } from 'src/modules/board/board.service';
+import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.service';
 @Injectable()
 export class ProgramCoordinatorService {
 	constructor(
@@ -22,6 +23,7 @@ export class ProgramCoordinatorService {
 		public userService: UserService,
 		private enumService: EnumService,
 		private boardService: BoardService,
+		private beneficiariesCoreService: BeneficiariesCoreService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {
@@ -2243,5 +2245,97 @@ export class ProgramCoordinatorService {
 				data: [],
 			});
 		}
+	}
+
+	async programCoordinatorLearnerVerification(body, request, response) {
+		let query;
+		let hasura_response;
+		let validation_result;
+		let pc_user_id = request?.mw_userid;
+		let {
+			user_id,
+			enrollment_verification_status,
+			program_id,
+			academic_year_id,
+		} = body;
+		let set_update_body;
+
+		if (!user_id) {
+			return response.json({
+				status: 422,
+				message: 'Provide valid user id ',
+				data: {},
+			});
+		}
+
+		query = `query MyQuery {
+			program_beneficiaries(where: {user_id: {_eq: ${user_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}},facilitator_user: {program_faciltators: {pc_id: {_eq: ${pc_user_id}}}}}) {
+			  user_id
+			  id
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		validation_result =
+			hasura_response?.data?.program_beneficiaries?.[0]?.user_id;
+
+		if (!validation_result) {
+			return response.json({
+				status: 422,
+				message: 'Invalid Access',
+				data: {},
+			});
+		}
+
+		const { data: updatedUser } =
+			await this.beneficiariesCoreService.userById(user_id);
+
+		if (enrollment_verification_status == 'pc_verified') {
+			set_update_body = {
+				enrollment_verification_status: 'pc_verified',
+			};
+		}
+
+		await this.hasuraService.q(
+			'program_beneficiaries',
+			{
+				...set_update_body,
+				id: updatedUser?.program_beneficiaries?.id,
+			},
+			['id', 'enrollment_verification_status'],
+			true,
+			['id', 'enrollment_verification_status'],
+		);
+
+		const newdata = (await this.beneficiariesCoreService.userById(user_id))
+			.data;
+
+		await this.userService.addAuditLog(
+			body?.user_id,
+			request.mw_userid,
+			'program_beneficiaries.status',
+			updatedUser?.program_beneficiaries?.id,
+			{
+				status: updatedUser?.program_beneficiaries?.status,
+				reason_for_status_update:
+					updatedUser?.program_beneficiaries
+						?.reason_for_status_update,
+			},
+			{
+				status: newdata?.program_beneficiaries?.status,
+				reason_for_status_update:
+					newdata?.program_beneficiaries?.reason_for_status_update,
+			},
+			['status', 'reason_for_status_update'],
+		);
+		return response.json({
+			status: 200,
+			success: true,
+			message: 'Status Updated successfully!',
+		});
 	}
 }
