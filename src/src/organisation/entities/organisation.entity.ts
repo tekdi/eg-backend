@@ -1,1 +1,1 @@
-export class Organisation {}
+export function Organisation() {}

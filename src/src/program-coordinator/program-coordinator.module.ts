@@ -1,9 +1,4 @@
-import {
-	Module,
-	MiddlewareConsumer,
-	NestModule,
-	RequestMethod,
-} from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 
 import { HelperModule } from 'src/helper/helper.module';
 import { AadhaarKycModule } from 'src/modules/aadhaar_kyc/aadhaar_kyc.module';
@@ -16,7 +11,6 @@ import { AcknowledgementModule } from '../modules/acknowledgement/acknowledgemen
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { S3Module } from 'src/services/s3/s3.module';
-import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { ProgramCoordinatorController } from './program-coordinator.controller';
 import { ProgramCoordinatorService } from './program-coordinator.service';
 import { BeneficiariesModule } from 'src/beneficiaries/beneficiaries.module';

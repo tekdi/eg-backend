@@ -1,11 +1,4 @@
-import { Exclude, Expose } from 'class-transformer';
-import {
-	MaxLength,
-	IsNotEmpty,
-	IsEmail,
-	IsString,
-	IsNumber,
-} from 'class-validator';
+import { Expose } from 'class-transformer';
 
 export class LMSTestTrackingDto {
 	//generated fields

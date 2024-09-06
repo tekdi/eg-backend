@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { Response } from 'express';
-import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';

@@ -1,1 +1,1 @@
-export class Enum {}
+export function Enum() {}

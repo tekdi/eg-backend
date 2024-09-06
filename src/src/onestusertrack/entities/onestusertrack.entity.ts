@@ -1,1 +1,1 @@
-export class Onestusertrack {}
+export function Onestusertrack() {}

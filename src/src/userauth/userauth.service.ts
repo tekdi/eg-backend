@@ -1914,16 +1914,14 @@ export class UserauthService {
 
 		user_data.users_by_pk.program_beneficiaries =
 			user_data?.users_by_pk?.program_beneficiaries?.reduce((acc, pb) => {
-				pb ? pb : {};
-
-				return { ...acc, ...pb };
+				// If pb is truthy, spread it into acc; otherwise, just return acc as it is
+				return pb ? { ...acc, ...pb } : acc;
 			}, {});
 
 		user_data.users_by_pk.references =
 			user_data?.users_by_pk?.references?.reduce((acc, rf) => {
-				rf ? rf : {};
-
-				return { ...acc, ...rf };
+				// Merge rf into acc if rf is truthy, otherwise return acc unchanged
+				return rf ? { ...acc, ...rf } : acc;
 			}, {});
 
 		const {

@@ -1,9 +1,4 @@
-import {
-	Module,
-	MiddlewareConsumer,
-	NestModule,
-	RequestMethod,
-} from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { UserauthController } from './userauth.controller';
 import { UserauthService } from './userauth.service';
 import { HelperModule } from 'src/helper/helper.module';

@@ -1,1 +1,1 @@
-export class Event {}
+export function Event() {}

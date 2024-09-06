@@ -1089,8 +1089,6 @@ export class ObservationsService {
 	async getObservationFieldList(body: any, resp: any, request: any) {
 		let response;
 		let newQdata;
-		let query;
-		let obj_filters;
 		let data;
 		let user_id = request?.mw_userid;
 
@@ -1105,7 +1103,7 @@ export class ObservationsService {
 			body.filters.field_status = { _eq: 'enabled' };
 			let filters = {
 				...body.filters,
-			} as any;
+			};
 
 			Object.keys(body.filters).forEach((item) => {
 				Object.keys(body.filters[item]).forEach((e) => {

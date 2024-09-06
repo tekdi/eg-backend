@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOnestusertrackDto } from './dto/create-onestusertrack.dto';
-import { UpdateOnestusertrackDto } from './dto/update-onestusertrack.dto';
 import { HasuraService } from '../hasura/hasura.service';
 
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';

@@ -6,7 +6,6 @@ import { Method } from 'src/common/method/method';
 import { LMSCertificateDto } from 'src/lms/dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../services/hasura/hasura.service';
-import { json } from 'stream/consumers';
 import {
 	pragati_orientation,
 	pcr_training,

@@ -1,1 +1,1 @@
-export class Pcrscore {}
+export function Pcrscore() {}

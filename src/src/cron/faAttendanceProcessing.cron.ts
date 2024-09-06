@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { AwsRekognitionService } from '../services/aws-rekognition/aws-rekognition.service';
 import { HasuraService } from '../services/hasura/hasura.service';
 
