@@ -1,1 +1,1 @@
-export function Subjectslist() {}
+export class Subjectslist {}

@@ -1,1 +1,1 @@
-export function Reference() {}
+export class Reference {}

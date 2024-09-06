@@ -1,1 +1,1 @@
-export function CreateFacilitatorDto() {}
+export class CreateFacilitatorDto {}

@@ -1,1 +1,1 @@
-export function Comment() {}
+export class Comment {}
