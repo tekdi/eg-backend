@@ -1996,6 +1996,41 @@
 			"value": "PASS"
 		}
 	],
+
+	"EXAM_FINAL_RESULT_STATUS": [
+		{
+			"title": "EXAM_RESULT_STATUS_P",
+			"value": "P"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_RWH",
+			"value": "RWH"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_XXXX",
+			"value": "XXXX"
+		}
+	],
+
+	"EXAM_SUBJECT_RESULT_STATUS": [
+		{
+			"title": "EXAM_RESULT_STATUS_P",
+			"value": "P"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYC",
+			"value": "SYC"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYCT",
+			"value": "SYCT"
+		},
+		{
+			"title": "EXAM_RESULT_STATUS_SYCP",
+			"value": "SYCP"
+		}
+	],
+
 	"EXAM_PDF_UPLOAD_STATUS": [
 		{
 			"title": "EXAM_PDF_UPLOAD_STATUS_FIRST_TIME_UPLOAD_FAILED",
