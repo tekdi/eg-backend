@@ -20,7 +20,6 @@ export class UploadFileService {
 		response: Response,
 		isCommonFunction?,
 	) {
-		//console.log('file-->>', file);
 		if (!file?.originalname) {
 			return response.status(400).send({
 				success: false,
@@ -80,9 +79,9 @@ export class UploadFileService {
 						promise2.push(this.s3Service.deletePhoto(item.name));
 					}
 					//delete all existing records from table
-					const deleteDocuments = await Promise.all(promise);
+					await Promise.all(promise);
 					//delete all existing records from s3 bucket
-					const deleteFroms3Bucket = await Promise.all(promise2);
+					await Promise.all(promise2);
 				}
 			} catch (error) {
 				return response.status(500).send({

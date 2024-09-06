@@ -407,7 +407,6 @@ export class ExamResultPattern {
 			totalMarks: match[8],
 			result: match[9],
 		}));
-		console.log('matches', matches);
 
 		return data;
 	}
@@ -587,7 +586,7 @@ export class ExamResultPattern {
 		for (const match of matches) {
 			try {
 				const wordsArray = match[0].split(/\s+/);
-				//console.log('wordsArray', wordsArray);
+
 				if (wordsArray.length == 10) {
 					//check if subjectcode added or not
 					if (

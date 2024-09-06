@@ -238,7 +238,7 @@ export class FaFaceIndexingCron {
 		try {
 			let users = (await this.hasuraService.getData({ query }))?.data
 				?.users;
-			//console.log('fetchindex------>>>>>', users);
+
 			users.forEach((user) => {
 				for (const key of [
 					'profile_photo_1',
@@ -252,10 +252,6 @@ export class FaFaceIndexingCron {
 					}
 				}
 			});
-			/*console.log(
-				'\n>>>>>> Batch of users for whom face photos to be indexed:\n',
-				users,
-			);*/
 
 			return users;
 		} catch (error) {

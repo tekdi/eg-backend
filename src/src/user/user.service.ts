@@ -305,7 +305,6 @@ export class UserService {
 
 	public async register(body: any, request: any) {
 		const axios = require('axios');
-		//const password = `@${this.helper.generateRandomPassword()}`;
 		const password = body?.mobile;
 		let username = `${body.first_name}`;
 		if (body?.last_name) {

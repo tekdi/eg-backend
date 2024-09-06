@@ -1003,7 +1003,6 @@ export class ExamService {
 		}
 
 		if (body?.block && body?.block.length > 0) {
-			//searchQuery = `block:{_in: ${JSON.stringify(body?.block)}}`;
 			filterQueryArray.push(
 				`block:{_in: ${JSON.stringify(body?.block)}}`,
 			);

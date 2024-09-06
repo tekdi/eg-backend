@@ -1495,7 +1495,7 @@ export class UserauthService {
 				if (!obj?.id) {
 					referenceData.context_id = result?.experience?.id;
 				}
-				let result1 = await this.upsertRecords(
+				await this.upsertRecords(
 					set_update,
 					'references',
 					referenceFields,
