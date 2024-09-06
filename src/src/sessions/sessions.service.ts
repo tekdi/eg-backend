@@ -18,7 +18,6 @@ export class SessionsService {
 
 	async createSession(body: any, request: any, response: any) {
 		const program_id = request.mw_program_id;
-		const academic_year_id = request.mw_academic_year_id;
 		const camp_id = body?.camp_id;
 		// Step 1: Retrieve the camp details to check the camp_type
 		let campQuery = `query GetCampType {

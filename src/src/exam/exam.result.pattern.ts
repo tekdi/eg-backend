@@ -1,15 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createObjectCsvStringifier } from 'csv-writer';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
-import * as moment from 'moment';
+
 const parse = require('pdf-parse');
-//PDF to Image to Text
-import { fromBuffer } from 'pdf2pic';
-import * as fs from 'fs';
-import * as path from 'path';
-import { NotFoundException } from '@nestjs/common';
+
 //python in nest js
 //import { spawn } from 'child_process';
 import axios from 'axios';
@@ -412,7 +407,6 @@ export class ExamResultPattern {
 			totalMarks: match[8],
 			result: match[9],
 		}));
-		console.log('matches', matches);
 
 		return data;
 	}
@@ -592,7 +586,7 @@ export class ExamResultPattern {
 		for (const match of matches) {
 			try {
 				const wordsArray = match[0].split(/\s+/);
-				//console.log('wordsArray', wordsArray);
+
 				if (wordsArray.length == 10) {
 					//check if subjectcode added or not
 					if (

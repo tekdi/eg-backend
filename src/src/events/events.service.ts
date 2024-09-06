@@ -523,9 +523,7 @@ export class EventsService {
 								}),
 							);
 						}
-						const removeAttendees = await Promise.all(
-							deletePromise,
-						);
+						await Promise.all(deletePromise);
 					}
 
 					//add new attendees in current event
@@ -555,7 +553,7 @@ export class EventsService {
 								),
 							);
 						}
-						const createAttendees = await Promise.all(promises);
+						await Promise.all(promises);
 					}
 				}
 			}
@@ -753,7 +751,7 @@ export class EventsService {
 							}),
 						);
 					}
-					const removedAttendees = await Promise.all(deletePromise);
+					await Promise.all(deletePromise);
 				}
 				const deleteEvent = await this.hasuraService.delete(
 					this.table,

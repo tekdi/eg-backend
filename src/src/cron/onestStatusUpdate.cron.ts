@@ -79,13 +79,7 @@ export class OnestStatusUpdateCron {
 							},
 						),
 					);
-					// console.log(
-					// 	'Thirdapi---response2',
-					// 	response2?.data?.responses?.[0]?.message?.order
-					// 		?.fulfillments,
-					// 	response2?.data?.responses?.[0]?.message?.order
-					// 		?.fulfillments?.[0]?.state?.descriptor?.name,
-					// );
+
 					if (response2) {
 						const name =
 							response2?.data?.responses?.[0]?.message?.order

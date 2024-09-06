@@ -1,9 +1,4 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule,
-	RequestMethod,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 
 import { HasuraModule } from 'src/hasura/hasura.module';
 import { UserModule } from 'src/user/user.module';

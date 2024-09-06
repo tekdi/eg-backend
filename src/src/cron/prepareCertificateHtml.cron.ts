@@ -6,7 +6,6 @@ import { Method } from 'src/common/method/method';
 import { LMSCertificateDto } from 'src/lms/dto/lms-certificate.dto';
 import { UserService } from 'src/user/user.service';
 import { HasuraService } from '../services/hasura/hasura.service';
-import { json } from 'stream/consumers';
 import {
 	pragati_orientation,
 	pcr_training,
@@ -174,47 +173,44 @@ export class PrepareCertificateHtmlCron {
 								certificate_id;
 
 							let modifiedHtml = null;
-							const modified = await new Promise(
-								(resolve, reject) => {
-									qr.toDataURL(
-										qr_code_verify_link,
-										function (err, code) {
-											if (err) {
-												resolve(null);
-												return;
-											}
+							await new Promise((resolve, reject) => {
+								qr.toDataURL(
+									qr_code_verify_link,
+									function (err, code) {
+										if (err) {
+											resolve(null);
+											return;
+										}
 
-											if (code) {
-												const newHtml = code;
+										if (code) {
+											const newHtml = code;
 
-												const root =
-													parse(certificateTemplate);
+											const root =
+												parse(certificateTemplate);
 
-												// Find the img tag with id "qrcode"
-												const qrcodeImg =
-													root.querySelector(
-														'#qr_certificate',
-													);
+											// Find the img tag with id "qrcode"
+											const qrcodeImg =
+												root.querySelector(
+													'#qr_certificate',
+												);
 
-												if (qrcodeImg) {
-													qrcodeImg.setAttribute(
-														'src',
-														newHtml,
-													);
-													modifiedHtml =
-														root.toString();
+											if (qrcodeImg) {
+												qrcodeImg.setAttribute(
+													'src',
+													newHtml,
+												);
+												modifiedHtml = root.toString();
 
-													resolve(modifiedHtml);
-												} else {
-													resolve(null);
-												}
+												resolve(modifiedHtml);
 											} else {
 												resolve(null);
 											}
-										},
-									);
-								},
-							);
+										} else {
+											resolve(null);
+										}
+									},
+								);
+							});
 							if (modifiedHtml != null) {
 								certificateTemplate = modifiedHtml;
 							}

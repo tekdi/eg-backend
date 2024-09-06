@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { Response } from 'express';
-import jwt_decode from 'jwt-decode';
 import { lastValueFrom, map } from 'rxjs';
 import { HasuraService } from '../hasura/hasura.service';
 import { UserHelperService } from '../helper/userHelper.service';
@@ -306,7 +305,6 @@ export class UserService {
 
 	public async register(body: any, request: any) {
 		const axios = require('axios');
-		//const password = `@${this.helper.generateRandomPassword()}`;
 		const password = body?.mobile;
 		let username = `${body.first_name}`;
 		if (body?.last_name) {

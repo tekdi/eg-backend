@@ -5,7 +5,6 @@ import {
 	Res,
 	Req,
 	UseGuards,
-	UseInterceptors,
 	UsePipes,
 	ValidationPipe,
 } from '@nestjs/common';
