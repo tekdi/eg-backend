@@ -1215,8 +1215,9 @@ export class ExamService {
 		if (body.search && body.search !== '') {
 			let first_name = body.search.split(' ')[0];
 			let last_name = body.search.split(' ')[1] || '';
-
-			if (last_name?.length > 0) {
+			if (/^\d+$/.test(body.search)) {
+				filterQueryArray.push(`id: { _eq: "${body.search}" }`);
+			} else if (last_name?.length > 0) {
 				filterQueryArray.push(`
 				first_name: { _ilike: "%${first_name}%" }, 
 				last_name: { _ilike: "%${last_name}%" }
@@ -2008,7 +2009,24 @@ export class ExamService {
 							total_marks
                             board_id
 							code
+<<<<<<< HEAD
 		                  boardById {
+=======
+							results(where: {exam_result: {user_id: {_eq:${learner_id}}}}) {
+								exam_result {
+								  final_result
+								}
+								subject_name
+								subject_code
+								max_marks
+								practical
+								theory
+								tma_internal_sessional
+								total
+								result
+							  }
+                            boardById {
+>>>>>>> upstream/release-2.6.1
                                 id
                                 name
                             }

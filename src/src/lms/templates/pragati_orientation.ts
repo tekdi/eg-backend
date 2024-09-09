@@ -244,7 +244,7 @@ export default `<html lang="en">
               </div>
               <div class="font-size-15">
                 <div class="pt-10">
-                  <b>'प्रोजेक्ट प्रगति'</b> के प्रशिक्षण को सफलतापूर्वक पूरा
+                  <b>'प्रगति'</b> के प्रशिक्षण को सफलतापूर्वक पूरा
                   किया है।
                 </div>
                 <div>
@@ -334,7 +334,7 @@ export default `<html lang="en">
                   />
                 </div>
                 <div>गीतिका टंडन हिगिंस</div>
-                <div>(एसोसिएट निदेशक, प्रोजेक्ट प्रगति)</div>
+                <div>(निदेशक प्रगति)</div>
               </div>
             </div>
           </div>
