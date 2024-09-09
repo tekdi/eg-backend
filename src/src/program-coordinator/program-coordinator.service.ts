@@ -9,6 +9,7 @@ import { UploadFileService } from 'src/upload-file/upload-file.service';
 import { UserService } from '../user/user.service';
 import { EnumService } from '../enum/enum.service';
 import { BoardService } from 'src/modules/board/board.service';
+import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.service';
 @Injectable()
 export class ProgramCoordinatorService {
 	constructor(
@@ -22,6 +23,7 @@ export class ProgramCoordinatorService {
 		public userService: UserService,
 		private enumService: EnumService,
 		private boardService: BoardService,
+		private beneficiariesCoreService: BeneficiariesCoreService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {
@@ -339,8 +341,8 @@ export class ProgramCoordinatorService {
 
 				if (last_name?.length > 0) {
 					userFilter.push(`
-				first_name: { _ilike: "%${first_name}%" }, 
-			  last_name: { _ilike: "%${last_name}%" } 
+					first_name: { _ilike: "%${first_name}%" }, 
+					 last_name: { _ilike: "%${last_name}%" } 
 				  `);
 				} else {
 					userFilter.push(
@@ -348,17 +350,18 @@ export class ProgramCoordinatorService {
 					);
 				}
 			}
-
-			if (body.district) {
-				userFilter.push(`district: {_eq: "${body.district}"}`);
-			}
-			if (body.block) {
-				userFilter.push(`block: {_eq: "${body.block}"}`);
-			}
 		}
+
+		if (body.district) {
+			userFilter.push(`district: {_in: ["${body.district}"]}`);
+		}
+		if (body.block) {
+			userFilter.push(`block: {_in: ["${body.block}"]}`);
+		}
+
 		let filter = [];
 		if (userFilter.length > 0) {
-			filter.push(`user: {${userFilter.join(', ')}}`);
+			filter.push(` ${userFilter.join(', ')}`);
 		}
 
 		let filterQuery = filter.join(', ');
@@ -393,7 +396,7 @@ export class ProgramCoordinatorService {
 							path
 							}
 						program_users(where: {ip_user_id: {_eq:${ip_id}}, program_facilitators: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}}}}) {
-								program_facilitators(where: {${filterQuery},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}, limit: ${limit}, offset: ${offset})  {
+								program_facilitators(where: {user:{${filterQuery}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}, limit: ${limit}, offset: ${offset})  {
 										facilitator_id: user_id
 										id:id
 										status
@@ -415,7 +418,7 @@ export class ProgramCoordinatorService {
 								count
 						}
 				}
-				program_faciltators_aggregate(where:{pc_id:{_eq:${id}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
+				program_faciltators_aggregate(where:{user:{${filterQuery}},pc_id:{_eq:${id}},academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}}}){
 					aggregate{
 						count
 					}
@@ -466,8 +469,10 @@ export class ProgramCoordinatorService {
 		let users = [];
 		let facilitators = [];
 		let total_count =
-			hasura_response?.data?.users_aggregate?.aggregate?.count || 0;
+			hasura_response?.data?.program_faciltators_aggregate?.aggregate
+				?.count || 0;
 		const totalPages = Math.ceil(total_count / limit);
+
 		if (program_coordinator_data?.users) {
 			program_coordinator_data.users.forEach((user) => {
 				users.push({
@@ -986,19 +991,17 @@ export class ProgramCoordinatorService {
 		const page = isNaN(body?.page) ? 1 : parseInt(body?.page);
 		const limit = isNaN(body?.limit) ? 10 : parseInt(body?.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
-
 		let hasura_response;
+		let userFilter = [`pc_id:{_eq:${pc_id}}`];
 
-		let userFilter = [];
-
+		if (body.withCampFilter == 'campFilter') {
+			userFilter.push(`user:{
+				group_users: {
+				status: {_eq: "active"},
+				member_type: {_eq: "owner"}
+			}}`);
+		}
 		//filters
-
-		userFilter.push(`pc_id:{_eq:${pc_id}},user:{
-      group_users: {
-      status: {_eq: "active"},
-      member_type: {_eq: "owner"}
-    }
-    }`);
 
 		if (body?.status) {
 			userFilter.push(`status:{_eq:${body?.status}}`);
@@ -1186,7 +1189,7 @@ export class ProgramCoordinatorService {
 					users f ON pf.user_id = f.id
 				WHERE
 					CONCAT(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
-					AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
+					AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string}) ${additionalFilters}
 			)
 			SELECT 
 				pb.user_id, 
@@ -1216,7 +1219,7 @@ export class ProgramCoordinatorService {
 				TotalRecords tr
 			WHERE
 				CONCAT(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
-				AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
+				AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string}) ${additionalFilters}
 			ORDER BY 
 				pb.user_id ASC 
 			LIMIT ${limit}
@@ -2245,5 +2248,97 @@ export class ProgramCoordinatorService {
 				data: [],
 			});
 		}
+	}
+
+	async programCoordinatorLearnerVerification(body, request, response) {
+		let query;
+		let hasura_response;
+		let validation_result;
+		let pc_user_id = request?.mw_userid;
+		let {
+			user_id,
+			enrollment_verification_status,
+			program_id,
+			academic_year_id,
+		} = body;
+		let set_update_body;
+
+		if (!user_id) {
+			return response.json({
+				status: 422,
+				message: 'Provide valid user id ',
+				data: {},
+			});
+		}
+
+		query = `query MyQuery {
+			program_beneficiaries(where: {user_id: {_eq: ${user_id}},program_id:{_eq:${program_id}},academic_year_id:{_eq:${academic_year_id}},facilitator_user: {program_faciltators: {pc_id: {_eq: ${pc_user_id}}}}}) {
+			  user_id
+			  id
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		validation_result =
+			hasura_response?.data?.program_beneficiaries?.[0]?.user_id;
+
+		if (!validation_result) {
+			return response.json({
+				status: 422,
+				message: 'Invalid Access',
+				data: {},
+			});
+		}
+
+		const { data: updatedUser } =
+			await this.beneficiariesCoreService.userById(user_id);
+
+		if (enrollment_verification_status == 'pc_verified') {
+			set_update_body = {
+				enrollment_verification_status: 'pc_verified',
+			};
+		}
+
+		await this.hasuraService.q(
+			'program_beneficiaries',
+			{
+				...set_update_body,
+				id: updatedUser?.program_beneficiaries?.id,
+			},
+			['id', 'enrollment_verification_status'],
+			true,
+			['id', 'enrollment_verification_status'],
+		);
+
+		const newdata = (await this.beneficiariesCoreService.userById(user_id))
+			.data;
+
+		await this.userService.addAuditLog(
+			body?.user_id,
+			request.mw_userid,
+			'program_beneficiaries.status',
+			updatedUser?.program_beneficiaries?.id,
+			{
+				status: updatedUser?.program_beneficiaries?.status,
+				reason_for_status_update:
+					updatedUser?.program_beneficiaries
+						?.reason_for_status_update,
+			},
+			{
+				status: newdata?.program_beneficiaries?.status,
+				reason_for_status_update:
+					newdata?.program_beneficiaries?.reason_for_status_update,
+			},
+			['status', 'reason_for_status_update'],
+		);
+		return response.json({
+			status: 200,
+			success: true,
+			message: 'Status Updated successfully!',
+		});
 	}
 }
