@@ -3331,6 +3331,20 @@ export class BeneficiariesService {
 						}
 					}
 
+					if (req?.sso_id && request?.mw_program_id == 1) {
+						const result = await this.validateForSSOID(
+							req?.sso_id,
+							request?.mw_program_id,
+							beneficiary_id,
+						);
+
+						if (result?.status == false) {
+							return response.status(422).json({
+								result,
+							});
+						}
+					}
+
 					if (
 						req?.subjects?.length > 7 ||
 						req?.subjects?.length < 1
