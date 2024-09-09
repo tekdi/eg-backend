@@ -1189,7 +1189,7 @@ export class ProgramCoordinatorService {
 					users f ON pf.user_id = f.id
 				WHERE
 					CONCAT(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
-					AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
+					AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string}) ${additionalFilters}
 			)
 			SELECT 
 				pb.user_id, 
@@ -1219,7 +1219,7 @@ export class ProgramCoordinatorService {
 				TotalRecords tr
 			WHERE
 				CONCAT(pb.facilitator_id, ' ', pb.academic_year_id, ' ', pb.program_id) IN (${pc_string})
-				AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string})
+				AND CONCAT(pf.user_id, ' ', pf.academic_year_id, ' ', pf.program_id) IN (${pc_string}) ${additionalFilters}
 			ORDER BY 
 				pb.user_id ASC 
 			LIMIT ${limit}
