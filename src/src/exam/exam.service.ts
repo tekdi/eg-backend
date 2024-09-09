@@ -976,8 +976,9 @@ export class ExamService {
 		if (body.search && body.search !== '') {
 			let first_name = body.search.split(' ')[0];
 			let last_name = body.search.split(' ')[1] || '';
-
-			if (last_name?.length > 0) {
+			if (/^\d+$/.test(body.search)) {
+				filterQueryArray.push(`id: { _eq: "${body.search}" }`);
+			} else if (last_name?.length > 0) {
 				filterQueryArray.push(`
 				first_name: { _ilike: "%${first_name}%" }, 
 				last_name: { _ilike: "%${last_name}%" }
