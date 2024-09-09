@@ -2009,9 +2009,6 @@ export class ExamService {
 							total_marks
                             board_id
 							code
-<<<<<<< HEAD
-		                  boardById {
-=======
 							results(where: {exam_result: {user_id: {_eq:${learner_id}}}}) {
 								exam_result {
 								  final_result
@@ -2026,7 +2023,6 @@ export class ExamService {
 								result
 							  }
                             boardById {
->>>>>>> upstream/release-2.6.1
                                 id
                                 name
                             }
