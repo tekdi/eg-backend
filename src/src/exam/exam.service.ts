@@ -1756,6 +1756,19 @@ export class ExamService {
 							total_marks
                             board_id
 							code
+							results(where: {exam_result: {user_id: {_eq:${learner_id}}}}) {
+								exam_result {
+								  final_result
+								}
+								subject_name
+								subject_code
+								max_marks
+								practical
+								theory
+								tma_internal_sessional
+								total
+								result
+							  }
                             boardById {
                                 id
                                 name
