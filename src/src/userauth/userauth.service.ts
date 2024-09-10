@@ -167,8 +167,6 @@ export class UserauthService {
 			);
 
 			if (findUsername.length > 0 && group === 'beneficiaries') {
-				findUsername[findUsername.length - 1].username;
-
 				let count = findUsername.length;
 
 				data_to_create_user.username =
