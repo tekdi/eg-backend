@@ -641,12 +641,24 @@ export class ExamService {
 	async createExamResult(body: any, request: any, response: any) {
 		let program_id = request?.mw_program_id;
 		let academic_year_id = request?.mw_academic_year_id;
+		let role = request?.mw_roles;
 		let examResultBody = body;
 		let examResult;
+		let uploaded_by;
 
 		//add upload type to the result body
 
 		examResultBody.upload_type = 'manual';
+
+		//add uploaded_by to the result body
+
+		if (role?.includes('staff')) {
+			uploaded_by = 'IP';
+		} else if (role?.includes('facilitator')) {
+			uploaded_by = 'facilitator';
+		}
+
+		examResultBody.uploaded_by = uploaded_by;
 
 		examResult = await this.ExamResultUpsertNew(
 			examResultBody,
@@ -1240,6 +1252,8 @@ export class ExamService {
 		const user_id = request?.body?.user_id;
 		const board_id = request?.body?.board_id;
 		const enrollment = request?.body?.enrollment;
+		let role = request?.mw_roles;
+		let uploaded_by;
 		let validation_result;
 		let result_upload_status;
 		let update_status_body = {};
@@ -1284,6 +1298,17 @@ export class ExamService {
 
 					// add upload_type to
 					result.upload_type = 'file';
+
+					//add uploaded_by to the result body
+
+					if (role?.includes('staff')) {
+						uploaded_by = 'IP';
+					} else if (role?.includes('facilitator')) {
+						uploaded_by = 'facilitator';
+					}
+
+					result.uploaded_by = uploaded_by;
+
 					examResult = await this.ExamResultUpsertNew(
 						result,
 						academic_year_id,
