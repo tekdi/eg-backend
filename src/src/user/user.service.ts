@@ -31,7 +31,7 @@ export class UserService {
 		userId: string,
 		body: any,
 		req: any,
-		tableName: String,
+		tableName: string,
 	) {
 		try {
 			const academic_year_id = req?.mw_academic_year_id;

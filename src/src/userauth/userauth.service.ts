@@ -693,7 +693,7 @@ export class UserauthService {
 						: 'Data not found',
 				status: 'success',
 				is_mobile_found: false,
-				is_data_found: result?.length > 0 ? true : false,
+				is_data_found: result?.length > 0,
 			});
 		}
 	}
@@ -1232,7 +1232,7 @@ export class UserauthService {
 		let base64result;
 		for (const key in json) {
 			const value = json[key];
-			if (!(Object.keys(value).length === 0)) {
+			if (Object.keys(value).length !== 0) {
 				if (typeof value === 'object') {
 					tableName = key;
 					tableFields = Object.keys(value);
@@ -1273,8 +1273,7 @@ export class UserauthService {
 					tableName = key;
 					let tempvalue = [];
 
-					for (let i = 0; i < value.length; i++) {
-						let tempobj = value[i];
+					for (let tempobj of value) {
 						delete tempobj.status;
 						delete tempobj.unique_key;
 						tempvalue.push(tempobj);
@@ -2008,7 +2007,8 @@ export class UserauthService {
 	public async base64ToBlob(base64, userId, res, documentDetails) {
 		let fileObject;
 		const arr = base64.split(',');
-		const mime = arr[0].match(/:(.*?);/)[1];
+		const mime = arr[0].match(/^data:([^;]+);/)[1];
+
 		const buffer = Buffer.from(arr[1], 'base64');
 		let { document_type, document_sub_type } = documentDetails;
 

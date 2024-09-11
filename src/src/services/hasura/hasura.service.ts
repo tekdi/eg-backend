@@ -527,7 +527,7 @@ export class HasuraService {
 				result = data[tableName];
 			}
 		}
-		result = result ? result : errors ? errors[0] : {};
+		result = result || errors?.[0] || {};
 		if (response === 'data') {
 			return result;
 		} else {
