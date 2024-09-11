@@ -2169,6 +2169,7 @@ export class BeneficiariesService {
 			return {
 				status: 422,
 				success: false,
+				message: 'Invalid syc reason',
 			};
 		}
 
@@ -2181,11 +2182,13 @@ export class BeneficiariesService {
 			return {
 				status: 422,
 				success: false,
+				message: 'Invalid syc reason',
 			};
 		} else {
 			return {
 				status: 200,
 				success: true,
+				message: 'Valid syc reason',
 			};
 		}
 	}
