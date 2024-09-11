@@ -641,16 +641,34 @@ export class ExamService {
 	async createExamResult(body: any, request: any, response: any) {
 		let program_id = request?.mw_program_id;
 		let academic_year_id = request?.mw_academic_year_id;
+		let role = request?.mw_roles;
 		let examResultBody = body;
+		let examResult;
+		let uploaded_by;
 
-		let examResult = await this.ExamResultUpsert(
+		//add upload type to the result body
+
+		examResultBody.upload_type = 'manual';
+
+		//add uploaded_by to the result body
+
+		if (role?.includes('staff')) {
+			uploaded_by = 'IP';
+		} else if (role?.includes('facilitator')) {
+			uploaded_by = 'facilitator';
+		}
+
+		examResultBody.uploaded_by = uploaded_by;
+
+		examResult = await this.ExamResultUpsertNew(
 			examResultBody,
 			academic_year_id,
 			program_id,
 		);
 
+		let response_status = examResult?.status == 422 ? 422 : 200;
 		if (examResult) {
-			return response.status(200).json({
+			return response.status(response_status).json({
 				data: examResult,
 			});
 		} else {
@@ -660,7 +678,7 @@ export class ExamService {
 		}
 	}
 
-	async ExamResultUpsert(examResultBody, academic_year_id, program_id) {
+	async ExamResultUpsertNew(examResultBody, academic_year_id, program_id) {
 		let data;
 		let vquery;
 		let vresponse;
@@ -693,10 +711,11 @@ export class ExamService {
 		set_update = exam_result_id ? 1 : 0; // Set the update flag
 
 		if (set_update == 1) {
-			mutation_query = `
-				mutation UpdateExamResults {
-					update_exam_results_by_pk(pk_columns: {id: ${exam_result_id}}, _set: {
-			`;
+			return {
+				status: 422,
+				message: 'Exam data already exists',
+				data: exam_result_id,
+			};
 		} else {
 			mutation_query = `
 				mutation CreateExamResults {
@@ -736,11 +755,11 @@ export class ExamService {
 						exam_year
 						total_marks
 						final_result
+						upload_type
 					}
 				}
 			`;
 
-		console.log('mutation_query', mutation_query);
 		data = {
 			query: `${mutation_query}`,
 			variables: {},
@@ -749,17 +768,11 @@ export class ExamService {
 		const query_response =
 			await this.hasuraServiceFromServices.queryWithVariable(data);
 
-		console.log('query_response', query_response?.data);
-
 		exam_result_id =
-			set_update == 1
-				? query_response?.data?.data?.update_exam_results_by_pk?.id
-				: query_response?.data?.data?.insert_exam_results_one?.id;
+			query_response?.data?.data?.insert_exam_results_one?.id;
 
 		exam_result_response =
-			set_update == 1
-				? query_response?.data?.data?.update_exam_results_by_pk
-				: query_response?.data?.data?.insert_exam_results_one;
+			query_response?.data?.data?.insert_exam_results_one;
 
 		result = { ...exam_result_response }; // Set exam result data directly
 
@@ -787,20 +800,11 @@ export class ExamService {
 				exam_result_subjects_id =
 					vresponse?.data?.data?.exam_subject_results?.[0]?.id;
 
-				let query;
-
-				if (exam_result_subjects_id) {
-					query = `
-						mutation UpdateExamResultSubjects {
-							update_exam_subject_results_by_pk(pk_columns: {id: ${exam_result_subjects_id}}, _set: {
-					`;
-				} else {
-					query = `
+				let query = `
 						mutation CreateExamResultSubjects {
 							insert_exam_subject_results_one(object: {
 								exam_results_id:${exam_result_id},
 					`;
-				}
 
 				Object.keys(schedule).forEach((key) => {
 					if (schedule[key] !== null && schedule[key] !== '') {
@@ -842,9 +846,7 @@ export class ExamService {
 
 				const updatedOrCreatedEvent =
 					query_response?.data?.data?.[
-						exam_result_subjects_id
-							? 'update_exam_subject_results_by_pk'
-							: 'insert_exam_subject_results_one'
+						'insert_exam_subject_results_one'
 					];
 
 				if (updatedOrCreatedEvent) {
@@ -976,8 +978,9 @@ export class ExamService {
 		if (body.search && body.search !== '') {
 			let first_name = body.search.split(' ')[0];
 			let last_name = body.search.split(' ')[1] || '';
-
-			if (last_name?.length > 0) {
+			if (/^\d+$/.test(body.search)) {
+				filterQueryArray.push(`id: { _eq: "${body.search}" }`);
+			} else if (last_name?.length > 0) {
 				filterQueryArray.push(`
 				first_name: { _ilike: "%${first_name}%" }, 
 				last_name: { _ilike: "%${last_name}%" }
@@ -1248,9 +1251,12 @@ export class ExamService {
 		const user_id = request?.body?.user_id;
 		const board_id = request?.body?.board_id;
 		const enrollment = request?.body?.enrollment;
+		let role = request?.mw_roles;
+		let uploaded_by;
 		let validation_result;
 		let result_upload_status;
 		let update_status_body = {};
+		let examResult;
 
 		try {
 			const result = await this.examResultPattern.extractResultFromPDF(
@@ -1288,12 +1294,36 @@ export class ExamService {
 					//add document id in results
 					let document_id = document?.document_id;
 					result.document_id = document_id;
-					let examResult = await this.ExamResultUpsert(
+
+					// add upload_type to
+					result.upload_type = 'file';
+
+					//add uploaded_by to the result body
+
+					if (role?.includes('staff')) {
+						uploaded_by = 'IP';
+					} else if (role?.includes('facilitator')) {
+						uploaded_by = 'facilitator';
+					}
+
+					result.uploaded_by = uploaded_by;
+
+					examResult = await this.ExamResultUpsertNew(
 						result,
 						academic_year_id,
 						program_id,
 					);
-					if (examResult) {
+
+					if (examResult?.status == 422) {
+						return response.status(422).json({
+							success: false,
+							data: [],
+							document: [],
+							extracted_data: {
+								result,
+							},
+						});
+					} else if (examResult) {
 						return response.status(200).json({
 							success: true,
 							data: examResult,
@@ -1754,6 +1784,19 @@ export class ExamService {
 							total_marks
                             board_id
 							code
+							results(where: {exam_result: {user_id: {_eq:${learner_id}}}}) {
+								exam_result {
+								  final_result
+								}
+								subject_name
+								subject_code
+								max_marks
+								practical
+								theory
+								tma_internal_sessional
+								total
+								result
+							  }
                             boardById {
                                 id
                                 name
@@ -1805,7 +1848,6 @@ export class ExamService {
 							newQdata?.enrollment_middle_name,
 						enrollment_dob: newQdata?.enrollment_dob,
 						user: newQdata?.user,
-
 						subjectsArray,
 					},
 				});
