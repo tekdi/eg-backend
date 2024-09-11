@@ -1427,6 +1427,7 @@ export class BeneficiariesService {
 				exam_fee_document_id
 				exam_fee_date
 				syc_subjects
+				syc_reason
 				is_continued
 				sso_id
 				document {
