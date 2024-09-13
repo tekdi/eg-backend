@@ -217,7 +217,7 @@ export class ReferencesService {
 
 		if (community_id) {
 			response = await this.hasuraService.q(
-				this.table,
+				'references',
 				{
 					...body,
 					id: community_id,
