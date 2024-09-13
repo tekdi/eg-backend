@@ -352,10 +352,10 @@ export class PcrscoresService {
 
 		if (pcr_scores_id) {
 			response = await this.hasuraService.q(
-				this.table,
+				'pcr_scores',
+				//body
 				{
 					...body,
-
 					id: pcr_scores_id,
 				},
 				[
