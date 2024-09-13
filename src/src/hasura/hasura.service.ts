@@ -187,9 +187,9 @@ export class HasuraService {
 						},
 						{
 							headers: {
+								'Content-Type': 'application/json',
 								'x-hasura-admin-secret':
 									process.env.HASURA_ADMIN_SECRET,
-								'Content-Type': 'application/json',
 							},
 						},
 					)
@@ -249,9 +249,9 @@ export class HasuraService {
 						},
 						{
 							headers: {
+								'Content-Type': 'application/json',
 								'x-hasura-admin-secret':
 									process.env.HASURA_ADMIN_SECRET,
-								'Content-Type': 'application/json',
 							},
 						},
 					)
@@ -277,9 +277,9 @@ export class HasuraService {
 						},
 						{
 							headers: {
+								'Content-Type': 'application/json',
 								'x-hasura-admin-secret':
 									process.env.HASURA_ADMIN_SECRET,
-								'Content-Type': 'application/json',
 							},
 						},
 					)
@@ -290,7 +290,7 @@ export class HasuraService {
 	}
 
 	public getResponce = (
-		{ data, errors }: any,
+		{ errors, data }: any,
 		tableName: any,
 		response = 'table',
 	) => {
