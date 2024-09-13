@@ -197,9 +197,9 @@ export class HasuraService {
 					},
 					{
 						headers: {
-							'Content-Type': 'application/json',
 							'x-hasura-admin-secret':
 								process.env.HASURA_ADMIN_SECRET,
+							'Content-Type': 'application/json',
 						},
 					},
 				)

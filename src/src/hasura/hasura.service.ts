@@ -52,7 +52,7 @@ export class HasuraService {
 		onlyFields: any = [],
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
-		const { data, errors } = await lastValueFrom(
+		const { errors, data } = await lastValueFrom(
 			this.httpService
 				.post(
 					this.url,
@@ -65,9 +65,9 @@ export class HasuraService {
 					},
 					{
 						headers: {
+							'Content-Type': 'application/json',
 							'x-hasura-admin-secret':
 								process.env.HASURA_ADMIN_SECRET,
-							'Content-Type': 'application/json',
 						},
 					},
 				)
@@ -75,7 +75,7 @@ export class HasuraService {
 		);
 		let obj: any = { data: {} };
 		if (!errors) {
-			const { limit, page } = request;
+			const { page, limit } = request;
 			let mappedResponse = data?.[`${tableName}`];
 			if (limit) {
 				const totalCount =
@@ -83,8 +83,8 @@ export class HasuraService {
 				const totalPages = limit ? Math.ceil(totalCount / limit) : 0;
 				obj = {
 					...obj,
-					totalCount: `${totalCount}`,
 					limit: `${limit}`,
+					totalCount: `${totalCount}`,
 					currentPage: page ? `${page}` : '1',
 					totalPages: `${totalPages}`,
 				};
