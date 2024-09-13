@@ -2343,7 +2343,7 @@ export class ExamService {
 				return obj;
 			}, {} as any);
 
-		if (filteredBody.is_continued == true) {
+		if (filteredBody.is_continued === true) {
 			const status = this.enumService
 				.getEnumValue('BENEFICIARY_STATUS')
 				.data.filter(

@@ -5,6 +5,7 @@ import { UserService } from 'src/user/user.service';
 import { LMSCertificateDto } from './dto/lms-certificate.dto';
 import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { SearchLMSDto } from './dto/search-lms.dto';
+import { query } from 'express';
 
 const moment = require('moment');
 const { parse, HTMLElement } = require('node-html-parser');
@@ -110,16 +111,15 @@ export class LMSService {
 		let marks_total = 0;
 		//calculate marks
 		let score_detail = lmsTestTrackingDto['score_details'];
-		for (let i = 0; i < score_detail.length; i++) {
-			let section = score_detail[i];
+		for (let section of score_detail) {
 			let itemData = section?.data;
 			if (itemData) {
-				for (let j = 0; j < itemData.length; j++) {
-					let dataItem = itemData[j];
+				for (let dataItem of itemData) {
 					marks_total += parseInt(dataItem?.item?.maxscore);
 				}
 			}
 		}
+
 		//calculate score
 		let score = (marks_obtained / marks_total) * 100;
 		//set new values
@@ -193,12 +193,10 @@ export class LMSService {
 			let testId = query_response.data.insert_lms_test_tracking_one.id;
 			let score_detail = lmsTestTrackingDto['score_details'];
 			let scoreObj = [];
-			for (let i = 0; i < score_detail.length; i++) {
-				let section = score_detail[i];
+			for (let section of score_detail) {
 				let itemData = section?.data;
 				if (itemData) {
-					for (let j = 0; j < itemData.length; j++) {
-						let dataItem = itemData[j];
+					for (let dataItem of itemData) {
 						scoreObj.push({
 							user_id: user_id,
 							test_id: testId,
@@ -215,6 +213,7 @@ export class LMSService {
 					}
 				}
 			}
+
 			let data_score_details = {
 				query: `mutation insert_multiple_lms_score_details($objects: [lms_score_details_insert_input!]!) {
 					  insert_lms_score_details(objects: $objects) {
@@ -297,15 +296,13 @@ export class LMSService {
 			if (data_list?.data?.lms_test_tracking.length > 0) {
 				let response_data = data_list.data.lms_test_tracking;
 				//convert score text to json object
-				for (let i = 0; i < response_data.length; i++) {
-					response_data[i].score_details = response_data[
-						i
-					].score_details.replace('"[', '[');
-					response_data[i].score_details = response_data[
-						i
-					].score_details.replace('"]', ']');
-					response_data[i].score_details = JSON.parse(
-						response_data[i].score_details,
+				for (let responseItem of response_data) {
+					responseItem.score_details =
+						responseItem.score_details.replace('"[', '[');
+					responseItem.score_details =
+						responseItem.score_details.replace('"]', ']');
+					responseItem.score_details = JSON.parse(
+						responseItem.score_details,
 					);
 				}
 				return response.status(200).send({
@@ -393,17 +390,12 @@ export class LMSService {
 		if (query_test_list?.data?.data?.lms_test_tracking.length > 0) {
 			let response_data = query_test_list.data.data.lms_test_tracking;
 			//convert score text to json object
-			for (let i = 0; i < response_data.length; i++) {
-				response_data[i].score_details = response_data[
-					i
-				].score_details.replace('"[', '[');
-				response_data[i].score_details = response_data[
-					i
-				].score_details.replace('"]', ']');
-				response_data[i].score_details = JSON.parse(
-					response_data[i].score_details,
-				);
+			for (let item of response_data) {
+				item.score_details = item.score_details.replace('"[', '[');
+				item.score_details = item.score_details.replace('"]', ']');
+				item.score_details = JSON.parse(item.score_details);
 			}
+
 			return response.status(200).send({
 				success: true,
 				message: 'Getlms_test_tracking Data Found!',

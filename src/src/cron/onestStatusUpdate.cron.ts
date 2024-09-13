@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { HasuraService } from '../services/hasura/hasura.service';
-import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
+import {
+	HasuraService,
+	HasuraService as HasuraServiceFromServices,
+} from '../services/hasura/hasura.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 const moment = require('moment');
@@ -87,10 +89,7 @@ export class OnestStatusUpdateCron {
 						console.log('name', name);
 
 						// Update the tracking status in the database
-						const data = await this.updateTrackingStatus(
-							track.id,
-							name,
-						);
+						await this.updateTrackingStatus(track.id, name);
 					}
 				}
 			} catch (error) {

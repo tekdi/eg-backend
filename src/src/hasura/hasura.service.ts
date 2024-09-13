@@ -295,6 +295,7 @@ export class HasuraService {
 		response = 'table',
 	) => {
 		let result = null;
+		//check
 		if (data) {
 			if (data[`${tableName}_by_pk`]) {
 				result = data[`${tableName}_by_pk`];
@@ -311,7 +312,7 @@ export class HasuraService {
 				result = data[tableName];
 			}
 		}
-		result = result ? result : errors ? errors[0] : {};
+		result = result || (errors ? errors[0] : {});
 		if (response === 'data') {
 			return result;
 		} else {

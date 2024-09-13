@@ -549,7 +549,7 @@ export class FacilitatorService {
 				tableName,
 				{
 					...body,
-					id: experience_id ? experience_id : null,
+					id: experience_id || null, // Simplified conditional expression
 					user_id: id,
 				},
 				experienceArr,
