@@ -364,7 +364,7 @@ export class PcrscoresService {
 					'rapid_assessment_second_learning_level',
 					'endline_learning_level',
 					'camp_id',
-				],
+				], //body
 				true,
 				[
 					...this.returnFields,
@@ -378,7 +378,7 @@ export class PcrscoresService {
 					'updated_by',
 					'created_at',
 					'updated_at',
-				],
+				], //return fields
 			);
 			return resp.status(200).json({
 				success: true,
