@@ -364,7 +364,7 @@ export class PcrscoresService {
 					'rapid_assessment_second_learning_level',
 					'endline_learning_level',
 					'camp_id',
-				], //body
+				],
 				true,
 				[
 					...this.returnFields,
@@ -384,7 +384,7 @@ export class PcrscoresService {
 				success: true,
 				message: 'Updated successfully!',
 				data: response,
-			});
+			}); //return true
 		} else {
 			return resp.json({
 				status: 400,
