@@ -163,9 +163,8 @@ export class ObservationsService {
 		const vresponse = await this.hasuraServiceFromServices.getData({
 			query: vquery,
 		});
-		const newQdata = vresponse?.data?.fields_aggregate?.aggregate?.count;
 
-		if (newQdata > 0) {
+		if (vresponse?.data?.fields_aggregate?.aggregate?.count > 0) {
 			return resp.status(422).json({
 				success: false,
 				message: 'Duplicate title encountered !!',
