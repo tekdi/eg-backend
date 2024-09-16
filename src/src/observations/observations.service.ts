@@ -168,14 +168,14 @@ export class ObservationsService {
 		if (newQdata > 0) {
 			return resp.status(422).json({
 				success: false,
-				message: 'Duplicate title encountered !',
+				message: 'Duplicate title encountered !!',
 				data: {},
 			});
 		}
 
 		let query = '';
 		Object.keys(body).forEach((e) => {
-			if (body[e] && body[e] != '') {
+			if (body[e] != '' && body[e]) {
 				if (e === 'render') {
 					query += `${e}: ${body[e]}, `;
 				} else if (Array.isArray(body[e])) {
@@ -252,7 +252,7 @@ export class ObservationsService {
 		if (newQdata > 0) {
 			return resp.status(422).json({
 				success: false,
-				message: 'Duplicate observation field encountered !',
+				message: 'Duplicate observation field encountered !!',
 				data: {},
 			});
 		}
@@ -335,7 +335,7 @@ export class ObservationsService {
 		if (newQdata > 0) {
 			return resp.status(422).json({
 				success: false,
-				message: 'Duplicate field responses encountered !',
+				message: 'Duplicate field responses encountered !!!',
 				data: {},
 			});
 		}
@@ -504,7 +504,7 @@ export class ObservationsService {
 		if (newQdata > 0) {
 			return resp.status(422).json({
 				success: false,
-				message: 'Duplicate title encountered !',
+				message: 'Duplicate title encountered !!!!',
 				data: {},
 			});
 		}
