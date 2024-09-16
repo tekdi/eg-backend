@@ -52,7 +52,7 @@ export class HasuraService {
 		onlyFields: any = [],
 		request: any = { filters: {}, page: '0', limit: '0' },
 	) {
-		const { data, errors } = await lastValueFrom(
+		const { errors, data } = await lastValueFrom(
 			this.httpService
 				.post(
 					this.url,
@@ -65,9 +65,9 @@ export class HasuraService {
 					},
 					{
 						headers: {
+							'Content-Type': 'application/json',
 							'x-hasura-admin-secret':
 								process.env.HASURA_ADMIN_SECRET,
-							'Content-Type': 'application/json',
 						},
 					},
 				)
@@ -75,7 +75,7 @@ export class HasuraService {
 		);
 		let obj: any = { data: {} };
 		if (!errors) {
-			const { limit, page } = request;
+			const { page, limit } = request;
 			let mappedResponse = data?.[`${tableName}`];
 			if (limit) {
 				const totalCount =
@@ -83,8 +83,8 @@ export class HasuraService {
 				const totalPages = limit ? Math.ceil(totalCount / limit) : 0;
 				obj = {
 					...obj,
-					totalCount: `${totalCount}`,
 					limit: `${limit}`,
+					totalCount: `${totalCount}`,
 					currentPage: page ? `${page}` : '1',
 					totalPages: `${totalPages}`,
 				};
@@ -187,9 +187,9 @@ export class HasuraService {
 						},
 						{
 							headers: {
+								'Content-Type': 'application/json',
 								'x-hasura-admin-secret':
 									process.env.HASURA_ADMIN_SECRET,
-								'Content-Type': 'application/json',
 							},
 						},
 					)
@@ -249,9 +249,9 @@ export class HasuraService {
 						},
 						{
 							headers: {
+								'Content-Type': 'application/json',
 								'x-hasura-admin-secret':
 									process.env.HASURA_ADMIN_SECRET,
-								'Content-Type': 'application/json',
 							},
 						},
 					)
@@ -277,9 +277,9 @@ export class HasuraService {
 						},
 						{
 							headers: {
+								'Content-Type': 'application/json',
 								'x-hasura-admin-secret':
 									process.env.HASURA_ADMIN_SECRET,
-								'Content-Type': 'application/json',
 							},
 						},
 					)
@@ -290,11 +290,12 @@ export class HasuraService {
 	}
 
 	public getResponce = (
-		{ data, errors }: any,
+		{ errors, data }: any,
 		tableName: any,
 		response = 'table',
 	) => {
 		let result = null;
+		//check
 		if (data) {
 			if (data[`${tableName}_by_pk`]) {
 				result = data[`${tableName}_by_pk`];
@@ -311,7 +312,7 @@ export class HasuraService {
 				result = data[tableName];
 			}
 		}
-		result = result ? result : errors ? errors[0] : {};
+		result = result || (errors ? errors[0] : {});
 		if (response === 'data') {
 			return result;
 		} else {

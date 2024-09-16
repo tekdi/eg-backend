@@ -352,10 +352,10 @@ export class PcrscoresService {
 
 		if (pcr_scores_id) {
 			response = await this.hasuraService.q(
-				this.table,
+				'pcr_scores',
+				//body
 				{
 					...body,
-
 					id: pcr_scores_id,
 				},
 				[
@@ -370,10 +370,10 @@ export class PcrscoresService {
 					...this.returnFields,
 					'id',
 					'user_id',
-					'baseline_learning_level',
-					'rapid_assessment_first_learning_level',
 					'rapid_assessment_second_learning_level',
 					'endline_learning_level',
+					'baseline_learning_level',
+					'rapid_assessment_first_learning_level',
 					'camp_id',
 					'updated_by',
 					'created_at',
@@ -384,7 +384,7 @@ export class PcrscoresService {
 				success: true,
 				message: 'Updated successfully!',
 				data: response,
-			});
+			}); //return true
 		} else {
 			return resp.json({
 				status: 400,
