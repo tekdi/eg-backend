@@ -2336,6 +2336,22 @@ export class ExamService {
 			});
 		}
 
+		// check for valid document id
+
+		if (body?.is_continued) {
+			let document_validation_result = await this.validateDocumentDetails(
+				body?.exam_fee_document_id,
+			);
+
+			if (document_validation_result?.status == 422) {
+				return response.status(422).json({
+					success: false,
+					message: 'Please select valid document',
+					data: {},
+				});
+			}
+		}
+
 		// Filter body to include only allowed fields
 		const filteredBody = Object.keys(body)
 			.filter((key) => requiredFields.includes(key))
@@ -2444,6 +2460,37 @@ export class ExamService {
 				message: 'Unable to update status!',
 				data: {},
 			});
+		}
+	}
+
+	async validateDocumentDetails(document_id: any) {
+		let query;
+		let hasura_response;
+
+		query = `query MyQuery {
+			documents_by_pk(id:${document_id}){
+			  id
+			  name
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const id = hasura_response?.data?.documents_by_pk?.id;
+
+		if (!id) {
+			return {
+				success: false,
+				status: 422,
+			};
+		} else {
+			return {
+				success: true,
+				status: 200,
+			};
 		}
 	}
 }
