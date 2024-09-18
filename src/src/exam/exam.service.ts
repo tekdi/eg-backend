@@ -2361,6 +2361,28 @@ export class ExamService {
 			}, {} as any);
 
 		if (filteredBody.is_continued == true) {
+			//
+			const vquery = `query MyQuery {
+		  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},user_id: {_eq:${body?.user_id}},status:{_eq:"pragati_syc"}}){
+				id
+				user_id
+				status
+				}
+			}`;
+
+			const vresponse = await this.hasuraServiceFromServices.getData({
+				query: vquery,
+			});
+
+			const current_status = vresponse?.data?.program_beneficiaries;
+			if (current_status?.length == 0) {
+				return response.status(422).json({
+					success: false,
+					message: 'Invalid Request',
+					data: {},
+				});
+			}
+
 			const status = this.enumService
 				.getEnumValue('BENEFICIARY_STATUS')
 				.data.filter(
