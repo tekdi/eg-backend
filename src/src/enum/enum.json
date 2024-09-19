@@ -1463,6 +1463,13 @@
 		"Home Science",
 		"Indian Culture And Heritage"
 	],
+	"PCR_SUBJECT_LIST_MADHYA_PRADESH": [
+		"Hindi",
+		"Social Science",
+		"Home Science",
+		"Economics",
+		"Business Studies"
+	],
 	"LEARNING_ACTIVITIES": [
 		{
 			"title": "LEARNING_ACTIVITIES_SUBJECT_CONTENT_FACILITATION",

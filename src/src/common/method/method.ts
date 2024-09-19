@@ -128,4 +128,30 @@ export class Method {
 	public getFormattedISTTime() {
 		return moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
 	}
+
+	public async getBoardByProgramId(program_id) {
+		let query;
+		let hasura_response;
+		let board_name;
+
+		query = `query MyQuery {
+			boards(where: {program_id: {_eq:${program_id}}, status: {_eq: "active"}}) {
+			  board_id: id
+			  name
+			}
+		  }
+		  `;
+		hasura_response = await this.hasuraServiceFromService.getData({
+			query: query,
+		});
+
+		board_name = hasura_response?.data?.boards?.[0]?.name;
+
+		let pcr_enum_variable =
+			board_name == 'MPSOS'
+				? 'PCR_SUBJECT_LIST_MADHYA_PRADESH'
+				: 'PCR_SUBJECT_LIST';
+
+		return pcr_enum_variable;
+	}
 }

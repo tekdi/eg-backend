@@ -3,6 +3,7 @@ import { HasuraService } from 'src/hasura/hasura.service';
 import { UserService } from 'src/user/user.service';
 import { HasuraService as HasuraServiceFromServices } from '../services/hasura/hasura.service';
 import { EnumService } from '../enum/enum.service';
+import { Method } from 'src/common/method/method';
 
 @Injectable()
 export class PcrscoresService {
@@ -34,6 +35,7 @@ export class PcrscoresService {
 		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private userService: UserService,
 		private enumService: EnumService,
+		private methodService: Method,
 	) {}
 
 	async create(body: any, request: any, resp: any) {
@@ -408,8 +410,14 @@ export class PcrscoresService {
 		let hasura_response;
 		let subject_list = [];
 
+		// get pcr subject enum list as per program id
+
+		let pcr_enum_variable = await this.methodService.getBoardByProgramId(
+			program_id,
+		);
+
 		await this.enumService
-			.getEnumValue('PCR_SUBJECT_LIST')
+			.getEnumValue(pcr_enum_variable)
 			?.data?.map((item) => subject_list.push(item));
 
 		query = `query MyQuery2 {
@@ -465,8 +473,14 @@ export class PcrscoresService {
 			});
 		}
 
+		// get pcr subject enum list as per program id
+
+		let pcr_enum_variable = await this.methodService.getBoardByProgramId(
+			program_id,
+		);
+
 		await this.enumService
-			.getEnumValue('PCR_SUBJECT_LIST')
+			.getEnumValue(pcr_enum_variable)
 			?.data?.map((item) => subject_list.push(item));
 
 		if (!subject_list.includes(subject)) {
@@ -558,8 +572,14 @@ export class PcrscoresService {
 		let user_id = request?.mw_userid;
 		let { program_id, subject, ...update_body } = body;
 
+		// get pcr subject list enum variable as per program_id
+
+		let pcr_enum_variable = await this.methodService.getBoardByProgramId(
+			program_id,
+		);
+
 		await this.enumService
-			.getEnumValue('PCR_SUBJECT_LIST')
+			.getEnumValue(pcr_enum_variable)
 			?.data?.map((item) => subject_list.push(item));
 
 		if (!subject_list.includes(body?.subject)) {
@@ -600,8 +620,8 @@ export class PcrscoresService {
 		const beneficiary_subject_data =
 			hasura_response?.data?.program_beneficiaries?.[0]?.subjects;
 
-		const matchingSubjects = subject_ids.filter((subject_id) =>
-			beneficiary_subject_data.includes(subject_id.toString()),
+		const matchingSubjects = subject_ids?.filter((subject_id) =>
+			beneficiary_subject_data?.includes(subject_id.toString()),
 		);
 
 		query = `query MyQuery {
@@ -610,8 +630,7 @@ export class PcrscoresService {
 			  
 			}
 		  }
-		  
-		  `;
+		    `;
 
 		hasura_response = await this.hasuraServiceFromServices.getData({
 			query: query,
