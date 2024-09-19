@@ -17,6 +17,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import * as moment from 'moment';
+import { CSVHelperService } from 'src/helper/csvHelper.service';
 
 @Injectable()
 export class BeneficiariesService {
@@ -34,6 +35,7 @@ export class BeneficiariesService {
 		private enumService: EnumService,
 		private uploadFileService: UploadFileService,
 		private beneficiariesCoreService: BeneficiariesCoreService,
+		public csvhelperService: CSVHelperService,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('BENEFICIARY_STATUS').data;
@@ -275,16 +277,17 @@ export class BeneficiariesService {
 				}
 			}
 
-			if (body.hasOwnProperty('state') && body.state.length) {
-				paramsQueryArray.push('$state: [String!]');
-				filterQueryArray.push('{state: { _in: $state }}');
-				variables.state = body.state;
-			}
-
 			if (body.hasOwnProperty('district') && body.district.length) {
 				paramsQueryArray.push('$district: [String!]');
 				filterQueryArray.push('{district: { _in: $district }}');
 				variables.district = body.district;
+			}
+
+			// state added to filter
+			if (body.hasOwnProperty('state') && body.state.length) {
+				paramsQueryArray.push('$state: [String!]');
+				filterQueryArray.push('{state: { _in: $state }}');
+				variables.state = body.state; // state variable added
 			}
 
 			if (body.hasOwnProperty('block') && body.block.length) {
@@ -348,26 +351,15 @@ export class BeneficiariesService {
 				data,
 			);
 			const allBeneficiaries = hasuraResponse?.data?.users;
+
+			//create CSV stringifier Object called
+
+			let csv_header = this.csvhelperService.getCSVObject();
+
+			// Create a CSV stringifier with a custom header
 			const csvStringifier = createObjectCsvStringifier({
-				header: [
-					{ id: 'name', title: 'Name' },
-					{ id: 'user_id', title: 'LearnerId' },
-					{ id: 'district', title: 'District' },
-					{ id: 'block', title: 'Block' },
-					{ id: 'village', title: 'Village' },
-					{ id: 'dob', title: 'DOB' },
-					{ id: 'prerak', title: 'Prerak' },
-					{ id: 'facilitator_id', title: 'FacilitatorId' },
-					{ id: 'mobile', title: 'Mobile Number' },
-					{ id: 'status', title: 'Status' },
-					{ id: 'enrollment_number', title: 'Enrollment Number' },
-					{ id: 'aadhar_no', title: 'Aadhaar Number' },
-					{ id: 'aadhar_verified', title: 'Aadhaar Number Verified' },
-					{
-						id: 'aadhaar_verification_mode',
-						title: 'Aadhaar Verification Mode',
-					},
-				],
+				// Define the header columns
+				header: csv_header,
 			});
 
 			const records = [];
@@ -412,13 +404,21 @@ export class BeneficiariesService {
 					data?.aadhaar_verification_mode;
 				records.push(dataObject);
 			}
+
+			// Set the response header to indicate that the response body contains CSV data
+			resp.header('Content-Type', 'text/csv');
+
+			// Generate the CSV file data by concatenating the header string and stringified records
+			const fileData =
+				csvStringifier.getHeaderString() + // Get the CSV header string
+				csvStringifier.stringifyRecords(records); // Stringify the records into CSV format
+
+			// Define the file name by concatenating the user's first name, last name, and current date
 			let fileName = `${
 				user?.data?.first_name + '_' + user?.data?.last_name
 			}_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
-			const fileData =
-				csvStringifier.getHeaderString() +
-				csvStringifier.stringifyRecords(records);
-			resp.header('Content-Type', 'text/csv');
+
+			// Send the CSV file as an attachment with the specified file name
 			return resp.attachment(fileName).send(fileData);
 		} catch (error) {
 			return resp.status(500).json({
@@ -448,33 +448,21 @@ export class BeneficiariesService {
 				`{ program_beneficiaries: { facilitator_user: { program_faciltators: { parent_ip: { _eq: "${user?.data?.program_users[0]?.organisation_id}" },academic_year_id:{_eq:${academic_year_id}},program_id:{_eq:${program_id}} } } } }`,
 			);
 
-			if (body?.state && body?.state.length > 0) {
-				filterQueryArray.push(
-					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
-				);
-			}
-
 			if (body?.district && body?.district.length > 0) {
 				filterQueryArray.push(
 					`{district:{_in: ${JSON.stringify(body?.district)}}}`,
 				);
 			}
 
-			if (body?.block && body?.block.length > 0) {
+			if (body?.state && body?.state.length > 0) {
 				filterQueryArray.push(
-					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+					`{state:{_in: ${JSON.stringify(body?.state)}}}`,
 				);
 			}
 
-			if (body.facilitator && body.facilitator.length > 0) {
-				filterQueryArray.push(
-					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
-						body.facilitator,
-					)}}}}`,
-				);
-			}
-
+			// Check if the status variable is truthy and not an empty string
 			if (status && status !== '') {
+				// If the status is 'identified', add a filter query with an OR condition
 				if (status === 'identified') {
 					filterQueryArray.push(`{
 					_or: [
@@ -484,10 +472,29 @@ export class BeneficiariesService {
 					]
 				}`);
 				} else {
+					// Otherwise, add a filter query with an exact match for the status
 					filterQueryArray.push(
 						`{program_beneficiaries:{status:{_eq:${status}}}}`,
 					);
 				}
+			}
+
+			// Check if the body object has a 'facilitator' property and its length is greater than 0
+			if (body.facilitator && body.facilitator.length > 0) {
+				// Add a filter query to the array, searching for program beneficiaries with facilitator IDs in the provided array
+				filterQueryArray.push(
+					`{program_beneficiaries: {facilitator_id:{_in: ${JSON.stringify(
+						body.facilitator,
+					)}}}}`,
+				);
+			}
+
+			// Check if the body object has a 'block' property and its length is greater than 0
+			if (body?.block && body?.block.length > 0) {
+				// Add a filter query to the array, searching for blocks that are in the provided array
+				filterQueryArray.push(
+					`{block:{_in: ${JSON.stringify(body?.block)}}}`,
+				);
 			}
 
 			let filterQuery = '{ _and: [' + filterQueryArray.join(',') + '] }';
@@ -693,22 +700,24 @@ export class BeneficiariesService {
 	public async getList(body: any, req: any, resp: any) {
 		const program_id = req.mw_program_id;
 		const academic_year_id = req.mw_academic_year_id;
+
+		//check role data
 		if (req.mw_roles?.includes('program_owner')) {
 			req.parent_ip_id = req.mw_ip_user_id;
 		} else {
 			const user = await this.userService.ipUserInfo(req);
-			if (req.mw_roles?.includes('staff')) {
+			if (req.mw_roles?.includes('facilitator')) {
+				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
+			} else if (req.mw_roles?.includes('staff')) {
 				req.parent_ip_id =
 					user?.data?.program_users?.[0]?.organisation_id;
-			} else if (req.mw_roles?.includes('facilitator')) {
-				req.parent_ip_id = user?.data?.program_faciltators?.parent_ip;
 			}
 		}
 		if (!req.parent_ip_id) {
 			return resp.status(404).send({
 				success: false,
-				message: 'Invalid Ip',
 				data: {},
+				message: 'Invalid Ip',
 			});
 		}
 		const sortType = body?.sortType ? body?.sortType : 'desc';
@@ -780,15 +789,15 @@ export class BeneficiariesService {
 			filterQueryArray.push(`{is_duplicate:{_eq:${body?.is_duplicate}}}`);
 		}
 
-		if (body?.state && body?.state.length > 0) {
-			filterQueryArray.push(
-				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
-			);
-		}
-
 		if (body?.district && body?.district.length > 0) {
 			filterQueryArray.push(
 				`{district:{_in: ${JSON.stringify(body?.district)}}}`,
+			);
+		}
+
+		if (body?.state && body?.state.length > 0) {
+			filterQueryArray.push(
+				`{state:{_in: ${JSON.stringify(body?.state)}}}`,
 			);
 		}
 
@@ -897,8 +906,8 @@ export class BeneficiariesService {
 			return resp.status(200).send({
 				success: false,
 				status: 'Not Found',
-				message: 'Beneficiaries Not Found',
 				data: {},
+				message: 'Beneficiaries Not Found',
 			});
 		} else {
 			mappedResponse = await Promise.all(
@@ -1211,17 +1220,16 @@ export class BeneficiariesService {
 
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let result = response?.data?.users;
-
-		let mappedResponse = result;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
 		const totalPages = Math.ceil(count / limit);
+		let mappedResponse = result;
 
 		if (!mappedResponse || mappedResponse.length < 1) {
 			return resp.status(200).send({
-				success: false,
-				status: 'Not Found',
-				message: 'Beneficiaries Not Found',
 				data: {},
+				success: false,
+				message: 'Beneficiaries Not Found',
+				status: 'Not Found',
 			});
 		} else {
 			mappedResponse = await Promise.all(
@@ -1419,6 +1427,7 @@ export class BeneficiariesService {
 				exam_fee_document_id
 				exam_fee_date
 				syc_subjects
+				syc_reason
 				is_continued
 				sso_id
 				document {
@@ -2042,14 +2051,147 @@ export class BeneficiariesService {
 		);
 		return {
 			status: 200,
-			success: true,
 			message: 'Status Updated successfully!',
+			success: true,
 			data: (
 				await this.beneficiariesCoreService.userById(
 					res?.program_beneficiaries?.user_id,
 				)
 			).data,
 		};
+	}
+
+	public async setPsycStatus(body: any, request: any) {
+		let validation_result;
+		let set_update_body;
+		let variable;
+
+		const { data: updatedUser } =
+			await this.beneficiariesCoreService.userById(body?.user_id);
+		const allEnrollmentStatuses = this.enumService
+			.getEnumValue('PSYC_VERIFICATION_STATUS')
+			.data.map((enumData) => enumData.value);
+
+		if (!allEnrollmentStatuses.includes(body?.psyc_status)) {
+			return {
+				status: 400,
+				success: false,
+				message: `Invalid status`,
+				data: {},
+			};
+		}
+
+		delete body.status;
+
+		if (body?.psyc_status == 'psyc_verified') {
+			set_update_body = {
+				status: 'pragati_syc_reattempt_ip_verified',
+				syc_reason: [],
+			};
+
+			variable = {
+				key: 'syc_reason',
+				type: 'jsonb',
+			};
+		}
+
+		if (body?.psyc_status == 'change_required') {
+			validation_result = await this.validateSycReason(body);
+			if (validation_result?.status == 422) {
+				return validation_result;
+			}
+
+			set_update_body = {
+				syc_reason: body?.syc_reason,
+			};
+
+			variable = {
+				key: 'syc_reason',
+				type: 'jsonb',
+			};
+		}
+
+		const res = await this.hasuraServiceFromServices.updateWithVariable(
+			updatedUser?.program_beneficiaries?.id,
+			'program_beneficiaries',
+			set_update_body,
+			['id', 'status', 'syc_reason'],
+			true,
+			{
+				variable: [variable],
+			},
+		);
+
+		const newdata = (
+			await this.beneficiariesCoreService.userById(
+				res?.program_beneficiaries?.user_id,
+			)
+		).data;
+
+		await this.userService.addAuditLog(
+			body?.user_id,
+			request.mw_userid,
+			'program_beneficiaries.status',
+			updatedUser?.program_beneficiaries?.id,
+			{
+				reason_for_status_update:
+					updatedUser?.program_beneficiaries
+						?.reason_for_status_update,
+				status: updatedUser?.program_beneficiaries?.status,
+			},
+			{
+				reason_for_status_update:
+					newdata?.program_beneficiaries?.reason_for_status_update,
+				status: newdata?.program_beneficiaries?.status,
+			},
+			['status', 'reason_for_status_update'],
+		);
+		return {
+			success: true,
+			data: (
+				await this.beneficiariesCoreService.userById(
+					res?.program_beneficiaries?.user_id,
+				)
+			).data,
+			message: 'Status updated successfully!',
+			status: 200,
+		};
+	}
+
+	public async validateSycReason(body) {
+		const valid_syc_reasons = [
+			'exam_fee_date',
+			'exam_fee_document_id',
+			'syc_subjects',
+		];
+
+		// Check if syc_reason is an array and not empty
+		if (!Array.isArray(body?.syc_reason) || body.syc_reason.length === 0) {
+			return {
+				status: 422,
+				success: false,
+				message: 'Invalid syc reason',
+			};
+		}
+
+		// Check if every item in syc_reason is included in valid_syc_reasons
+		const allValid = body.syc_reason.every((reason) =>
+			valid_syc_reasons.includes(reason),
+		);
+
+		if (!allValid) {
+			return {
+				status: 422,
+				success: false,
+				message: 'Invalid syc reason',
+			};
+		} else {
+			return {
+				status: 200,
+				success: true,
+				message: 'Valid syc reason',
+			};
+		}
 	}
 
 	public async isEnrollmentAvailiable(id, request, response) {
@@ -3037,6 +3179,27 @@ export class BeneficiariesService {
 						});
 					}
 
+					if (
+						!req?.payment_receipt_document_id ||
+						req.payment_receipt_document_id.some(
+							(doc) => !doc?.id || doc.id === '',
+						)
+					) {
+						return response.status(422).json({
+							message: 'Invalid payment_receipt_document_id',
+						});
+					}
+
+					if (
+						req?.subjects?.length > 7 ||
+						req?.subjects?.length < 1
+					) {
+						return response.status(422).json({
+							message:
+								'Selected subjects should be at least 1 and maximum 7 ',
+						});
+					}
+
 					if (req?.sso_id && request?.mw_program_id == 1) {
 						const result = await this.validateForSSOID(
 							req?.sso_id,
@@ -3051,42 +3214,21 @@ export class BeneficiariesService {
 						}
 					}
 
-					if (
-						req?.subjects?.length > 7 ||
-						req?.subjects?.length < 1
-					) {
-						return response.status(422).json({
-							message:
-								'Selected subjects should be at least 1 and maximum 7 ',
-						});
-					}
-
-					if (
-						!req?.payment_receipt_document_id ||
-						req.payment_receipt_document_id.some(
-							(doc) => !doc?.id || doc.id === '',
-						)
-					) {
-						return response.status(422).json({
-							message: 'Invalid payment_receipt_document_id',
-						});
-					}
-
 					let messageArray = [];
 					let status = null;
 					let reason = null;
 					let tempArray = [
-						'sso_id',
-						'enrollment_status',
 						'enrolled_for_board',
 						'subjects',
 						'enrollment_date',
-						'payment_receipt_document_id',
 						'enrollment_mobile_no',
 						'enrollment_first_name',
+						'payment_receipt_document_id',
+						'enrollment_status',
+						'type_of_enrollement',
+						'sso_id',
 						'enrollment_dob',
 						'is_eligible',
-						'type_of_enrollement',
 					];
 					for (let info of tempArray) {
 						if (req[info] === undefined || req[info] === '') {
@@ -3096,8 +3238,8 @@ export class BeneficiariesService {
 					if (messageArray.length > 0) {
 						return response.status(400).send({
 							success: false,
-							message: messageArray,
 							data: {},
+							message: messageArray,
 						});
 					} else {
 						const { edit_page_type, ...copiedRequest } = req;
@@ -3111,19 +3253,19 @@ export class BeneficiariesService {
 							await this.checkPragatiCampEligibility({ ...req });
 						if (validationError) {
 							return response.status(422).send({
-								success: false,
-								message: `Missing fields data`,
 								errors: {
 									subjects: {
 										__errors: [message],
 									},
 								},
+								message: `Missing fields data`,
+								success: false,
 							});
 						}
 						if (req?.is_eligible === 'no') {
-							status = 'ineligible_for_pragati_camp';
 							reason =
 								'The age of the learner should be 14 to 29';
+							status = 'ineligible_for_pragati_camp';
 						} else if (req?.is_eligible === 'yes') {
 							status = 'sso_id_enrolled';
 							reason = 'sso_id_enrolled';
@@ -3217,6 +3359,20 @@ export class BeneficiariesService {
 						});
 					}
 
+					if (req?.sso_id && request?.mw_program_id == 1) {
+						const result = await this.validateForSSOID(
+							req?.sso_id,
+							request?.mw_program_id,
+							beneficiary_id,
+						);
+
+						if (result?.status == false) {
+							return response.status(422).json({
+								result,
+							});
+						}
+					}
+
 					if (
 						!req?.payment_receipt_document_id ||
 						req.payment_receipt_document_id.some(
@@ -3233,9 +3389,9 @@ export class BeneficiariesService {
 					let reason = null;
 					let tempArray = [
 						'enrollment_number',
-						'enrollment_status',
 						'enrolled_for_board',
 						'subjects',
+						'enrollment_status',
 						'enrollment_date',
 						'payment_receipt_document_id',
 						'enrollment_mobile_no',
@@ -3564,16 +3720,16 @@ export class BeneficiariesService {
 		`;
 		const duplicateListArr = (
 			await this.hasuraServiceFromServices.executeRawSql(sql)
-		).result;
+		)?.result;
 
 		if (duplicateListArr != undefined) {
 			const count = duplicateListArr?.[1]?.[2].length;
 			const totalPages = Math.ceil(count / limit);
 			return {
-				success: true,
+				totalPages: totalPages,
 				limit,
 				currentPage: skip / limit + 1,
-				totalPages: totalPages,
+				success: true,
 				count,
 				data: this.hasuraServiceFromServices.getFormattedData(
 					duplicateListArr,
@@ -3582,12 +3738,12 @@ export class BeneficiariesService {
 			};
 		} else {
 			return {
+				currentPage: skip / limit + 1,
 				success: true,
 				limit,
-				currentPage: skip / limit + 1,
+				data: [],
 				totalPages: 0,
 				count: 0,
-				data: [],
 			};
 		}
 	}
