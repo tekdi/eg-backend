@@ -1427,6 +1427,7 @@ export class BeneficiariesService {
 				exam_fee_document_id
 				exam_fee_date
 				syc_subjects
+				syc_reason
 				is_continued
 				sso_id
 				document {
@@ -2169,6 +2170,7 @@ export class BeneficiariesService {
 			return {
 				status: 422,
 				success: false,
+				message: 'Invalid syc reason',
 			};
 		}
 
@@ -2181,11 +2183,13 @@ export class BeneficiariesService {
 			return {
 				status: 422,
 				success: false,
+				message: 'Invalid syc reason',
 			};
 		} else {
 			return {
 				status: 200,
 				success: true,
+				message: 'Valid syc reason',
 			};
 		}
 	}
