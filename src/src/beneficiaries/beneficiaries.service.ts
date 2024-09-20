@@ -18,7 +18,6 @@ import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import * as moment from 'moment';
 import { CSVHelperService } from 'src/helper/csvHelper.service';
-import { query } from 'express';
 
 @Injectable()
 export class BeneficiariesService {
