@@ -98,17 +98,19 @@ export class ProgramCoordinatorService {
 				query: query,
 			});
 
-			let user = hasura_response?.data?.users?.[0];
+			let user = hasura_response?.data?.users;
 
-			let user_role =
-				user?.program_faciltators?.length > 0
-					? 'facilitator'
-					: 'program_coordinator';
-
-			if (user) {
+			if (
+				user?.length > 0 &&
+				user.some(
+					(user) =>
+						user?.program_faciltators?.length > 0 ||
+						user?.program_users?.length > 0,
+				)
+			) {
 				return response.status(422).send({
 					success: false,
-					message: `Mobile Number Already Exist as ${user_role}`,
+					message: 'Mobile Number Already Exist',
 					data: {},
 				});
 			}
@@ -326,6 +328,72 @@ export class ProgramCoordinatorService {
 					data: {},
 				});
 			}
+		}
+	}
+
+	public async programCoordinatorMobileValidation(body, request, response) {
+		let query;
+		let hasura_response;
+
+		query = ` 			
+				
+				query MyQuery {
+				  users(
+					where: {
+					  mobile: { _eq: "${body?.mobile}" }
+					  _or: [
+						{ _not: { program_faciltators: {} } },
+						{ program_faciltators: { status: { _nin: ["dropout"] } } },
+									  
+					  ],
+						_not: { program_beneficiaries: {} } 
+					}
+				  ) {
+					id
+					mobile
+					program_faciltators(where: { status: { _nin: ["dropout"] } }) {
+					  user_id
+					  status
+					}
+					program_users {
+					  user_id
+					  status
+					}
+					program_beneficiaries{
+					  user_id
+					  status
+					}
+				  }
+				}
+				
+			      
+			  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let user = hasura_response?.data?.users;
+
+		if (
+			user?.length > 0 &&
+			user.some(
+				(user) =>
+					user?.program_faciltators?.length > 0 ||
+					user?.program_users?.length > 0,
+			)
+		) {
+			return response.status(422).send({
+				success: false,
+				message: 'Mobile Number Already Exist',
+				data: {},
+			});
+		} else {
+			return response.status(200).send({
+				success: true,
+				message: `Mobile Number is Valid`,
+				data: {},
+			});
 		}
 	}
 

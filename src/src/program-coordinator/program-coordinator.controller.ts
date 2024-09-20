@@ -39,6 +39,22 @@ export class ProgramCoordinatorController {
 		);
 	}
 
+	@Post('/mobile/validation')
+	@UseGuards(new AuthGuard())
+	@UsePipes(ValidationPipe)
+	public async mobileValidation(
+		@Body() body: Body,
+		@Res() response: Response,
+		@Req() request: Request,
+		@Param('role') role: string,
+	) {
+		return this.programCoordinatorService.programCoordinatorMobileValidation(
+			body,
+			request,
+			response,
+		);
+	}
+
 	@Post('/:id')
 	@UseGuards(new AuthGuard())
 	@UsePipes(ValidationPipe)
