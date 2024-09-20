@@ -2359,7 +2359,7 @@ export class ExamService {
 				return obj;
 			}, {} as any);
 
-		if (filteredBody.is_continued == true) {
+		if (filteredBody.is_continued) {
 			const vquery = `query MyQuery {
 		  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},user_id: {_eq:${body?.user_id}},status:{_eq:"pragati_syc"}}){
 				id
