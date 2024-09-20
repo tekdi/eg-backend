@@ -116,8 +116,8 @@ export class ProgramCoordinatorService {
 
 			let data_to_create_user = {
 				enabled: 'true',
-				firstName: body?.first_name,
 				lastName: body?.last_name,
+				firstName: body?.first_name,
 				username: username,
 				credentials: [
 					{
@@ -138,8 +138,8 @@ export class ProgramCoordinatorService {
 				);
 
 				const registerUserRes = await this.keycloakService.registerUser(
-					data_to_create_user,
 					token.access_token,
+					data_to_create_user,
 				);
 
 				if (registerUserRes.error) {
@@ -162,8 +162,8 @@ export class ProgramCoordinatorService {
 				} else if (registerUserRes.headers.location) {
 					const split = registerUserRes.headers.location.split('/');
 					const keycloak_id = split[split.length - 1];
-					body.keycloak_id = keycloak_id;
 					body.username = data_to_create_user.username;
+					body.keycloak_id = keycloak_id;
 					body.password = password;
 					let role_id;
 
