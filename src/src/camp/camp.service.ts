@@ -4383,7 +4383,8 @@ export class CampService {
 				learner_data?.find(
 					(item) =>
 						user_id === item.user_id &&
-						item.status !== 'registered_in_camp',
+						item.status !== 'registered_in_camp' &&
+						item.status !== 'registered_in_neev_camp',
 				),
 			)
 			.filter((e) => e);
