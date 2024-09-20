@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-
+const crypto = require('crypto');
 @Injectable()
 export class UserHelperService {
 	public generateRandomPassword() {
@@ -8,10 +8,10 @@ export class UserHelperService {
 			'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 		let password_value = '';
 
-		for (let i = 0, n = charset.length; i < length; ++i) {
-			password_value += charset.charAt(Math.floor(Math.random() * n));
+		for (let i = 0; i < length; i++) {
+			const randomIndex = crypto.randomBytes(1)[0] % charset.length;
+			password_value += charset[randomIndex];
 		}
-
 		return password_value;
 	}
 
