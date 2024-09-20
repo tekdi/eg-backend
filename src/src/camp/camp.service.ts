@@ -155,11 +155,6 @@ export class CampService {
 				});
 			}
 
-			//check if learners belongs to same prerak and have status 'enrolled_ip_verified'
-			this.enumService
-				.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
-				.data.map((item) => item.value);
-
 			let query = `query MyQuery {
 				users(where:{program_beneficiaries:{
 					user_id: {_in:[${learner_ids}]},

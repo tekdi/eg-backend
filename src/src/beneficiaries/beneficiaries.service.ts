@@ -18,6 +18,7 @@ import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import * as moment from 'moment';
 import { CSVHelperService } from 'src/helper/csvHelper.service';
+import { query } from 'express';
 
 @Injectable()
 export class BeneficiariesService {
@@ -4183,10 +4184,6 @@ export class BeneficiariesService {
 			status = 'sso_id_verified';
 		}
 
-		// Get users which are not present in the camps or whose status is inactive
-		this.enumService
-			.getEnumValue('PCR_SCORES_BASELINE_AND_ENDLINE')
-			.data.map((item) => item.value);
 		let qury = `query MyQuery {
 			users(where: {program_beneficiaries: {facilitator_id: {_eq:${facilitator_id}}, program_id: {_eq:${program_id}}, academic_year_id: {_eq:${academic_year_id}}, status: {_eq:${status}}} _not: {group_users: {status: {_eq: "active"}}}}) {
 			  id
