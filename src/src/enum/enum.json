@@ -774,6 +774,10 @@
 		{
 			"title": "FACILITATOR_REASONS_FOR_QUIT_NO_FUTURE_BENEFIT_IN_THIS_JOB",
 			"value": "no_future_benefit_in_this_job"
+		},
+		{
+			"title": "FACILITATOR_REASONS_FOR_QUIT_TRANSFER_AS_PC",
+			"value": "transfer_as_pc"
 		}
 	],
 	"FACILITATOR_REASONS_FOR_RUSTICATE": [
