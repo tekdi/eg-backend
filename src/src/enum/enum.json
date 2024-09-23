@@ -169,6 +169,10 @@
 		{
 			"title": "FACILITATOR_STATUS_RUSTICATE",
 			"value": "rusticate"
+		},
+		{
+			"title": "FACILITATOR_STATUS_TRANSFER_AS_PC",
+			"value": "transfer_as_pc"
 		}
 	],
 	"BENEFICIARY_STATUS": [
