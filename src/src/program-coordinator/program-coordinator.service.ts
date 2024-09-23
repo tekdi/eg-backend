@@ -65,7 +65,7 @@ export class ProgramCoordinatorService {
 					where: {
 					  mobile: { _eq: "${body?.mobile}" }
 					  _or: [
-						{ program_faciltators: { status: { _nin: ["dropout"] } } },
+						{ program_faciltators: { status: { _nin: ["quit"] } } },
 						{ _not: { program_faciltators: {} } },
 						
 					  
@@ -76,7 +76,7 @@ export class ProgramCoordinatorService {
 					id
 					mobile
 					first_name
-					program_faciltators(where: { status: { _nin: ["dropout"] } }) {
+					program_faciltators(where: { status: { _nin: ["quit"] } }) {
 					  user_id
 					  status
 					}
@@ -343,7 +343,7 @@ export class ProgramCoordinatorService {
 					  mobile: { _eq: "${body?.mobile}" }
 					  _or: [
 						{ _not: { program_faciltators: {} } },
-						{ program_faciltators: { status: { _nin: ["dropout"] } } },
+						{ program_faciltators: { status: { _nin: ["quit"] } } },
 									  
 					  ],
 						_not: { program_beneficiaries: {} } 
@@ -351,7 +351,7 @@ export class ProgramCoordinatorService {
 				  ) {
 					id
 					mobile
-					program_faciltators(where: { status: { _nin: ["dropout"] } }) {
+					program_faciltators(where: { status: { _nin: ["quit"] } }) {
 					  user_id
 					  status
 					}
