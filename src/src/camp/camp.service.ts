@@ -13,6 +13,7 @@ import { S3Service } from '../services/s3/s3.service';
 import { EnumService } from '../enum/enum.service';
 import { CampCoreService } from './camp.core.service';
 import * as moment from 'moment';
+import { Method } from 'src/common/method/method';
 @Injectable()
 export class CampService {
 	constructor(
@@ -26,6 +27,7 @@ export class CampService {
 		private campcoreservice: CampCoreService,
 		private beneficiariesService: BeneficiariesService,
 		private beneficiariesCoreService: BeneficiariesCoreService,
+		private methodService: Method,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];
@@ -5165,8 +5167,13 @@ export class CampService {
 		const camp_id = body?.camp_id;
 		const type = body?.assessment_type;
 		const program_id = req?.mw_program_id;
+		let pcr_enum_variable;
 
-		const subjects = this.enumService.getEnumValue('PCR_SUBJECT_LIST').data;
+		pcr_enum_variable = await this.methodService.getBoardByProgramId(
+			program_id,
+		);
+
+		const subjects = this.enumService.getEnumValue(pcr_enum_variable).data;
 
 		let assesmentQruey = '';
 
@@ -5249,9 +5256,15 @@ export class CampService {
 
 		const learnerId = updateResponse?.data?.users;
 		const subjects_name = updateResponse?.data?.subjects;
+
+		//get pcr subjects enum as per program id
+
+		pcr_enum_variable = await this.methodService.getBoardByProgramId(
+			program_id,
+		);
 		// Fetch subjects enum data
 		const subjectsEnum =
-			this.enumService.getEnumValue('PCR_SUBJECT_LIST').data;
+			this.enumService.getEnumValue(pcr_enum_variable).data;
 		const reData = {
 			success: true,
 			message: 'Learners Assessment data Found Successfully',

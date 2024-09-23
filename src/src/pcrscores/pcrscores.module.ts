@@ -5,10 +5,11 @@ import { HasuraModule as HasuraModuleFromServices } from '../services/hasura/has
 import { PcrscoresController } from './pcrscores.controller';
 import { PcrscoresService } from './pcrscores.service';
 import { EnumModule } from 'src/enum/enum.module';
+import { Method } from 'src/common/method/method';
 
 @Module({
 	imports: [HasuraModule, HasuraModuleFromServices, UserModule, EnumModule],
 	controllers: [PcrscoresController],
-	providers: [PcrscoresService],
+	providers: [PcrscoresService, Method],
 })
 export class PcrscoresModule {}

@@ -58,21 +58,56 @@ export class ProgramCoordinatorService {
 		if (role === 'program_coordinator') {
 			//validation to check if the mobile exists for another facilitator
 
-			query = `query MyQuery {
-                users(where: {mobile: {_eq: "${body?.mobile}"}}) {
-                  id
-                  mobile
-                }
-              }
-      
+			query = ` 			
+				
+				query MyQuery {
+				  users(
+					where: {
+					  mobile: { _eq: "${body?.mobile}" }
+					  _or: [
+						{ program_faciltators: { status: { _nin: ["dropout"] } } },
+						{ _not: { program_faciltators: {} } },
+						
+					  
+					  ],
+						_not: { program_beneficiaries: {} } 
+					}
+				  ) {
+					id
+					mobile
+					first_name
+					program_faciltators(where: { status: { _nin: ["dropout"] } }) {
+					  user_id
+					  status
+					}
+					program_users {
+					  user_id
+					  status
+					}
+					program_beneficiaries{
+					  user_id
+					  status
+					}
+				  }
+				}
+				
+			      
 			  `;
+
 			hasura_response = await this.hasuraServiceFromServices.getData({
 				query: query,
 			});
 
-			let users = hasura_response?.data?.users;
+			let user = hasura_response?.data?.users;
 
-			if (users?.length > 0) {
+			if (
+				user?.length > 0 &&
+				user.some(
+					(user) =>
+						user?.program_faciltators?.length > 0 ||
+						user?.program_users?.length > 0,
+				)
+			) {
 				return response.status(422).send({
 					success: false,
 					message: 'Mobile Number Already Exist',
@@ -100,7 +135,7 @@ export class ProgramCoordinatorService {
 			const password = `@${this.userHelperService.generateRandomPassword()}`;
 
 			// Generate username
-			let username = `${body.first_name}`;
+			let username = 'pc_' + `${body.first_name}`;
 			if (body?.last_name) {
 				username += `${body.last_name.charAt(0)}`;
 			}
@@ -293,6 +328,72 @@ export class ProgramCoordinatorService {
 					data: {},
 				});
 			}
+		}
+	}
+
+	public async programCoordinatorMobileValidation(body, request, response) {
+		let query;
+		let hasura_response;
+
+		query = ` 			
+				
+				query MyQuery {
+				  users(
+					where: {
+					  mobile: { _eq: "${body?.mobile}" }
+					  _or: [
+						{ _not: { program_faciltators: {} } },
+						{ program_faciltators: { status: { _nin: ["dropout"] } } },
+									  
+					  ],
+						_not: { program_beneficiaries: {} } 
+					}
+				  ) {
+					id
+					mobile
+					program_faciltators(where: { status: { _nin: ["dropout"] } }) {
+					  user_id
+					  status
+					}
+					program_users {
+					  user_id
+					  status
+					}
+					program_beneficiaries{
+					  user_id
+					  status
+					}
+				  }
+				}
+				
+			      
+			  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		let user = hasura_response?.data?.users;
+
+		if (
+			user?.length > 0 &&
+			user.some(
+				(user) =>
+					user?.program_faciltators?.length > 0 ||
+					user?.program_users?.length > 0,
+			)
+		) {
+			return response.status(422).send({
+				success: false,
+				message: 'Mobile Number Already Exist',
+				data: {},
+			});
+		} else {
+			return response.status(200).send({
+				success: true,
+				message: `Mobile Number is Valid`,
+				data: {},
+			});
 		}
 	}
 

@@ -583,8 +583,8 @@ export class BeneficiariesController {
 
 	@Post('/beneficiaries-scores')
 	@UseGuards(new AuthGuard())
-	learnerScore(@Body() body: any, @Res() response: any) {
-		return this.beneficiariesService.learnerScore(body, response);
+	learnerScore(@Body() body: any, @Res() response: any, @Req() request: any) {
+		return this.beneficiariesService.learnerScore(body, request, response);
 	}
 
 	@Get('/enrollment-validation/:id')
