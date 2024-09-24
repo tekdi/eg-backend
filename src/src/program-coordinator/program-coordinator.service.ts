@@ -157,8 +157,8 @@ export class ProgramCoordinatorService {
 				credentials: [
 					{
 						type: 'password',
-						value: password,
 						temporary: false,
+						value: password,
 					},
 				],
 				groups: [`${group}`],
@@ -173,8 +173,8 @@ export class ProgramCoordinatorService {
 				);
 
 				const registerUserRes = await this.keycloakService.registerUser(
-					token.access_token,
 					data_to_create_user,
+					token.access_token,
 				);
 
 				if (registerUserRes.error) {
@@ -184,8 +184,8 @@ export class ProgramCoordinatorService {
 					) {
 						return response.status(200).json({
 							success: false,
-							message: 'User already exists!',
 							data: {},
+							message: 'User already exists!',
 						});
 					} else {
 						return response.status(200).json({
