@@ -138,8 +138,8 @@ export class ProgramCoordinatorService {
 				);
 
 				const registerUserRes = await this.keycloakService.registerUser(
-					token.access_token,
 					data_to_create_user,
+					token.access_token,
 				);
 
 				if (registerUserRes.error) {
