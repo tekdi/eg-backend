@@ -169,6 +169,10 @@
 		{
 			"title": "FACILITATOR_STATUS_RUSTICATE",
 			"value": "rusticate"
+		},
+		{
+			"title": "FACILITATOR_STATUS_TRANSFER_AS_PC",
+			"value": "transfer_as_pc"
 		}
 	],
 	"BENEFICIARY_STATUS": [
@@ -770,6 +774,10 @@
 		{
 			"title": "FACILITATOR_REASONS_FOR_QUIT_NO_FUTURE_BENEFIT_IN_THIS_JOB",
 			"value": "no_future_benefit_in_this_job"
+		},
+		{
+			"title": "FACILITATOR_REASONS_FOR_QUIT_TRANSFER_AS_PC",
+			"value": "transfer_as_pc"
 		}
 	],
 	"FACILITATOR_REASONS_FOR_RUSTICATE": [
@@ -1462,6 +1470,13 @@
 		"Social Science",
 		"Home Science",
 		"Indian Culture And Heritage"
+	],
+	"PCR_SUBJECT_LIST_MADHYA_PRADESH": [
+		"Hindi",
+		"Social Science",
+		"Home Science",
+		"Economics",
+		"Business Studies"
 	],
 	"LEARNING_ACTIVITIES": [
 		{

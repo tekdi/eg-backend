@@ -2335,6 +2335,22 @@ export class ExamService {
 			});
 		}
 
+		// check for valid document id
+
+		if (body?.is_continued) {
+			let document_validation_result = await this.validateDocumentDetails(
+				body?.exam_fee_document_id,
+			);
+
+			if (document_validation_result?.status == 422) {
+				return response.status(422).json({
+					success: false,
+					message: 'Please select valid document',
+					data: {},
+				});
+			}
+		}
+
 		// Filter body to include only allowed fields
 		const filteredBody = Object.keys(body)
 			.filter((key) => requiredFields.includes(key))
@@ -2343,7 +2359,28 @@ export class ExamService {
 				return obj;
 			}, {} as any);
 
-		if (filteredBody.is_continued === true) {
+		if (filteredBody.is_continued) {
+			const vquery = `query MyQuery {
+		  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},user_id: {_eq:${body?.user_id}},status:{_eq:"pragati_syc"}}){
+				id
+				user_id
+				status
+				}
+			}`;
+
+			const vresponse = await this.hasuraServiceFromServices.getData({
+				query: vquery,
+			});
+
+			const current_status = vresponse?.data?.program_beneficiaries;
+			if (current_status?.length == 0) {
+				return response.status(422).json({
+					success: false,
+					message: 'Invalid Request',
+					data: {},
+				});
+			}
+
 			const status = this.enumService
 				.getEnumValue('BENEFICIARY_STATUS')
 				.data.filter(
@@ -2359,7 +2396,7 @@ export class ExamService {
 				'exam_fee_document_id',
 				'syc_subjects',
 			];
-		}
+		} //NOSONAR
 
 		// Build Hasura query to check authorization
 		const vquery = `query MyQuery {
@@ -2443,6 +2480,37 @@ export class ExamService {
 				message: 'Unable to update status!',
 				data: {},
 			});
+		}
+	}
+
+	async validateDocumentDetails(document_id: any) {
+		let query;
+		let hasura_response;
+
+		query = `query MyQuery {
+			documents_by_pk(id:${document_id}){
+			  id
+			  name
+			}
+		  }
+		  `;
+
+		hasura_response = await this.hasuraServiceFromServices.getData({
+			query: query,
+		});
+
+		const id = hasura_response?.data?.documents_by_pk?.id;
+
+		if (!id) {
+			return {
+				success: false,
+				status: 422,
+			};
+		} else {
+			return {
+				success: true,
+				status: 200,
+			};
 		}
 	}
 }
