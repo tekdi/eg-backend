@@ -433,11 +433,13 @@ export class AuthService {
 		const data = {
 			username: req.body.username,
 			password: req.body.password,
+			type: 'login',
 		};
 
 		const token = await this.keycloakService.getUserKeycloakToken(data);
 		if (token) {
 			await this.updateLastLogin(token);
+			await this.validateCredentialsForPC(data, req.body);
 			return response.status(200).send({
 				success: true,
 				message: 'LOGGEDIN_SUCCESSFULLY',
@@ -450,6 +452,63 @@ export class AuthService {
 				data: null,
 			});
 		}
+	}
+
+	public async logout(req, response) {
+		const data = {
+			username: req.body.username,
+			type: 'logout',
+		};
+		await this.validateCredentialsForPC(data, req.body);
+		return response.status(200).send({
+			success: true,
+			message: 'LOGGEDOUT SUCCESSFULLY',
+		});
+	}
+
+	public async validateCredentialsForPC(data: any, body: any) {
+		const query = `query MyQuery {
+			users(where: {username: {_eq: "${data?.username}"}, program_users: {roles: {slug: {_eq: "program_coordinator"}}}}) {
+			  id
+			}
+		  }
+		`;
+
+		const hasura_response = await this.hasuraService.getData({ query });
+		const user_id = hasura_response?.data?.users?.[0]?.id;
+
+		if (user_id) {
+			const { lat, long } = body || {};
+
+			// Dynamically construct insert_body based on login or logout type
+			const insert_body = {
+				user_id,
+				lat,
+				long,
+				...(data?.type === 'login'
+					? { logout_time: null }
+					: { login_time: null }),
+			};
+
+			// Dynamically construct the array based on login or logout type
+			const columns = [
+				'user_id',
+				'lat',
+				'long',
+				...(data?.type === 'login' ? ['logout_time'] : ['login_time']),
+			];
+
+			// Insert the data into login_audit_logs
+			await this.hasuraService.q(
+				`login_audit_logs`,
+				insert_body, // Pass the constructed insert_body
+				columns, // Pass the constructed columns array
+			);
+
+			return;
+		}
+
+		return { is_pc: false };
 	}
 
 	public async refreshToken(req: any, response: any) {
