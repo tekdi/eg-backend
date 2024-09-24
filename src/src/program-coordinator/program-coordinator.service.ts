@@ -157,8 +157,8 @@ export class ProgramCoordinatorService {
 				credentials: [
 					{
 						type: 'password',
-						value: password,
 						temporary: false,
+						value: password,
 					},
 				],
 				groups: [`${group}`],
@@ -184,8 +184,8 @@ export class ProgramCoordinatorService {
 					) {
 						return response.status(200).json({
 							success: false,
-							message: 'User already exists!',
 							data: {},
+							message: 'User already exists!',
 						});
 					} else {
 						return response.status(200).json({
