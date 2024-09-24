@@ -18,6 +18,7 @@ import { KeycloakService } from '../services/keycloak/keycloak.service';
 import { BeneficiariesCoreService } from './beneficiaries.core.service';
 import * as moment from 'moment';
 import { CSVHelperService } from 'src/helper/csvHelper.service';
+import { Method } from 'src/common/method/method';
 
 @Injectable()
 export class BeneficiariesService {
@@ -36,6 +37,7 @@ export class BeneficiariesService {
 		private uploadFileService: UploadFileService,
 		private beneficiariesCoreService: BeneficiariesCoreService,
 		public csvhelperService: CSVHelperService,
+		private methodService: Method,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('BENEFICIARY_STATUS').data;
@@ -4444,8 +4446,9 @@ export class BeneficiariesService {
 		}
 	}
 
-	public async learnerScore(body: any, resp: any) {
+	public async learnerScore(body: any, request: any, resp: any) {
 		const id = body?.id;
+		const program_id = request?.mw_program_id;
 		// Validate ID
 		if (!id || isNaN(id)) {
 			return resp.status(400).json({
@@ -4454,8 +4457,15 @@ export class BeneficiariesService {
 				data: {},
 			});
 		}
+
+		//get pcr subjects enum as per program id
+
+		let pcr_enum_variable = await this.methodService.getBoardByProgramId(
+			program_id,
+		);
+
 		const baseLine = this.enumService
-			.getEnumValue('PCR_SUBJECT_LIST')
+			.getEnumValue(pcr_enum_variable)
 			.data.map((subject) => subject);
 
 		const pbquery = `query MyQuery {
