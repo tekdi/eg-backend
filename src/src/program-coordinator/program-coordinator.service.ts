@@ -190,8 +190,8 @@ export class ProgramCoordinatorService {
 					} else {
 						return response.status(200).json({
 							success: false,
-							message: registerUserRes.error.message,
 							data: {},
+							message: registerUserRes.error.message,
 						});
 					}
 				} else if (registerUserRes.headers.location) {
@@ -306,13 +306,13 @@ export class ProgramCoordinatorService {
 
 					return response.status(200).send({
 						success: true,
-						message: 'User created successfully',
 						data: {
 							user: result?.data,
 							keycloak_id: keycloak_id,
 							username: data_to_create_user.username,
 							password: password,
 						},
+						message: 'User created successfully',
 					});
 				} else {
 					return response.status(200).json({
