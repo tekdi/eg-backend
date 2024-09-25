@@ -454,10 +454,12 @@ export class ProgramCoordinatorService {
 		}
 
 		if (body.district) {
-			userFilter.push(`district: {_in: ["${body.district}"]}`);
+			userFilter.push(
+				`district: {_in: ${JSON.stringify(body?.district)}}`,
+			);
 		}
 		if (body.block) {
-			userFilter.push(`block: {_in: ["${body.block}"]}`);
+			userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
 		}
 
 		let filter = [];
