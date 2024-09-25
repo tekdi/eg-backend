@@ -691,12 +691,13 @@ export class ProgramCoordinatorService {
 					);
 				}
 			}
-
 			if (body.district) {
-				userFilter.push(`district: {_eq: "${body.district}"}`);
+				userFilter.push(
+					`district: {_in: ${JSON.stringify(body?.district)}}`,
+				);
 			}
 			if (body.block) {
-				userFilter.push(`block: {_eq: "${body.block}"}`);
+				userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
 			}
 		}
 
@@ -858,11 +859,12 @@ export class ProgramCoordinatorService {
 			}
 		}
 		if (body.district) {
-			userFilter.push(`district: { _eq: "${body.district}" }`);
+			userFilter.push(
+				`district: {_in: ${JSON.stringify(body?.district)}}`,
+			);
 		}
-
 		if (body.block) {
-			userFilter.push(`block: { _eq: "${body.block}" }`);
+			userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
 		}
 
 		let filterQuery =
