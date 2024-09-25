@@ -435,21 +435,18 @@ export class ProgramCoordinatorService {
 		}
 		let userFilter = [];
 
-		if (body?.search) {
-			if (body.search) {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
-
-				if (last_name?.length > 0) {
-					userFilter.push(`
-					first_name: { _ilike: "%${first_name}%" }, 
-					 last_name: { _ilike: "%${last_name}%" } 
-				  `);
-				} else {
-					userFilter.push(
-						`first_name: { _ilike: "%${first_name}%" }`,
-					);
-				}
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (/^\d+$/.test(body.search)) {
+				userFilter.push(`id: {_eq: ${body.search} }`);
+			} else if (last_name?.length > 0) {
+				userFilter.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+				last_name: { _ilike: "%${last_name}%" }
+		`);
+			} else {
+				userFilter.push(`first_name: { _ilike: "%${first_name}%" }`);
 			}
 		}
 
@@ -675,30 +672,27 @@ export class ProgramCoordinatorService {
 		}
 		let userFilter = [];
 
-		if (body?.search) {
-			if (body.search) {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
-
-				if (last_name?.length > 0) {
-					userFilter.push(`
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (/^\d+$/.test(body.search)) {
+				userFilter.push(`id: {_eq: ${body.search} }`);
+			} else if (last_name?.length > 0) {
+				userFilter.push(`
 				first_name: { _ilike: "%${first_name}%" }, 
-			  last_name: { _ilike: "%${last_name}%" } 
-				  `);
-				} else {
-					userFilter.push(
-						`first_name: { _ilike: "%${first_name}%" }`,
-					);
-				}
+				last_name: { _ilike: "%${last_name}%" }
+		`);
+			} else {
+				userFilter.push(`first_name: { _ilike: "%${first_name}%" }`);
 			}
-			if (body.district) {
-				userFilter.push(
-					`district: {_in: ${JSON.stringify(body?.district)}}`,
-				);
-			}
-			if (body.block) {
-				userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
-			}
+		}
+		if (body.district) {
+			userFilter.push(
+				`district: {_in: ${JSON.stringify(body?.district)}}`,
+			);
+		}
+		if (body.block) {
+			userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
 		}
 
 		if (userFilter.length > 0) {
@@ -841,21 +835,18 @@ export class ProgramCoordinatorService {
 		//get list of available prerak list for given cohort.
 		let userFilter = [];
 
-		if (body?.search) {
-			if (body.search) {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
-
-				if (last_name?.length > 0) {
-					userFilter.push(`
-                    first_name: { _ilike: "%${first_name}%" }, 
-                    last_name: { _ilike: "%${last_name}%" } 
-                `);
-				} else {
-					userFilter.push(
-						`first_name: { _ilike: "%${first_name}%" }`,
-					);
-				}
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (/^\d+$/.test(body.search)) {
+				userFilter.push(`id: {_eq: ${body.search} }`);
+			} else if (last_name?.length > 0) {
+				userFilter.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+				last_name: { _ilike: "%${last_name}%" }
+		`);
+			} else {
+				userFilter.push(`first_name: { _ilike: "%${first_name}%" }`);
 			}
 		}
 		if (body.district) {
