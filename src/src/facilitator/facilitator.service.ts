@@ -1571,12 +1571,16 @@ export class FacilitatorService {
 			);
 			variables.qualificationIds = body.qualificationIds;
 		}
-		if (body.search && body.search !== '') {
-			filterQueryArray.push(`{_or: [
-		{ first_name: { _ilike: "%${body.search}%" } },
-		{ last_name: { _ilike: "%${body.search}%" } },
-		{ email_id: { _ilike: "%${body.search}%" } }
-	  ]} `);
+		if (body?.search && body?.search !== '') {
+			if (/^\d+$/.test(body?.search)) {
+				filterQueryArray.push(`{id: { _eq: "${body?.search}"} }`);
+			} else {
+				filterQueryArray.push(`{_or: [
+					{ first_name: { _ilike: "%${body.search}%" } },
+					{ last_name: { _ilike: "%${body.search}%" } },
+					{ email_id: { _ilike: "%${body.search}%" } }
+				  ]} `);
+			}
 		}
 		if (body.hasOwnProperty('status')) {
 			if (
