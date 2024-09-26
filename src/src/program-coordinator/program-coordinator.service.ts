@@ -184,14 +184,14 @@ export class ProgramCoordinatorService {
 					) {
 						return response.status(200).json({
 							success: false,
-							message: 'User already exists!',
 							data: {},
+							message: 'User already exists!',
 						});
 					} else {
 						return response.status(200).json({
 							success: false,
-							message: registerUserRes.error.message,
 							data: {},
+							message: registerUserRes.error.message,
 						});
 					}
 				} else if (registerUserRes.headers.location) {
@@ -306,13 +306,13 @@ export class ProgramCoordinatorService {
 
 					return response.status(200).send({
 						success: true,
-						message: 'User created successfully',
 						data: {
 							user: result?.data,
 							keycloak_id: keycloak_id,
 							username: data_to_create_user.username,
 							password: password,
 						},
+						message: 'User created successfully',
 					});
 				} else {
 					return response.status(200).json({
@@ -435,29 +435,28 @@ export class ProgramCoordinatorService {
 		}
 		let userFilter = [];
 
-		if (body?.search) {
-			if (body.search) {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
-
-				if (last_name?.length > 0) {
-					userFilter.push(`
-					first_name: { _ilike: "%${first_name}%" }, 
-					 last_name: { _ilike: "%${last_name}%" } 
-				  `);
-				} else {
-					userFilter.push(
-						`first_name: { _ilike: "%${first_name}%" }`,
-					);
-				}
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (/^\d+$/.test(body.search)) {
+				userFilter.push(`id: {_eq: ${body.search} }`);
+			} else if (last_name?.length > 0) {
+				userFilter.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+				last_name: { _ilike: "%${last_name}%" }
+		`);
+			} else {
+				userFilter.push(`first_name: { _ilike: "%${first_name}%" }`);
 			}
 		}
 
 		if (body.district) {
-			userFilter.push(`district: {_in: ["${body.district}"]}`);
+			userFilter.push(
+				`district: {_in: ${JSON.stringify(body?.district)}}`,
+			);
 		}
 		if (body.block) {
-			userFilter.push(`block: {_in: ["${body.block}"]}`);
+			userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
 		}
 
 		let filter = [];
@@ -673,29 +672,27 @@ export class ProgramCoordinatorService {
 		}
 		let userFilter = [];
 
-		if (body?.search) {
-			if (body.search) {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
-
-				if (last_name?.length > 0) {
-					userFilter.push(`
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (/^\d+$/.test(body.search)) {
+				userFilter.push(`id: {_eq: ${body.search} }`);
+			} else if (last_name?.length > 0) {
+				userFilter.push(`
 				first_name: { _ilike: "%${first_name}%" }, 
-			  last_name: { _ilike: "%${last_name}%" } 
-				  `);
-				} else {
-					userFilter.push(
-						`first_name: { _ilike: "%${first_name}%" }`,
-					);
-				}
+				last_name: { _ilike: "%${last_name}%" }
+		`);
+			} else {
+				userFilter.push(`first_name: { _ilike: "%${first_name}%" }`);
 			}
-
-			if (body.district) {
-				userFilter.push(`district: {_eq: "${body.district}"}`);
-			}
-			if (body.block) {
-				userFilter.push(`block: {_eq: "${body.block}"}`);
-			}
+		}
+		if (body.district) {
+			userFilter.push(
+				`district: {_in: ${JSON.stringify(body?.district)}}`,
+			);
+		}
+		if (body.block) {
+			userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
 		}
 
 		if (userFilter.length > 0) {
@@ -838,29 +835,27 @@ export class ProgramCoordinatorService {
 		//get list of available prerak list for given cohort.
 		let userFilter = [];
 
-		if (body?.search) {
-			if (body.search) {
-				let first_name = body.search.split(' ')[0];
-				let last_name = body.search.split(' ')[1] || '';
-
-				if (last_name?.length > 0) {
-					userFilter.push(`
-                    first_name: { _ilike: "%${first_name}%" }, 
-                    last_name: { _ilike: "%${last_name}%" } 
-                `);
-				} else {
-					userFilter.push(
-						`first_name: { _ilike: "%${first_name}%" }`,
-					);
-				}
+		if (body.search && body.search !== '') {
+			let first_name = body.search.split(' ')[0];
+			let last_name = body.search.split(' ')[1] || '';
+			if (/^\d+$/.test(body.search)) {
+				userFilter.push(`id: {_eq: ${body.search} }`);
+			} else if (last_name?.length > 0) {
+				userFilter.push(`
+				first_name: { _ilike: "%${first_name}%" }, 
+				last_name: { _ilike: "%${last_name}%" }
+		`);
+			} else {
+				userFilter.push(`first_name: { _ilike: "%${first_name}%" }`);
 			}
 		}
 		if (body.district) {
-			userFilter.push(`district: { _eq: "${body.district}" }`);
+			userFilter.push(
+				`district: {_in: ${JSON.stringify(body?.district)}}`,
+			);
 		}
-
 		if (body.block) {
-			userFilter.push(`block: { _eq: "${body.block}" }`);
+			userFilter.push(`block: {_in: ${JSON.stringify(body?.block)}}`);
 		}
 
 		let filterQuery =
