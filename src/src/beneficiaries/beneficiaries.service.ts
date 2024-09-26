@@ -743,32 +743,36 @@ export class BeneficiariesService {
 			let first_name = body.search.split(' ')[0];
 			let last_name = body.search.split(' ')[1] || '';
 
-			if (last_name?.length > 0) {
-				filterQueryArray.push(`{ _or: [
-					{ first_name: { _ilike: "%${first_name}%" } },
-					{ last_name: { _ilike: "%${last_name}%" } },
+			if (/^\d+$/.test(body?.search)) {
+				filterQueryArray.push(`{id: { _eq: "${body?.search}"} }`);
+			} else {
+				if (last_name?.length > 0) {
+					filterQueryArray.push(`{ _or: [
+						{ first_name: { _ilike: "%${first_name}%" } },
+						{ last_name: { _ilike: "%${last_name}%" } },
+						{
+							program_beneficiaries: {
+								_or: [
+									{ enrollment_first_name: { _ilike: "%${first_name}%" } },
+									{ enrollment_last_name: { _ilike: "%${last_name}%" } }
+								]
+							}
+						}
+					]} `);
+				} else {
+					filterQueryArray.push(`{_or: [
+					{ first_name: { _ilike: "%${first_name}%" } }
+					{ last_name: { _ilike: "%${first_name}%" } }
 					{
 						program_beneficiaries: {
 							_or: [
 								{ enrollment_first_name: { _ilike: "%${first_name}%" } },
-								{ enrollment_last_name: { _ilike: "%${last_name}%" } }
+								{ enrollment_last_name: { _ilike: "%${first_name}%" } }
 							]
 						}
 					}
-				]} `);
-			} else {
-				filterQueryArray.push(`{_or: [
-				{ first_name: { _ilike: "%${first_name}%" } }
-				{ last_name: { _ilike: "%${first_name}%" } }
-				{
-					program_beneficiaries: {
-						_or: [
-							{ enrollment_first_name: { _ilike: "%${first_name}%" } },
-							{ enrollment_last_name: { _ilike: "%${first_name}%" } }
-						]
-					}
+					 ]} `);
 				}
-				 ]} `);
 			}
 		}
 
@@ -900,6 +904,7 @@ export class BeneficiariesService {
 				offset: offset,
 			},
 		};
+
 		const response = await this.hasuraServiceFromServices.getData(data);
 		let mappedResponse = response?.data?.users;
 		const count = response?.data?.users_aggregate?.aggregate?.count;
@@ -1002,16 +1007,20 @@ export class BeneficiariesService {
 			let first_name = body.search.split(' ')[0];
 			let last_name = body.search.split(' ')[1] || '';
 
-			if (last_name?.length > 0) {
-				filterQueryArray.push(`{_or: [
-				{ first_name: { _ilike: "%${first_name}%" } }
-				{ last_name: { _ilike: "%${last_name}%" } }
-				 ]} `);
+			if (/^\d+$/.test(body?.search)) {
+				filterQueryArray.push(`{id: { _eq: "${body?.search}"} }`);
 			} else {
-				filterQueryArray.push(`{_or: [
-				{ first_name: { _ilike: "%${first_name}%" } }
-				{ last_name: { _ilike: "%${first_name}%" } }
-				 ]} `);
+				if (last_name?.length > 0) {
+					filterQueryArray.push(`{_or: [
+					{ first_name: { _ilike: "%${first_name}%" } }
+					{ last_name: { _ilike: "%${last_name}%" } }
+					 ]} `);
+				} else {
+					filterQueryArray.push(`{_or: [
+					{ first_name: { _ilike: "%${first_name}%" } }
+					{ last_name: { _ilike: "%${first_name}%" } }
+					 ]} `);
+				}
 			}
 		}
 		if (body?.is_deactivated && body?.is_deactivated !== '') {
