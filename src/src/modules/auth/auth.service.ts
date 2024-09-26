@@ -483,8 +483,8 @@ export class AuthService {
 			// Dynamically construct insert_body based on login or logout type
 			const insert_body = {
 				user_id,
-				lat: lat ? lat : null,
-				long: long ? long : null,
+				lat: lat || null,
+				long: long || null,
 				...(data?.type === 'login'
 					? { logout_time: null }
 					: { login_time: null }),
