@@ -2363,7 +2363,7 @@ export class ExamService {
 		if (filteredBody.is_continued == true) {
 			//
 			const vquery = `query MyQuery {
-		  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},user_id: {_eq:${body?.user_id}},status:{_eq:"pragati_syc"}}){
+		  program_beneficiaries(where: {academic_year_id: {_eq:${academic_year_id}}, program_id: {_eq:${program_id}},user_id: {_eq:${body?.user_id}},status:{_in:["pragati_syc","pragati_syc_reattempt"]}}){
 				id
 				user_id
 				status
