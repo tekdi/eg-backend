@@ -92,6 +92,12 @@ export class AuthController {
 		return this.authService.login(req, response);
 	}
 
+	@Post('/logout')
+	@UsePipes(ValidationPipe)
+	logout(@Req() req: Request, @Res() response: Response) {
+		return this.authService.logout(req, response);
+	}
+
 	@Post('/refresh-token')
 	@UsePipes(ValidationPipe)
 	refreshToken(@Req() req: Request, @Res() response: Response) {
