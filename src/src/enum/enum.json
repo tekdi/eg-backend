@@ -213,6 +213,10 @@
 			"value": "registered_in_camp"
 		},
 		{
+			"title": "BENEFICIARY_STATUS_REGISTERED_IN_NEEV_CAMP",
+			"value": "registered_in_neev_camp"
+		},
+		{
 			"title": "BENEFICIARY_STATUS_REJECTED",
 			"value": "rejected"
 		},

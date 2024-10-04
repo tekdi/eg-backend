@@ -1570,12 +1570,16 @@ export class FacilitatorService {
 			);
 			variables.qualificationIds = body.qualificationIds;
 		}
-		if (body.search && body.search !== '') {
-			filterQueryArray.push(`{_or: [
-		{ first_name: { _ilike: "%${body.search}%" } },
-		{ last_name: { _ilike: "%${body.search}%" } },
-		{ email_id: { _ilike: "%${body.search}%" } }
-	  ]} `);
+		if (body?.search && body?.search !== '') {
+			if (/^\d+$/.test(body?.search)) {
+				filterQueryArray.push(`{id: { _eq: "${body?.search}"} }`);
+			} else {
+				filterQueryArray.push(`{_or: [
+					{ first_name: { _ilike: "%${body.search}%" } },
+					{ last_name: { _ilike: "%${body.search}%" } },
+					{ email_id: { _ilike: "%${body.search}%" } }
+				  ]} `);
+			}
 		}
 		if (body.hasOwnProperty('status')) {
 			if (
@@ -2155,13 +2159,29 @@ export class FacilitatorService {
 		const user = await this.userService.ipUserInfo(req);
 		const academic_year_id = req.mw_academic_year_id;
 		const program_id = req.mw_program_id;
+		let state_query;
+		let state_result;
+		let status;
 		if (!user?.data?.id) {
 			return resp.status(401).json({
 				success: false,
 				message: 'Unauthenticated User!',
 			});
 		}
-
+		//get state details
+		state_query = `query MyQuery {
+	programs_by_pk(id: ${program_id}){
+		state{
+		state_name
+		}
+	}
+	}
+	`;
+		state_result = await this.hasuraServiceFromServices.getData({
+			query: state_query,
+		});
+		const state_response =
+			state_result?.data?.programs_by_pk?.state?.state_name;
 		const page = isNaN(query.page) ? 1 : parseInt(query.page);
 		const limit = isNaN(query.limit) ? 10 : parseInt(query.limit);
 		let offset = page > 1 ? limit * (page - 1) : 0;
@@ -2170,14 +2190,31 @@ export class FacilitatorService {
 			offset: offset,
 		};
 
+		if (state_response == 'RAJASTHAN') {
+			status = [
+				'identified',
+				'ready_to_enroll',
+				'enrolled',
+				'sso_id_enrolled',
+				'sso_id_verified',
+			];
+		} else {
+			status = [
+				'identified',
+				'ready_to_enroll',
+				'enrolled',
+				'enrolled_ip_verified',
+			];
+		}
+
 		let qury = `query MyQuery($limit:Int, $offset:Int) {
-			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq: ${id}},academic_year_id:{_eq:${academic_year_id}}, program_id: {_eq: ${program_id}}}, _not: {group_users: {status: {_eq: "active"}}}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
+			users_aggregate(where: {program_beneficiaries: {facilitator_id: {_eq: ${id}},academic_year_id:{_eq:${academic_year_id}},status:{_in:[${status}]}, program_id: {_eq: ${program_id}}}, _not: {group_users: {status: {_eq: "active"}}}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
 			  aggregate {
 				count
 			  }
 			}
 			users(limit: $limit,
-				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq: ${id}},academic_year_id:{_eq:${academic_year_id}}, program_id: {_eq: ${program_id}}}, _not: {group_users: {status: {_eq: "active"}}}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
+				offset: $offset,where: {program_beneficiaries: {facilitator_id: {_eq: ${id}},academic_year_id:{_eq:${academic_year_id}},status:{_in:[${status}]}, program_id: {_eq: ${program_id}}}, _not: {group_users: {status: {_eq: "active"}}}, _or: [{is_deactivated: {_eq: false}}, {is_deactivated: {_is_null: true}}]}) {
 			  id
 			  first_name
 			  last_name
