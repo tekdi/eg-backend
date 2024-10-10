@@ -5,7 +5,6 @@ import { UserService } from 'src/user/user.service';
 import { LMSCertificateDto } from './dto/lms-certificate.dto';
 import { LMSTestTrackingDto } from './dto/lms-test-tracking.dto';
 import { SearchLMSDto } from './dto/search-lms.dto';
-import { query } from 'express';
 
 const moment = require('moment');
 const { parse, HTMLElement } = require('node-html-parser');
