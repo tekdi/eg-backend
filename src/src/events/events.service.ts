@@ -64,9 +64,9 @@ export class EventsService {
 	constructor(
 		private readonly httpService: HttpService,
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly userService: UserService,
-		private enumService: EnumService,
+		private readonly enumService: EnumService,
 	) {}
 
 	public async create(req, header, response) {
@@ -370,7 +370,7 @@ export class EventsService {
 	}
 
 	public async findOne(id: number, resp: any) {
-		var data = {
+		const data = {
 			query: `query searchById {
 	  events_by_pk(id: ${id}) {
 		reminders
