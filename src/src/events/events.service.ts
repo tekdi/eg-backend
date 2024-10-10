@@ -64,7 +64,7 @@ export class EventsService {
 	constructor(
 		private readonly httpService: HttpService,
 		private readonly hasuraService: HasuraService,
-		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly userService: UserService,
 		private readonly enumService: EnumService,
 	) {}
