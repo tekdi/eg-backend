@@ -4,7 +4,7 @@ import { Method } from '../method/method';
 
 @Injectable()
 export class IpMiddleware implements NestMiddleware {
-	constructor(private method: Method) {}
+	constructor(private readonly method: Method) {}
 	async use(req: any, res: Response, next: () => void) {
 		//check IP User ID is present or not [x-ip-user-id]
 		if (

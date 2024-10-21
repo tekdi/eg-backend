@@ -13,9 +13,9 @@ import * as FormData from 'form-data';
 @Injectable()
 export class ExamResultPattern {
 	constructor(
-		private configService: ConfigService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private uploadFileService: UploadFileService,
+		private readonly configService: ConfigService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly uploadFileService: UploadFileService,
 	) {}
 
 	//extract result from pdf functions

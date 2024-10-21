@@ -2,7 +2,7 @@ import { HouseKeepingService } from './housekeeping.service';
 
 //@Controller('hk')
 export class HouseKeepingController {
-	constructor(private houseKeepingService: HouseKeepingService) {}
+	constructor(private readonly houseKeepingService: HouseKeepingService) {}
 	/*
 	@Post('/download-files')
 	//@UseGuards(new AuthGuard())

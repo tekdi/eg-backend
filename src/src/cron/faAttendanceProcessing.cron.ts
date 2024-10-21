@@ -6,12 +6,12 @@ import { HasuraService } from '../services/hasura/hasura.service';
 
 @Injectable()
 export class FaAttendanceProcessingCron {
-	private prefixed: string;
+	private readonly prefixed: string;
 
 	constructor(
-		private configService: ConfigService,
-		private awsRekognitionService: AwsRekognitionService,
-		private hasuraService: HasuraService,
+		private readonly configService: ConfigService,
+		private readonly awsRekognitionService: AwsRekognitionService,
+		private readonly hasuraService: HasuraService,
 	) {
 		this.prefixed = this.configService.get<string>(
 			'AWS_REKOGNITION_CUSTOM_PREFIX',

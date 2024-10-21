@@ -50,8 +50,8 @@ export class ObservationsService {
 	];
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private userService: UserService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly userService: UserService,
 	) {}
 
 	async createObservation(body: any, resp: any, request: any) {

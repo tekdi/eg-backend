@@ -10,9 +10,9 @@ export class HasuraService {
 	public url = this.configService.get<string>('HASURA_BASE_URL');
 
 	constructor(
-		private configService: ConfigService,
+		private readonly configService: ConfigService,
 		private readonly httpService: HttpService,
-		private qgService: QueryGeneratorService,
+		private readonly qgService: QueryGeneratorService,
 	) {}
 
 	public async postData(query) {

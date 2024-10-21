@@ -5,7 +5,7 @@ const moment = require('moment');
 
 @Injectable()
 export class CampEndCron {
-	constructor(private hasuraService: HasuraService) {}
+	constructor(private readonly hasuraService: HasuraService) {}
 
 	// Cronjob runs every day at 12am
 	@Cron('0 00 * * * ')

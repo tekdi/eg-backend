@@ -8,10 +8,10 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 @Injectable()
 export class BeneficiariesCoreService {
 	constructor(
-		private userService: UserService,
-		private hasuraService: HasuraService,
-		private enumService: EnumService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly userService: UserService,
+		private readonly hasuraService: HasuraService,
+		private readonly enumService: EnumService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	public returnFields = [

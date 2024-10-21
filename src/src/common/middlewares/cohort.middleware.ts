@@ -8,7 +8,7 @@ import { Method } from '../method/method';
 
 @Injectable()
 export class CohortMiddleware implements NestMiddleware {
-	constructor(private method: Method) {}
+	constructor(private readonly method: Method) {}
 	async use(req: any, res: Response, next: () => void) {
 		let goToNextMw = false;
 

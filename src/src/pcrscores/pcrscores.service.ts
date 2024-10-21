@@ -32,10 +32,10 @@ export class PcrscoresService {
 
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private userService: UserService,
-		private enumService: EnumService,
-		private methodService: Method,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly userService: UserService,
+		private readonly enumService: EnumService,
+		private readonly methodService: Method,
 	) {}
 
 	async create(body: any, request: any, resp: any) {

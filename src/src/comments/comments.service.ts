@@ -5,8 +5,8 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 @Injectable()
 export class CommentsService {
 	constructor(
-		private hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraService: HasuraService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	returnFields = [

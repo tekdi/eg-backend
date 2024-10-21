@@ -17,17 +17,17 @@ import { Method } from 'src/common/method/method';
 @Injectable()
 export class CampService {
 	constructor(
-		private userService: UserService,
-		private hasuraService: HasuraService,
-		private attendancesService: AttendancesService,
-		private enumService: EnumService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private uploadFileService: UploadFileService,
-		private s3Service: S3Service,
-		private campcoreservice: CampCoreService,
-		private beneficiariesService: BeneficiariesService,
-		private beneficiariesCoreService: BeneficiariesCoreService,
-		private methodService: Method,
+		private readonly userService: UserService,
+		private readonly hasuraService: HasuraService,
+		private readonly attendancesService: AttendancesService,
+		private readonly enumService: EnumService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly uploadFileService: UploadFileService,
+		private readonly s3Service: S3Service,
+		private readonly campcoreservice: CampCoreService,
+		private readonly beneficiariesService: BeneficiariesService,
+		private readonly beneficiariesCoreService: BeneficiariesCoreService,
+		private readonly methodService: Method,
 	) {}
 
 	public returnFieldsgroups = ['id', 'name', 'type', 'status'];

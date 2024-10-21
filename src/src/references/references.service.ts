@@ -37,7 +37,7 @@ export class ReferencesService {
 
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	async create(body: any, request: any, resp: any) {

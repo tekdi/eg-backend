@@ -1,10 +1,10 @@
 import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-  PutObjectCommandInput,
-  PutObjectCommandOutput,
-  S3Client,
+	DeleteObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand,
+	PutObjectCommandInput,
+	PutObjectCommandOutput,
+	S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
@@ -12,8 +12,8 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
-	private region: string;
-	private s3: S3Client;
+	private readonly region: string;
+	private readonly s3: S3Client;
 
 	constructor(private configService: ConfigService) {
 		this.region = this.configService.get<string>('S3_REGION');

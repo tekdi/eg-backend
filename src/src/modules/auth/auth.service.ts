@@ -19,12 +19,12 @@ export class AuthService {
 	);
 
 	constructor(
-		private configService: ConfigService,
-		private aadhaarKycService: AadhaarKycService,
+		private readonly configService: ConfigService,
+		private readonly aadhaarKycService: AadhaarKycService,
 		private readonly keycloakService: KeycloakService,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
-		private userService: UserService,
+		private readonly userService: UserService,
 	) {}
 
 	public returnFields = [

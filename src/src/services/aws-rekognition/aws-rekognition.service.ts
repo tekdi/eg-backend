@@ -18,16 +18,16 @@ import { HasuraService } from '../../services/hasura/hasura.service';
 
 @Injectable()
 export class AwsRekognitionService {
-	private region: string;
-	private accessKeyId: string;
-	private secretAccessKey: string;
-	private rekognition: RekognitionClient;
-	private bucketName: string;
-	private prefixed: string;
+	private readonly region: string;
+	private readonly accessKeyId: string;
+	private readonly secretAccessKey: string;
+	private readonly rekognition: RekognitionClient;
+	private readonly bucketName: string;
+	private readonly prefixed: string;
 
 	constructor(
-		private configService: ConfigService,
-		private hasuraService: HasuraService,
+		private readonly configService: ConfigService,
+		private readonly hasuraService: HasuraService,
 	) {
 		// Setup AWS credentials
 		this.region = this.configService.get<string>('AWS_REKOGNITION_REGION');

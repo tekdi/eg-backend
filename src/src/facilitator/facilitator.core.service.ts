@@ -5,7 +5,7 @@ import * as moment from 'moment';
 
 @Injectable()
 export class FacilitatorCoreService {
-	constructor(private hasuraService: HasuraService) {}
+	constructor(private readonly hasuraService: HasuraService) {}
 
 	public async updateOkycResponse(
 		body: any,

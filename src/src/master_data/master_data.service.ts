@@ -3,7 +3,9 @@ import { MasterDataCoreService } from './master_data_core.service';
 
 @Injectable()
 export class MasterDataService {
-	constructor(private masterDataCoreService: MasterDataCoreService) {}
+	constructor(
+		private readonly masterDataCoreService: MasterDataCoreService,
+	) {}
 	async getList(req: any, body: any, res: any) {
 		const limit = isNaN(body.limit) ? 6 : parseInt(body.limit);
 		const page = isNaN(body.page) ? 1 : parseInt(body.page);

@@ -15,7 +15,7 @@ import { EditRequestService } from './edit-requests.service';
 
 @Controller('edit-request')
 export class EditRequestController {
-	constructor(private editRequestService: EditRequestService) {}
+	constructor(private readonly editRequestService: EditRequestService) {}
 
 	@Post('/edit-requests')
 	@UseGuards(new AuthGuard())

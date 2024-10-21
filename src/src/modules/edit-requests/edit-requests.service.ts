@@ -6,10 +6,10 @@ import { EditRequestCoreService } from './edit-requests.core.service';
 @Injectable()
 export class EditRequestService {
 	constructor(
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private hasuraService: HasuraService,
-		private editRequestCoreService: EditRequestCoreService,
-		private userService: UserService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraService: HasuraService,
+		private readonly editRequestCoreService: EditRequestCoreService,
+		private readonly userService: UserService,
 	) {}
 	public returnField = [
 		'id',

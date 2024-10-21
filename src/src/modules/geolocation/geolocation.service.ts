@@ -6,7 +6,7 @@ import { HasuraService as HasuraServiceFromServices } from '../../services/hasur
 export class GeolocationService {
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	public async findAll(tableName: string, filters: Object = {}) {

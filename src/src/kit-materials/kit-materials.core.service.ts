@@ -7,7 +7,7 @@ const moment = require('moment');
 export class KitMaterialsCoreService {
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	public async list(body: any, camp_id: any) {

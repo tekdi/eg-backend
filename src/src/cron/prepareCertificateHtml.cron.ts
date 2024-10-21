@@ -20,10 +20,10 @@ const { parse, HTMLElement } = require('node-html-parser');
 export class PrepareCertificateHtmlCron {
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private configService: ConfigService,
+		private readonly configService: ConfigService,
 		private readonly attendanceCoreService: AttendancesCoreService,
-		private userService: UserService,
-		private method: Method,
+		private readonly userService: UserService,
+		private readonly method: Method,
 	) {}
 
 	//cron issue certificate run every 5 minutes

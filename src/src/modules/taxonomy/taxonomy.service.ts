@@ -3,7 +3,9 @@ import { HasuraService as HasuraServiceFromServices } from '../../services/hasur
 
 @Injectable()
 export class TaxonomyService {
-	constructor(private hasuraServiceFromServices: HasuraServiceFromServices) {}
+	constructor(
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+	) {}
 
 	/***************************** PROGRAMS ***********************************/
 	public async getProgramDetails(id: any, response: any) {
