@@ -7,8 +7,8 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 export class ActivitiesCoreService {
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private enumService: EnumService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly enumService: EnumService,
 	) {}
 	allStatus = this.enumService.getEnumValue('LEARNING_ACTIVITIES').data;
 	public table = 'activities';

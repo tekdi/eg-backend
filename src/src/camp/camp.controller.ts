@@ -18,7 +18,7 @@ import { CampService } from './camp.service';
 
 @Controller('camp')
 export class CampController {
-	constructor(private campService: CampService) {}
+	constructor(private readonly campService: CampService) {}
 
 	@Post('/')
 	@UsePipes(ValidationPipe)

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HasuraService } from '../services/hasura/hasura.service';
 @Injectable()
 export class MasterDataCoreService {
-	constructor(private hasuraServiceFromServices: HasuraService) {}
+	constructor(private readonly hasuraServiceFromServices: HasuraService) {}
 
 	async list(body) {
 		const { page, totalpage, total_count, limit, ...filter } = body || {};

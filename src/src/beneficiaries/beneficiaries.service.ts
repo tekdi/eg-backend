@@ -27,17 +27,17 @@ export class BeneficiariesService {
 	constructor(
 		private readonly s3Service: S3Service,
 		private readonly httpService: HttpService,
-		private userService: UserService,
-		private helper: UserHelperService,
-		private hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private keycloakService: KeycloakService,
-		private configService: ConfigService,
-		private enumService: EnumService,
-		private uploadFileService: UploadFileService,
-		private beneficiariesCoreService: BeneficiariesCoreService,
+		private readonly userService: UserService,
+		private readonly helper: UserHelperService,
+		private readonly hasuraService: HasuraService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly keycloakService: KeycloakService,
+		private readonly configService: ConfigService,
+		private readonly enumService: EnumService,
+		private readonly uploadFileService: UploadFileService,
+		private readonly beneficiariesCoreService: BeneficiariesCoreService,
 		public csvhelperService: CSVHelperService,
-		private methodService: Method,
+		private readonly methodService: Method,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('BENEFICIARY_STATUS').data;

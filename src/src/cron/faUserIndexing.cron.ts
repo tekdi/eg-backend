@@ -6,12 +6,12 @@ import { HasuraService } from '../services/hasura/hasura.service';
 
 @Injectable()
 export class FaUserIndexingCron {
-	private data_limit: string;
+	private readonly data_limit: string;
 
 	constructor(
-		private configService: ConfigService,
-		private awsRekognitionService: AwsRekognitionService,
-		private hasuraService: HasuraService,
+		private readonly configService: ConfigService,
+		private readonly awsRekognitionService: AwsRekognitionService,
+		private readonly hasuraService: HasuraService,
 	) {
 		this.data_limit = this.configService.get<string>(
 			'AWS_REKOGNITION_INDEX_USER_BATCH_SIZE',

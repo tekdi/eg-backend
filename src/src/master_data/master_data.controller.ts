@@ -4,7 +4,7 @@ import { MasterDataService } from './master_data.service';
 
 @Controller('master-data')
 export class MasterDataController {
-	constructor(private masterDataService: MasterDataService) {}
+	constructor(private readonly masterDataService: MasterDataService) {}
 
 	@Post('/list')
 	@UseGuards(new AuthGuard())

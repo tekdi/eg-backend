@@ -26,8 +26,8 @@ import { StatusUpdateDTO } from './dto/status-update.dto';
 @Controller('beneficiaries')
 export class BeneficiariesController {
 	constructor(
-		private beneficiariesService: BeneficiariesService,
-		private userService: UserService,
+		private readonly beneficiariesService: BeneficiariesService,
+		private readonly userService: UserService,
 	) {}
 
 	// @Get('/list')

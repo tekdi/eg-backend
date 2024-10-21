@@ -6,7 +6,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 export class AttendancesCoreService {
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 	public async create(body: any, returnFields: any, onlyFiled: any = []) {
 		let response = await this.hasuraService.q(

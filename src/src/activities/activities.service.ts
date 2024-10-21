@@ -5,8 +5,8 @@ import { ActivitiesCoreService } from './activities.core.service';
 @Injectable()
 export class ActivitiesService {
 	constructor(
-		private activitiesCoreService: ActivitiesCoreService,
-		private enumService: EnumService,
+		private readonly activitiesCoreService: ActivitiesCoreService,
+		private readonly enumService: EnumService,
 	) {}
 
 	public async create(request: any, body: any, resp: any) {

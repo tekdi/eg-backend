@@ -12,10 +12,10 @@ const parse = require('pdf-parse');
 @Injectable()
 export class ExamService {
 	constructor(
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private uploadFileService: UploadFileService,
-		private examResultPattern: ExamResultPattern,
-		private enumService: EnumService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly uploadFileService: UploadFileService,
+		private readonly examResultPattern: ExamResultPattern,
+		private readonly enumService: EnumService,
 	) {}
 
 	async getExamSchedule(id: any, resp: any, request: any) {

@@ -4,14 +4,16 @@ import * as moment from 'moment-timezone';
 
 @Injectable()
 export class Method {
-	constructor(private hasuraServiceFromService: HasuraServiceFromServices) {}
+	constructor(
+		private readonly hasuraServiceFromService: HasuraServiceFromServices,
+	) {}
 
 	async CapitalizeEachWord(sentence) {
 		if (sentence == null || sentence === '') {
 			return '';
 		} else {
 			const arr = sentence.split(' ');
-			for (var i = 0; i < arr.length; i++) {
+			for (let i = 0; i < arr.length; i++) {
 				arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
 			}
 			const c_sentence = arr.join(' ');

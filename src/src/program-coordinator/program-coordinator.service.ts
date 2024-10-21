@@ -14,16 +14,16 @@ import { BeneficiariesCoreService } from 'src/beneficiaries/beneficiaries.core.s
 export class ProgramCoordinatorService {
 	constructor(
 		private readonly keycloakService: KeycloakService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
-		private authService: AuthService,
-		private beneficiariesService: BeneficiariesService,
-		private uploadFileService: UploadFileService,
-		public userService: UserService,
-		private enumService: EnumService,
-		private boardService: BoardService,
-		private beneficiariesCoreService: BeneficiariesCoreService,
+		private readonly authService: AuthService,
+		private readonly beneficiariesService: BeneficiariesService,
+		private readonly uploadFileService: UploadFileService,
+		public readonly userService: UserService,
+		private readonly enumService: EnumService,
+		private readonly boardService: BoardService,
+		private readonly beneficiariesCoreService: BeneficiariesCoreService,
 	) {}
 
 	public async programCoordinatorRegister(body, request, response, role) {

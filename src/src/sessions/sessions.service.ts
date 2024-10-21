@@ -9,11 +9,11 @@ const moment = require('moment');
 @Injectable()
 export class SessionsService {
 	constructor(
-		private userService: UserService,
-		private hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private enumService: EnumService,
-		private campService: CampService,
+		private readonly userService: UserService,
+		private readonly hasuraService: HasuraService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly enumService: EnumService,
+		private readonly campService: CampService,
 	) {}
 
 	async createSession(body: any, request: any, response: any) {

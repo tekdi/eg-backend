@@ -11,12 +11,12 @@ const moment = require('moment');
 @Injectable()
 export class CampCoreService {
 	constructor(
-		private userService: UserService,
-		private hasuraService: HasuraService,
-		private enumService: EnumService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private uploadFileService: UploadFileService,
-		private s3Service: S3Service,
+		private readonly userService: UserService,
+		private readonly hasuraService: HasuraService,
+		private readonly enumService: EnumService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly uploadFileService: UploadFileService,
+		private readonly s3Service: S3Service,
 	) {}
 
 	public returnFieldsconsents = [

@@ -5,7 +5,7 @@ import { HasuraService } from 'src/services/hasura/hasura.service';
 @Injectable()
 export class BoardService {
 	constructor(
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly hasuraService: HasuraService,
 	) {}
 

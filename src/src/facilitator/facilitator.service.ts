@@ -17,15 +17,15 @@ import { Method } from '../common/method/method';
 export class FacilitatorService {
 	constructor(
 		private readonly httpService: HttpService,
-		private authService: AuthService,
-		private enumService: EnumService,
-		private hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private userService: UserService,
-		private s3Service: S3Service,
-		private uploadFileService: UploadFileService,
-		private facilitatorCoreService: FacilitatorCoreService,
-		private method: Method,
+		private readonly authService: AuthService,
+		private readonly enumService: EnumService,
+		private readonly hasuraService: HasuraService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly userService: UserService,
+		private readonly s3Service: S3Service,
+		private readonly uploadFileService: UploadFileService,
+		private readonly facilitatorCoreService: FacilitatorCoreService,
+		private readonly method: Method,
 	) {}
 
 	allStatus = this.enumService.getEnumValue('FACILITATOR_STATUS').data;

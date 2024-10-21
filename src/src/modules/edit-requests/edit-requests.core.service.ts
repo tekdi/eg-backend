@@ -4,8 +4,8 @@ import { HasuraService as HasuraServiceFromServices } from '../../services/hasur
 @Injectable()
 export class EditRequestCoreService {
 	constructor(
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private hasuraService: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraService: HasuraServiceFromServices,
 	) {}
 	public returnField = [
 		'id',

@@ -13,8 +13,8 @@ const { parse, HTMLElement } = require('node-html-parser');
 export class LMSService {
 	constructor(
 		private readonly hasuraService: HasuraService,
-		private configService: ConfigService,
-		private userService: UserService,
+		private readonly configService: ConfigService,
+		private readonly userService: UserService,
 	) {}
 
 	public async getTestAllowStatus(req, response) {

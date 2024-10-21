@@ -11,9 +11,9 @@ const moment = require('moment');
 @Injectable()
 export class OnestStatusUpdateCron {
 	constructor(
-		private hasuraService: HasuraService,
-		private httpService: HttpService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraService: HasuraService,
+		private readonly httpService: HttpService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	// Cronjob runs every day at 12am

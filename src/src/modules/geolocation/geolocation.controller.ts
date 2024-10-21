@@ -21,7 +21,7 @@ import { GeolocationService } from './geolocation.service';
 @UseInterceptors(SentryInterceptor)
 @Controller('/locationmaster')
 export class GeolocationController {
-	constructor(private geolocationService: GeolocationService) {}
+	constructor(private readonly geolocationService: GeolocationService) {}
 
 	// Get states list
 	@UseInterceptors(CacheInterceptor)

@@ -5,8 +5,8 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 @Injectable()
 export class OrganisationService {
 	constructor(
-		private hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraService: HasuraService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 	) {}
 
 	async create(body: any, request: any, response: any) {

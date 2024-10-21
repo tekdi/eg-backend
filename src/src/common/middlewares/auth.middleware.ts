@@ -5,7 +5,7 @@ import jwt_decode from 'jwt-decode';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-	constructor(private userService: UserService) {}
+	constructor(private readonly userService: UserService) {}
 
 	async use(req: any, res: Response, next: NextFunction) {
 		req.mw_roles = [];
