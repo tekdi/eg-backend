@@ -146,7 +146,7 @@ export class SessionsService {
 
 	async updateSession(id: any, body: any, request: any, response: any) {
 		const program_id = request.mw_program_id;
-		const academic_year_id = request.mw_academic_year_id;
+
 		// Step 1: Retrieve session details
 		let sessionQuery = `query GetSessionDetails {
 			learning_lesson_plans_master(where:{session_tracks:{id:{_eq:${id}}}}) {

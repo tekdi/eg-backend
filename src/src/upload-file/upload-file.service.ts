@@ -7,7 +7,7 @@ import { HasuraService as HasuraServiceFromServices } from '../services/hasura/h
 @Injectable()
 export class UploadFileService {
 	constructor(
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 
 		private readonly s3Service: S3Service,
 		private readonly hasuraService: HasuraService,
@@ -206,7 +206,7 @@ export class UploadFileService {
 				}
 			  }`;
 
-			hasura_response = await this.hasuraService.getData({
+			await this.hasuraService.getData({
 				query: query,
 			});
 

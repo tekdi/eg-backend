@@ -17,7 +17,7 @@ import { SessionsService } from './sessions.service';
 
 @Controller('sessions')
 export class SessionsController {
-	constructor(private sessionService: SessionsService) {}
+	constructor(private readonly sessionService: SessionsService) {}
 
 	@Post('/add')
 	@UsePipes(ValidationPipe)

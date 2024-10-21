@@ -26,17 +26,17 @@ export class UserauthService {
 		'KEYCLOAK_ADMIN_CLI_CLIENT_SECRET',
 	);
 	constructor(
-		private configService: ConfigService,
+		private readonly configService: ConfigService,
 		private readonly keycloakService: KeycloakService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
-		private authService: AuthService,
-		private acknowledgementService: AcknowledgementService,
-		private userService: UserService,
+		private readonly authService: AuthService,
+		private readonly acknowledgementService: AcknowledgementService,
+		private readonly userService: UserService,
 		private readonly s3Service: S3Service,
-		private method: Method,
-		private uploadFileService: UploadFileService,
+		private readonly method: Method,
+		private readonly uploadFileService: UploadFileService,
 	) {}
 
 	public async userAuthRegister(body, response, role) {
