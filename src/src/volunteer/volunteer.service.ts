@@ -5,9 +5,9 @@ import { UploadFileService } from 'src/upload-file/upload-file.service';
 @Injectable()
 export class VolunteerService {
 	constructor(
-		private hasuraService: HasuraService,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
-		private uploadFileService: UploadFileService,
+		private readonly hasuraService: HasuraService,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
+		private readonly uploadFileService: UploadFileService,
 	) {}
 
 	public async getvolunteerList(body: any, request: any, response: any) {

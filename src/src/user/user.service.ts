@@ -19,11 +19,11 @@ export class UserService {
 	public url = process.env.HASURA_BASE_URL;
 
 	constructor(
-		@Inject(CACHE_MANAGER) private cacheService: Cache,
-		private hasuraServiceFromServices: HasuraServiceFromServices,
+		@Inject(CACHE_MANAGER) private readonly cacheService: Cache,
+		private readonly hasuraServiceFromServices: HasuraServiceFromServices,
 		private readonly httpService: HttpService,
-		private helper: UserHelperService,
-		private hasuraService: HasuraService,
+		private readonly helper: UserHelperService,
+		private readonly hasuraService: HasuraService,
 		private readonly keycloakService: KeycloakService,
 	) {}
 
@@ -182,13 +182,13 @@ export class UserService {
 
 	public async login(username: string, password: string, response: Response) {
 		const axios = require('axios');
-		var loginData = {
+		const loginData = {
 			username: username,
 			password: password,
 			grant_type: 'password',
 			client_id: 'hasura',
 		};
-		var configData = {
+		const configData = {
 			method: 'post',
 			url: `${process.env.KEYCLOAK_URL}/realms/eg-sso/protocol/openid-connect/token`,
 			headers: {
@@ -233,7 +233,7 @@ export class UserService {
 		const axios = require('axios');
 
 		// Set query for getting data info
-		var queryData = {
+		const queryData = {
 			query: `query GetUserDetails($keycloak_id:uuid) {
 				users(where: {keycloak_id: {_eq: $keycloak_id}}) {
 					id
@@ -243,7 +243,7 @@ export class UserService {
 		};
 
 		// Initialize config
-		var configData = {
+		const configData = {
 			method: 'post',
 			url: this.url,
 			headers: {
@@ -329,7 +329,7 @@ export class UserService {
 		const adminResult = await this.helper.getAdminKeycloakToken();
 
 		if (adminResult?.data?.access_token) {
-			var config = {
+			const config = {
 				method: 'post',
 				url: `${process.env.KEYCLOAK_URL}/admin/realms/eg-sso/users`,
 				headers: {
