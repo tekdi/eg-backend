@@ -63,7 +63,7 @@ export class CampModule implements NestModule {
 					path: '/camp/attendance/:id',
 					method: RequestMethod.POST,
 				},
-				'/camp/getStatusWiseCount',
+
 				{
 					path: '/camp/admin/facilitator-reassign/:id',
 					method: RequestMethod.PATCH,
