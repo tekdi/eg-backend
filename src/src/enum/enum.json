@@ -2258,9 +2258,9 @@
 			"foreign_enum_key": "TRAINING_AND_MEETING_ACTIVITY"
 		}
 	],
-	"Users_Access_Remove": [
+	"USERS_ACCESS_REMOVE": [
 		{
-			"title": "Users_Access_Remove_MP",
+			"title": "USERS_ACCESS_REMOVE_MP",
 			"value": "pragati-madhya-pradesh"
 		}
 	]

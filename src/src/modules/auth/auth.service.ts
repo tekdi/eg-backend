@@ -491,7 +491,7 @@ export class AuthService {
 		const state = hasura_response?.data?.users?.[0]?.state || '';
 		const removeState =
 		this.enumService
-		.getEnumValue('Users_Access_Remove')
+		.getEnumValue('USERS_ACCESS_REMOVE')
 		?.data?.map((item) => item.value) || []; // Default to an empty array if undefined or null
 		if (Array.isArray(removeState) && removeState.includes(state)) {
 			return false;
