@@ -18,6 +18,7 @@ import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 import { AuthMiddleware } from '../common/middlewares/auth.middleware';
 import { S3Module } from 'src/services/s3/s3.module';
 import { UploadFileService } from 'src/upload-file/upload-file.service';
+import { EnumModule } from 'src/enum/enum.module';
 
 @Module({
 	imports: [
@@ -28,6 +29,7 @@ import { UploadFileService } from 'src/upload-file/upload-file.service';
 		UserModule,
 		AcknowledgementModule,
 		S3Module,
+		EnumModule
 	],
 	controllers: [UserauthController],
 	providers: [UserauthService, UploadFileService, AuthService, Method],
