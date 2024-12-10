@@ -482,19 +482,32 @@ export class AuthService {
 		// Decode the token to extract user_id
 		const decoded: any = jwt_decode(access_token);
 		const userId = decoded?.sub;
-		const query = `query MyQuery {
-			users(where: {keycloak_id: {_eq: "${userId}"}}) {
-			  state
+		const roles = decoded?.resource_access?.hasura?.roles
+
+		if(roles?.includes("facilitator")){
+			const removeState = this.enumService
+				.getEnumValue('USERS_ACCESS_REMOVE')
+				?.data?.filter(e => e.value).map((item) => item.value) || [];
+			const query = `query MyQuery {
+				users(where: {keycloak_id: {_eq: "${userId}"},program_faciltators:{program:{state:{state_name:{_in:${JSON.stringify(removeState)}}}}}}) {
+					id	
+					program_faciltators{
+							program_id
+							program{
+								id
+								state{
+									state_name
+								}
+							}
+						}
+					}
+				}`;
+			const hasura_response = await this.hasuraService.getData({ query });
+			const user = hasura_response?.data?.users?.[0] || '';
+			 // Default to an empty array if undefined or null
+			if (user?.id) {
+				return false;
 			}
-		}`;
-		const hasura_response = await this.hasuraService.getData({ query });
-		const state = hasura_response?.data?.users?.[0]?.state || '';
-		const removeState =
-		this.enumService
-		.getEnumValue('USERS_ACCESS_REMOVE')
-		?.data?.map((item) => item.value) || []; // Default to an empty array if undefined or null
-		if (Array.isArray(removeState) && removeState.includes(state)) {
-			return false;
 		}
 		return true;
 	}
