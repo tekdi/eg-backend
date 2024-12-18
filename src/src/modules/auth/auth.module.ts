@@ -9,6 +9,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Method } from 'src/common/method/method';
 import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
+import { EnumModule } from "src/enum/enum.module"
 
 @Module({
 	imports: [
@@ -17,6 +18,7 @@ import { CohortMiddleware } from 'src/common/middlewares/cohort.middleware';
 		AadhaarKycModule,
 		HelperModule,
 		UserModule,
+		EnumModule
 	],
 	controllers: [AuthController],
 	providers: [AuthService, Method],
