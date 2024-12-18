@@ -655,7 +655,7 @@ export class EventsService {
 
 			let data = {
 				query: `query MyQuery1 {
-					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}, start_time: {_lte: "${currentTime}"}, end_time: {_gte: "${currentTime}"}}) {
+					events_aggregate(where: {attendances: {id: {_eq: ${attendance_id}}}, start_date: {_lte: "${dateString}"}, end_date: {_gte: "${dateString}"}}) {
 						aggregate {
 							count
 						}
