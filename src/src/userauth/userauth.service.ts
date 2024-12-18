@@ -143,7 +143,7 @@ export class UserauthService {
 			group = `beneficiaries`;
 		}
 
-		let data_to_create_user = {
+		const data_to_create_user = {
 			enabled: 'true',
 			firstName: body?.first_name,
 			lastName: body?.last_name,

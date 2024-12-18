@@ -11,6 +11,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const atob = require('atob');
 const jwt = require('jwt-decode');
+import { EnumService } from '../../enum/enum.service';
 @Injectable()
 export class AuthService {
 	public smsKey = this.configService.get<string>('SMS_KEY');
@@ -25,6 +26,7 @@ export class AuthService {
 		private readonly hasuraService: HasuraService,
 		private readonly userHelperService: UserHelperService,
 		private userService: UserService,
+		private enumService: EnumService,
 	) {}
 
 	public returnFields = [
@@ -438,13 +440,22 @@ export class AuthService {
 
 		const token = await this.keycloakService.getUserKeycloakToken(data);
 		if (token) {
-			await this.updateLastLogin(token);
-			await this.validateCredentialsForPC(data, req.body);
-			return response.status(200).send({
-				success: true,
-				message: 'LOGGEDIN_SUCCESSFULLY',
-				data: token,
-			});
+			const dataResult = await this.removeStateAccess(token);
+			if (!dataResult) {
+				return response.status(401).send({
+					success: false,
+					message: 'USER_DISABLED_FOR_STATE',
+					data: null,
+				});
+			} else {
+				await this.updateLastLogin(token);
+				await this.validateCredentialsForPC(data, req.body);
+				return response.status(200).send({
+					success: true,
+					message: 'LOGGEDIN_SUCCESSFULLY',
+					data: token,
+				});
+			}
 		} else {
 			return response.status(401).send({
 				success: false,
@@ -464,6 +475,41 @@ export class AuthService {
 			success: true,
 			message: 'LOGGEDOUT SUCCESSFULLY',
 		});
+	}
+
+	public async removeStateAccess(token: any) {
+		const { access_token } = token;
+		// Decode the token to extract user_id
+		const decoded: any = jwt_decode(access_token);
+		const userId = decoded?.sub;
+		const roles = decoded?.resource_access?.hasura?.roles
+
+		if(roles?.includes("facilitator")){
+			const removeState = this.enumService
+				.getEnumValue('USERS_ACCESS_REMOVE')
+				?.data?.filter(e => e.value).map((item) => item.value) || [];
+			const query = `query MyQuery {
+				users(where: {keycloak_id: {_eq: "${userId}"},program_faciltators:{program:{state:{state_name:{_in:${JSON.stringify(removeState)}}}}}}) {
+					id	
+					program_faciltators{
+							program_id
+							program{
+								id
+								state{
+									state_name
+								}
+							}
+						}
+					}
+				}`;
+			const hasura_response = await this.hasuraService.getData({ query });
+			const user = hasura_response?.data?.users?.[0] || '';
+			 // Default to an empty array if undefined or null
+			if (user?.id) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public async validateCredentialsForPC(data: any, body: any) {
