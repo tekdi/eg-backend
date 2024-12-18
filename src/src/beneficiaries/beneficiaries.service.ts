@@ -4444,7 +4444,10 @@ export class BeneficiariesService {
 			const statuscheck =
 				result?.data?.program_beneficiaries?.[0]?.status;
 
-			if (statuscheck == 'registered_in_camp') {
+			if (
+				statuscheck == 'registered_in_camp' ||
+				statuscheck == 'registered_in_neev_camp'
+			) {
 				return {
 					status: 422,
 					success: true,
