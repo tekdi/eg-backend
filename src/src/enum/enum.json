@@ -2266,6 +2266,10 @@
 		{
 			"title": "USERS_ACCESS_REMOVE_RJ",
 			"value": "RAJASTHAN"
+		},
+		{
+			"title": "USERS_ACCESS_REMOVE_BH",
+			"value": "BIHAR"
 		}
 	]
 }
