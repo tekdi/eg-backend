@@ -2259,17 +2259,6 @@
 		}
 	],
 	"USERS_ACCESS_REMOVE": [
-		{
-			"title": "USERS_ACCESS_REMOVE_MP",
-			"value": "MADHYA PRADESH"
-		},
-		{
-			"title": "USERS_ACCESS_REMOVE_RJ",
-			"value": "RAJASTHAN"
-		},
-		{
-			"title": "USERS_ACCESS_REMOVE_BH",
-			"value": "BIHAR"
-		}
+		
 	]
 }
